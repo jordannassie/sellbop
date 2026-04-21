@@ -12,7 +12,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import {
   Lock, ChevronDown, ChevronRight,
-  Star, Eye, EyeOff, Pencil, Package, Plus, ExternalLink,
+  Star, Eye, EyeOff, Pencil, Package, Plus,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatCurrency } from '@/lib/utils'
@@ -166,9 +166,8 @@ function SortableProductRow({
         </div>
       </div>
 
-      {/* Action buttons */}
-      <div className="flex items-center pr-1.5 flex-shrink-0">
-        {/* Feature toggle */}
+      {/* Actions: Feature · Hide · Edit */}
+      <div className="flex items-center gap-0.5 pr-2 flex-shrink-0">
         <button
           onClick={onToggleFeatured}
           disabled={!canFeature && !isFeatured}
@@ -183,7 +182,6 @@ function SortableProductRow({
         >
           <Star size={13} fill={isFeatured ? 'currentColor' : 'none'} strokeWidth={2} />
         </button>
-        {/* Hide toggle */}
         <button
           onClick={onToggleHidden}
           title={isHidden ? 'Show on storefront' : 'Hide from storefront'}
@@ -196,23 +194,12 @@ function SortableProductRow({
         >
           {isHidden ? <EyeOff size={13} /> : <Eye size={13} />}
         </button>
-        {/* Edit product */}
         <Link
           href={`/dashboard/products/${product.id}`}
           title="Edit product"
           className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-300 hover:text-neutral-700 hover:bg-neutral-100 transition-all"
         >
           <Pencil size={11} />
-        </Link>
-        {/* Preview product page */}
-        <Link
-          href={`/p/${product.slug}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          title="Preview product page"
-          className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-300 hover:text-blue-500 hover:bg-blue-50 transition-all"
-        >
-          <ExternalLink size={11} />
         </Link>
       </div>
     </div>

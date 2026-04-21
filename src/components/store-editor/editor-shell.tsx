@@ -1,21 +1,19 @@
 'use client'
 import { useState } from 'react'
-import { Pencil, LayoutGrid, Eye, ExternalLink, Copy, Check, CloudUpload } from 'lucide-react'
+import { Pencil, LayoutGrid, ExternalLink, Copy, Check, CloudUpload } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { EditorSidebar } from './editor-sidebar'
 import { SectionArranger } from './section-arranger'
-import { PreviewPanel } from './preview-panel'
 import { useStoreEditor } from '@/context/store-editor-context'
 import { DEMO_SELLER_PROFILE } from '@/lib/demo-data/seed'
 import { toast } from 'sonner'
 
-type Tab = 'edit' | 'arrange' | 'preview'
+type Tab = 'edit' | 'arrange'
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: 'edit',    label: 'Edit',    icon: <Pencil size={13} /> },
   { id: 'arrange', label: 'Arrange', icon: <LayoutGrid size={13} /> },
-  { id: 'preview', label: 'Preview', icon: <Eye size={13} /> },
 ]
 
 // ── Top Header Bar ────────────────────────────────────────────
@@ -39,10 +37,9 @@ function EditorTopBar() {
       <div className="flex items-center gap-3 min-w-0">
         <div>
           <h1 className="text-sm font-bold text-black tracking-tight leading-none">Store Editor</h1>
-          <p className="text-[10px] text-neutral-400 leading-none mt-0.5 hidden sm:block">Visual storefront builder</p>
+          <p className="text-[10px] text-neutral-400 leading-none mt-0.5 hidden sm:block">Edit your storefront</p>
         </div>
 
-        {/* Unsaved changes — visible pill when dirty */}
         {isDirty && (
           <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-bold px-2.5 py-1 rounded-full">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse flex-shrink-0" />
@@ -64,7 +61,7 @@ function EditorTopBar() {
           {copied ? 'Copied!' : 'Copy Link'}
         </button>
 
-        {/* Open Store */}
+        {/* Open Store — opens live storefront in new tab */}
         <Link
           href={storeUrl}
           target="_blank"
@@ -74,7 +71,7 @@ function EditorTopBar() {
           Open Store
         </Link>
 
-        {/* Save — prominent when dirty */}
+        {/* Save */}
         <button
           onClick={saveChanges}
           disabled={!isDirty || isSaving}
@@ -99,26 +96,21 @@ export function StoreEditorShell() {
 
   return (
     <div className="flex flex-col h-screen lg:h-full">
-      {/* Global top bar */}
       <EditorTopBar />
 
-      {/* ── Desktop: 3-col layout ──────────────────────────────── */}
-      <div className="hidden lg:grid lg:grid-cols-[272px_1fr_368px] flex-1 min-h-0 divide-x divide-neutral-100">
+      {/* ── Desktop: 2-col layout ──────────────────────────────── */}
+      <div className="hidden lg:grid lg:grid-cols-[300px_1fr] flex-1 min-h-0 divide-x divide-neutral-100">
         {/* Left — Edit Controls */}
         <div className="overflow-hidden flex flex-col bg-white">
           <EditorSidebar />
         </div>
-        {/* Center — Section Arranger */}
+        {/* Right — Store Structure */}
         <div className="overflow-hidden flex flex-col bg-[#f8f8f8]">
           <SectionArranger />
         </div>
-        {/* Right — Live Preview (fills height, sticky) */}
-        <div className="overflow-hidden flex flex-col bg-[#f0f0f0]">
-          <PreviewPanel />
-        </div>
       </div>
 
-      {/* ── Mobile: tab layout ─────────────────────────────────── */}
+      {/* ── Mobile: 2-tab layout ───────────────────────────────── */}
       <div className="lg:hidden flex flex-col flex-1 min-h-0">
         {/* Tab Bar */}
         <div className="flex border-b border-neutral-100 bg-white shrink-0">
@@ -149,11 +141,6 @@ export function StoreEditorShell() {
           {activeTab === 'arrange' && (
             <div className="h-full overflow-hidden flex flex-col bg-[#f8f8f8]">
               <SectionArranger />
-            </div>
-          )}
-          {activeTab === 'preview' && (
-            <div className="h-full overflow-hidden flex flex-col bg-[#f0f0f0]">
-              <PreviewPanel />
             </div>
           )}
         </div>
