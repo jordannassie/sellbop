@@ -219,6 +219,8 @@ export const DEMO_PRODUCTS: Product[] = [
     publishedAt: '2024-01-20T10:00:00Z',
     createdAt: '2024-01-15T10:00:00Z',
     updatedAt: '2024-04-01T10:00:00Z',
+    marketplaceVisible: true,
+    marketplaceExcerpt: '50+ premium Notion templates — projects, habits, journaling, finance, and more.',
   },
   {
     id: 'product-2',
@@ -254,6 +256,8 @@ export const DEMO_PRODUCTS: Product[] = [
     publishedAt: '2024-02-01T10:00:00Z',
     createdAt: '2024-01-28T10:00:00Z',
     updatedAt: '2024-04-01T10:00:00Z',
+    marketplaceVisible: true,
+    marketplaceExcerpt: 'Complete sermon series resources: outlines, slides, bulletins, and social graphics.',
   },
   {
     id: 'product-3',
@@ -289,6 +293,8 @@ export const DEMO_PRODUCTS: Product[] = [
     publishedAt: '2024-02-15T10:00:00Z',
     createdAt: '2024-02-10T10:00:00Z',
     updatedAt: '2024-04-01T10:00:00Z',
+    marketplaceVisible: true,
+    marketplaceExcerpt: '60-minute private session to clarify your systems, goals, and next steps.',
   },
   {
     id: 'product-4',
@@ -324,6 +330,8 @@ export const DEMO_PRODUCTS: Product[] = [
     publishedAt: '2024-03-05T10:00:00Z',
     createdAt: '2024-03-01T10:00:00Z',
     updatedAt: '2024-04-01T10:00:00Z',
+    marketplaceVisible: true,
+    marketplaceExcerpt: 'All of Alex\'s best products in one bundle — save over 40% vs buying separately.',
   },
   {
     id: 'product-5',
@@ -359,6 +367,8 @@ export const DEMO_PRODUCTS: Product[] = [
     publishedAt: '2024-02-20T10:00:00Z',
     createdAt: '2024-02-18T10:00:00Z',
     updatedAt: '2024-04-01T10:00:00Z',
+    marketplaceVisible: true,
+    marketplaceExcerpt: 'New templates monthly, live Q&A sessions, and private community. Cancel anytime.',
   },
   {
     id: 'product-6',
@@ -394,6 +404,8 @@ export const DEMO_PRODUCTS: Product[] = [
     publishedAt: '2024-02-15T10:00:00Z',
     createdAt: '2024-02-12T10:00:00Z',
     updatedAt: '2024-04-01T10:00:00Z',
+    marketplaceVisible: true,
+    marketplaceExcerpt: 'Professional motion backgrounds, slides, and social graphics for Sunday services.',
   },
 ]
 

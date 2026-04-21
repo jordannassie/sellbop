@@ -72,6 +72,7 @@ export default function NewProductPage() {
         licenseKeyEnabled: false, memberAccessEnabled: false,
         downloadLimit: null, accessExpirationDays: null, variants: [],
         publishedAt: published ? new Date().toISOString() : null,
+        marketplaceVisible: true, marketplaceExcerpt: null,
       })
       toast.success('Product created!')
       router.push('/dashboard/products')

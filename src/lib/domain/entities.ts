@@ -114,6 +114,11 @@ export interface Product {
   publishedAt: string | null
   createdAt: string
   updatedAt: string
+  // ── Marketplace visibility (future-ready) ──────────────
+  /** Whether this product appears in the public SellBop marketplace. Defaults to true for published products. */
+  marketplaceVisible: boolean
+  /** Short excerpt shown on marketplace cards (falls back to shortDescription). Max ~120 chars. */
+  marketplaceExcerpt: string | null
 }
 
 export interface Order {

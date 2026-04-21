@@ -7,12 +7,16 @@ import { GradientImageFallback } from '@/components/ui/gradient-image-fallback'
 import type { ProductType } from '@/lib/domain/entities'
 
 // ─── Mock marketplace data ────────────────────────────────────────────────────
+// Each product links directly to its dedicated product page (/p/[slug]).
+// The creator name links to the creator's storefront (/store/[handle]).
+// This preserves the 3-surface architecture: Marketplace → Product Page → Checkout.
 
 interface MarketProduct {
   id: string
+  slug: string          // routes to /p/[slug]
   title: string
   creator: string
-  creatorHandle: string
+  creatorHandle: string // routes to /store/[handle]
   category: string
   productType: ProductType
   price: number
@@ -24,22 +28,24 @@ interface MarketProduct {
 }
 
 const PRODUCTS: MarketProduct[] = [
-  { id: 'mp-1',  title: 'Notion Life OS — Ultimate Productivity System',  creator: 'Alex Johnson',     creatorHandle: 'alexjohnson',  category: 'Templates',     productType: 'digital_download',  price: 2900,  rating: 4.9, sales: 1842, trending: true,  featured: true,  tags: ['notion', 'productivity', 'templates'] },
-  { id: 'mp-2',  title: '30-Day Content Calendar for Creators',           creator: 'Maya Chen',        creatorHandle: 'alexjohnson',  category: 'Templates',     productType: 'digital_download',  price: 1200,  rating: 4.7, sales: 987,  trending: false, featured: true,  tags: ['content', 'social media', 'planning'] },
-  { id: 'mp-3',  title: 'YouTube Growth Masterclass',                     creator: 'Jordan Rivera',    creatorHandle: 'alexjohnson',  category: 'Courses',       productType: 'digital_download',  price: 9700,  rating: 4.8, sales: 512,  trending: true,  featured: true,  tags: ['youtube', 'video', 'growth'] },
-  { id: 'mp-4',  title: '1-on-1 Brand Strategy Session',                  creator: 'Sarah Mitchell',   creatorHandle: 'alexjohnson',  category: 'Coaching',      productType: 'service_offer',     price: 29900, rating: 5.0, sales: 74,   trending: false, featured: false, tags: ['branding', 'strategy', 'coaching'] },
-  { id: 'mp-5',  title: 'Systems Lab — Monthly Membership',               creator: 'Alex Johnson',     creatorHandle: 'alexjohnson',  category: 'Memberships',   productType: 'subscription',      price: 1900,  rating: 4.6, sales: 320,  trending: false, featured: false, tags: ['productivity', 'community', 'monthly'] },
-  { id: 'mp-6',  title: 'Figma UI Kit — SaaS Dashboard Components',      creator: 'Priya Kapoor',     creatorHandle: 'alexjohnson',  category: 'Templates',     productType: 'digital_download',  price: 4900,  rating: 4.9, sales: 1204, trending: true,  featured: false, tags: ['figma', 'ui', 'design'] },
-  { id: 'mp-7',  title: 'Freelance Pricing & Proposal Templates',         creator: 'Ryan Brooks',      creatorHandle: 'alexjohnson',  category: 'Templates',     productType: 'digital_download',  price: 1700,  rating: 4.5, sales: 763,  trending: false, featured: false, tags: ['freelance', 'proposals', 'business'] },
-  { id: 'mp-8',  title: 'Build a SaaS in 30 Days — Full Course',         creator: 'David Park',       creatorHandle: 'alexjohnson',  category: 'Courses',       productType: 'digital_download',  price: 14900, rating: 4.8, sales: 398,  trending: true,  featured: false, tags: ['saas', 'coding', 'startup'] },
-  { id: 'mp-9',  title: 'Email Copywriting Secrets',                      creator: 'Lisa Wang',        creatorHandle: 'alexjohnson',  category: 'Courses',       productType: 'digital_download',  price: 3700,  rating: 4.7, sales: 891,  trending: false, featured: false, tags: ['email', 'copywriting', 'marketing'] },
-  { id: 'mp-10', title: 'Weekly Marketing Playbook Subscription',         creator: 'Brandon Torres',   creatorHandle: 'alexjohnson',  category: 'Subscriptions', productType: 'subscription',      price: 2900,  rating: 4.4, sales: 215,  trending: false, featured: false, tags: ['marketing', 'weekly', 'newsletter'] },
-  { id: 'mp-11', title: 'Church Sermon Series Media Kit Vol. 2',          creator: 'David Reyes',      creatorHandle: 'alexjohnson',  category: 'Templates',     productType: 'bundle',            price: 7900,  rating: 4.9, sales: 143,  trending: false, featured: false, tags: ['church', 'media', 'design'] },
-  { id: 'mp-12', title: 'Creator Starter Bundle — Everything You Need',   creator: 'Alex Johnson',     creatorHandle: 'alexjohnson',  category: 'Bundles',       productType: 'bundle',            price: 6700,  rating: 4.7, sales: 502,  trending: true,  featured: false, tags: ['bundle', 'creator', 'starter'] },
-  { id: 'mp-13', title: 'Instagram Reels Script Templates',               creator: 'Maya Chen',        creatorHandle: 'alexjohnson',  category: 'Templates',     productType: 'digital_download',  price: 900,   rating: 4.6, sales: 2341, trending: true,  featured: false, tags: ['instagram', 'reels', 'scripts'] },
-  { id: 'mp-14', title: 'Solopreneur Financial Tracker — Notion',         creator: 'Priya Kapoor',     creatorHandle: 'alexjohnson',  category: 'Templates',     productType: 'digital_download',  price: 1400,  rating: 4.8, sales: 634,  trending: false, featured: false, tags: ['finance', 'notion', 'tracking'] },
-  { id: 'mp-15', title: 'Launch Checklist & Strategy Guide',              creator: 'Jordan Rivera',    creatorHandle: 'alexjohnson',  category: 'Courses',       productType: 'digital_download',  price: 2200,  rating: 4.5, sales: 417,  trending: false, featured: false, tags: ['launch', 'strategy', 'guide'] },
-  { id: 'mp-16', title: 'Productivity Coaching Call — 60 Minutes',       creator: 'Sarah Mitchell',   creatorHandle: 'alexjohnson',  category: 'Coaching',      productType: 'service_offer',     price: 19900, rating: 4.9, sales: 88,   trending: false, featured: false, tags: ['productivity', 'coaching', 'systems'] },
+  // Alex Johnson's real products link to live demo pages (/p/[slug])
+  { id: 'mp-1',  slug: 'notion-template-pack',       title: 'Notion Template Pack — 50+ Systems',           creator: 'Alex Johnson',     creatorHandle: 'alexjohnson',   category: 'Templates',     productType: 'digital_download',  price: 2900,  rating: 4.9, sales: 1842, trending: true,  featured: true,  tags: ['notion', 'productivity', 'templates'] },
+  { id: 'mp-5',  slug: 'systems-membership',         title: 'Systems Lab — Monthly Membership',             creator: 'Alex Johnson',     creatorHandle: 'alexjohnson',   category: 'Memberships',   productType: 'subscription',      price: 1900,  rating: 4.6, sales: 320,  trending: false, featured: true,  tags: ['productivity', 'community', 'monthly'] },
+  { id: 'mp-12', slug: 'creator-bundle',             title: 'Creator Bundle — Everything You Need',         creator: 'Alex Johnson',     creatorHandle: 'alexjohnson',   category: 'Bundles',       productType: 'bundle',            price: 7900,  rating: 4.7, sales: 502,  trending: true,  featured: true,  tags: ['bundle', 'creator', 'starter'] },
+  { id: 'mp-3',  slug: 'coaching-call',              title: '1-on-1 Coaching Call — 60 Minutes',            creator: 'Alex Johnson',     creatorHandle: 'alexjohnson',   category: 'Coaching',      productType: 'service_offer',     price: 14900, rating: 5.0, sales: 74,   trending: false, featured: false, tags: ['coaching', 'strategy', 'systems'] },
+  // Other creators (demo slugs — product pages not available in demo mode)
+  { id: 'mp-2',  slug: '30-day-content-calendar',   title: '30-Day Content Calendar for Creators',         creator: 'Maya Chen',        creatorHandle: 'mayachen',      category: 'Templates',     productType: 'digital_download',  price: 1200,  rating: 4.7, sales: 987,  trending: false, featured: false, tags: ['content', 'social media', 'planning'] },
+  { id: 'mp-6',  slug: 'figma-ui-kit-saas',         title: 'Figma UI Kit — SaaS Dashboard Components',    creator: 'Priya Kapoor',     creatorHandle: 'priyakapoor',   category: 'Templates',     productType: 'digital_download',  price: 4900,  rating: 4.9, sales: 1204, trending: true,  featured: false, tags: ['figma', 'ui', 'design'] },
+  { id: 'mp-4',  slug: 'youtube-growth-masterclass', title: 'YouTube Growth Masterclass',                  creator: 'Jordan Rivera',    creatorHandle: 'jordanrivera',  category: 'Courses',       productType: 'digital_download',  price: 9700,  rating: 4.8, sales: 512,  trending: true,  featured: false, tags: ['youtube', 'video', 'growth'] },
+  { id: 'mp-7',  slug: 'freelance-pricing-templates', title: 'Freelance Pricing & Proposal Templates',     creator: 'Ryan Brooks',      creatorHandle: 'ryanbrooks',    category: 'Templates',     productType: 'digital_download',  price: 1700,  rating: 4.5, sales: 763,  trending: false, featured: false, tags: ['freelance', 'proposals', 'business'] },
+  { id: 'mp-8',  slug: 'build-saas-30-days',        title: 'Build a SaaS in 30 Days — Full Course',       creator: 'David Park',       creatorHandle: 'davidpark',     category: 'Courses',       productType: 'digital_download',  price: 14900, rating: 4.8, sales: 398,  trending: true,  featured: false, tags: ['saas', 'coding', 'startup'] },
+  { id: 'mp-9',  slug: 'email-copywriting-secrets', title: 'Email Copywriting Secrets',                    creator: 'Lisa Wang',        creatorHandle: 'lisawang',      category: 'Courses',       productType: 'digital_download',  price: 3700,  rating: 4.7, sales: 891,  trending: false, featured: false, tags: ['email', 'copywriting', 'marketing'] },
+  { id: 'mp-10', slug: 'weekly-marketing-playbook', title: 'Weekly Marketing Playbook — Subscription',    creator: 'Brandon Torres',   creatorHandle: 'brandontorres', category: 'Subscriptions', productType: 'subscription',      price: 2900,  rating: 4.4, sales: 215,  trending: false, featured: false, tags: ['marketing', 'weekly', 'newsletter'] },
+  { id: 'mp-11', slug: 'sermon-series-media-kit',   title: 'Church Sermon Series Media Kit Vol. 2',       creator: 'David Reyes',      creatorHandle: 'davidreyes',    category: 'Templates',     productType: 'bundle',            price: 7900,  rating: 4.9, sales: 143,  trending: false, featured: false, tags: ['church', 'media', 'design'] },
+  { id: 'mp-13', slug: 'instagram-reels-scripts',   title: 'Instagram Reels Script Templates',             creator: 'Maya Chen',        creatorHandle: 'mayachen',      category: 'Templates',     productType: 'digital_download',  price: 900,   rating: 4.6, sales: 2341, trending: true,  featured: false, tags: ['instagram', 'reels', 'scripts'] },
+  { id: 'mp-14', slug: 'solopreneur-finance-tracker', title: 'Solopreneur Financial Tracker — Notion',    creator: 'Priya Kapoor',     creatorHandle: 'priyakapoor',   category: 'Templates',     productType: 'digital_download',  price: 1400,  rating: 4.8, sales: 634,  trending: false, featured: false, tags: ['finance', 'notion', 'tracking'] },
+  { id: 'mp-15', slug: 'launch-checklist-guide',    title: 'Launch Checklist & Strategy Guide',            creator: 'Jordan Rivera',    creatorHandle: 'jordanrivera',  category: 'Courses',       productType: 'digital_download',  price: 2200,  rating: 4.5, sales: 417,  trending: false, featured: false, tags: ['launch', 'strategy', 'guide'] },
+  { id: 'mp-16', slug: 'brand-strategy-session',    title: '1-on-1 Brand Strategy Session',                creator: 'Sarah Mitchell',   creatorHandle: 'sarahmitchell', category: 'Coaching',      productType: 'service_offer',     price: 29900, rating: 4.9, sales: 88,   trending: false, featured: false, tags: ['branding', 'strategy', 'coaching'] },
 ]
 
 const CATEGORIES = ['All', 'Templates', 'Courses', 'Coaching', 'Subscriptions', 'Memberships', 'Bundles']
@@ -79,12 +85,14 @@ function Avatar({ name, size = 6 }: { name: string; size?: number }) {
 }
 
 // ─── Product Card ─────────────────────────────────────────────────────────────
+// Card links to /p/[slug] (dedicated product page).
+// Creator name is a secondary link to /store/[handle] (creator storefront).
 
 function ProductCard({ product }: { product: MarketProduct }) {
   return (
-    <Link href={`/store/${product.creatorHandle}`}>
-      <div className="group bg-white border border-neutral-200 rounded-2xl overflow-hidden hover:shadow-md hover:border-neutral-300 transition-all cursor-pointer">
-        {/* Thumbnail */}
+    <div className="group bg-white border border-neutral-200 rounded-2xl overflow-hidden hover:shadow-md hover:border-neutral-300 transition-all">
+      {/* Card links to product page */}
+      <Link href={`/p/${product.slug}`} className="block">
         <div className="aspect-[4/3] relative overflow-hidden bg-neutral-100">
           <GradientImageFallback productType={product.productType} />
           {product.trending && (
@@ -101,43 +109,48 @@ function ProductCard({ product }: { product: MarketProduct }) {
           </div>
         </div>
 
-        {/* Content */}
-        <div className="p-4 space-y-3">
-          <div>
-            <h3 className="text-sm font-semibold text-black leading-snug line-clamp-2 group-hover:underline underline-offset-2">
-              {product.title}
-            </h3>
-          </div>
+        <div className="px-4 pt-4 pb-2">
+          <h3 className="text-sm font-semibold text-black leading-snug line-clamp-2 group-hover:underline underline-offset-2">
+            {product.title}
+          </h3>
+        </div>
+      </Link>
 
-          {/* Creator */}
+      {/* Footer: creator link (storefront) + price */}
+      <div className="px-4 pb-4 space-y-2.5">
+        {/* Creator → storefront */}
+        <Link
+          href={`/store/${product.creatorHandle}`}
+          className="flex items-center gap-2 w-fit hover:opacity-70 transition-opacity"
+          onClick={e => e.stopPropagation()}
+        >
+          <Avatar name={product.creator} size={5} />
+          <span className="text-xs text-neutral-500 truncate">{product.creator}</span>
+        </Link>
+
+        {/* Price + rating */}
+        <div className="flex items-center justify-between pt-2 border-t border-neutral-50">
           <div className="flex items-center gap-2">
-            <Avatar name={product.creator} size={5} />
-            <span className="text-xs text-neutral-500 truncate">{product.creator}</span>
+            <Stars rating={product.rating} />
+            <span className="text-[11px] text-neutral-400">({product.sales.toLocaleString()})</span>
           </div>
-
-          {/* Price row */}
-          <div className="flex items-center justify-between pt-1 border-t border-neutral-50">
-            <div className="flex items-center gap-2">
-              <Stars rating={product.rating} />
-              <span className="text-[11px] text-neutral-400">({product.sales.toLocaleString()})</span>
-            </div>
-            <span className="text-sm font-bold text-black">
-              {formatPrice(product.price)}
-              {product.productType === 'subscription' && <span className="text-xs font-normal text-neutral-400">/mo</span>}
-            </span>
-          </div>
+          <span className="text-sm font-bold text-black">
+            {formatPrice(product.price)}
+            {product.productType === 'subscription' && <span className="text-xs font-normal text-neutral-400">/mo</span>}
+          </span>
         </div>
       </div>
-    </Link>
+    </div>
   )
 }
 
 // ─── Featured Card (large) ────────────────────────────────────────────────────
+// Same routing: card → /p/[slug], creator → /store/[handle]
 
 function FeaturedCard({ product }: { product: MarketProduct }) {
   return (
-    <Link href={`/store/${product.creatorHandle}`}>
-      <div className="group bg-white border border-neutral-200 rounded-2xl overflow-hidden hover:shadow-lg hover:border-neutral-300 transition-all cursor-pointer flex flex-col h-full">
+    <div className="group bg-white border border-neutral-200 rounded-2xl overflow-hidden hover:shadow-lg hover:border-neutral-300 transition-all flex flex-col h-full">
+      <Link href={`/p/${product.slug}`} className="block">
         <div className="aspect-video relative overflow-hidden bg-neutral-100">
           <GradientImageFallback productType={product.productType} iconSize="lg" />
           {product.trending && (
@@ -148,7 +161,7 @@ function FeaturedCard({ product }: { product: MarketProduct }) {
             </div>
           )}
         </div>
-        <div className="p-5 flex flex-col gap-3 flex-1">
+        <div className="px-5 pt-5 pb-2 flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">{product.category}</span>
             <Stars rating={product.rating} />
@@ -156,19 +169,24 @@ function FeaturedCard({ product }: { product: MarketProduct }) {
           <h3 className="text-base font-bold text-black leading-snug line-clamp-2 group-hover:underline underline-offset-2">
             {product.title}
           </h3>
-          <div className="flex items-center gap-2 mt-auto pt-3 border-t border-neutral-50 justify-between">
-            <div className="flex items-center gap-2">
-              <Avatar name={product.creator} size={6} />
-              <span className="text-xs text-neutral-500">{product.creator}</span>
-            </div>
-            <span className="text-base font-bold text-black">
-              {formatPrice(product.price)}
-              {product.productType === 'subscription' && <span className="text-xs font-normal text-neutral-400">/mo</span>}
-            </span>
-          </div>
         </div>
+      </Link>
+      <div className="px-5 pb-5 flex items-center gap-2 mt-auto pt-3 border-t border-neutral-50 justify-between">
+        {/* Creator → storefront */}
+        <Link
+          href={`/store/${product.creatorHandle}`}
+          className="flex items-center gap-2 hover:opacity-70 transition-opacity"
+          onClick={e => e.stopPropagation()}
+        >
+          <Avatar name={product.creator} size={6} />
+          <span className="text-xs text-neutral-500">{product.creator}</span>
+        </Link>
+        <span className="text-base font-bold text-black">
+          {formatPrice(product.price)}
+          {product.productType === 'subscription' && <span className="text-xs font-normal text-neutral-400">/mo</span>}
+        </span>
       </div>
-    </Link>
+    </div>
   )
 }
 
