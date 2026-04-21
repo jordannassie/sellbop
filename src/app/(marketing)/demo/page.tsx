@@ -1,10 +1,12 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Check } from 'lucide-react'
+import { GradientImageFallback } from '@/components/ui/gradient-image-fallback'
 import { DEMO_PRODUCTS, DEMO_ORDERS, DEMO_SELLER_PROFILE } from '@/lib/demo-data/seed'
 import { formatCurrency, formatDate } from '@/lib/utils'
+import { DemoLoginButtons } from './demo-login-buttons'
 
-export const metadata = { title: 'Demo — Selli' }
+export const metadata = { title: 'Demo — SellBop' }
 
 export default function DemoPage() {
   const topProducts = DEMO_PRODUCTS.slice(0, 3)
@@ -18,7 +20,7 @@ export default function DemoPage() {
           <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />
           Live demo — real data, real UI
         </div>
-        <h1 className="text-4xl font-bold text-black mb-3">See Selli in action</h1>
+        <h1 className="text-4xl font-bold text-black mb-3">See SellBop in action</h1>
         <p className="text-neutral-500 text-base max-w-lg mx-auto">
           Every part of this is real and interactive. Log in with demo credentials to explore the full dashboard.
         </p>
@@ -27,26 +29,7 @@ export default function DemoPage() {
       {/* Demo credentials box */}
       <div className="max-w-lg mx-auto mb-12 p-5 bg-neutral-50 border border-neutral-200 rounded-2xl">
         <p className="text-sm font-semibold text-black mb-3">Demo Accounts</p>
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <div>
-              <span className="text-neutral-500">Creator: </span>
-              <code className="text-black">creator@selli.demo</code>
-              <span className="text-neutral-400"> / </span>
-              <code className="text-black">demo123</code>
-            </div>
-            <Link href="/login"><Button size="xs">Log in →</Button></Link>
-          </div>
-          <div className="flex items-center justify-between text-sm border-t border-neutral-100 pt-2">
-            <div>
-              <span className="text-neutral-500">Buyer: </span>
-              <code className="text-black">buyer@selli.demo</code>
-              <span className="text-neutral-400"> / </span>
-              <code className="text-black">demo123</code>
-            </div>
-            <Link href="/login"><Button size="xs" variant="secondary">Log in →</Button></Link>
-          </div>
-        </div>
+        <DemoLoginButtons />
       </div>
 
       <div className="grid lg:grid-cols-2 gap-8">
@@ -58,7 +41,7 @@ export default function DemoPage() {
           <div className="bg-white border border-neutral-200 rounded-2xl overflow-hidden shadow-sm">
             <div className="flex">
               <div className="w-36 bg-neutral-50 border-r border-neutral-100 p-3 min-h-80">
-                <p className="text-xs font-bold text-black px-2 py-2">Selli</p>
+                <p className="text-xs font-bold text-black px-2 py-2">SellBop</p>
                 {['Overview', 'Products', 'Orders', 'Customers', 'Analytics', 'Discounts', 'Payouts', 'Settings'].map((item, i) => (
                   <div key={item} className={`px-2 py-1.5 rounded-md text-xs mb-0.5 ${i === 0 ? 'bg-black text-white font-medium' : 'text-neutral-500'}`}>{item}</div>
                 ))}
@@ -100,8 +83,8 @@ export default function DemoPage() {
             <span className="text-xs text-neutral-400">/p/notion-template-pack</span>
           </div>
           <div className="bg-white border border-neutral-200 rounded-2xl overflow-hidden shadow-sm">
-            <div className="h-40 bg-gradient-to-br from-neutral-100 to-neutral-200 flex items-center justify-center">
-              <span className="text-5xl opacity-30">📄</span>
+            <div className="h-40 overflow-hidden">
+              <GradientImageFallback productType="digital_download" iconSize="lg" />
             </div>
             <div className="p-6">
               <span className="text-xs bg-neutral-100 text-neutral-600 px-2 py-0.5 rounded font-medium">Digital Download</span>
@@ -126,7 +109,7 @@ export default function DemoPage() {
       {/* Products grid */}
       <div className="mt-14">
         <h2 className="text-lg font-semibold text-black mb-6">Demo products (click to view live pages)</h2>
-        <div className="grid sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {topProducts.map(p => (
             <Link key={p.id} href={`/p/${p.slug}`}>
               <div className="border border-neutral-200 rounded-xl p-5 hover:shadow-md transition-shadow bg-white group">

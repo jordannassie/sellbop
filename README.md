@@ -1,10 +1,10 @@
-# Selli v2 — Gumroad-Class Selling Platform
+# SellBop v2 — Gumroad-Class SellBopng Platform
 
 > **Sell anything in minutes.** — Beautiful sell pages for digital downloads, coaching, subscriptions, and memberships.
 
 ## Overview
 
-Selli v2 is a full-stack Next.js selling platform with:
+SellBop v2 is a full-stack Next.js sellbopng platform with:
 - **Demo mode** out of the box — works with zero backend setup
 - **Adapter architecture** — swap demo adapters for Supabase, Stripe, Resend when ready
 - **Full creator dashboard** — products, orders, customers, analytics, discounts, payouts
@@ -15,7 +15,7 @@ Selli v2 is a full-stack Next.js selling platform with:
 ## Quick Start
 
 ```bash
-cd selli-v2-gumroad-engine
+cd sellbop-v2-gumroad-engine
 npm install
 npm run dev
 ```
@@ -26,8 +26,8 @@ Open http://localhost:3000
 
 | Role    | Email                 | Password |
 |---------|-----------------------|----------|
-| Creator | creator@selli.demo    | demo123  |
-| Buyer   | buyer@selli.demo      | demo123  |
+| Creator | creator@sellbop.demo    | demo123  |
+| Buyer   | buyer@sellbop.demo      | demo123  |
 
 Or sign up with any email/password — demo mode accepts anything.
 
@@ -63,7 +63,7 @@ Or sign up with any email/password — demo mode accepts anything.
 | `/dashboard/payouts` | Payout history |
 | `/dashboard/files` | File assets |
 | `/dashboard/storefront` | Storefront editor |
-| `/dashboard/billing` | Selli plan management |
+| `/dashboard/billing` | SellBop plan management |
 | `/dashboard/settings` | Profile settings |
 
 ### Internal

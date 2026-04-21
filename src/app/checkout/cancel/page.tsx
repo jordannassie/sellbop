@@ -1,12 +1,13 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { X } from 'lucide-react'
+import { SellBopLogo } from '@/components/ui/sellbop-logo'
 export default function CancelPage() {
   return (
     <div className="min-h-screen bg-neutral-50">
       <div className="bg-white border-b border-neutral-100">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center">
-          <Link href="/" className="text-sm font-bold text-black">Selli</Link>
+          <SellBopLogo size="lg" />
         </div>
       </div>
       <div className="max-w-md mx-auto text-center py-16 px-4">

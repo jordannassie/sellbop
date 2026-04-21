@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select } from '@/components/ui/select'
 import { Toggle } from '@/components/ui/toggle'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ImageUpload } from '@/components/dashboard/image-upload'
 import { toast } from 'sonner'
 import { slugify } from '@/lib/utils'
 import type { ProductType } from '@/lib/domain/entities'
@@ -40,6 +41,7 @@ export default function NewProductPage() {
   const [compareAtPrice, setCompareAtPrice] = useState('')
   const [ctaText, setCtaText] = useState('Get Instant Access')
   const [externalUrl, setExternalUrl] = useState('')
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null)
   const [published, setPublished] = useState(false)
   const [saving, setSaving] = useState(false)
 
@@ -62,7 +64,7 @@ export default function NewProductPage() {
         price: priceAmount,
         compareAtPrice: compareAtPrice ? Math.round(parseFloat(compareAtPrice) * 100) : null,
         currency: 'usd',
-        thumbnailUrl: null, coverImageUrl: null, galleryImageUrls: [],
+        thumbnailUrl: thumbnailUrl, coverImageUrl: thumbnailUrl, galleryImageUrls: [],
         category: null, tags: [], fileAssetIds: [],
         externalUrl: externalUrl || null,
         confirmationMessage: null, supportEmail: DEMO_SELLER_PROFILE.supportEmail,
@@ -95,6 +97,13 @@ export default function NewProductPage() {
             </div>
             <Textarea label="Description" value={description} onChange={e => setDescription(e.target.value)} placeholder="Describe what buyers get..." rows={4} />
             <Input label="Short Description" value={shortDescription} onChange={e => setShortDescription(e.target.value)} placeholder="One-line summary shown in listings" />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader><CardTitle>Media</CardTitle></CardHeader>
+          <CardContent>
+            <ImageUpload value={thumbnailUrl} onChange={setThumbnailUrl} />
           </CardContent>
         </Card>
 

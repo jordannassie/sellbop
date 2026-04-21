@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
-import { Package, ExternalLink, Pencil, Eye } from 'lucide-react'
+import { Package, ExternalLink, Pencil } from 'lucide-react'
+import { ProductImage } from '@/components/ui/product-image'
 import type { Product } from '@/lib/domain/entities'
 
 const TYPE_LABELS: Record<string, string> = {
@@ -48,6 +49,9 @@ export default function ProductsPage() {
             <div className="divide-y divide-neutral-50">
               {products.map(p => (
                 <div key={p.id} className="px-6 py-4 flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 relative">
+                    <ProductImage src={p.thumbnailUrl} alt={p.name} productType={p.productType} fill iconSize="sm" />
+                  </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
                       <p className="text-sm font-semibold text-black truncate">{p.name}</p>

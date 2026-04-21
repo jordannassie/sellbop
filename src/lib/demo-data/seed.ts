@@ -2,20 +2,21 @@ import type {
   User, SellerProfile, Product, Order, Customer,
   FileAsset, Coupon, DownloadGrant, Subscription,
   AnalyticsEvent, EmailLog, PayoutRecord, Storefront,
+  RefundStatus, AccessStatus,
 } from '@/lib/domain/entities'
 
 // ─── USERS ──────────────────────────────────────────────────
 export const DEMO_USERS: User[] = [
   {
     id: 'user-creator-1',
-    email: 'creator@selli.demo',
+    email: 'creator@sellbop.demo',
     name: 'Alex Johnson',
     role: 'creator',
     createdAt: '2024-01-15T10:00:00Z',
   },
   {
     id: 'user-buyer-1',
-    email: 'buyer@selli.demo',
+    email: 'buyer@sellbop.demo',
     name: 'Jordan Smith',
     role: 'buyer',
     createdAt: '2024-02-01T09:00:00Z',
@@ -23,8 +24,8 @@ export const DEMO_USERS: User[] = [
 ]
 
 export const DEMO_CREDENTIALS: Record<string, string> = {
-  'creator@selli.demo': 'demo123',
-  'buyer@selli.demo': 'demo123',
+  'creator@sellbop.demo': 'demo123',
+  'buyer@sellbop.demo': 'demo123',
 }
 
 // ─── SELLER PROFILE ─────────────────────────────────────────
@@ -39,7 +40,7 @@ export const DEMO_SELLER_PROFILE: SellerProfile = {
   logoUrl: null,
   websiteUrl: 'https://alexcreates.com',
   twitterUrl: 'https://twitter.com/alexcreates',
-  supportEmail: 'creator@selli.demo',
+  supportEmail: 'creator@sellbop.demo',
   plan: 'pro',
   featuredProductIds: ['product-1', 'product-3', 'product-5'],
   themeColor: '#000000',
@@ -193,7 +194,7 @@ export const DEMO_PRODUCTS: Product[] = [
     fileAssetIds: ['file-1', 'file-5'],
     externalUrl: null,
     confirmationMessage: 'Thank you! Your Notion templates are ready to download. Import them directly into Notion using the import links inside the ZIP file.',
-    supportEmail: 'creator@selli.demo',
+    supportEmail: 'creator@sellbop.demo',
     ctaText: 'Get Instant Access',
     seoTitle: 'Notion Template Pack — 50+ Premium Templates',
     seoDescription: '50+ premium Notion templates for productivity, projects, and building a second brain.',
@@ -228,7 +229,7 @@ export const DEMO_PRODUCTS: Product[] = [
     fileAssetIds: ['file-2', 'file-7'],
     externalUrl: null,
     confirmationMessage: 'Thank you! Your Sermon Series Kit is ready. Check your email for access instructions.',
-    supportEmail: 'creator@selli.demo',
+    supportEmail: 'creator@sellbop.demo',
     ctaText: 'Get the Kit',
     seoTitle: 'Sermon Series Kit — Complete Ministry Resources',
     seoDescription: 'Sermon outline templates, slide decks, and ministry resources for pastors.',
@@ -263,7 +264,7 @@ export const DEMO_PRODUCTS: Product[] = [
     fileAssetIds: [],
     externalUrl: 'https://cal.com/alexjohnson/coaching',
     confirmationMessage: 'Your session is booked! Use the link below to schedule your call time.',
-    supportEmail: 'creator@selli.demo',
+    supportEmail: 'creator@sellbop.demo',
     ctaText: 'Book and Pay',
     seoTitle: '1-on-1 Coaching Call with Alex Johnson',
     seoDescription: 'Book a 60-minute private coaching session with Alex Johnson.',
@@ -298,7 +299,7 @@ export const DEMO_PRODUCTS: Product[] = [
     fileAssetIds: ['file-3', 'file-8'],
     externalUrl: null,
     confirmationMessage: 'Welcome to the Creator Bundle! All files are ready for download below.',
-    supportEmail: 'creator@selli.demo',
+    supportEmail: 'creator@sellbop.demo',
     ctaText: 'Get the Bundle',
     seoTitle: 'Creator Bundle — Alex\'s Complete Digital Toolkit',
     seoDescription: 'Save 40% with the Creator Bundle. Notion templates, social media assets, and more.',
@@ -333,7 +334,7 @@ export const DEMO_PRODUCTS: Product[] = [
     fileAssetIds: [],
     externalUrl: null,
     confirmationMessage: 'Welcome to the Systems Lab! Check your email for access to the private community and resource vault.',
-    supportEmail: 'creator@selli.demo',
+    supportEmail: 'creator@sellbop.demo',
     ctaText: 'Join the Lab',
     seoTitle: 'Systems Lab Membership — Monthly Templates and Sessions',
     seoDescription: 'Monthly membership with new templates, live Q&A, and community access.',
@@ -368,7 +369,7 @@ export const DEMO_PRODUCTS: Product[] = [
     fileAssetIds: ['file-4'],
     externalUrl: null,
     confirmationMessage: 'Your Church Media Pack is ready! All files are available for download. Recommended software: ProPresenter, Keynote, or PowerPoint.',
-    supportEmail: 'creator@selli.demo',
+    supportEmail: 'creator@sellbop.demo',
     ctaText: 'Download Now',
     seoTitle: 'Church Media Pack Vol. 1 — Motion Backgrounds and Slides',
     seoDescription: 'Professional church media: motion backgrounds, title slides, and social graphics.',
@@ -396,31 +397,45 @@ export const DEMO_CUSTOMERS: Customer[] = [
   { id: 'cust-7', sellerId: 'seller-1', email: 'mike.j@gmail.com', name: 'Mike Johnson', totalSpend: 2900, purchaseCount: 1, lastPurchaseAt: '2024-03-25T09:30:00Z', orderIds: ['order-8'], createdAt: '2024-03-25T09:00:00Z' },
   { id: 'cust-8', sellerId: 'seller-1', email: 'pastor.sue@newlife.org', name: 'Susan Park', totalSpend: 8800, purchaseCount: 2, lastPurchaseAt: '2024-03-20T13:00:00Z', orderIds: ['order-9', 'order-15'], createdAt: '2024-02-20T10:00:00Z' },
   { id: 'cust-9', sellerId: 'seller-1', email: 'ryan.b@gmail.com', name: 'Ryan Brooks', totalSpend: 1900, purchaseCount: 1, lastPurchaseAt: '2024-03-15T11:00:00Z', orderIds: ['order-10'], createdAt: '2024-03-15T11:00:00Z' },
-  { id: 'cust-10', sellerId: 'seller-1', email: 'jordan@selli.demo', name: 'Jordan Smith', totalSpend: 13700, purchaseCount: 3, lastPurchaseAt: '2024-04-12T08:00:00Z', orderIds: ['order-13', 'order-16', 'order-18'], createdAt: '2024-02-01T09:00:00Z' },
+  { id: 'cust-10', sellerId: 'seller-1', email: 'jordan@sellbop.demo', name: 'Jordan Smith', totalSpend: 13700, purchaseCount: 3, lastPurchaseAt: '2024-04-12T08:00:00Z', orderIds: ['order-13', 'order-16', 'order-18'], createdAt: '2024-02-01T09:00:00Z' },
 ]
 
 // ─── ORDERS ─────────────────────────────────────────────────
+type MkOrderInput = Omit<Order, 'refundStatus'|'refundedAt'|'refundReason'|'accessStatus'|'subscriptionId'|'internalNotes'> & Partial<Pick<Order,'refundStatus'|'refundedAt'|'refundReason'|'accessStatus'|'subscriptionId'|'internalNotes'>>
+
+function mkOrder(o: MkOrderInput): Order {
+  const defaults: Pick<Order,'refundStatus'|'refundedAt'|'refundReason'|'accessStatus'|'subscriptionId'|'internalNotes'> = {
+    refundStatus: o.paymentStatus === 'refunded' ? 'refunded' : 'paid' as RefundStatus,
+    refundedAt: null,
+    refundReason: null,
+    accessStatus: o.paymentStatus === 'refunded' ? 'revoked' : 'active' as AccessStatus,
+    subscriptionId: null,
+    internalNotes: null,
+  }
+  return { ...defaults, ...o }
+}
+
 export const DEMO_ORDERS: Order[] = [
-  { id: 'order-1', sellerId: 'seller-1', productId: 'product-3', productName: '1-on-1 Coaching Call', productType: 'service_offer', customerId: 'cust-1', customerEmail: 'sarah.m@gmail.com', customerName: 'Sarah Mitchell', amount: 14900, currency: 'usd', status: 'completed', paymentStatus: 'paid', couponId: null, couponCode: null, discountAmount: 0, stripePaymentIntentId: null, stripeSessionId: null, receiptSent: true, createdAt: '2024-04-10T14:30:00Z' },
-  { id: 'order-2', sellerId: 'seller-1', productId: 'product-3', productName: '1-on-1 Coaching Call', productType: 'service_offer', customerId: 'cust-2', customerEmail: 'jared.k@outlook.com', customerName: 'Jared Kim', amount: 14900, currency: 'usd', status: 'completed', paymentStatus: 'paid', couponId: null, couponCode: null, discountAmount: 0, stripePaymentIntentId: null, stripeSessionId: null, receiptSent: true, createdAt: '2024-04-08T09:15:00Z' },
-  { id: 'order-3', sellerId: 'seller-1', productId: 'product-2', productName: 'Sermon Series Kit', productType: 'digital_download', customerId: 'cust-3', customerEmail: 'pastor.dave@grace.church', customerName: 'David Reyes', amount: 4900, currency: 'usd', status: 'completed', paymentStatus: 'paid', couponId: null, couponCode: null, discountAmount: 0, stripePaymentIntentId: null, stripeSessionId: null, receiptSent: true, createdAt: '2024-04-05T11:45:00Z' },
-  { id: 'order-4', sellerId: 'seller-1', productId: 'product-4', productName: 'Creator Bundle', productType: 'bundle', customerId: 'cust-4', customerEmail: 'maya.c@icloud.com', customerName: 'Maya Chen', amount: 7900, currency: 'usd', status: 'completed', paymentStatus: 'paid', couponId: 'coupon-2', couponCode: 'CREATOR20', discountAmount: 1000, stripePaymentIntentId: null, stripeSessionId: null, receiptSent: true, createdAt: '2024-04-03T16:20:00Z' },
-  { id: 'order-5', sellerId: 'seller-1', productId: 'product-1', productName: 'Notion Template Pack', productType: 'digital_download', customerId: 'cust-1', customerEmail: 'sarah.m@gmail.com', customerName: 'Sarah Mitchell', amount: 2900, currency: 'usd', status: 'completed', paymentStatus: 'paid', couponId: null, couponCode: null, discountAmount: 0, stripePaymentIntentId: null, stripeSessionId: null, receiptSent: true, createdAt: '2024-04-02T08:00:00Z' },
-  { id: 'order-6', sellerId: 'seller-1', productId: 'product-1', productName: 'Notion Template Pack', productType: 'digital_download', customerId: 'cust-5', customerEmail: 'brandon.t@gmail.com', customerName: 'Brandon Torres', amount: 2900, currency: 'usd', status: 'completed', paymentStatus: 'paid', couponId: null, couponCode: null, discountAmount: 0, stripePaymentIntentId: null, stripeSessionId: null, receiptSent: true, createdAt: '2024-04-01T10:00:00Z' },
-  { id: 'order-7', sellerId: 'seller-1', productId: 'product-2', productName: 'Sermon Series Kit', productType: 'digital_download', customerId: 'cust-6', customerEmail: 'lisa.w@yahoo.com', customerName: 'Lisa Wang', amount: 4900, currency: 'usd', status: 'completed', paymentStatus: 'paid', couponId: null, couponCode: null, discountAmount: 0, stripePaymentIntentId: null, stripeSessionId: null, receiptSent: true, createdAt: '2024-03-28T14:00:00Z' },
-  { id: 'order-8', sellerId: 'seller-1', productId: 'product-1', productName: 'Notion Template Pack', productType: 'digital_download', customerId: 'cust-7', customerEmail: 'mike.j@gmail.com', customerName: 'Mike Johnson', amount: 2900, currency: 'usd', status: 'completed', paymentStatus: 'paid', couponId: 'coupon-1', couponCode: 'WELCOME10', discountAmount: 290, stripePaymentIntentId: null, stripeSessionId: null, receiptSent: true, createdAt: '2024-03-25T09:30:00Z' },
-  { id: 'order-9', sellerId: 'seller-1', productId: 'product-6', productName: 'Church Media Pack Vol. 1', productType: 'digital_download', customerId: 'cust-8', customerEmail: 'pastor.sue@newlife.org', customerName: 'Susan Park', amount: 3900, currency: 'usd', status: 'completed', paymentStatus: 'paid', couponId: null, couponCode: null, discountAmount: 0, stripePaymentIntentId: null, stripeSessionId: null, receiptSent: true, createdAt: '2024-03-20T13:00:00Z' },
-  { id: 'order-10', sellerId: 'seller-1', productId: 'product-5', productName: 'Systems Membership', productType: 'subscription', customerId: 'cust-9', customerEmail: 'ryan.b@gmail.com', customerName: 'Ryan Brooks', amount: 1900, currency: 'usd', status: 'completed', paymentStatus: 'paid', couponId: null, couponCode: null, discountAmount: 0, stripePaymentIntentId: null, stripeSessionId: null, receiptSent: true, createdAt: '2024-03-15T11:00:00Z' },
-  { id: 'order-11', sellerId: 'seller-1', productId: 'product-5', productName: 'Systems Membership', productType: 'subscription', customerId: 'cust-1', customerEmail: 'sarah.m@gmail.com', customerName: 'Sarah Mitchell', amount: 1900, currency: 'usd', status: 'completed', paymentStatus: 'paid', couponId: null, couponCode: null, discountAmount: 0, stripePaymentIntentId: null, stripeSessionId: null, receiptSent: true, createdAt: '2024-03-10T10:00:00Z' },
-  { id: 'order-12', sellerId: 'seller-1', productId: 'product-6', productName: 'Church Media Pack Vol. 1', productType: 'digital_download', customerId: 'cust-3', customerEmail: 'pastor.dave@grace.church', customerName: 'David Reyes', amount: 3900, currency: 'usd', status: 'completed', paymentStatus: 'paid', couponId: null, couponCode: null, discountAmount: 0, stripePaymentIntentId: null, stripeSessionId: null, receiptSent: true, createdAt: '2024-03-08T14:00:00Z' },
-  { id: 'order-13', sellerId: 'seller-1', productId: 'product-1', productName: 'Notion Template Pack', productType: 'digital_download', customerId: 'cust-10', customerEmail: 'jordan@selli.demo', customerName: 'Jordan Smith', amount: 2900, currency: 'usd', status: 'completed', paymentStatus: 'paid', couponId: null, couponCode: null, discountAmount: 0, stripePaymentIntentId: null, stripeSessionId: null, receiptSent: true, createdAt: '2024-02-28T09:00:00Z' },
-  { id: 'order-14', sellerId: 'seller-1', productId: 'product-2', productName: 'Sermon Series Kit', productType: 'digital_download', customerId: 'cust-5', customerEmail: 'brandon.t@gmail.com', customerName: 'Brandon Torres', amount: 4900, currency: 'usd', status: 'completed', paymentStatus: 'paid', couponId: null, couponCode: null, discountAmount: 0, stripePaymentIntentId: null, stripeSessionId: null, receiptSent: true, createdAt: '2024-02-22T11:00:00Z' },
-  { id: 'order-15', sellerId: 'seller-1', productId: 'product-2', productName: 'Sermon Series Kit', productType: 'digital_download', customerId: 'cust-8', customerEmail: 'pastor.sue@newlife.org', customerName: 'Susan Park', amount: 4900, currency: 'usd', status: 'refunded', paymentStatus: 'refunded', couponId: null, couponCode: null, discountAmount: 0, stripePaymentIntentId: null, stripeSessionId: null, receiptSent: true, createdAt: '2024-02-15T14:00:00Z' },
-  { id: 'order-16', sellerId: 'seller-1', productId: 'product-4', productName: 'Creator Bundle', productType: 'bundle', customerId: 'cust-10', customerEmail: 'jordan@selli.demo', customerName: 'Jordan Smith', amount: 7900, currency: 'usd', status: 'completed', paymentStatus: 'paid', couponId: null, couponCode: null, discountAmount: 0, stripePaymentIntentId: null, stripeSessionId: null, receiptSent: true, createdAt: '2024-02-10T10:00:00Z' },
-  { id: 'order-17', sellerId: 'seller-1', productId: 'product-5', productName: 'Systems Membership', productType: 'subscription', customerId: 'cust-1', customerEmail: 'sarah.m@gmail.com', customerName: 'Sarah Mitchell', amount: 1900, currency: 'usd', status: 'completed', paymentStatus: 'paid', couponId: null, couponCode: null, discountAmount: 0, stripePaymentIntentId: null, stripeSessionId: null, receiptSent: true, createdAt: '2024-02-10T09:00:00Z' },
-  { id: 'order-18', sellerId: 'seller-1', productId: 'product-3', productName: '1-on-1 Coaching Call', productType: 'service_offer', customerId: 'cust-10', customerEmail: 'jordan@selli.demo', customerName: 'Jordan Smith', amount: 14900, currency: 'usd', status: 'completed', paymentStatus: 'paid', couponId: null, couponCode: null, discountAmount: 0, stripePaymentIntentId: null, stripeSessionId: null, receiptSent: true, createdAt: '2024-04-12T08:00:00Z' },
-  { id: 'order-19', sellerId: 'seller-1', productId: 'product-1', productName: 'Notion Template Pack', productType: 'digital_download', customerId: 'cust-7', customerEmail: 'mike.j@gmail.com', customerName: 'Mike Johnson', amount: 2900, currency: 'usd', status: 'completed', paymentStatus: 'paid', couponId: null, couponCode: null, discountAmount: 0, stripePaymentIntentId: null, stripeSessionId: null, receiptSent: true, createdAt: '2024-04-13T07:30:00Z' },
-  { id: 'order-20', sellerId: 'seller-1', productId: 'product-6', productName: 'Church Media Pack Vol. 1', productType: 'digital_download', customerId: 'cust-4', customerEmail: 'maya.c@icloud.com', customerName: 'Maya Chen', amount: 3900, currency: 'usd', status: 'completed', paymentStatus: 'paid', couponId: null, couponCode: null, discountAmount: 0, stripePaymentIntentId: null, stripeSessionId: null, receiptSent: true, createdAt: '2024-04-14T15:00:00Z' },
+  mkOrder({ id: 'order-1',  sellerId: 'seller-1', productId: 'product-3', productName: '1-on-1 Coaching Call',       productType: 'service_offer',   customerId: 'cust-1',  customerEmail: 'sarah.m@gmail.com',        customerName: 'Sarah Mitchell',  amount: 14900, currency: 'usd', status: 'completed', paymentStatus: 'paid',     couponId: null,       couponCode: null,        discountAmount: 0,    stripePaymentIntentId: null, stripeSessionId: null, receiptSent: true, createdAt: '2024-04-10T14:30:00Z' }),
+  mkOrder({ id: 'order-2',  sellerId: 'seller-1', productId: 'product-3', productName: '1-on-1 Coaching Call',       productType: 'service_offer',   customerId: 'cust-2',  customerEmail: 'jared.k@outlook.com',      customerName: 'Jared Kim',       amount: 14900, currency: 'usd', status: 'completed', paymentStatus: 'paid',     couponId: null,       couponCode: null,        discountAmount: 0,    stripePaymentIntentId: null, stripeSessionId: null, receiptSent: true, createdAt: '2024-04-08T09:15:00Z' }),
+  mkOrder({ id: 'order-3',  sellerId: 'seller-1', productId: 'product-2', productName: 'Sermon Series Kit',          productType: 'digital_download',customerId: 'cust-3',  customerEmail: 'pastor.dave@grace.church', customerName: 'David Reyes',     amount:  4900, currency: 'usd', status: 'completed', paymentStatus: 'paid',     couponId: null,       couponCode: null,        discountAmount: 0,    stripePaymentIntentId: null, stripeSessionId: null, receiptSent: true, createdAt: '2024-04-05T11:45:00Z' }),
+  mkOrder({ id: 'order-4',  sellerId: 'seller-1', productId: 'product-4', productName: 'Creator Bundle',             productType: 'bundle',          customerId: 'cust-4',  customerEmail: 'maya.c@icloud.com',        customerName: 'Maya Chen',       amount:  7900, currency: 'usd', status: 'completed', paymentStatus: 'paid',     couponId: 'coupon-2', couponCode: 'CREATOR20', discountAmount: 1000, stripePaymentIntentId: null, stripeSessionId: null, receiptSent: true, createdAt: '2024-04-03T16:20:00Z' }),
+  mkOrder({ id: 'order-5',  sellerId: 'seller-1', productId: 'product-1', productName: 'Notion Template Pack',       productType: 'digital_download',customerId: 'cust-1',  customerEmail: 'sarah.m@gmail.com',        customerName: 'Sarah Mitchell',  amount:  2900, currency: 'usd', status: 'completed', paymentStatus: 'paid',     couponId: null,       couponCode: null,        discountAmount: 0,    stripePaymentIntentId: null, stripeSessionId: null, receiptSent: true, createdAt: '2024-04-02T08:00:00Z' }),
+  mkOrder({ id: 'order-6',  sellerId: 'seller-1', productId: 'product-1', productName: 'Notion Template Pack',       productType: 'digital_download',customerId: 'cust-5',  customerEmail: 'brandon.t@gmail.com',      customerName: 'Brandon Torres',  amount:  2900, currency: 'usd', status: 'completed', paymentStatus: 'paid',     couponId: null,       couponCode: null,        discountAmount: 0,    stripePaymentIntentId: null, stripeSessionId: null, receiptSent: true, createdAt: '2024-04-01T10:00:00Z' }),
+  mkOrder({ id: 'order-7',  sellerId: 'seller-1', productId: 'product-2', productName: 'Sermon Series Kit',          productType: 'digital_download',customerId: 'cust-6',  customerEmail: 'lisa.w@yahoo.com',         customerName: 'Lisa Wang',       amount:  4900, currency: 'usd', status: 'completed', paymentStatus: 'paid',     couponId: null,       couponCode: null,        discountAmount: 0,    stripePaymentIntentId: null, stripeSessionId: null, receiptSent: true, createdAt: '2024-03-28T14:00:00Z' }),
+  mkOrder({ id: 'order-8',  sellerId: 'seller-1', productId: 'product-1', productName: 'Notion Template Pack',       productType: 'digital_download',customerId: 'cust-7',  customerEmail: 'mike.j@gmail.com',         customerName: 'Mike Johnson',    amount:  2900, currency: 'usd', status: 'completed', paymentStatus: 'paid',     couponId: 'coupon-1', couponCode: 'WELCOME10', discountAmount: 290,  stripePaymentIntentId: null, stripeSessionId: null, receiptSent: true, createdAt: '2024-03-25T09:30:00Z' }),
+  mkOrder({ id: 'order-9',  sellerId: 'seller-1', productId: 'product-6', productName: 'Church Media Pack Vol. 1',   productType: 'digital_download',customerId: 'cust-8',  customerEmail: 'pastor.sue@newlife.org',   customerName: 'Susan Park',      amount:  3900, currency: 'usd', status: 'completed', paymentStatus: 'paid',     couponId: null,       couponCode: null,        discountAmount: 0,    stripePaymentIntentId: null, stripeSessionId: null, receiptSent: true, createdAt: '2024-03-20T13:00:00Z' }),
+  mkOrder({ id: 'order-10', sellerId: 'seller-1', productId: 'product-5', productName: 'Systems Membership',         productType: 'subscription',    customerId: 'cust-9',  customerEmail: 'ryan.b@gmail.com',         customerName: 'Ryan Brooks',     amount:  1900, currency: 'usd', status: 'completed', paymentStatus: 'paid',     couponId: null,       couponCode: null,        discountAmount: 0,    stripePaymentIntentId: null, stripeSessionId: null, receiptSent: true, createdAt: '2024-03-15T11:00:00Z', subscriptionId: 'sub-1' }),
+  mkOrder({ id: 'order-11', sellerId: 'seller-1', productId: 'product-5', productName: 'Systems Membership',         productType: 'subscription',    customerId: 'cust-1',  customerEmail: 'sarah.m@gmail.com',        customerName: 'Sarah Mitchell',  amount:  1900, currency: 'usd', status: 'completed', paymentStatus: 'paid',     couponId: null,       couponCode: null,        discountAmount: 0,    stripePaymentIntentId: null, stripeSessionId: null, receiptSent: true, createdAt: '2024-03-10T10:00:00Z', subscriptionId: 'sub-2' }),
+  mkOrder({ id: 'order-12', sellerId: 'seller-1', productId: 'product-6', productName: 'Church Media Pack Vol. 1',   productType: 'digital_download',customerId: 'cust-3',  customerEmail: 'pastor.dave@grace.church', customerName: 'David Reyes',     amount:  3900, currency: 'usd', status: 'completed', paymentStatus: 'paid',     couponId: null,       couponCode: null,        discountAmount: 0,    stripePaymentIntentId: null, stripeSessionId: null, receiptSent: true, createdAt: '2024-03-08T14:00:00Z' }),
+  mkOrder({ id: 'order-13', sellerId: 'seller-1', productId: 'product-1', productName: 'Notion Template Pack',       productType: 'digital_download',customerId: 'cust-10', customerEmail: 'jordan@sellbop.demo',      customerName: 'Jordan Smith',    amount:  2900, currency: 'usd', status: 'completed', paymentStatus: 'paid',     couponId: null,       couponCode: null,        discountAmount: 0,    stripePaymentIntentId: null, stripeSessionId: null, receiptSent: true, createdAt: '2024-02-28T09:00:00Z' }),
+  mkOrder({ id: 'order-14', sellerId: 'seller-1', productId: 'product-2', productName: 'Sermon Series Kit',          productType: 'digital_download',customerId: 'cust-5',  customerEmail: 'brandon.t@gmail.com',      customerName: 'Brandon Torres',  amount:  4900, currency: 'usd', status: 'completed', paymentStatus: 'paid',     couponId: null,       couponCode: null,        discountAmount: 0,    stripePaymentIntentId: null, stripeSessionId: null, receiptSent: true, createdAt: '2024-02-22T11:00:00Z' }),
+  mkOrder({ id: 'order-15', sellerId: 'seller-1', productId: 'product-2', productName: 'Sermon Series Kit',          productType: 'digital_download',customerId: 'cust-8',  customerEmail: 'pastor.sue@newlife.org',   customerName: 'Susan Park',      amount:  4900, currency: 'usd', status: 'refunded',  paymentStatus: 'refunded', couponId: null,       couponCode: null,        discountAmount: 0,    stripePaymentIntentId: null, stripeSessionId: null, receiptSent: true, createdAt: '2024-02-15T14:00:00Z', refundedAt: '2024-02-16T10:00:00Z', refundReason: 'Customer requested refund — content not as described.', accessStatus: 'revoked' }),
+  mkOrder({ id: 'order-16', sellerId: 'seller-1', productId: 'product-4', productName: 'Creator Bundle',             productType: 'bundle',          customerId: 'cust-10', customerEmail: 'jordan@sellbop.demo',      customerName: 'Jordan Smith',    amount:  7900, currency: 'usd', status: 'completed', paymentStatus: 'paid',     couponId: null,       couponCode: null,        discountAmount: 0,    stripePaymentIntentId: null, stripeSessionId: null, receiptSent: true, createdAt: '2024-02-10T10:00:00Z' }),
+  mkOrder({ id: 'order-17', sellerId: 'seller-1', productId: 'product-5', productName: 'Systems Membership',         productType: 'subscription',    customerId: 'cust-1',  customerEmail: 'sarah.m@gmail.com',        customerName: 'Sarah Mitchell',  amount:  1900, currency: 'usd', status: 'completed', paymentStatus: 'paid',     couponId: null,       couponCode: null,        discountAmount: 0,    stripePaymentIntentId: null, stripeSessionId: null, receiptSent: true, createdAt: '2024-02-10T09:00:00Z', subscriptionId: 'sub-2' }),
+  mkOrder({ id: 'order-18', sellerId: 'seller-1', productId: 'product-3', productName: '1-on-1 Coaching Call',       productType: 'service_offer',   customerId: 'cust-10', customerEmail: 'jordan@sellbop.demo',      customerName: 'Jordan Smith',    amount: 14900, currency: 'usd', status: 'completed', paymentStatus: 'paid',     couponId: null,       couponCode: null,        discountAmount: 0,    stripePaymentIntentId: null, stripeSessionId: null, receiptSent: true, createdAt: '2024-04-12T08:00:00Z' }),
+  mkOrder({ id: 'order-19', sellerId: 'seller-1', productId: 'product-1', productName: 'Notion Template Pack',       productType: 'digital_download',customerId: 'cust-7',  customerEmail: 'mike.j@gmail.com',         customerName: 'Mike Johnson',    amount:  2900, currency: 'usd', status: 'completed', paymentStatus: 'paid',     couponId: null,       couponCode: null,        discountAmount: 0,    stripePaymentIntentId: null, stripeSessionId: null, receiptSent: true, createdAt: '2024-04-13T07:30:00Z' }),
+  mkOrder({ id: 'order-20', sellerId: 'seller-1', productId: 'product-6', productName: 'Church Media Pack Vol. 1',   productType: 'digital_download',customerId: 'cust-4',  customerEmail: 'maya.c@icloud.com',        customerName: 'Maya Chen',       amount:  3900, currency: 'usd', status: 'completed', paymentStatus: 'paid',     couponId: null,       couponCode: null,        discountAmount: 0,    stripePaymentIntentId: null, stripeSessionId: null, receiptSent: true, createdAt: '2024-04-14T15:00:00Z' }),
 ]
 
 // ─── COUPONS ────────────────────────────────────────────────
@@ -433,22 +448,59 @@ export const DEMO_COUPONS: Coupon[] = [
 
 // ─── SUBSCRIPTIONS ──────────────────────────────────────────
 export const DEMO_SUBSCRIPTIONS: Subscription[] = [
-  { id: 'sub-1', sellerId: 'seller-1', customerId: 'cust-9', productId: 'product-5', customerEmail: 'ryan.b@gmail.com', status: 'active', currentPeriodStart: '2024-04-15T00:00:00Z', currentPeriodEnd: '2024-05-15T00:00:00Z', cancelAtPeriodEnd: false, amount: 1900, currency: 'usd', stripeSubscriptionId: null, createdAt: '2024-03-15T11:00:00Z' },
-  { id: 'sub-2', sellerId: 'seller-1', customerId: 'cust-1', productId: 'product-5', customerEmail: 'sarah.m@gmail.com', status: 'active', currentPeriodStart: '2024-04-10T00:00:00Z', currentPeriodEnd: '2024-05-10T00:00:00Z', cancelAtPeriodEnd: false, amount: 1900, currency: 'usd', stripeSubscriptionId: null, createdAt: '2024-02-10T09:00:00Z' },
-  { id: 'sub-3', sellerId: 'seller-1', customerId: 'cust-10', productId: 'product-5', customerEmail: 'jordan@selli.demo', status: 'canceled', currentPeriodStart: '2024-03-01T00:00:00Z', currentPeriodEnd: '2024-04-01T00:00:00Z', cancelAtPeriodEnd: true, amount: 1900, currency: 'usd', stripeSubscriptionId: null, createdAt: '2024-02-01T09:00:00Z' },
+  {
+    id: 'sub-1', sellerId: 'seller-1', customerId: 'cust-9', customerName: 'Ryan Brooks',
+    productId: 'product-5', productName: 'Systems Membership',
+    customerEmail: 'ryan.b@gmail.com', status: 'active',
+    currentPeriodStart: '2024-04-15T00:00:00Z', currentPeriodEnd: '2024-05-15T00:00:00Z',
+    cancelAtPeriodEnd: false, canceledAt: null, cancelMode: null,
+    accessStatus: 'active', latestPaymentStatus: 'paid',
+    amount: 1900, currency: 'usd', stripeSubscriptionId: null,
+    internalNotes: null, createdAt: '2024-03-15T11:00:00Z',
+  },
+  {
+    id: 'sub-2', sellerId: 'seller-1', customerId: 'cust-1', customerName: 'Sarah Mitchell',
+    productId: 'product-5', productName: 'Systems Membership',
+    customerEmail: 'sarah.m@gmail.com', status: 'active',
+    currentPeriodStart: '2024-04-10T00:00:00Z', currentPeriodEnd: '2024-05-10T00:00:00Z',
+    cancelAtPeriodEnd: false, canceledAt: null, cancelMode: null,
+    accessStatus: 'active', latestPaymentStatus: 'paid',
+    amount: 1900, currency: 'usd', stripeSubscriptionId: null,
+    internalNotes: null, createdAt: '2024-02-10T09:00:00Z',
+  },
+  {
+    id: 'sub-3', sellerId: 'seller-1', customerId: 'cust-10', customerName: 'Jordan Smith',
+    productId: 'product-5', productName: 'Systems Membership',
+    customerEmail: 'jordan@sellbop.demo', status: 'canceled',
+    currentPeriodStart: '2024-03-01T00:00:00Z', currentPeriodEnd: '2024-04-01T00:00:00Z',
+    cancelAtPeriodEnd: true, canceledAt: '2024-03-20T10:00:00Z', cancelMode: 'cancel_end_of_period',
+    accessStatus: 'revoked', latestPaymentStatus: 'paid',
+    amount: 1900, currency: 'usd', stripeSubscriptionId: null,
+    internalNotes: 'Buyer canceled via buyer portal.', createdAt: '2024-02-01T09:00:00Z',
+  },
+  {
+    id: 'sub-4', sellerId: 'seller-1', customerId: 'cust-5', customerName: 'Brandon Torres',
+    productId: 'product-5', productName: 'Systems Membership',
+    customerEmail: 'brandon.t@gmail.com', status: 'past_due',
+    currentPeriodStart: '2024-04-01T00:00:00Z', currentPeriodEnd: '2024-05-01T00:00:00Z',
+    cancelAtPeriodEnd: false, canceledAt: null, cancelMode: null,
+    accessStatus: 'active', latestPaymentStatus: 'failed',
+    amount: 1900, currency: 'usd', stripeSubscriptionId: null,
+    internalNotes: null, createdAt: '2024-03-01T09:00:00Z',
+  },
 ]
 
 // ─── DOWNLOAD GRANTS ────────────────────────────────────────
 export const DEMO_DOWNLOAD_GRANTS: DownloadGrant[] = [
   { id: 'dl-1', orderId: 'order-5', productId: 'product-1', fileAssetId: 'file-1', buyerEmail: 'sarah.m@gmail.com', token: 'demo-token-abc123', downloadCount: 2, maxDownloads: null, expiresAt: null, createdAt: '2024-04-02T08:01:00Z' },
   { id: 'dl-2', orderId: 'order-3', productId: 'product-2', fileAssetId: 'file-2', buyerEmail: 'pastor.dave@grace.church', token: 'demo-token-def456', downloadCount: 1, maxDownloads: 3, expiresAt: '2025-04-05T11:45:00Z', createdAt: '2024-04-05T11:46:00Z' },
-  { id: 'dl-3', orderId: 'order-13', productId: 'product-1', fileAssetId: 'file-1', buyerEmail: 'jordan@selli.demo', token: 'demo-token-ghi789', downloadCount: 0, maxDownloads: null, expiresAt: null, createdAt: '2024-02-28T09:01:00Z' },
+  { id: 'dl-3', orderId: 'order-13', productId: 'product-1', fileAssetId: 'file-1', buyerEmail: 'jordan@sellbop.demo', token: 'demo-token-ghi789', downloadCount: 0, maxDownloads: null, expiresAt: null, createdAt: '2024-02-28T09:01:00Z' },
 ]
 
 // ─── EMAIL LOGS ─────────────────────────────────────────────
 export const DEMO_EMAIL_LOGS: EmailLog[] = [
-  { id: 'email-1', sellerId: 'seller-1', type: 'receipt', toEmail: 'sarah.m@gmail.com', subject: 'Your Selli receipt — 1-on-1 Coaching Call', orderId: 'order-1', status: 'simulated', createdAt: '2024-04-10T14:31:00Z' },
-  { id: 'email-2', sellerId: 'seller-1', type: 'receipt', toEmail: 'jared.k@outlook.com', subject: 'Your Selli receipt — 1-on-1 Coaching Call', orderId: 'order-2', status: 'simulated', createdAt: '2024-04-08T09:16:00Z' },
+  { id: 'email-1', sellerId: 'seller-1', type: 'receipt', toEmail: 'sarah.m@gmail.com', subject: 'Your SellBop receipt — 1-on-1 Coaching Call', orderId: 'order-1', status: 'simulated', createdAt: '2024-04-10T14:31:00Z' },
+  { id: 'email-2', sellerId: 'seller-1', type: 'receipt', toEmail: 'jared.k@outlook.com', subject: 'Your SellBop receipt — 1-on-1 Coaching Call', orderId: 'order-2', status: 'simulated', createdAt: '2024-04-08T09:16:00Z' },
   { id: 'email-3', sellerId: 'seller-1', type: 'download', toEmail: 'sarah.m@gmail.com', subject: 'Your download is ready — Notion Template Pack', orderId: 'order-5', status: 'simulated', createdAt: '2024-04-02T08:01:00Z' },
   { id: 'email-4', sellerId: 'seller-1', type: 'refund', toEmail: 'pastor.sue@newlife.org', subject: 'Your refund has been processed', orderId: 'order-15', status: 'simulated', createdAt: '2024-02-16T10:00:00Z' },
   { id: 'email-5', sellerId: 'seller-1', type: 'subscription_confirmed', toEmail: 'ryan.b@gmail.com', subject: 'Welcome to Systems Lab Membership!', orderId: 'order-10', status: 'simulated', createdAt: '2024-03-15T11:01:00Z' },

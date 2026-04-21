@@ -25,8 +25,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="flex min-h-screen bg-neutral-50">
       <DashboardSidebar />
-      <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
-        <main className="flex-1 p-6 lg:p-8 max-w-6xl">{children}</main>
+      {/* pt-14 offsets the mobile fixed top bar; removed on lg where sidebar is always shown */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden pt-14 lg:pt-0">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-6xl">{children}</main>
       </div>
     </div>
   )

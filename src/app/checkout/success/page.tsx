@@ -6,6 +6,7 @@ import { demoOrderRepo, demoDownloadRepo, demoProductRepo } from '@/lib/adapters
 import { formatCurrency } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Check, Download, ExternalLink } from 'lucide-react'
+import { SellBopLogo } from '@/components/ui/sellbop-logo'
 import type { Order, Product, DownloadGrant } from '@/lib/domain/entities'
 
 function SuccessContent() {
@@ -100,7 +101,7 @@ export default function SuccessPage() {
     <div className="min-h-screen bg-neutral-50">
       <div className="bg-white border-b border-neutral-100">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center">
-          <Link href="/" className="text-sm font-bold text-black">Selli</Link>
+          <SellBopLogo size="lg" />
         </div>
       </div>
       <Suspense fallback={<div className="text-center py-20 text-neutral-500 text-sm">Loading…</div>}>

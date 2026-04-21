@@ -1,6 +1,6 @@
 // ============================================================
 // SELLI DOMAIN ENTITIES
-// All core types for the Selli platform.
+// All core types for the SellBop platform.
 // These are provider-agnostic — same types whether using
 // demo mode, Supabase, or any future backend.
 // ============================================================
@@ -9,9 +9,12 @@ export type ProductType = 'digital_download' | 'service_offer' | 'subscription' 
 export type ProductStatus = 'draft' | 'published' | 'archived'
 export type OrderStatus = 'pending' | 'completed' | 'refunded' | 'failed'
 export type PaymentStatus = 'unpaid' | 'paid' | 'refunded' | 'failed'
-export type SubscriptionStatus = 'active' | 'canceled' | 'past_due' | 'trialing'
+export type RefundStatus = 'paid' | 'refunded' | 'refund_pending' | 'refund_failed'
+export type AccessStatus = 'active' | 'revoked' | 'expired'
+export type SubscriptionStatus = 'active' | 'canceled' | 'past_due' | 'trialing' | 'refunded' | 'expired'
+export type CancelMode = 'cancel_end_of_period' | 'cancel_immediately'
 export type CouponType = 'percent' | 'fixed'
-export type SelliPlan = 'free' | 'starter' | 'pro'
+export type SellBopPlan = 'free' | 'starter' | 'pro'
 export type FileAssetType = 'pdf' | 'zip' | 'video' | 'audio' | 'image' | 'other'
 
 export interface User {
@@ -34,7 +37,7 @@ export interface SellerProfile {
   websiteUrl: string | null
   twitterUrl: string | null
   supportEmail: string
-  plan: SelliPlan
+  plan: SellBopPlan
   featuredProductIds: string[]
   themeColor: string
   createdAt: string
@@ -113,12 +116,18 @@ export interface Order {
   currency: string
   status: OrderStatus
   paymentStatus: PaymentStatus
+  refundStatus: RefundStatus
+  refundedAt: string | null
+  refundReason: string | null
+  accessStatus: AccessStatus
+  subscriptionId: string | null
   couponId: string | null
   couponCode: string | null
   discountAmount: number
   stripePaymentIntentId: string | null
   stripeSessionId: string | null
   receiptSent: boolean
+  internalNotes: string | null
   createdAt: string
 }
 
@@ -151,15 +160,22 @@ export interface Subscription {
   id: string
   sellerId: string
   customerId: string
+  customerName: string
   productId: string
+  productName: string
   customerEmail: string
   status: SubscriptionStatus
   currentPeriodStart: string
   currentPeriodEnd: string
   cancelAtPeriodEnd: boolean
+  canceledAt: string | null
+  cancelMode: CancelMode | null
+  accessStatus: AccessStatus
+  latestPaymentStatus: PaymentStatus
   amount: number
   currency: string
   stripeSubscriptionId: string | null
+  internalNotes: string | null
   createdAt: string
 }
 

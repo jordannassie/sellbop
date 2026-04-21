@@ -25,14 +25,14 @@ import {
 // ─── STORAGE HELPERS ────────────────────────────────────────
 function getStored<T>(key: string, fallback: T[]): T[] {
   if (typeof window === 'undefined') return fallback
-  const raw = localStorage.getItem(`selli_demo_${key}`)
+  const raw = localStorage.getItem(`sellbop_demo_${key}`)
   if (!raw) return fallback
   try { return JSON.parse(raw) as T[] } catch { return fallback }
 }
 
 function setStored<T>(key: string, data: T[]): void {
   if (typeof window === 'undefined') return
-  localStorage.setItem(`selli_demo_${key}`, JSON.stringify(data))
+  localStorage.setItem(`sellbop_demo_${key}`, JSON.stringify(data))
 }
 
 function genId(prefix: string): string {

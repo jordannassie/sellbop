@@ -173,7 +173,7 @@ npm install stripe
 
 ## Step 6 — Stripe Subscriptions
 
-**Goal:** Real recurring billing for your own Selli plans.
+**Goal:** Real recurring billing for your own Shopzely plans.
 
 1. Create Starter ($19/mo) and Pro ($49/mo) products in Stripe
 2. Add price IDs to `.env.local`:
@@ -200,7 +200,7 @@ npm install resend
 3. Create `src/lib/adapters/resend/email.ts` implementing an email interface:
    ```typescript
    await resend.emails.send({
-     from: 'Selli <noreply@yourdomain.com>',
+     from: 'Shopzely <noreply@yourdomain.com>',
      to: buyerEmail,
      subject: `Your receipt — ${productName}`,
      html: receiptTemplate(order),
@@ -220,6 +220,6 @@ For fastest path to live:
 3. ✅ Stripe Webhooks (order records created)
 4. ✅ Supabase Database (products/orders persist)
 5. ✅ Supabase Storage (file delivery works)
-6. ✅ Stripe Subscriptions (Selli billing)
+6. ✅ Stripe Subscriptions (Shopzely billing)
 7. ✅ Email (Resend receipts)
 8. ✅ Stripe Connect (seller payouts)

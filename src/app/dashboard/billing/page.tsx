@@ -1,74 +1,66 @@
 'use client'
-import { useState } from 'react'
-import { DEMO_SELLER_PROFILE } from '@/lib/demo-data/seed'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Check } from 'lucide-react'
 
-const PLANS = [
-  { id: 'starter', name: 'Starter', price: '$19/mo', features: ['Up to 3 products', 'Basic storefront', 'Stripe checkout', 'File delivery', 'Basic analytics'] },
-  { id: 'pro', name: 'Pro', price: '$49/mo', features: ['Unlimited products', 'Custom branding', 'Discount codes', 'Advanced analytics', 'Priority support'] },
-]
-
 export default function BillingPage() {
-  const [plan, setPlan] = useState(DEMO_SELLER_PROFILE.plan)
-
-  function handleUpgrade(planId: string) {
-    alert(`Demo: Would redirect to Stripe Checkout for ${planId} plan.`)
-    setPlan(planId as typeof plan)
-  }
-
   return (
-    <div className="max-w-2xl">
-      <div className="mb-8">
+    <div className="max-w-2xl space-y-6">
+      <div>
         <h1 className="text-2xl font-bold text-black">Billing</h1>
-        <p className="text-neutral-500 text-sm mt-1">Manage your Selli subscription.</p>
+        <p className="text-neutral-500 text-sm mt-1">No monthly fee. You only pay when you sell.</p>
       </div>
 
-      <Card className="mb-6">
-        <CardContent className="pt-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-neutral-700">Current plan</p>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="text-xl font-bold text-black capitalize">{plan}</span>
-                <Badge variant="success">Active</Badge>
-              </div>
-            </div>
-            <Button variant="secondary" size="sm" onClick={() => alert('Demo: Would open Stripe Customer Portal for billing management.')}>
-              Manage Billing
-            </Button>
-          </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Direct sales fee</CardTitle>
+          <CardDescription>Applied when you share your own product page, storefront, or link.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-4xl font-bold text-black">10% + $0.50</p>
+          <p className="text-sm text-neutral-500">per transaction</p>
+          <ul className="space-y-2 text-sm text-neutral-600">
+            {[
+              'No monthly subscription required',
+              'Simple sellbopng, simple pricing',
+              'Built for downloads, services, and subscriptions',
+            ].map((item) => (
+              <li key={item} className="flex items-center gap-2">
+                <Check size={13} className="text-black flex-shrink-0" />
+                {item}
+              </li>
+            ))}
+          </ul>
+          <p className="text-xs text-neutral-400 border-t border-neutral-100 pt-3">
+            Payment processing fees may apply separately.
+          </p>
         </CardContent>
       </Card>
 
-      <div className="grid sm:grid-cols-2 gap-4">
-        {PLANS.map(p => (
-          <div key={p.id} className={`rounded-2xl border p-6 ${plan === p.id ? 'border-black bg-black text-white' : 'border-neutral-200 bg-white'}`}>
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <p className={`text-sm font-medium ${plan === p.id ? 'text-neutral-400' : 'text-neutral-500'}`}>{p.name}</p>
-                <p className="text-2xl font-bold mt-0.5">{p.price}</p>
-              </div>
-              {plan === p.id && <Badge variant="success">Current</Badge>}
-            </div>
-            <ul className="space-y-2 mb-5">
-              {p.features.map(f => (
-                <li key={f} className="flex items-center gap-2 text-sm">
-                  <Check size={13} className="flex-shrink-0" />
-                  <span className={plan === p.id ? 'text-neutral-300' : 'text-neutral-700'}>{f}</span>
-                </li>
-              ))}
-            </ul>
-            {plan !== p.id && (
-              <Button onClick={() => handleUpgrade(p.id)} className="w-full" variant="secondary">
-                Upgrade to {p.name}
-              </Button>
-            )}
-          </div>
-        ))}
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Discover marketplace fee</CardTitle>
+          <CardDescription>Only when SellBop brings the customer to you.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-2xl font-semibold text-black">30% per transaction</p>
+          <p className="text-sm text-neutral-500">
+            This fee only applies when a buyer discovers your product through SellBop&apos;s future marketplace — not when you share your own links.
+          </p>
+          <Badge variant="neutral">Discover not live yet</Badge>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Payouts &amp; tax settings</CardTitle>
+          <CardDescription>Coming soon.</CardDescription>
+        </CardHeader>
+        <CardContent className="text-sm text-neutral-500 space-y-1">
+          <p>Connect your payout account and manage tax settings from here.</p>
+          <p>All past transactions and fees will be visible once Stripe is connected.</p>
+        </CardContent>
+      </Card>
     </div>
   )
 }

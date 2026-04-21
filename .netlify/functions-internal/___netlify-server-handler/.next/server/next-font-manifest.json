@@ -1,0 +1,121 @@
+{
+  "app": {
+    "[project]/src/app/(auth)/login/page": [
+      "static/media/caa3a2e1cccd8315-s.p.16t1db8_9y2o~.woff2"
+    ],
+    "[project]/src/app/(auth)/signup/page": [
+      "static/media/caa3a2e1cccd8315-s.p.16t1db8_9y2o~.woff2"
+    ],
+    "[project]/src/app/(marketing)/courses/page": [
+      "static/media/caa3a2e1cccd8315-s.p.16t1db8_9y2o~.woff2"
+    ],
+    "[project]/src/app/(marketing)/demo/page": [
+      "static/media/caa3a2e1cccd8315-s.p.16t1db8_9y2o~.woff2"
+    ],
+    "[project]/src/app/(marketing)/marketplace/page": [
+      "static/media/caa3a2e1cccd8315-s.p.16t1db8_9y2o~.woff2"
+    ],
+    "[project]/src/app/(marketing)/page": [
+      "static/media/caa3a2e1cccd8315-s.p.16t1db8_9y2o~.woff2"
+    ],
+    "[project]/src/app/(marketing)/pricing/page": [
+      "static/media/caa3a2e1cccd8315-s.p.16t1db8_9y2o~.woff2"
+    ],
+    "[project]/src/app/(marketing)/privacy/page": [
+      "static/media/caa3a2e1cccd8315-s.p.16t1db8_9y2o~.woff2"
+    ],
+    "[project]/src/app/(marketing)/terms/page": [
+      "static/media/caa3a2e1cccd8315-s.p.16t1db8_9y2o~.woff2"
+    ],
+    "[project]/src/app/(marketing)/university/page": [
+      "static/media/caa3a2e1cccd8315-s.p.16t1db8_9y2o~.woff2"
+    ],
+    "[project]/src/app/_not-found/page": [
+      "static/media/caa3a2e1cccd8315-s.p.16t1db8_9y2o~.woff2"
+    ],
+    "[project]/src/app/checkout/[productId]/page": [
+      "static/media/caa3a2e1cccd8315-s.p.16t1db8_9y2o~.woff2"
+    ],
+    "[project]/src/app/checkout/cancel/page": [
+      "static/media/caa3a2e1cccd8315-s.p.16t1db8_9y2o~.woff2"
+    ],
+    "[project]/src/app/checkout/success/page": [
+      "static/media/caa3a2e1cccd8315-s.p.16t1db8_9y2o~.woff2"
+    ],
+    "[project]/src/app/dashboard/analytics/page": [
+      "static/media/caa3a2e1cccd8315-s.p.16t1db8_9y2o~.woff2"
+    ],
+    "[project]/src/app/dashboard/billing/page": [
+      "static/media/caa3a2e1cccd8315-s.p.16t1db8_9y2o~.woff2"
+    ],
+    "[project]/src/app/dashboard/customers/[id]/page": [
+      "static/media/caa3a2e1cccd8315-s.p.16t1db8_9y2o~.woff2"
+    ],
+    "[project]/src/app/dashboard/customers/page": [
+      "static/media/caa3a2e1cccd8315-s.p.16t1db8_9y2o~.woff2"
+    ],
+    "[project]/src/app/dashboard/discounts/page": [
+      "static/media/caa3a2e1cccd8315-s.p.16t1db8_9y2o~.woff2"
+    ],
+    "[project]/src/app/dashboard/files/page": [
+      "static/media/caa3a2e1cccd8315-s.p.16t1db8_9y2o~.woff2"
+    ],
+    "[project]/src/app/dashboard/orders/[id]/page": [
+      "static/media/caa3a2e1cccd8315-s.p.16t1db8_9y2o~.woff2"
+    ],
+    "[project]/src/app/dashboard/orders/page": [
+      "static/media/caa3a2e1cccd8315-s.p.16t1db8_9y2o~.woff2"
+    ],
+    "[project]/src/app/dashboard/page": [
+      "static/media/caa3a2e1cccd8315-s.p.16t1db8_9y2o~.woff2"
+    ],
+    "[project]/src/app/dashboard/payouts/page": [
+      "static/media/caa3a2e1cccd8315-s.p.16t1db8_9y2o~.woff2"
+    ],
+    "[project]/src/app/dashboard/products/[id]/page": [
+      "static/media/caa3a2e1cccd8315-s.p.16t1db8_9y2o~.woff2"
+    ],
+    "[project]/src/app/dashboard/products/new/page": [
+      "static/media/caa3a2e1cccd8315-s.p.16t1db8_9y2o~.woff2"
+    ],
+    "[project]/src/app/dashboard/products/page": [
+      "static/media/caa3a2e1cccd8315-s.p.16t1db8_9y2o~.woff2"
+    ],
+    "[project]/src/app/dashboard/settings/page": [
+      "static/media/caa3a2e1cccd8315-s.p.16t1db8_9y2o~.woff2"
+    ],
+    "[project]/src/app/dashboard/storefront/page": [
+      "static/media/caa3a2e1cccd8315-s.p.16t1db8_9y2o~.woff2"
+    ],
+    "[project]/src/app/dashboard/subscriptions/[id]/page": [
+      "static/media/caa3a2e1cccd8315-s.p.16t1db8_9y2o~.woff2"
+    ],
+    "[project]/src/app/dashboard/subscriptions/page": [
+      "static/media/caa3a2e1cccd8315-s.p.16t1db8_9y2o~.woff2"
+    ],
+    "[project]/src/app/internal/admin/orders/[id]/page": [
+      "static/media/caa3a2e1cccd8315-s.p.16t1db8_9y2o~.woff2"
+    ],
+    "[project]/src/app/internal/admin/page": [
+      "static/media/caa3a2e1cccd8315-s.p.16t1db8_9y2o~.woff2"
+    ],
+    "[project]/src/app/internal/admin/subscriptions/[id]/page": [
+      "static/media/caa3a2e1cccd8315-s.p.16t1db8_9y2o~.woff2"
+    ],
+    "[project]/src/app/internal/demo-center/page": [
+      "static/media/caa3a2e1cccd8315-s.p.16t1db8_9y2o~.woff2"
+    ],
+    "[project]/src/app/p/[slug]/page": [
+      "static/media/caa3a2e1cccd8315-s.p.16t1db8_9y2o~.woff2"
+    ],
+    "[project]/src/app/purchases/page": [
+      "static/media/caa3a2e1cccd8315-s.p.16t1db8_9y2o~.woff2"
+    ],
+    "[project]/src/app/store/[sellerSlug]/page": [
+      "static/media/caa3a2e1cccd8315-s.p.16t1db8_9y2o~.woff2"
+    ]
+  },
+  "appUsingSizeAdjust": true,
+  "pages": {},
+  "pagesUsingSizeAdjust": false
+}

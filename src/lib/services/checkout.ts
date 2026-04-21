@@ -105,12 +105,18 @@ export async function completeCheckout(
     currency: session.product.currency,
     status: 'completed',
     paymentStatus: 'paid',
+    refundStatus: 'paid',
+    refundedAt: null,
+    refundReason: null,
+    accessStatus: 'active',
+    subscriptionId: null,
     couponId: session.couponId,
     couponCode: session.couponCode,
     discountAmount: session.discountAmount,
     stripePaymentIntentId: null,
     stripeSessionId: session.id,
     receiptSent: true,
+    internalNotes: null,
   })
 
   // Increment coupon use

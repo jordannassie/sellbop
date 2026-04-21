@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Shield, ArrowLeft, Tag } from 'lucide-react'
 import Link from 'next/link'
+import { SellBopLogo } from '@/components/ui/sellbop-logo'
+import { GradientImageFallback } from '@/components/ui/gradient-image-fallback'
 import type { CheckoutSession } from '@/lib/domain/entities'
 
 export default function CheckoutPage({ params }: { params: Promise<{ productId: string }> }) {
@@ -65,7 +67,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ productId: 
     <div className="min-h-screen bg-neutral-50">
       <div className="bg-white border-b border-neutral-100">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-          <span className="font-bold text-black">Selli</span>
+          <SellBopLogo size="lg" />
           <Link href={`/p/${product.slug}`} className="flex items-center gap-1.5 text-sm text-neutral-500 hover:text-black">
             <ArrowLeft size={14} />Back to product
           </Link>
@@ -109,7 +111,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ productId: 
                 Complete Purchase — {formatCurrency(session.total, product.currency)}
               </Button>
               <p className="text-xs text-neutral-400 text-center flex items-center justify-center gap-1.5">
-                <Shield size={11} />Secure checkout powered by Selli
+                <Shield size={11} />Secure checkout powered by SellBop
               </p>
             </form>
           </div>
@@ -119,8 +121,8 @@ export default function CheckoutPage({ params }: { params: Promise<{ productId: 
             <div className="bg-white border border-neutral-200 rounded-2xl p-6 sticky top-6">
               <h2 className="text-sm font-semibold text-neutral-900 mb-4">Order Summary</h2>
               <div className="flex items-start gap-3 pb-4 border-b border-neutral-100">
-                <div className="w-12 h-12 rounded-lg bg-neutral-100 flex items-center justify-center flex-shrink-0 text-xl">
-                  {product.productType === 'digital_download' ? '📄' : product.productType === 'service_offer' ? '🎯' : '📦'}
+                <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
+                  <GradientImageFallback productType={product.productType} iconSize="sm" />
                 </div>
                 <div>
                   <p className="text-sm font-medium text-neutral-900">{product.name}</p>

@@ -1,7 +1,7 @@
 import type { IAuthProvider, AuthSession } from '@/lib/domain/auth'
 import { DEMO_USERS, DEMO_CREDENTIALS } from '@/lib/demo-data/seed'
 
-const SESSION_KEY = 'selli_demo_session'
+const SESSION_KEY = 'sellbop_demo_session'
 
 export class DemoAuthAdapter implements IAuthProvider {
   async signIn(email: string, password: string): Promise<AuthSession> {

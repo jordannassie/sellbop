@@ -1,5 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { ProductImage } from '@/components/ui/product-image'
+import { SellBopLogo } from '@/components/ui/sellbop-logo'
 import { DEMO_PRODUCTS, DEMO_SELLER_PROFILE } from '@/lib/demo-data/seed'
 import { formatCurrency } from '@/lib/utils'
 import { BuyButton } from './buy-button'
@@ -37,7 +39,7 @@ export default async function SellPage({ params }: { params: Promise<{ slug: str
       {/* Minimal nav */}
       <div className="border-b border-neutral-100">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-13 flex items-center justify-between">
-          <Link href="/" className="text-sm font-bold text-black">Selli</Link>
+          <SellBopLogo size="lg" />
           <Link href={`/store/${seller.slug}`} className="text-xs text-neutral-500 hover:text-black">{seller.displayName} →</Link>
         </div>
       </div>
@@ -47,10 +49,14 @@ export default async function SellPage({ params }: { params: Promise<{ slug: str
           {/* Main content */}
           <div className="lg:col-span-3 space-y-8">
             {/* Hero image */}
-            <div className="aspect-video rounded-2xl bg-gradient-to-br from-neutral-100 to-neutral-200 flex items-center justify-center border border-neutral-200">
-              <span className="text-7xl opacity-20">
-                {product.productType === 'digital_download' ? '📄' : product.productType === 'service_offer' ? '🎯' : product.productType === 'subscription' ? '♻️' : '📦'}
-              </span>
+            <div className="aspect-video rounded-2xl overflow-hidden border border-neutral-200 relative">
+              <ProductImage
+                src={product.coverImageUrl}
+                alt={product.name}
+                productType={product.productType}
+                fill
+                iconSize="lg"
+              />
             </div>
 
             {/* Meta */}
@@ -138,7 +144,7 @@ export default async function SellPage({ params }: { params: Promise<{ slug: str
                 )}
                 <div className="flex items-center gap-2 text-xs text-neutral-500">
                   <Shield size={12} />
-                  <span>Secure checkout · Powered by Selli</span>
+                  <span>Secure checkout · Powered by SellBop</span>
                 </div>
               </div>
 

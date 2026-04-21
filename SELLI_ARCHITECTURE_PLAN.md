@@ -1,4 +1,4 @@
-# Selli v2 Architecture Plan
+# Shopzely v2 Architecture Plan
 
 ## Current Demo Architecture
 
@@ -9,7 +9,7 @@ User Browser
 ├── React / Next.js (App Router)
 ├── AuthProvider (context/auth-context.tsx)
 │   └── DemoAuthAdapter (lib/adapters/demo/auth.ts)
-│       └── localStorage: selli_demo_session
+│       └── localStorage: shopzely_demo_session
 ├── Demo Repositories (lib/adapters/demo/repositories.ts)
 │   └── Each repo: localStorage key → seed fallback → in-memory writes
 ├── Service Layer (lib/services/)
@@ -21,7 +21,7 @@ User Browser
 ### Demo Data Flow
 
 1. Page renders → calls `demoXxxRepo.findXxx()`
-2. Repo checks `localStorage['selli_demo_xxx']`
+2. Repo checks `localStorage['shopzely_demo_xxx']`
 3. If empty → returns `DEMO_XXX` seed constants
 4. Writes (`create`, `update`) persist to `localStorage`
 5. Data survives page refreshes; reset via `/internal/demo-center`
@@ -123,7 +123,7 @@ Create `/app/api/webhooks/stripe/route.ts` to handle:
 - `customer.subscription.updated/deleted` → update Subscription record
 - `invoice.payment_failed` → notify seller/buyer
 
-### 3. Billing Portal (Selli's own plans)
+### 3. Billing Portal (Shopzely's own plans)
 
 ```typescript
 const session = await stripe.billingPortal.sessions.create({

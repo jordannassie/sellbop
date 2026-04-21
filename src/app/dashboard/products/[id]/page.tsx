@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select } from '@/components/ui/select'
 import { Toggle } from '@/components/ui/toggle'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ImageUpload } from '@/components/dashboard/image-upload'
 import { toast } from 'sonner'
 import { slugify, formatCurrency } from '@/lib/utils'
 import { ExternalLink } from 'lucide-react'
@@ -42,6 +43,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
   const [compareAtPrice, setCompareAtPrice] = useState('')
   const [ctaText, setCtaText] = useState('Get Instant Access')
   const [externalUrl, setExternalUrl] = useState('')
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null)
   const [published, setPublished] = useState(false)
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -56,6 +58,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
         setProductType(p.productType); setPrice(String(p.price / 100))
         setCompareAtPrice(p.compareAtPrice ? String(p.compareAtPrice / 100) : '')
         setCtaText(p.ctaText); setExternalUrl(p.externalUrl ?? '')
+        setThumbnailUrl(p.thumbnailUrl)
         setPublished(p.status === 'published')
       })
     })
@@ -72,6 +75,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
         price: Math.round(parseFloat(price) * 100),
         compareAtPrice: compareAtPrice ? Math.round(parseFloat(compareAtPrice) * 100) : null,
         ctaText, externalUrl: externalUrl || null,
+        thumbnailUrl, coverImageUrl: thumbnailUrl,
         publishedAt: published ? (product.publishedAt || new Date().toISOString()) : null,
       })
       toast.success('Product updated.')
@@ -117,6 +121,13 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
             <Input label="Short Description" value={shortDescription} onChange={e => setShortDescription(e.target.value)} />
           </CardContent>
         </Card>
+        <Card>
+          <CardHeader><CardTitle>Media</CardTitle></CardHeader>
+          <CardContent>
+            <ImageUpload value={thumbnailUrl} onChange={setThumbnailUrl} />
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader><CardTitle>Pricing</CardTitle></CardHeader>
           <CardContent className="space-y-4">

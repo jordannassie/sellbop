@@ -7,8 +7,8 @@ import type { AuthSession } from '@/lib/domain/auth'
 interface AuthContextValue {
   session: AuthSession | null
   loading: boolean
-  signIn: (email: string, password: string) => Promise<void>
-  signUp: (email: string, password: string, name: string) => Promise<void>
+  signIn: (email: string, password: string) => Promise<AuthSession>
+  signUp: (email: string, password: string, name: string) => Promise<AuthSession>
   signOut: () => Promise<void>
 }
 
@@ -28,11 +28,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = useCallback(async (email: string, password: string) => {
     const s = await demoAuth.signIn(email, password)
     setSession(s)
+    return s
   }, [])
 
   const signUp = useCallback(async (email: string, password: string, name: string) => {
     const s = await demoAuth.signUp(email, password, name)
     setSession(s)
+    return s
   }, [])
 
   const signOut = useCallback(async () => {

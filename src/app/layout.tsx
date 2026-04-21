@@ -7,8 +7,8 @@ import { Toaster } from 'sonner'
 const geist = Geist({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Selli — Sell anything in minutes',
-  description: 'Create one simple page for your product or offer and start getting paid.',
+  title: 'SellBop.com — Sell anything in minutes',
+  description: 'Create one simple page for your product or offer and start getting paid. SellBop.com',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
