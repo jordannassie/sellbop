@@ -241,24 +241,10 @@ export function EditorSidebar() {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="px-4 py-3 border-b border-neutral-100 flex items-center justify-between">
-        <div>
-          <h2 className="text-sm font-bold text-black">Edit Store</h2>
-          {isDirty && <p className="text-[10px] text-amber-500 font-medium mt-0.5">Unsaved changes</p>}
-        </div>
-        <button
-          onClick={saveChanges}
-          disabled={isSaving || !isDirty}
-          className={cn(
-            'text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors',
-            isDirty && !isSaving
-              ? 'bg-black text-white hover:bg-neutral-800'
-              : 'bg-neutral-100 text-neutral-400 cursor-not-allowed',
-          )}
-        >
-          {isSaving ? 'Saving…' : 'Save'}
-        </button>
+      {/* Column header */}
+      <div className="px-4 py-3 border-b border-neutral-100 bg-white shrink-0">
+        <h2 className="text-sm font-bold text-black">Edit</h2>
+        <p className="text-[11px] text-neutral-400 mt-0.5">Customize your store profile and theme</p>
       </div>
 
       {/* Scrollable panels */}

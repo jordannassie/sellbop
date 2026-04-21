@@ -26,13 +26,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (!session) return null
 
   return (
-    <div className="flex min-h-screen bg-neutral-50">
+    <div className={cn('flex bg-neutral-50', isStoreEditor ? 'h-screen overflow-hidden' : 'min-h-screen')}>
       <DashboardSidebar />
       {/* pt-14 offsets the mobile fixed top bar; removed on lg where sidebar is always shown */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden pt-14 lg:pt-0">
+      <div className={cn(
+        'flex-1 flex flex-col min-w-0 overflow-x-hidden pt-14 lg:pt-0',
+        isStoreEditor && 'overflow-hidden',
+      )}>
         <main className={cn(
-          'flex-1',
-          isStoreEditor ? 'p-0 overflow-hidden' : 'p-4 sm:p-6 lg:p-8 max-w-6xl',
+          'flex-1 min-h-0',
+          isStoreEditor ? 'p-0 overflow-hidden flex flex-col' : 'p-4 sm:p-6 lg:p-8 max-w-6xl',
         )}>
           {children}
         </main>

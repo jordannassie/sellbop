@@ -199,6 +199,12 @@
       "namedRegex": "^/dashboard/settings(?:/)?$"
     },
     {
+      "page": "/dashboard/store-editor",
+      "regex": "^/dashboard/store\\-editor(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/store\\-editor(?:/)?$"
+    },
+    {
       "page": "/dashboard/storefront",
       "regex": "^/dashboard/storefront(?:/)?$",
       "routeKeys": {},

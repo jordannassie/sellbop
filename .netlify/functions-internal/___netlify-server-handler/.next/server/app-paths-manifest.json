@@ -28,6 +28,7 @@
   "/dashboard/products/new/page": "app/dashboard/products/new/page.js",
   "/dashboard/products/page": "app/dashboard/products/page.js",
   "/dashboard/settings/page": "app/dashboard/settings/page.js",
+  "/dashboard/store-editor/page": "app/dashboard/store-editor/page.js",
   "/dashboard/storefront/page": "app/dashboard/storefront/page.js",
   "/dashboard/subscriptions/[id]/page": "app/dashboard/subscriptions/[id]/page.js",
   "/dashboard/subscriptions/page": "app/dashboard/subscriptions/page.js",
