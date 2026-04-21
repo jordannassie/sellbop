@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { ProductImage } from '@/components/ui/product-image'
 import { RotatingWord } from '@/components/marketing/rotating-word'
 import { StrategyCallSection } from '@/components/marketing/strategy-call-section'
-import { Check, ArrowRight, Store, FileText, ShoppingBag, Pencil, Download, MapPin, Zap } from 'lucide-react'
+import { Check, ArrowRight, Store, FileText, ShoppingBag, Pencil, Download, MapPin, Zap, Sparkles } from 'lucide-react'
 import { DEMO_PRODUCTS } from '@/lib/demo-data/seed'
 import { formatCurrency } from '@/lib/utils'
 
@@ -70,6 +70,114 @@ export default function HomePage() {
         <p className="text-center text-xs text-neutral-400 mt-4">
           <Link href="/store/alexjohnson" className="hover:text-neutral-700 underline underline-offset-2">View the full demo store →</Link>
         </p>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════════════
+          BENEFITS — Why creators choose SellBop (Stan-style)
+      ══════════════════════════════════════════════════════════════ */}
+      <section className="border-t border-neutral-100 py-20 sm:py-28 bg-white">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6">
+
+          {/* Header */}
+          <div className="text-center mb-16 sm:mb-20">
+            <div className="inline-flex items-center gap-2 bg-neutral-100 text-neutral-600 text-xs font-semibold px-3 py-1.5 rounded-full mb-5">
+              <Sparkles size={11} />
+              No website needed
+            </div>
+            <h2 className="text-3xl sm:text-5xl font-black text-black tracking-tight leading-tight mb-4">
+              Why creators choose SellBop
+            </h2>
+            <p className="text-neutral-500 text-base sm:text-lg max-w-lg mx-auto leading-relaxed">
+              Everything you need to sell online — without coding, complicated tools, or building a website from scratch.
+            </p>
+          </div>
+
+          {/* Alternating benefit rows */}
+          <div className="space-y-20 sm:space-y-28">
+
+            {/* Row 1: Text left, Visual right — No coding required */}
+            <div className="grid md:grid-cols-2 gap-10 sm:gap-16 items-center">
+              <div>
+                <div className="inline-flex items-center gap-2 bg-violet-50 border border-violet-100 text-violet-700 text-xs font-bold px-3 py-1.5 rounded-full mb-5">
+                  01 — Setup
+                </div>
+                <h3 className="text-2xl sm:text-4xl font-black text-black leading-tight mb-4">
+                  No coding required
+                </h3>
+                <p className="text-neutral-500 text-base leading-relaxed mb-5">
+                  Create your store, publish products, and start selling in minutes — without building a custom website or hiring a developer.
+                </p>
+                <p className="text-sm font-semibold text-black border-l-2 border-neutral-200 pl-3 text-neutral-700">
+                  Skip the website build. Just create your product, share your page, and get paid.
+                </p>
+              </div>
+              <div className="bg-neutral-50 rounded-2xl p-5 sm:p-6 border border-neutral-100">
+                <BenefitEditorMockup />
+              </div>
+            </div>
+
+            {/* Row 2: Visual left, Text right — 1-tap checkout */}
+            <div className="grid md:grid-cols-2 gap-10 sm:gap-16 items-center">
+              <div className="bg-neutral-50 rounded-2xl p-5 sm:p-6 border border-neutral-100 order-2 md:order-1">
+                <BenefitCheckoutMockup />
+              </div>
+              <div className="order-1 md:order-2">
+                <div className="inline-flex items-center gap-2 bg-blue-50 border border-blue-100 text-blue-700 text-xs font-bold px-3 py-1.5 rounded-full mb-5">
+                  02 — Checkout
+                </div>
+                <h3 className="text-2xl sm:text-4xl font-black text-black leading-tight mb-4">
+                  1-tap checkout
+                </h3>
+                <p className="text-neutral-500 text-base leading-relaxed mb-5">
+                  Every product gets its own focused sell page — built to convert on desktop and mobile without any configuration.
+                </p>
+                <p className="text-sm font-semibold border-l-2 border-neutral-200 pl-3 text-neutral-700">
+                  Clean product pages, fast checkout, instant delivery.
+                </p>
+              </div>
+            </div>
+
+            {/* Row 3: Text left, Visual right — Multiple product types */}
+            <div className="grid md:grid-cols-2 gap-10 sm:gap-16 items-center">
+              <div>
+                <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-100 text-emerald-700 text-xs font-bold px-3 py-1.5 rounded-full mb-5">
+                  03 — Products
+                </div>
+                <h3 className="text-2xl sm:text-4xl font-black text-black leading-tight mb-4">
+                  Every type of offer, one platform
+                </h3>
+                <p className="text-neutral-500 text-base leading-relaxed mb-5">
+                  Sell digital downloads, coaching sessions, subscriptions, and bundles — all from one simple creator platform.
+                </p>
+                <p className="text-sm font-semibold border-l-2 border-neutral-200 pl-3 text-neutral-700">
+                  One store. Every type of offer.
+                </p>
+              </div>
+              <div className="bg-neutral-50 rounded-2xl p-5 sm:p-6 border border-neutral-100">
+                <BenefitProductTypesMockup />
+              </div>
+            </div>
+
+          </div>
+
+          {/* Supporting benefit pills */}
+          <div className="mt-16 sm:mt-20 pt-10 border-t border-neutral-100 flex flex-wrap justify-center gap-2.5">
+            {[
+              'Marketplace discovery',
+              'Dedicated product pages',
+              'Visual Store Editor',
+              'Launch in minutes',
+              'No monthly fee',
+              'Built for creators',
+            ].map(pill => (
+              <span key={pill} className="inline-flex items-center gap-1.5 bg-neutral-50 border border-neutral-200 rounded-full px-4 py-2 text-sm text-neutral-600 font-medium">
+                <Check size={12} className="text-neutral-400 flex-shrink-0" />
+                {pill}
+              </span>
+            ))}
+          </div>
+
+        </div>
       </section>
 
       {/* ══════════════════════════════════════════════════════════════
@@ -437,6 +545,135 @@ export default function HomePage() {
         </div>
       </section>
     </>
+  )
+}
+
+// ── Benefit Section Mockups ───────────────────────────────────
+
+function BenefitEditorMockup() {
+  return (
+    <div className="bg-white rounded-2xl border border-neutral-200 overflow-hidden shadow-sm">
+      {/* Top bar */}
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-neutral-100 bg-neutral-50">
+        <div className="flex items-center gap-1.5">
+          {['bg-red-300', 'bg-amber-300', 'bg-green-300'].map(c => (
+            <div key={c} className={`w-2.5 h-2.5 rounded-full ${c}`} />
+          ))}
+        </div>
+        <div className="w-28 h-2 bg-neutral-200 rounded-full" />
+        <div className="w-16 h-5 bg-black rounded-lg flex items-center justify-center">
+          <div className="w-9 h-1.5 bg-white/60 rounded-full" />
+        </div>
+      </div>
+      {/* Editor: sidebar + preview */}
+      <div className="flex min-h-[160px]">
+        {/* Sidebar */}
+        <div className="w-28 border-r border-neutral-100 p-3 space-y-3 flex-shrink-0">
+          <div className="space-y-1.5">
+            <div className="w-full h-1.5 bg-neutral-300 rounded-full" />
+            <div className="w-3/4 h-1.5 bg-neutral-200 rounded-full" />
+          </div>
+          <div className="bg-neutral-50 border border-neutral-100 rounded-lg p-2 space-y-1.5">
+            <div className="w-full h-5 bg-white border border-neutral-200 rounded" />
+            <div className="w-full h-5 bg-white border border-neutral-200 rounded" />
+            <div className="w-2/3 h-1.5 bg-neutral-200 rounded-full mt-1" />
+          </div>
+          <div className="flex gap-1.5 flex-wrap">
+            {['bg-black', 'bg-violet-400', 'bg-blue-400', 'bg-emerald-400'].map((c, i) => (
+              <div key={i} className={`w-4 h-4 rounded-full ${c} ${i === 0 ? 'ring-2 ring-offset-1 ring-black' : ''}`} />
+            ))}
+          </div>
+        </div>
+        {/* Live preview */}
+        <div className="flex-1 p-3 bg-neutral-50/50">
+          <div className="bg-white rounded-xl border border-neutral-100 overflow-hidden">
+            <div className="flex items-center gap-2 px-3 py-2.5 border-b border-neutral-100">
+              <div className="w-7 h-7 rounded-lg bg-black flex items-center justify-center text-white text-[9px] font-black">A</div>
+              <div>
+                <div className="w-14 h-1.5 bg-black rounded-full" />
+                <div className="w-20 h-1 bg-neutral-300 rounded-full mt-1" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-1.5 p-2">
+              {(['bg-violet-100', 'bg-blue-100', 'bg-emerald-100', 'bg-amber-100'] as const).map((c, i) => (
+                <div key={i} className="bg-neutral-50 rounded-lg border border-neutral-100 overflow-hidden">
+                  <div className={`h-7 ${c}`} />
+                  <div className="px-1.5 py-1">
+                    <div className="w-full h-1 bg-neutral-300 rounded-full" />
+                    <div className="w-6 h-1 bg-black rounded-full mt-1" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function BenefitCheckoutMockup() {
+  return (
+    <div className="max-w-[260px] mx-auto bg-white rounded-2xl border border-neutral-200 overflow-hidden shadow-sm">
+      {/* Product hero image area */}
+      <div className="h-28 bg-gradient-to-br from-blue-50 via-violet-50 to-blue-100 flex items-center justify-center">
+        <div className="w-14 h-14 rounded-2xl bg-white border border-white/80 shadow-md flex items-center justify-center">
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-400 to-violet-500" />
+        </div>
+      </div>
+      {/* Product content */}
+      <div className="p-5">
+        <div className="w-12 h-1.5 bg-neutral-200 rounded-full mb-2.5" />
+        <div className="w-full h-2.5 bg-black rounded-full mb-1.5" />
+        <div className="w-3/4 h-2.5 bg-neutral-200 rounded-full mb-4" />
+        <div className="flex items-baseline gap-2 mb-5">
+          <div className="w-12 h-4 bg-black rounded-md" />
+          <div className="w-8 h-2.5 bg-neutral-200 rounded-full line-through" />
+        </div>
+        {/* CTA button */}
+        <div className="w-full h-11 bg-black rounded-2xl flex items-center justify-center">
+          <div className="w-32 h-2 bg-white/50 rounded-full" />
+        </div>
+        {/* Trust row */}
+        <div className="flex items-center justify-center gap-4 mt-3.5">
+          {[0, 1].map(i => (
+            <div key={i} className="flex items-center gap-1">
+              <div className="w-3 h-3 rounded-full bg-neutral-100 border border-neutral-200" />
+              <div className="w-14 h-1.5 bg-neutral-200 rounded-full" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function BenefitProductTypesMockup() {
+  const types = [
+    { label: 'Digital Download', bg: 'bg-blue-50', bar: 'bg-blue-400', dot: 'bg-blue-500', price: '$29' },
+    { label: 'Coaching',         bg: 'bg-violet-50', bar: 'bg-violet-400', dot: 'bg-violet-500', price: '$500' },
+    { label: 'Membership',       bg: 'bg-emerald-50', bar: 'bg-emerald-400', dot: 'bg-emerald-500', price: '$19/mo' },
+    { label: 'Bundle',           bg: 'bg-amber-50', bar: 'bg-amber-400', dot: 'bg-amber-500', price: '$97' },
+  ]
+  return (
+    <div className="grid grid-cols-2 gap-3">
+      {types.map(t => (
+        <div key={t.label} className="bg-white border border-neutral-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+          <div className={`${t.bg} h-16 flex items-center justify-center`}>
+            <div className={`w-8 h-8 rounded-xl ${t.bar} flex items-center justify-center`}>
+              <div className="w-4 h-4 rounded-md bg-white/50" />
+            </div>
+          </div>
+          <div className="p-3">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <div className={`w-1.5 h-1.5 rounded-full ${t.dot}`} />
+              <p className="text-[8px] font-bold uppercase tracking-wider text-neutral-400 leading-none">{t.label}</p>
+            </div>
+            <p className="text-base font-black text-black leading-none">{t.price}</p>
+          </div>
+        </div>
+      ))}
+    </div>
   )
 }
 
