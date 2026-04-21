@@ -211,9 +211,13 @@ function SortableProductRow({ product, isFeatured, onToggleFeatured, onToggleHid
         <GripDots />
       </span>
 
-      {/* Thumbnail */}
-      <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-neutral-100 my-2.5 ml-2.5">
-        <ProductImage src={product.thumbnailUrl} alt={product.name} productType={product.productType} fill iconSize="sm" />
+      {/* Thumbnail — fixed size, overflow hidden, relative required for fill images */}
+      <div className="relative w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-neutral-100 my-2.5 ml-2.5">
+        {product.thumbnailUrl && product.source === 'printify' ? (
+          <img src={product.thumbnailUrl} alt={product.name} className="w-full h-full object-cover" />
+        ) : (
+          <ProductImage src={product.thumbnailUrl} alt={product.name} productType={product.productType} fill iconSize="sm" />
+        )}
       </div>
 
       {/* Info */}
@@ -317,8 +321,8 @@ function AvailableProductRow({ product, onAddToStore, onAddToFeatured, canFeatur
 
   return (
     <div className="flex items-center rounded-xl bg-neutral-50 border border-neutral-200 border-dashed hover:border-neutral-300 hover:bg-white hover:shadow-sm transition-all duration-150 overflow-hidden">
-      {/* Thumbnail */}
-      <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-neutral-100 my-2.5 ml-3 mr-0.5">
+      {/* Thumbnail — fixed size, overflow hidden, relative required for fill images */}
+      <div className="relative w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-neutral-100 my-2.5 ml-3 mr-0.5">
         {product.thumbnailUrl && isPrintify ? (
           <img src={product.thumbnailUrl} alt={product.name} className="w-full h-full object-cover" />
         ) : (

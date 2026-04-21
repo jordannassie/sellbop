@@ -1,5 +1,5 @@
 var R=require("../../../chunks/ssr/[turbopack]_runtime.js")("server/app/dashboard/printify/page.js")
-R.c("server/chunks/ssr/[root-of-the-server]__0qbp1w5._.js")
+R.c("server/chunks/ssr/[root-of-the-server]__04_9d.m._.js")
 R.c("server/chunks/ssr/node_modules_next_dist_0jk5ehi._.js")
 R.c("server/chunks/ssr/node_modules_next_dist_esm_build_templates_app-page_01k.8qq.js")
 R.c("server/chunks/ssr/[root-of-the-server]__0~0x98s._.js")
