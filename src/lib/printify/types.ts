@@ -10,20 +10,33 @@ export interface PrintifyShop {
 
 export interface PrintifyVariant {
   id: number
-  price: number        // in cents
+  price: number        // in cents (integer — e.g. 2499 = $24.99)
   is_enabled: boolean
   is_default: boolean
-  title: string
+  title: string        // e.g. "Black / M" or just "M"
   sku: string
   grams: number
-  options: number[]
+  options: number[]    // array of option value IDs
 }
 
 export interface PrintifyImage {
   src: string
-  variant_ids: number[]
+  variant_ids: number[]  // which variant IDs this image belongs to
   position: string
   is_default: boolean
+}
+
+export interface PrintifyOptionValue {
+  id: number
+  title: string
+  colors?: string[]   // hex colors if type === 'color'
+}
+
+export interface PrintifyOption {
+  id: number
+  name: string        // e.g. "Colors", "Sizes"
+  type: string        // e.g. "color", "size", "style"
+  values: PrintifyOptionValue[]
 }
 
 export interface PrintifyProduct {
@@ -33,6 +46,7 @@ export interface PrintifyProduct {
   tags: string[]
   images: PrintifyImage[]
   variants: PrintifyVariant[]
+  options: PrintifyOption[]
   print_provider_id: number
   blueprint_id: number
   is_locked: boolean
@@ -83,3 +97,19 @@ export interface PrintifyOrderResponse {
   line_items: PrintifyLineItem[]
   created_at: string
 }
+
+// ── Shipping calculation ──────────────────────────────────────
+
+export interface PrintifyShippingRequest {
+  line_items: PrintifyLineItem[]
+  address_to: PrintifyAddress
+}
+
+export interface PrintifyShippingMethod {
+  method_id: number
+  method_title: string
+  price: number   // in cents
+  currency: string
+}
+
+export type PrintifyShippingResponse = PrintifyShippingMethod[]

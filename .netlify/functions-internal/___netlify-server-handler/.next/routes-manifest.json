@@ -23,6 +23,14 @@
   },
   "dynamicRoutes": [
     {
+      "page": "/checkout/merch/[productId]",
+      "regex": "^/checkout/merch/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPproductId": "nxtPproductId"
+      },
+      "namedRegex": "^/checkout/merch/(?<nxtPproductId>[^/]+?)(?:/)?$"
+    },
+    {
       "page": "/checkout/[productId]",
       "regex": "^/checkout/([^/]+?)(?:/)?$",
       "routeKeys": {
@@ -143,6 +151,12 @@
       "regex": "^/api/printify/select\\-shop(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/api/printify/select\\-shop(?:/)?$"
+    },
+    {
+      "page": "/api/printify/shipping",
+      "regex": "^/api/printify/shipping(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/printify/shipping(?:/)?$"
     },
     {
       "page": "/api/printify/shops",

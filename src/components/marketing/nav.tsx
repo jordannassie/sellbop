@@ -45,11 +45,14 @@ export function MarketingNav() {
           {/* Right actions */}
           <div className="flex items-center gap-2 sm:gap-3">
             {session ? (
-              <Link href="/dashboard"><Button size="sm">Dashboard</Button></Link>
+              <>
+                <Link href="/dashboard" className="text-sm text-neutral-600 hover:text-black transition-colors hidden sm:block">Dashboard</Link>
+                <Link href="/signup"><Button size="sm">Get Started</Button></Link>
+              </>
             ) : (
               <>
                 <Link href="/login" className="text-sm text-neutral-600 hover:text-black transition-colors hidden sm:block">Log in</Link>
-                <Link href="/signup"><Button size="sm">Start Free</Button></Link>
+                <Link href="/signup"><Button size="sm">Get Started</Button></Link>
               </>
             )}
             {/* Hamburger — mobile only */}
@@ -87,9 +90,16 @@ export function MarketingNav() {
               ))}
               <div className="pt-2 pb-1 border-t border-neutral-100 mt-2 flex flex-col gap-2">
                 {session ? (
-                  <Link href="/dashboard" onClick={() => setOpen(false)}>
-                    <Button className="w-full" size="sm">Dashboard</Button>
-                  </Link>
+                  <>
+                    <Link href="/dashboard" onClick={() => setOpen(false)}>
+                      <button className="w-full h-11 text-sm font-medium text-neutral-700 border border-neutral-200 rounded-xl hover:border-neutral-400 transition-colors">
+                        Dashboard
+                      </button>
+                    </Link>
+                    <Link href="/signup" onClick={() => setOpen(false)}>
+                      <Button className="w-full" size="sm">Get Started</Button>
+                    </Link>
+                  </>
                 ) : (
                   <>
                     <Link href="/login" onClick={() => setOpen(false)}>
@@ -98,7 +108,7 @@ export function MarketingNav() {
                       </button>
                     </Link>
                     <Link href="/signup" onClick={() => setOpen(false)}>
-                      <Button className="w-full" size="sm">Start Free</Button>
+                      <Button className="w-full" size="sm">Get Started</Button>
                     </Link>
                   </>
                 )}

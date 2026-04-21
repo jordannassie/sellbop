@@ -30,6 +30,19 @@ const makeMockProduct = (
     { id: 3, price: priceInCents, is_enabled: true, is_default: false, title: 'L', sku: `${id}-L`, grams: 240, options: [3] },
     { id: 4, price: priceInCents + 200, is_enabled: true, is_default: false, title: 'XL', sku: `${id}-XL`, grams: 260, options: [4] },
   ],
+  options: [
+    {
+      id: 1,
+      name: 'Sizes',
+      type: 'size',
+      values: [
+        { id: 1, title: 'S' },
+        { id: 2, title: 'M' },
+        { id: 3, title: 'L' },
+        { id: 4, title: 'XL' },
+      ],
+    },
+  ],
   print_provider_id: 99,
   blueprint_id: 5,
   is_locked: false,

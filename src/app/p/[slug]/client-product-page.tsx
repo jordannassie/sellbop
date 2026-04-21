@@ -1,6 +1,7 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { demoProductRepo } from '@/lib/adapters/demo/repositories'
 import { DEMO_SELLER_PROFILE, DEMO_STOREFRONT } from '@/lib/demo-data/seed'
 import { formatCurrency } from '@/lib/utils'
@@ -8,10 +9,17 @@ import { ProductImage } from '@/components/ui/product-image'
 import { SellBopLogo } from '@/components/ui/sellbop-logo'
 import { BuyButton } from './buy-button'
 import {
-  Check, Download, Star, Shield, ArrowLeft,
-  ChevronRight, Shirt, Zap,
+  Check, Download, Star, Shield, ArrowLeft, ChevronRight,
+  Shirt, Zap, Plus, Minus, ChevronDown,
 } from 'lucide-react'
-import type { Product } from '@/lib/domain/entities'
+import {
+  printifyColors,
+  printifySizes,
+  printifyMinPrice,
+  printifyMaxPrice,
+  printifyHasPriceRange,
+} from '@/lib/printify/normalize'
+import type { Product, ProductVariant } from '@/lib/domain/entities'
 
 const TYPE_LABELS: Record<string, string> = {
   digital_download: 'Digital Download',
@@ -29,129 +37,6 @@ const TYPE_DELIVERY: Record<string, string> = {
   membership_ready: 'Access granted immediately after payment',
 }
 
-// ── Trust Row ─────────────────────────────────────────────────
-function TrustRow({ icon, text }: { icon: React.ReactNode; text: React.ReactNode }) {
-  return (
-    <div className="flex items-start gap-2 text-xs text-neutral-500">
-      <span className="text-neutral-400 mt-0.5 flex-shrink-0">{icon}</span>
-      <span className="leading-relaxed">{text}</span>
-    </div>
-  )
-}
-
-// ── Printify Thumbnail ────────────────────────────────────────
-function ProductHeroImage({ product }: { product: Product }) {
-  if (product.source === 'printify' && product.coverImageUrl) {
-    return (
-      <img
-        src={product.coverImageUrl}
-        alt={product.name}
-        className="w-full h-full object-cover"
-      />
-    )
-  }
-  return (
-    <ProductImage
-      src={product.coverImageUrl}
-      alt={product.name}
-      productType={product.productType}
-      fill
-      iconSize="lg"
-    />
-  )
-}
-
-// ── Desktop Buy Card ──────────────────────────────────────────
-function DesktopBuyCard({ product, accent, discount }: { product: Product; accent: string; discount: number }) {
-  const isPrintify = product.source === 'printify'
-  return (
-    <div className="bg-white border border-neutral-200 rounded-2xl overflow-hidden shadow-md">
-      <div className="aspect-[16/9] relative border-b border-neutral-100">
-        {isPrintify && product.thumbnailUrl ? (
-          <img src={product.thumbnailUrl} alt={product.name} className="w-full h-full object-cover" />
-        ) : (
-          <ProductImage src={product.thumbnailUrl} alt={product.name} productType={product.productType} fill iconSize="md" />
-        )}
-      </div>
-      <div className="p-6 space-y-5">
-        <div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-black text-black">{formatCurrency(product.price, product.currency)}</span>
-            {product.compareAtPrice && (
-              <span className="text-base text-neutral-400 line-through font-medium">{formatCurrency(product.compareAtPrice)}</span>
-            )}
-          </div>
-          {discount > 0 && (
-            <p className="text-xs text-emerald-600 font-semibold mt-1">
-              Save {discount}% · {formatCurrency((product.compareAtPrice ?? 0) - product.price)} off
-            </p>
-          )}
-        </div>
-
-        {/* Variants (sizes) for Printify */}
-        {isPrintify && product.variants && product.variants.length > 0 && (
-          <div>
-            <p className="text-xs font-semibold text-neutral-600 mb-2">Available sizes</p>
-            <div className="flex flex-wrap gap-1.5">
-              {product.variants.map(v => (
-                <span key={v.id} className="text-xs px-2.5 py-1 border border-neutral-200 rounded-lg text-neutral-700 font-medium">
-                  {v.name}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <BuyButton
-          product={{ id: product.id, name: product.name, ctaText: product.ctaText, productType: product.productType }}
-          accent={accent}
-        />
-
-        <div className="border-t border-neutral-100 pt-4 space-y-2.5">
-          {isPrintify ? (
-            <>
-              <TrustRow icon={<Shirt size={12} />} text="Fulfilled via Printify · Ships directly to you" />
-              <TrustRow icon={<Shield size={12} />} text="Secure checkout · Quality guaranteed" />
-            </>
-          ) : (
-            <>
-              <TrustRow icon={<Download size={12} />} text={TYPE_DELIVERY[product.productType] ?? 'Delivered after purchase'} />
-              <TrustRow icon={<Shield size={12} />} text="Secure checkout · 30-day guarantee" />
-              {product.supportEmail && (
-                <TrustRow
-                  icon={<Check size={12} />}
-                  text={<>Questions? <a href={`mailto:${product.supportEmail}`} className="underline hover:text-neutral-700">Email support</a></>}
-                />
-              )}
-            </>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ── Mobile Buy Card ───────────────────────────────────────────
-function MobileBuyCard({ product, accent, discount }: { product: Product; accent: string; discount: number }) {
-  const isPrintify = product.source === 'printify'
-  return (
-    <div className="space-y-3">
-      <div className="flex items-baseline gap-2">
-        <span className="text-2xl font-black text-black">{formatCurrency(product.price, product.currency)}</span>
-        {product.compareAtPrice && <span className="text-sm text-neutral-400 line-through">{formatCurrency(product.compareAtPrice)}</span>}
-        {discount > 0 && <span className="text-xs text-emerald-600 font-semibold">−{discount}%</span>}
-      </div>
-      <BuyButton
-        product={{ id: product.id, name: product.name, ctaText: product.ctaText, productType: product.productType }}
-        accent={accent}
-      />
-      <p className="text-xs text-neutral-400 text-center">
-        {isPrintify ? 'Fulfilled via Printify · Ships to you' : (TYPE_DELIVERY[product.productType] ?? 'Delivered after purchase')}
-      </p>
-    </div>
-  )
-}
-
 // ── Loading skeleton ──────────────────────────────────────────
 function Skeleton() {
   return (
@@ -165,7 +50,6 @@ function Skeleton() {
               <div className="h-4 w-24 bg-neutral-100 rounded-full" />
               <div className="h-8 w-3/4 bg-neutral-200 rounded-xl" />
               <div className="h-4 w-full bg-neutral-100 rounded-full" />
-              <div className="h-4 w-5/6 bg-neutral-100 rounded-full" />
             </div>
           </div>
         </div>
@@ -181,8 +65,8 @@ function NotFound({ slug }: { slug: string }) {
       <div className="text-5xl mb-4">✦</div>
       <h1 className="text-2xl font-bold text-black mb-2">Product not found</h1>
       <p className="text-neutral-500 text-sm mb-6">
-        We couldn&apos;t find a product at <code className="font-mono text-xs bg-neutral-100 px-1.5 py-0.5 rounded">/p/{slug}</code>.
-        It may be a draft or hasn&apos;t been synced yet.
+        We couldn&apos;t find a product at{' '}
+        <code className="font-mono text-xs bg-neutral-100 px-1.5 py-0.5 rounded">/p/{slug}</code>.
       </p>
       <Link
         href={`/store/${DEMO_SELLER_PROFILE.slug}`}
@@ -194,41 +78,396 @@ function NotFound({ slug }: { slug: string }) {
   )
 }
 
-// ── Main client component ─────────────────────────────────────
-export function ClientProductPage({ slug }: { slug: string }) {
-  const [product, setProduct] = useState<Product | null | undefined>(undefined)
+// ── Trust Row ─────────────────────────────────────────────────
+function TrustRow({ icon, text }: { icon: React.ReactNode; text: React.ReactNode }) {
+  return (
+    <div className="flex items-start gap-2 text-xs text-neutral-500">
+      <span className="text-neutral-400 mt-0.5 flex-shrink-0">{icon}</span>
+      <span className="leading-relaxed">{text}</span>
+    </div>
+  )
+}
 
-  useEffect(() => {
-    demoProductRepo.findBySlug(slug).then(p => {
-      // Show published products only (match server behavior)
-      setProduct(p && p.status === 'published' ? p : null)
+// ── Merch variant selector ─────────────────────────────────────
+function MerchVariantSelector({
+  product,
+  onVariantChange,
+  onQtyChange,
+  accent,
+}: {
+  product: Product
+  onVariantChange: (v: ProductVariant | null) => void
+  onQtyChange: (q: number) => void
+  accent: string
+}) {
+  const variants = product.variants
+  const colors   = useMemo(() => printifyColors(variants), [variants])
+  const hasColors = colors.length > 0
+
+  const [selectedColor, setSelectedColor] = useState<string | null>(
+    hasColors ? null : null,
+  )
+  const [selectedSize, setSelectedSize]   = useState<string | null>(null)
+  const [qty, setQty]                     = useState(1)
+
+  const availableSizes = useMemo(
+    () => printifySizes(variants, selectedColor ?? undefined),
+    [variants, selectedColor],
+  )
+
+  // Derive the matching variant whenever selections change
+  const selectedVariant = useMemo<ProductVariant | null>(() => {
+    if (!selectedSize) return null
+    return variants.find(v => {
+      const colorMatch = hasColors ? v.color === selectedColor : true
+      const sizeMatch  = (v.size ?? v.name) === selectedSize
+      return colorMatch && sizeMatch
+    }) ?? null
+  }, [variants, selectedColor, selectedSize, hasColors])
+
+  // Bubble up changes
+  useEffect(() => { onVariantChange(selectedVariant) }, [selectedVariant, onVariantChange])
+  useEffect(() => { onQtyChange(qty) }, [qty, onQtyChange])
+
+  // When color changes, reset size if it's no longer available
+  function handleColorSelect(color: string) {
+    setSelectedColor(color)
+    const sizesForColor = printifySizes(variants, color)
+    if (selectedSize && !sizesForColor.includes(selectedSize)) {
+      setSelectedSize(null)
+    }
+  }
+
+  const priceDisplay = selectedVariant
+    ? formatCurrency(selectedVariant.price, product.currency)
+    : printifyHasPriceRange(variants)
+      ? `From ${formatCurrency(printifyMinPrice(variants), product.currency)}`
+      : formatCurrency(printifyMinPrice(variants), product.currency)
+
+  return (
+    <div className="space-y-5">
+      {/* Price */}
+      <div>
+        <span className="text-3xl font-black text-black">{priceDisplay}</span>
+        {!selectedVariant && printifyHasPriceRange(variants) && (
+          <span className="ml-2 text-sm text-neutral-400">
+            — up to {formatCurrency(printifyMaxPrice(variants), product.currency)}
+          </span>
+        )}
+      </div>
+
+      {/* Color picker */}
+      {hasColors && (
+        <div>
+          <p className="text-xs font-bold text-neutral-700 mb-2.5 uppercase tracking-wider">
+            Color{selectedColor ? <span className="normal-case font-normal text-neutral-500 ml-1">— {selectedColor}</span> : ''}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {colors.map(color => (
+              <button
+                key={color}
+                onClick={() => handleColorSelect(color)}
+                className={`px-3.5 py-1.5 rounded-xl text-sm font-semibold border-2 transition-all ${
+                  selectedColor === color
+                    ? 'border-black text-black bg-black/5'
+                    : 'border-neutral-200 text-neutral-600 hover:border-neutral-400'
+                }`}
+              >
+                {color}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Size picker */}
+      <div>
+        <p className="text-xs font-bold text-neutral-700 mb-2.5 uppercase tracking-wider">
+          Size{selectedSize ? <span className="normal-case font-normal text-neutral-500 ml-1">— {selectedSize}</span> : ''}
+        </p>
+        {hasColors && !selectedColor ? (
+          <p className="text-xs text-neutral-400 italic">Select a color first</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {availableSizes.map(size => (
+              <button
+                key={size}
+                onClick={() => setSelectedSize(size)}
+                className={`min-w-[44px] px-3 py-1.5 rounded-xl text-sm font-semibold border-2 transition-all ${
+                  selectedSize === size
+                    ? 'border-black text-black bg-black/5'
+                    : 'border-neutral-200 text-neutral-600 hover:border-neutral-400'
+                }`}
+              >
+                {size}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Quantity */}
+      <div>
+        <p className="text-xs font-bold text-neutral-700 mb-2.5 uppercase tracking-wider">Quantity</p>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setQty(q => Math.max(1, q - 1))}
+            className="w-9 h-9 rounded-xl border border-neutral-200 flex items-center justify-center hover:border-neutral-400 transition-colors"
+          >
+            <Minus size={14} />
+          </button>
+          <span className="text-base font-bold w-6 text-center">{qty}</span>
+          <button
+            onClick={() => setQty(q => Math.min(10, q + 1))}
+            className="w-9 h-9 rounded-xl border border-neutral-200 flex items-center justify-center hover:border-neutral-400 transition-colors"
+          >
+            <Plus size={14} />
+          </button>
+        </div>
+      </div>
+
+      {/* Buy button */}
+      <MerchBuyButton
+        product={product}
+        selectedVariant={selectedVariant}
+        quantity={qty}
+        accent={accent}
+        hasColors={hasColors}
+        selectedColor={selectedColor}
+      />
+
+      {/* Fulfillment note */}
+      <p className="text-xs text-neutral-400 flex items-center gap-1.5">
+        <Shirt size={11} />
+        Printed on demand · Fulfilled by Printify · Ships to your door
+      </p>
+    </div>
+  )
+}
+
+// ── Merch buy button ───────────────────────────────────────────
+function MerchBuyButton({
+  product,
+  selectedVariant,
+  quantity,
+  accent,
+  hasColors,
+  selectedColor,
+}: {
+  product: Product
+  selectedVariant: ProductVariant | null
+  quantity: number
+  accent: string
+  hasColors: boolean
+  selectedColor: string | null
+}) {
+  const router = useRouter()
+  const isReady = selectedVariant !== null
+
+  let helperText = ''
+  if (hasColors && !selectedColor)   helperText = 'Please select a color'
+  else if (!selectedVariant)         helperText = 'Please select a size'
+
+  function handleBuy() {
+    if (!selectedVariant) return
+    const params = new URLSearchParams({
+      variant: selectedVariant.id,
+      qty: String(quantity),
     })
-  }, [slug])
+    router.push(`/checkout/merch/${product.id}?${params}`)
+  }
 
-  // Still loading
-  if (product === undefined) return <Skeleton />
+  return (
+    <div className="space-y-2">
+      <button
+        onClick={handleBuy}
+        disabled={!isReady}
+        className={`w-full py-3.5 px-4 rounded-xl text-sm font-bold text-white transition-all ${
+          isReady
+            ? 'hover:opacity-90 active:scale-[0.99]'
+            : 'opacity-40 cursor-not-allowed'
+        }`}
+        style={{ backgroundColor: isReady ? accent : '#9ca3af' }}
+      >
+        {isReady ? `Buy Now — ${formatCurrency(selectedVariant!.price * quantity, product.currency)}` : 'Select options to continue'}
+      </button>
+      {helperText && (
+        <p className="text-xs text-neutral-400 text-center">{helperText}</p>
+      )}
+    </div>
+  )
+}
 
-  // Not found
-  if (product === null) return <NotFound slug={slug} />
+// ── Merch product page ─────────────────────────────────────────
+function MerchProductPage({ product, accent }: { product: Product; accent: string }) {
+  const seller  = DEMO_SELLER_PROFILE
+  const variants = product.variants
 
-  const seller     = DEMO_SELLER_PROFILE
-  const storefront = DEMO_STOREFRONT
-  const accent     = storefront.themeColor
-  const isPrintify = product.source === 'printify'
+  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null)
+  const [qty, setQty]                          = useState(1)
+  const [activeImage, setActiveImage]          = useState<string | null>(
+    product.coverImageUrl,
+  )
 
+  // Update hero image when variant changes (use variant-specific image if available)
+  useEffect(() => {
+    if (!selectedVariant) {
+      setActiveImage(product.coverImageUrl)
+      return
+    }
+    // Look for an image whose title/position hints at the variant color
+    const colorHint = selectedVariant.color?.toLowerCase()
+    if (colorHint && product.galleryImageUrls.length > 0) {
+      // Heuristic: pick first gallery image for now (variant_ids mapping would require raw API data)
+      setActiveImage(product.coverImageUrl)
+    }
+  }, [selectedVariant, product])
+
+  const cleanDesc = product.description.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+  const allImages = [
+    ...(product.coverImageUrl ? [product.coverImageUrl] : []),
+    ...product.galleryImageUrls,
+  ]
+
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Nav */}
+      <nav className="sticky top-0 z-20 bg-white/95 backdrop-blur-sm border-b border-neutral-100">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 flex items-center justify-between" style={{ height: 52 }}>
+          <div className="flex items-center gap-3">
+            <SellBopLogo size="lg" />
+            <span className="hidden sm:block text-neutral-200 text-lg font-light">/</span>
+            <Link
+              href={`/store/${seller.slug}`}
+              className="hidden sm:flex items-center gap-1 text-xs font-medium text-neutral-500 hover:text-black transition-colors"
+            >
+              {seller.displayName}
+            </Link>
+          </div>
+          <Link
+            href={`/store/${seller.slug}`}
+            className="flex items-center gap-1.5 text-xs font-medium text-neutral-500 hover:text-black transition-colors"
+          >
+            <ArrowLeft size={12} /> Back to store
+          </Link>
+        </div>
+      </nav>
+
+      {/* Main */}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        <div className="lg:grid lg:grid-cols-2 lg:gap-12">
+
+          {/* Left: images */}
+          <div className="space-y-3 mb-8 lg:mb-0">
+            <div className="aspect-square rounded-2xl overflow-hidden border border-neutral-100 shadow-sm bg-neutral-50">
+              {activeImage ? (
+                <img src={activeImage} alt={product.name} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-neutral-300">
+                  <Shirt size={64} />
+                </div>
+              )}
+            </div>
+            {allImages.length > 1 && (
+              <div className="grid grid-cols-4 gap-2">
+                {allImages.slice(0, 4).map((url, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setActiveImage(url)}
+                    className={`aspect-square rounded-xl overflow-hidden border-2 transition-all ${
+                      activeImage === url ? 'border-black' : 'border-neutral-200 hover:border-neutral-400'
+                    }`}
+                  >
+                    <img src={url} alt={`${product.name} ${i + 1}`} className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Right: info + variant selector */}
+          <div className="space-y-6">
+            {/* Badges */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span
+                className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full"
+                style={{ backgroundColor: accent + '15', color: accent }}
+              >
+                Clothing
+              </span>
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full bg-violet-50 text-violet-600 border border-violet-200">
+                <Zap size={9} /> Printify
+              </span>
+            </div>
+
+            {/* Title */}
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-black text-black leading-tight mb-2">
+                {product.name}
+              </h1>
+              {product.shortDescription && (
+                <p className="text-sm text-neutral-500 leading-relaxed">{product.shortDescription}</p>
+              )}
+            </div>
+
+            {/* Variant selector + buy */}
+            <MerchVariantSelector
+              product={product}
+              onVariantChange={setSelectedVariant}
+              onQtyChange={setQty}
+              accent={accent}
+            />
+
+            {/* Description */}
+            {cleanDesc && cleanDesc !== product.name && (
+              <div className="border-t border-neutral-100 pt-5">
+                <p className="text-sm text-neutral-600 leading-relaxed">{cleanDesc}</p>
+              </div>
+            )}
+
+            {/* Creator */}
+            <div className="border border-neutral-100 rounded-2xl p-4 flex items-start gap-3">
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black flex-shrink-0"
+                style={{ backgroundColor: accent }}
+              >
+                {seller.displayName.charAt(0)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-bold text-black">{seller.displayName}</p>
+                  <Link
+                    href={`/store/${seller.slug}`}
+                    className="flex items-center gap-0.5 text-xs font-semibold text-neutral-400 hover:text-black transition-colors flex-shrink-0"
+                  >
+                    View store <ChevronRight size={12} />
+                  </Link>
+                </div>
+                {seller.bio && (
+                  <p className="text-xs text-neutral-500 mt-0.5 leading-relaxed line-clamp-2">{seller.bio}</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Digital product page (unchanged layout) ───────────────────
+function DigitalProductPage({ product, accent }: { product: Product; accent: string }) {
+  const seller   = DEMO_SELLER_PROFILE
   const discount = product.compareAtPrice
     ? Math.round((1 - product.price / product.compareAtPrice) * 100)
     : 0
 
-  // Build description bullets (sanitize HTML tags from Printify descriptions)
   const cleanDesc = product.description.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
-  const bullets = cleanDesc
+  const bullets   = cleanDesc
     .split(/[.!?]+/)
     .map(s => s.trim())
     .filter(s => s.length > 20)
     .slice(0, 4)
-
-  const typeLabel = isPrintify ? 'Clothing' : (TYPE_LABELS[product.productType] ?? 'Product')
 
   return (
     <div className="min-h-screen bg-white">
@@ -256,97 +495,54 @@ export function ClientProductPage({ slug }: { slug: string }) {
 
       {/* Mobile buy card */}
       <div className="lg:hidden border-b border-neutral-100 bg-neutral-50 px-4 py-4">
-        <MobileBuyCard product={product} accent={accent} discount={discount} />
+        <div className="space-y-3">
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-black text-black">{formatCurrency(product.price, product.currency)}</span>
+            {product.compareAtPrice && <span className="text-sm text-neutral-400 line-through">{formatCurrency(product.compareAtPrice)}</span>}
+            {discount > 0 && <span className="text-xs text-emerald-600 font-semibold">−{discount}%</span>}
+          </div>
+          <BuyButton
+            product={{ id: product.id, name: product.name, ctaText: product.ctaText, productType: product.productType }}
+            accent={accent}
+          />
+          <p className="text-xs text-neutral-400 text-center">{TYPE_DELIVERY[product.productType] ?? 'Delivered after purchase'}</p>
+        </div>
       </div>
 
-      {/* Main layout */}
+      {/* Main */}
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <div className="lg:grid lg:grid-cols-5 lg:gap-12">
-
-          {/* Left: product content */}
           <div className="lg:col-span-3 space-y-8">
-
-            {/* Hero image */}
             <div className="aspect-[4/3] rounded-2xl overflow-hidden border border-neutral-100 relative shadow-sm">
-              <ProductHeroImage product={product} />
+              <ProductImage src={product.coverImageUrl} alt={product.name} productType={product.productType} fill iconSize="lg" />
             </div>
 
-            {/* Gallery images (Printify) */}
-            {isPrintify && product.galleryImageUrls && product.galleryImageUrls.length > 0 && (
-              <div className="grid grid-cols-3 gap-2">
-                {product.galleryImageUrls.slice(0, 3).map((url, i) => (
-                  <div key={i} className="aspect-square rounded-xl overflow-hidden border border-neutral-100">
-                    <img src={url} alt={`${product.name} view ${i + 2}`} className="w-full h-full object-cover" />
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Title block */}
             <div>
               <div className="flex flex-wrap items-center gap-2 mb-3">
-                <span
-                  className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full"
-                  style={{ backgroundColor: accent + '15', color: accent }}
-                >
-                  {typeLabel}
+                <span className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full" style={{ backgroundColor: accent + '15', color: accent }}>
+                  {TYPE_LABELS[product.productType] ?? 'Product'}
                 </span>
-                {isPrintify && (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full bg-violet-50 text-violet-600 border border-violet-200">
-                    <Zap size={9} /> Printify · Fulfilled via Printify
-                  </span>
-                )}
-                {!isPrintify && product.salesCount > 50 && (
+                {product.salesCount > 50 && (
                   <span className="flex items-center gap-1 text-xs text-neutral-500 font-medium">
                     <Star size={11} className="fill-amber-400 text-amber-400" />
                     {product.salesCount.toLocaleString()}+ buyers
                   </span>
                 )}
               </div>
-
-              <h1 className="text-2xl sm:text-3xl font-black text-black leading-tight mb-3">
-                {product.name}
-              </h1>
-
+              <h1 className="text-2xl sm:text-3xl font-black text-black leading-tight mb-3">{product.name}</h1>
               {product.shortDescription && (
-                <p className="text-base text-neutral-600 leading-relaxed font-medium mb-4">
-                  {product.shortDescription}
-                </p>
+                <p className="text-base text-neutral-600 leading-relaxed font-medium mb-4">{product.shortDescription}</p>
               )}
-
-              <p className="text-sm text-neutral-600 leading-relaxed">
-                {cleanDesc || product.name}
-              </p>
+              <p className="text-sm text-neutral-600 leading-relaxed">{cleanDesc || product.name}</p>
             </div>
 
-            {/* What's included / Sizes */}
-            {isPrintify && product.variants && product.variants.length > 0 ? (
-              <div className="border border-neutral-100 rounded-2xl p-5 sm:p-6 bg-neutral-50/50">
-                <h2 className="text-sm font-bold text-black mb-4 flex items-center gap-2">
-                  <Shirt size={14} /> Available sizes
-                </h2>
-                <div className="flex flex-wrap gap-2">
-                  {product.variants.map(v => (
-                    <span key={v.id} className="text-sm px-3 py-1.5 border border-neutral-200 rounded-xl text-neutral-700 font-medium bg-white">
-                      {v.name}
-                    </span>
-                  ))}
-                </div>
-                <p className="text-xs text-neutral-400 mt-4 flex items-center gap-1">
-                  <Zap size={10} className="text-violet-400" />
-                  Printed and shipped by Printify
-                </p>
-              </div>
-            ) : bullets.length > 0 ? (
+            {bullets.length > 0 && (
               <div className="border border-neutral-100 rounded-2xl p-5 sm:p-6 bg-neutral-50/50">
                 <h2 className="text-sm font-bold text-black mb-4">What&apos;s included</h2>
                 <ul className="space-y-3">
                   {bullets.map((b, i) => (
                     <li key={i} className="flex items-start gap-3 text-sm text-neutral-700">
-                      <span
-                        className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
-                        style={{ backgroundColor: accent + '18' }}
-                      >
+                      <span className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: accent + '18' }}>
                         <Check size={11} style={{ color: accent }} />
                       </span>
                       {b}
@@ -362,41 +558,73 @@ export function ClientProductPage({ slug }: { slug: string }) {
                   )}
                 </ul>
               </div>
-            ) : null}
+            )}
 
-            {/* Creator card */}
             <div className="border border-neutral-100 rounded-2xl p-5 sm:p-6 flex items-start gap-4">
-              <div
-                className="w-12 h-12 rounded-xl flex items-center justify-center text-white text-xl font-black flex-shrink-0 shadow-sm"
-                style={{ backgroundColor: accent }}
-              >
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center text-white text-xl font-black flex-shrink-0 shadow-sm" style={{ backgroundColor: accent }}>
                 {seller.displayName.charAt(0)}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-sm font-bold text-black">{seller.displayName}</p>
-                  <Link
-                    href={`/store/${seller.slug}`}
-                    className="flex items-center gap-0.5 text-xs font-semibold text-neutral-400 hover:text-black transition-colors flex-shrink-0"
-                  >
+                  <Link href={`/store/${seller.slug}`} className="flex items-center gap-0.5 text-xs font-semibold text-neutral-400 hover:text-black transition-colors flex-shrink-0">
                     View store <ChevronRight size={12} />
                   </Link>
                 </div>
-                {seller.bio && (
-                  <p className="text-xs text-neutral-500 mt-1 leading-relaxed line-clamp-2">{seller.bio}</p>
-                )}
+                {seller.bio && <p className="text-xs text-neutral-500 mt-1 leading-relaxed line-clamp-2">{seller.bio}</p>}
               </div>
             </div>
           </div>
 
-          {/* Right: sticky buy card (desktop) */}
+          {/* Desktop buy card */}
           <div className="hidden lg:block lg:col-span-2">
-            <div className="sticky top-[72px]">
-              <DesktopBuyCard product={product} accent={accent} discount={discount} />
+            <div className="sticky top-[72px] bg-white border border-neutral-200 rounded-2xl overflow-hidden shadow-md">
+              <div className="aspect-[16/9] relative border-b border-neutral-100">
+                <ProductImage src={product.thumbnailUrl} alt={product.name} productType={product.productType} fill iconSize="md" />
+              </div>
+              <div className="p-6 space-y-5">
+                <div>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-black text-black">{formatCurrency(product.price, product.currency)}</span>
+                    {product.compareAtPrice && <span className="text-base text-neutral-400 line-through font-medium">{formatCurrency(product.compareAtPrice)}</span>}
+                  </div>
+                  {discount > 0 && <p className="text-xs text-emerald-600 font-semibold mt-1">Save {discount}% · {formatCurrency((product.compareAtPrice ?? 0) - product.price)} off</p>}
+                </div>
+                <BuyButton product={{ id: product.id, name: product.name, ctaText: product.ctaText, productType: product.productType }} accent={accent} />
+                <div className="border-t border-neutral-100 pt-4 space-y-2.5">
+                  <TrustRow icon={<Download size={12} />} text={TYPE_DELIVERY[product.productType] ?? 'Delivered after purchase'} />
+                  <TrustRow icon={<Shield size={12} />} text="Secure checkout · 30-day guarantee" />
+                  {product.supportEmail && (
+                    <TrustRow icon={<Check size={12} />} text={<>Questions? <a href={`mailto:${product.supportEmail}`} className="underline hover:text-neutral-700">Email support</a></>} />
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
   )
+}
+
+// ── Main client component ─────────────────────────────────────
+export function ClientProductPage({ slug }: { slug: string }) {
+  const [product, setProduct] = useState<Product | null | undefined>(undefined)
+
+  useEffect(() => {
+    demoProductRepo.findBySlug(slug).then(p => {
+      setProduct(p && p.status === 'published' ? p : null)
+    })
+  }, [slug])
+
+  if (product === undefined) return <Skeleton />
+  if (product === null)      return <NotFound slug={slug} />
+
+  const accent = DEMO_STOREFRONT.themeColor
+
+  if (product.source === 'printify') {
+    return <MerchProductPage product={product} accent={accent} />
+  }
+
+  return <DigitalProductPage product={product} accent={accent} />
 }

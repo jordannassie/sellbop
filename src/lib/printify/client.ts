@@ -20,6 +20,8 @@ import type {
   PrintifyProductsPage,
   PrintifyOrderPayload,
   PrintifyOrderResponse,
+  PrintifyShippingRequest,
+  PrintifyShippingResponse,
 } from './types'
 
 const BASE_URL = 'https://api.printify.com/v1'
@@ -103,6 +105,25 @@ export async function fetchProduct(
   if (!res.ok) {
     const body = await res.text()
     throw new Error(`Printify /product error ${res.status}: ${body}`)
+  }
+  return res.json()
+}
+
+export async function calculateShipping(
+  token: string,
+  shopId: string | number,
+  payload: PrintifyShippingRequest,
+): Promise<PrintifyShippingResponse> {
+  const url = `${BASE_URL}/shops/${shopId}/orders/shipping.json`
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: authHeaders(token),
+    body: JSON.stringify(payload),
+    cache: 'no-store',
+  })
+  if (!res.ok) {
+    const body = await res.text()
+    throw new Error(`Printify /shipping error ${res.status}: ${body}`)
   }
   return res.json()
 }

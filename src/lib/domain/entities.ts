@@ -76,11 +76,16 @@ export interface FileAsset {
 export interface ProductVariant {
   id: string
   productId: string
-  name: string
-  price: number
+  name: string          // Full title e.g. "Black / M" or "M"
+  price: number         // In dollars (e.g. 24.99) — Printify cents / 100
   compareAtPrice: number | null
   sku: string | null
   description: string | null
+  // ── Printify-specific ──────────────────────────────────────
+  color?: string | null                // Parsed from title e.g. "Black"
+  size?: string | null                 // Parsed from title e.g. "M"
+  printifyVariantId?: number           // Raw Printify numeric variant ID (for order creation)
+  isAvailable?: boolean                // false = sold out / disabled
 }
 
 export interface Product {
@@ -166,6 +171,9 @@ export interface Order {
   fulfillmentProvider?: FulfillmentProvider
   fulfillmentStatus?: FulfillmentStatus
   shippingAddress?: PrintifyShippingAddress | null
+  // ── Merch order fields ──────────────────────────────────
+  orderQuantity?: number
+  selectedVariantId?: string | null    // ProductVariant.id (our internal ID)
 }
 
 export interface PrintifyShippingAddress {
@@ -277,6 +285,28 @@ export interface CheckoutSession {
   discountAmount: number
   subtotal: number
   total: number
+  status: 'pending' | 'completed' | 'canceled'
+  createdAt: string
+}
+
+/** Checkout session for physical/merch products (Printify). */
+export interface MerchCheckoutSession {
+  id: string
+  productId: string
+  product: Product
+  seller: SellerProfile
+  selectedVariant: ProductVariant | null
+  quantity: number
+  buyerEmail: string | null
+  buyerName: string | null
+  buyerPhone: string | null
+  shippingAddress: PrintifyShippingAddress | null
+  shippingCents: number           // 0 until calculated
+  shippingMethodId: number | null
+  shippingCarrier: string | null
+  shippingCalculated: boolean
+  subtotalCents: number           // variant price in cents × quantity
+  totalCents: number              // subtotal + shipping
   status: 'pending' | 'completed' | 'canceled'
   createdAt: string
 }
