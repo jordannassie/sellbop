@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import {
   ExternalLink, Copy, Check, CloudUpload,
-  Star, Eye, EyeOff, Pencil, Plus, Lock, Package,
+  Star, Eye, EyeOff, Pencil, Plus, Lock, Package, Zap, Shirt,
 } from 'lucide-react'
 import Link from 'next/link'
 import {
@@ -231,7 +231,13 @@ function SortableProductRow({ product, isFeatured, onToggleFeatured, onToggleHid
               <span className="w-1 h-1 rounded-full bg-amber-400 flex-shrink-0" /> Draft
             </span>
           )}
-          <span className="text-[9px] text-neutral-400 font-semibold">{TYPE_LABELS[product.productType]}</span>
+          {product.source === 'printify' ? (
+            <span className="inline-flex items-center gap-0.5 text-[9px] font-bold bg-violet-50 text-violet-600 border border-violet-200 px-1.5 py-0.5 rounded-full">
+              <Zap size={7} /> Printify
+            </span>
+          ) : (
+            <span className="text-[9px] text-neutral-400 font-semibold">{TYPE_LABELS[product.productType]}</span>
+          )}
           <span className="text-[9px] text-neutral-500 font-bold">{formatCurrency(product.price, product.currency)}</span>
           {isFeatured && (
             <span className="inline-flex items-center gap-0.5 text-[9px] font-bold bg-amber-100 text-amber-700 border border-amber-300 px-1.5 py-0.5 rounded-full">
@@ -264,7 +270,7 @@ function SortableProductRow({ product, isFeatured, onToggleFeatured, onToggleHid
         </button>
         <button
           onClick={onToggleHidden}
-          title={isHidden ? 'Show on storefront' : 'Hide from storefront'}
+          title={isHidden ? 'Add to Store' : 'Hide from Store'}
           className={cn(
             'w-7 h-7 flex items-center justify-center rounded-lg transition-all',
             isHidden
@@ -274,13 +280,23 @@ function SortableProductRow({ product, isFeatured, onToggleFeatured, onToggleHid
         >
           {isHidden ? <EyeOff size={13} /> : <Eye size={13} />}
         </button>
-        <Link
-          href={`/dashboard/products/${product.id}`}
-          title="Edit product"
-          className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-300 hover:text-neutral-700 hover:bg-neutral-100 transition-all"
-        >
-          <Pencil size={11} />
-        </Link>
+        {product.source === 'printify' ? (
+          <Link
+            href="/dashboard/printify"
+            title="Managed in Printify"
+            className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-300 hover:text-violet-600 hover:bg-violet-50 transition-all"
+          >
+            <Shirt size={11} />
+          </Link>
+        ) : (
+          <Link
+            href={`/dashboard/products/${product.id}`}
+            title="Edit product"
+            className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-300 hover:text-neutral-700 hover:bg-neutral-100 transition-all"
+          >
+            <Pencil size={11} />
+          </Link>
+        )}
       </div>
     </div>
   )
@@ -290,16 +306,24 @@ function SortableProductRow({ product, isFeatured, onToggleFeatured, onToggleHid
 // Available product row (non-draggable; products not on store)
 // ─────────────────────────────────────────────────────────────
 
-function AvailableProductRow({ product, onAddToStore }: {
+function AvailableProductRow({ product, onAddToStore, onAddToFeatured, canFeature }: {
   product: Product
   onAddToStore: () => void
+  onAddToFeatured: () => void
+  canFeature: boolean
 }) {
-  const isLive = product.status === 'published'
+  const isLive      = product.status === 'published'
+  const isPrintify  = product.source === 'printify'
+
   return (
     <div className="flex items-center rounded-xl bg-neutral-50 border border-neutral-200 border-dashed hover:border-neutral-300 hover:bg-white hover:shadow-sm transition-all duration-150 overflow-hidden">
       {/* Thumbnail */}
       <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-neutral-100 my-2.5 ml-3 mr-0.5">
-        <ProductImage src={product.thumbnailUrl} alt={product.name} productType={product.productType} fill iconSize="sm" />
+        {product.thumbnailUrl && isPrintify ? (
+          <img src={product.thumbnailUrl} alt={product.name} className="w-full h-full object-cover" />
+        ) : (
+          <ProductImage src={product.thumbnailUrl} alt={product.name} productType={product.productType} fill iconSize="sm" />
+        )}
       </div>
 
       {/* Info */}
@@ -315,26 +339,50 @@ function AvailableProductRow({ product, onAddToStore }: {
               <span className="w-1 h-1 rounded-full bg-amber-400 flex-shrink-0" /> Draft
             </span>
           )}
-          <span className="text-[9px] text-neutral-400 font-semibold">{TYPE_LABELS[product.productType]}</span>
+          {isPrintify ? (
+            <span className="inline-flex items-center gap-0.5 text-[9px] font-bold bg-violet-50 text-violet-600 border border-violet-200 px-1.5 py-0.5 rounded-full">
+              <Zap size={7} /> Printify · Clothing
+            </span>
+          ) : (
+            <span className="text-[9px] text-neutral-400 font-semibold">{TYPE_LABELS[product.productType]}</span>
+          )}
           <span className="text-[9px] text-neutral-500 font-bold">{formatCurrency(product.price, product.currency)}</span>
         </div>
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-1.5 pr-3 flex-shrink-0">
+      <div className="flex items-center gap-1 pr-3 flex-shrink-0">
         <button
           onClick={onAddToStore}
-          className="flex items-center gap-1 h-7 px-2.5 rounded-lg text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-colors whitespace-nowrap"
+          className="flex items-center gap-1 h-7 px-2 rounded-lg text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-colors whitespace-nowrap"
         >
-          <Eye size={10} /> Add to Store
+          <Eye size={9} /> Add to Store
         </button>
-        <Link
-          href={`/dashboard/products/${product.id}`}
-          title="Edit Product"
-          className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-300 hover:text-neutral-700 hover:bg-neutral-100 transition-all"
+        <button
+          onClick={onAddToFeatured}
+          disabled={!canFeature}
+          title={canFeature ? 'Add to Featured' : 'Max 3 featured products'}
+          className="flex items-center gap-1 h-7 px-2 rounded-lg text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-colors whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          <Pencil size={11} />
-        </Link>
+          <Star size={9} fill="currentColor" /> Feature
+        </button>
+        {isPrintify ? (
+          <Link
+            href="/dashboard/printify"
+            title="Managed in Printify"
+            className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-300 hover:text-violet-600 hover:bg-violet-50 transition-all"
+          >
+            <Shirt size={11} />
+          </Link>
+        ) : (
+          <Link
+            href={`/dashboard/products/${product.id}`}
+            title="Edit Product"
+            className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-300 hover:text-neutral-700 hover:bg-neutral-100 transition-all"
+          >
+            <Pencil size={11} />
+          </Link>
+        )}
       </div>
     </div>
   )
@@ -501,17 +549,22 @@ function ProductsTab() {
   )
 
   // ── Computed groups ───────────────────────────────────────────
-  const orderMap = new Map(config.productOrder.map((pid, i) => [pid, i]))
-  const allSorted = [...products].sort((a, b) => (orderMap.get(a.id) ?? 999) - (orderMap.get(b.id) ?? 999))
+  const orderMap        = new Map(config.productOrder.map((pid, i) => [pid, i]))
+  const productOrderSet = new Set(config.productOrder)
+  const allSorted       = [...products].sort((a, b) => (orderMap.get(a.id) ?? 999) - (orderMap.get(b.id) ?? 999))
 
-  const featuredProducts  = config.featuredProductIds
+  const featuredProducts = config.featuredProductIds
     .map(fid => products.find(p => p.id === fid))
     .filter(Boolean) as Product[]
 
-  // "On store" = exists and not in hiddenProductIds
-  const storeProducts     = allSorted.filter(p => !config.hiddenProductIds.includes(p.id))
-  // "Available" = exists but is in hiddenProductIds (not currently shown)
-  const availableProducts = allSorted.filter(p =>  config.hiddenProductIds.includes(p.id))
+  // "On store"  = explicitly in productOrder AND not in hiddenProductIds
+  const storeProducts     = allSorted.filter(p =>
+    productOrderSet.has(p.id) && !config.hiddenProductIds.includes(p.id),
+  )
+  // "Available" = explicitly hidden OR never added to productOrder (newly synced Printify, etc.)
+  const availableProducts = allSorted.filter(p =>
+    config.hiddenProductIds.includes(p.id) || !productOrderSet.has(p.id),
+  )
 
   const storeProductIds = storeProducts.map(p => p.id)
   const canFeature      = config.featuredProductIds.length < 3
@@ -529,8 +582,9 @@ function ProductsTab() {
     const { active, over } = event
     if (!over || active.id === over.id) return
     const newStoreOrder = arrayMove(storeProductIds, storeProductIds.indexOf(active.id as string), storeProductIds.indexOf(over.id as string))
-    // Merge: reordered store products + available (hidden) products appended
-    update({ productOrder: [...newStoreOrder, ...availableProducts.map(p => p.id)] })
+    // Hidden products preserve their slot in productOrder; untracked products stay untracked
+    const hiddenInOrder = config.productOrder.filter(id => config.hiddenProductIds.includes(id))
+    update({ productOrder: [...newStoreOrder, ...hiddenInOrder] })
   }
 
   function toggleFeatured(productId: string) {
@@ -545,16 +599,31 @@ function ProductsTab() {
   function hideFromStore(productId: string) {
     // Remove from featured too — hidden products can't be featured
     update({
-      hiddenProductIds:    [...config.hiddenProductIds, productId],
-      featuredProductIds:  config.featuredProductIds.filter(id => id !== productId),
+      hiddenProductIds:   [...config.hiddenProductIds, productId],
+      featuredProductIds: config.featuredProductIds.filter(id => id !== productId),
     })
   }
 
   function addToStore(productId: string) {
-    // Unhide: bring back to Store Products (appended at end)
-    const newHidden   = config.hiddenProductIds.filter(id => id !== productId)
-    const newOrder    = [...storeProductIds, productId, ...newHidden]
+    const newHidden = config.hiddenProductIds.filter(id => id !== productId)
+    // If not yet in productOrder (newly synced), append it
+    const newOrder = productOrderSet.has(productId)
+      ? config.productOrder  // already in order, just unhide
+      : [...config.productOrder, productId]
     update({ hiddenProductIds: newHidden, productOrder: newOrder })
+  }
+
+  function addToFeatured(productId: string) {
+    if (config.featuredProductIds.length >= 3) return
+    const newHidden = config.hiddenProductIds.filter(id => id !== productId)
+    const newOrder  = productOrderSet.has(productId)
+      ? config.productOrder
+      : [...config.productOrder, productId]
+    update({
+      featuredProductIds: [...config.featuredProductIds, productId],
+      hiddenProductIds:   newHidden,
+      productOrder:       newOrder,
+    })
   }
 
   return (
@@ -680,7 +749,8 @@ function ProductsTab() {
           </CardHeader>
           <CardContent>
             <p className="text-[11px] text-neutral-400 mb-3 leading-relaxed">
-              These products exist in your account but are not shown on your public store. Click <strong className="text-neutral-600">Add to Store</strong> to make one visible.
+              Products in your account that are not currently on your store — including newly synced Printify clothing.
+              Click <strong className="text-neutral-600">Add to Store</strong> or <strong className="text-neutral-600">Add to Featured</strong> to make them visible.
             </p>
             {availableProducts.length === 0 && products.length === 0 ? (
               <div className="flex flex-col items-center py-6 text-center gap-2">
@@ -695,7 +765,13 @@ function ProductsTab() {
             ) : (
               <div className="space-y-2">
                 {availableProducts.map(p => (
-                  <AvailableProductRow key={p.id} product={p} onAddToStore={() => addToStore(p.id)} />
+                  <AvailableProductRow
+                    key={p.id}
+                    product={p}
+                    onAddToStore={() => addToStore(p.id)}
+                    onAddToFeatured={() => addToFeatured(p.id)}
+                    canFeature={canFeature}
+                  />
                 ))}
               </div>
             )}

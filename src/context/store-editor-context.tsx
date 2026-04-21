@@ -3,12 +3,11 @@ import {
   createContext, useContext, useState, useCallback,
   useEffect, ReactNode,
 } from 'react'
-import type { Storefront } from '@/lib/domain/entities'
-import { DEMO_STOREFRONT, DEMO_PRODUCTS } from '@/lib/demo-data/seed'
-import { demoStorefrontRepo } from '@/lib/adapters/demo/repositories'
+import type { Storefront, Product } from '@/lib/domain/entities'
+import { DEMO_STOREFRONT } from '@/lib/demo-data/seed'
+import { demoStorefrontRepo, demoProductRepo } from '@/lib/adapters/demo/repositories'
 import { DEMO_SELLER_PROFILE } from '@/lib/demo-data/seed'
 import { toast } from 'sonner'
-import type { Product } from '@/lib/domain/entities'
 
 interface StoreEditorCtx {
   config: Storefront
@@ -24,13 +23,17 @@ const StoreEditorContext = createContext<StoreEditorCtx | null>(null)
 
 export function StoreEditorProvider({ children }: { children: ReactNode }) {
   const [config, setConfig] = useState<Storefront>(DEMO_STOREFRONT)
+  const [products, setProducts] = useState<Product[]>([])
   const [isDirty, setIsDirty] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
-  // Load persisted storefront on mount
+  // Load persisted storefront + ALL account products (including Printify) on mount
   useEffect(() => {
     demoStorefrontRepo.findBySellerId(DEMO_SELLER_PROFILE.id).then(s => {
       if (s) setConfig(s as Storefront)
+    })
+    demoProductRepo.findAll(DEMO_SELLER_PROFILE.id).then(all => {
+      setProducts(all.length > 0 ? all : [])
     })
   }, [])
 
@@ -81,7 +84,7 @@ export function StoreEditorProvider({ children }: { children: ReactNode }) {
   return (
     <StoreEditorContext.Provider value={{
       config,
-      products: DEMO_PRODUCTS,
+      products,
       isDirty,
       isSaving,
       update,
