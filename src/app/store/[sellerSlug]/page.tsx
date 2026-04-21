@@ -1,25 +1,25 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { Globe } from 'lucide-react'
+import { Globe, ArrowRight } from 'lucide-react'
 import { ProductImage } from '@/components/ui/product-image'
 import { SellBopLogo } from '@/components/ui/sellbop-logo'
 import { DEMO_SELLER_PROFILE, DEMO_STOREFRONT, DEMO_PRODUCTS } from '@/lib/demo-data/seed'
-import { formatCurrency } from '@/lib/utils'
-import { cn } from '@/lib/utils'
+import { formatCurrency, cn } from '@/lib/utils'
 import type { Metadata } from 'next'
 import type { Product, Storefront } from '@/lib/domain/entities'
 
-function TwitterIcon() {
+// ── Social Icons ──────────────────────────────────────────────
+function TwitterIcon({ size = 15 }: { size?: number }) {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
       <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.259 5.63 5.905-5.63Zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
     </svg>
   )
 }
 
-function InstagramIcon() {
+function InstagramIcon({ size = 15 }: { size?: number }) {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
       <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
       <circle cx="12" cy="12" r="4" />
       <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" stroke="none" />
@@ -27,17 +27,25 @@ function InstagramIcon() {
   )
 }
 
-function YouTubeIcon() {
+function YouTubeIcon({ size = 15 }: { size?: number }) {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
       <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
     </svg>
   )
 }
 
 const TYPE_LABELS: Record<string, string> = {
+  digital_download: 'Digital Download',
+  service_offer: 'Service',
+  subscription: 'Subscription',
+  bundle: 'Bundle',
+  membership_ready: 'Membership',
+}
+
+const TYPE_SHORT: Record<string, string> = {
   digital_download: 'Digital', service_offer: 'Service',
-  subscription: 'Subscription', bundle: 'Bundle', membership_ready: 'Membership',
+  subscription: 'Monthly', bundle: 'Bundle', membership_ready: 'Member',
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ sellerSlug: string }> }): Promise<Metadata> {
@@ -46,6 +54,10 @@ export async function generateMetadata({ params }: { params: Promise<{ sellerSlu
   return {
     title: `${DEMO_STOREFRONT.title} — SellBop`,
     description: DEMO_STOREFRONT.bio ?? undefined,
+    openGraph: {
+      title: `${DEMO_STOREFRONT.title} — SellBop`,
+      description: DEMO_STOREFRONT.bio ?? undefined,
+    },
   }
 }
 
@@ -64,182 +76,334 @@ export default async function StorefrontPage({ params }: { params: Promise<{ sel
     .filter(Boolean) as Product[]
   const rest = published.filter(p => !storefront.featuredProductIds.includes(p.id))
 
+  const accent = storefront.themeColor
+
   return (
     <div className="min-h-screen bg-white">
-      {/* Top bar */}
-      <div className="border-b border-neutral-100 bg-white sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 h-12 flex items-center">
+      {/* ── Top nav bar ────────────────────────────────────────── */}
+      <nav className="sticky top-0 z-20 bg-white/95 backdrop-blur-sm border-b border-neutral-100">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 h-13 flex items-center justify-between" style={{ height: 52 }}>
           <SellBopLogo size="lg" />
+          <a
+            href={`/store/${sellerSlug}#products`}
+            className="text-xs font-semibold text-neutral-500 hover:text-black transition-colors hidden sm:block"
+          >
+            Browse Products
+          </a>
         </div>
-      </div>
+      </nav>
 
-      {/* Store header */}
+      {/* ── Store header ───────────────────────────────────────── */}
       <StoreHeader storefront={storefront} />
 
-      {/* Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 pb-16">
-        {/* Featured */}
+      {/* ── Main content ───────────────────────────────────────── */}
+      <div id="products" className="max-w-3xl mx-auto px-4 sm:px-6 pb-20">
+
+        {/* Featured products */}
         {featured.length > 0 && (
-          <section className="pt-10">
-            <SectionLabel>Featured</SectionLabel>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-              {featured.map(p => <ProductCard key={p.id} product={p} accent={storefront.themeColor} featured />)}
-            </div>
+          <section aria-label="Featured products" className="pt-12 sm:pt-16">
+            <SectionHeading
+              label="Featured"
+              accent={accent}
+              count={featured.length}
+            />
+            {featured.length === 1 ? (
+              // Hero card for single featured
+              <div className="mt-5">
+                <HeroProductCard product={featured[0]} accent={accent} />
+              </div>
+            ) : (
+              <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+                {featured.map(p => <ProductCard key={p.id} product={p} accent={accent} featured />)}
+              </div>
+            )}
           </section>
         )}
 
         {/* All products */}
         {rest.length > 0 && (
-          <section className="pt-10">
-            <SectionLabel>All Products</SectionLabel>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-              {rest.map(p => <ProductCard key={p.id} product={p} accent={storefront.themeColor} />)}
+          <section aria-label="All products" className="pt-14 sm:pt-16">
+            <SectionHeading
+              label="All Products"
+              accent={accent}
+              count={rest.length}
+            />
+            <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+              {rest.map(p => <ProductCard key={p.id} product={p} accent={accent} />)}
             </div>
           </section>
         )}
 
         {/* Empty state */}
         {published.length === 0 && (
-          <div className="py-24 text-center">
-            <p className="text-4xl mb-3">🛍️</p>
-            <p className="text-neutral-500 text-sm">No products here yet.</p>
+          <div className="py-32 text-center">
+            <div className="text-5xl mb-4">✦</div>
+            <p className="text-neutral-400 text-sm font-medium">Products coming soon.</p>
           </div>
         )}
       </div>
 
-      {/* Footer */}
-      <footer className="border-t border-neutral-100 py-8 text-center">
-        <p className="text-xs text-neutral-400 flex items-center justify-center gap-1.5">
-          Powered by <SellBopLogo size="sm" />
-        </p>
+      {/* ── Footer ─────────────────────────────────────────────── */}
+      <footer className="border-t border-neutral-100 py-10">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-xs text-neutral-400 flex items-center gap-1.5">
+            Powered by <SellBopLogo size="sm" />
+          </p>
+          <a
+            href="/"
+            className="text-xs font-medium text-neutral-400 hover:text-black transition-colors flex items-center gap-1"
+          >
+            Sell your own products <ArrowRight size={11} />
+          </a>
+        </div>
       </footer>
     </div>
   )
 }
 
-// ── Section Label ─────────────────────────────────────────────
-function SectionLabel({ children }: { children: React.ReactNode }) {
+// ── Section Heading ───────────────────────────────────────────
+function SectionHeading({ label, accent, count }: { label: string; accent: string; count: number }) {
   return (
-    <h2 className="text-xs font-semibold text-neutral-400 uppercase tracking-widest">
-      {children}
-    </h2>
+    <div className="flex items-center gap-3">
+      <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ backgroundColor: accent }} />
+      <h2 className="text-sm font-bold text-black tracking-tight">{label}</h2>
+      <span className="text-xs text-neutral-400 font-medium">{count}</span>
+      <div className="flex-1 h-px bg-neutral-100" />
+    </div>
   )
 }
 
 // ── Store Header ──────────────────────────────────────────────
 function StoreHeader({ storefront }: { storefront: Storefront }) {
   const socialLinks = [
-    storefront.socialLinks.twitter && { href: storefront.socialLinks.twitter, icon: <TwitterIcon />, label: 'Twitter / X' },
-    storefront.socialLinks.instagram && { href: storefront.socialLinks.instagram, icon: <InstagramIcon />, label: 'Instagram' },
-    storefront.socialLinks.youtube && { href: storefront.socialLinks.youtube, icon: <YouTubeIcon />, label: 'YouTube' },
-    storefront.socialLinks.website && { href: storefront.socialLinks.website, icon: <Globe size={15} />, label: 'Website' },
-  ].filter(Boolean) as { href: string; icon: React.ReactNode; label: string }[]
+    storefront.socialLinks.twitter && {
+      href: storefront.socialLinks.twitter, icon: <TwitterIcon size={14} />, label: 'X', fullLabel: 'Twitter / X',
+    },
+    storefront.socialLinks.instagram && {
+      href: storefront.socialLinks.instagram, icon: <InstagramIcon size={14} />, label: 'Instagram', fullLabel: 'Instagram',
+    },
+    storefront.socialLinks.youtube && {
+      href: storefront.socialLinks.youtube, icon: <YouTubeIcon size={14} />, label: 'YouTube', fullLabel: 'YouTube',
+    },
+    storefront.socialLinks.website && {
+      href: storefront.socialLinks.website, icon: <Globe size={14} />, label: 'Website', fullLabel: 'Website',
+    },
+  ].filter(Boolean) as { href: string; icon: React.ReactNode; label: string; fullLabel: string }[]
 
   if (storefront.headerLayout === 'centered') {
     return (
-      <div className="border-b border-neutral-100 py-12 sm:py-16">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 flex flex-col items-center text-center gap-4">
-          <div
-            className="w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center text-white text-3xl sm:text-4xl font-black shadow-md"
-            style={{ backgroundColor: storefront.themeColor }}
-          >
-            {storefront.title.charAt(0)}
+      <header className="py-14 sm:py-20">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 flex flex-col items-center text-center">
+          {/* Avatar */}
+          <div className="relative mb-6">
+            <div
+              className="w-24 h-24 sm:w-28 sm:h-28 rounded-full flex items-center justify-center text-white text-4xl sm:text-5xl font-black shadow-xl"
+              style={{ backgroundColor: storefront.themeColor }}
+            >
+              {storefront.title.charAt(0)}
+            </div>
+            {/* Subtle ring */}
+            <div
+              className="absolute inset-0 rounded-full"
+              style={{ boxShadow: `0 0 0 4px white, 0 0 0 6px ${storefront.themeColor}30` }}
+            />
           </div>
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-black text-black tracking-tight">{storefront.title}</h1>
-            {storefront.headline && (
-              <p className="text-neutral-500 text-sm sm:text-base mt-1 font-medium">{storefront.headline}</p>
-            )}
-            {storefront.bio && (
-              <p className="text-neutral-600 text-sm mt-3 max-w-md mx-auto leading-relaxed">{storefront.bio}</p>
-            )}
-          </div>
+
+          <h1 className="text-3xl sm:text-4xl font-black text-black tracking-tight leading-none">
+            {storefront.title}
+          </h1>
+
+          {storefront.headline && (
+            <p className="text-neutral-500 text-base sm:text-lg mt-2 font-medium max-w-sm">
+              {storefront.headline}
+            </p>
+          )}
+
+          {storefront.bio && (
+            <p className="text-neutral-600 text-sm sm:text-base mt-4 max-w-md leading-relaxed">
+              {storefront.bio}
+            </p>
+          )}
+
           {socialLinks.length > 0 && (
-            <div className="flex items-center gap-2 flex-wrap justify-center">
-              {socialLinks.map(l => <SocialButton key={l.href} {...l} />)}
+            <div className="flex items-center gap-2 mt-6 flex-wrap justify-center">
+              {socialLinks.map(l => <SocialPill key={l.href} {...l} accent={storefront.themeColor} />)}
             </div>
           )}
         </div>
-      </div>
+      </header>
     )
   }
 
   if (storefront.headerLayout === 'banner_avatar') {
     return (
-      <div className="border-b border-neutral-100">
+      <header>
+        {/* Banner */}
         <div
-          className="h-24 sm:h-32 w-full"
-          style={{ background: `linear-gradient(135deg, ${storefront.themeColor}22 0%, ${storefront.themeColor}11 100%)` }}
+          className="h-28 sm:h-40 w-full"
+          style={{
+            background: `linear-gradient(135deg, ${storefront.themeColor}28 0%, ${storefront.themeColor}10 60%, transparent 100%)`,
+          }}
         />
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 pb-8">
-          <div
-            className="w-18 h-18 sm:w-20 sm:h-20 rounded-full flex items-center justify-center text-white text-2xl sm:text-3xl font-black shadow-lg border-4 border-white -mt-9 sm:-mt-10"
-            style={{ backgroundColor: storefront.themeColor, width: 72, height: 72 }}
-          >
-            {storefront.title.charAt(0)}
+        <div className="max-w-3xl mx-auto px-4 sm:px-6">
+          {/* Avatar overlapping banner */}
+          <div className="flex items-end gap-5 -mt-10 sm:-mt-12 mb-5">
+            <div
+              className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl flex items-center justify-center text-white text-3xl sm:text-4xl font-black shadow-xl border-4 border-white flex-shrink-0"
+              style={{ backgroundColor: storefront.themeColor }}
+            >
+              {storefront.title.charAt(0)}
+            </div>
           </div>
-          <div className="mt-4">
-            <h1 className="text-2xl sm:text-3xl font-black text-black tracking-tight">{storefront.title}</h1>
-            {storefront.headline && (
-              <p className="text-neutral-500 text-sm mt-0.5 font-medium">{storefront.headline}</p>
-            )}
-            {storefront.bio && (
-              <p className="text-neutral-600 text-sm mt-2 max-w-lg leading-relaxed">{storefront.bio}</p>
-            )}
-            {socialLinks.length > 0 && (
-              <div className="flex items-center gap-2 mt-3 flex-wrap">
-                {socialLinks.map(l => <SocialButton key={l.href} {...l} />)}
-              </div>
-            )}
-          </div>
+          <h1 className="text-2xl sm:text-3xl font-black text-black tracking-tight leading-tight">
+            {storefront.title}
+          </h1>
+          {storefront.headline && (
+            <p className="text-neutral-500 text-sm sm:text-base mt-1 font-medium">
+              {storefront.headline}
+            </p>
+          )}
+          {storefront.bio && (
+            <p className="text-neutral-600 text-sm mt-3 max-w-xl leading-relaxed">
+              {storefront.bio}
+            </p>
+          )}
+          {socialLinks.length > 0 && (
+            <div className="flex items-center gap-2 mt-4 flex-wrap pb-8 border-b border-neutral-100">
+              {socialLinks.map(l => <SocialPill key={l.href} {...l} accent={storefront.themeColor} />)}
+            </div>
+          )}
+          {socialLinks.length === 0 && <div className="pb-8 border-b border-neutral-100" />}
         </div>
-      </div>
+      </header>
     )
   }
 
   // Default: left_avatar
   return (
-    <div className="border-b border-neutral-100 py-8 sm:py-12">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6">
+    <header className="border-b border-neutral-100 py-10 sm:py-14">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6">
         <div className="flex items-start gap-5 sm:gap-7">
-          <div
-            className="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center text-white text-2xl sm:text-3xl font-black flex-shrink-0 shadow-md"
-            style={{ backgroundColor: storefront.themeColor }}
-          >
-            {storefront.title.charAt(0)}
+          {/* Avatar */}
+          <div className="flex-shrink-0">
+            <div
+              className="w-18 h-18 sm:w-22 sm:h-22 rounded-2xl flex items-center justify-center text-white font-black shadow-lg"
+              style={{
+                backgroundColor: storefront.themeColor,
+                width: 72, height: 72,
+                fontSize: 32,
+              }}
+            >
+              {storefront.title.charAt(0)}
+            </div>
           </div>
-          <div className="flex-1 min-w-0 pt-1">
-            <h1 className="text-xl sm:text-2xl font-black text-black tracking-tight">{storefront.title}</h1>
+
+          {/* Text */}
+          <div className="flex-1 min-w-0 pt-0.5">
+            <h1 className="text-2xl sm:text-3xl font-black text-black tracking-tight leading-tight">
+              {storefront.title}
+            </h1>
             {storefront.headline && (
-              <p className="text-neutral-500 text-sm mt-0.5 font-medium">{storefront.headline}</p>
+              <p className="text-neutral-500 text-sm sm:text-base mt-1 font-medium leading-snug">
+                {storefront.headline}
+              </p>
             )}
             {storefront.bio && (
-              <p className="text-neutral-600 text-sm mt-2 max-w-lg leading-relaxed">{storefront.bio}</p>
+              <p className="text-neutral-600 text-sm sm:text-[15px] mt-3 max-w-xl leading-relaxed">
+                {storefront.bio}
+              </p>
             )}
             {socialLinks.length > 0 && (
-              <div className="flex items-center gap-2 mt-3 flex-wrap">
-                {socialLinks.map(l => <SocialButton key={l.href} {...l} />)}
+              <div className="flex items-center gap-2 mt-4 flex-wrap">
+                {socialLinks.map(l => <SocialPill key={l.href} {...l} accent={storefront.themeColor} />)}
               </div>
             )}
           </div>
         </div>
       </div>
-    </div>
+    </header>
   )
 }
 
-// ── Social Button ─────────────────────────────────────────────
-function SocialButton({ href, icon, label }: { href: string; icon: React.ReactNode; label: string }) {
+// ── Social Pill ───────────────────────────────────────────────
+function SocialPill({ href, icon, label, fullLabel, accent }: {
+  href: string; icon: React.ReactNode; label: string; fullLabel: string; accent: string
+}) {
   return (
     <a
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label={label}
-      className="w-9 h-9 rounded-xl border border-neutral-200 flex items-center justify-center text-neutral-500 hover:text-black hover:border-neutral-400 hover:bg-neutral-50 transition-all"
+      aria-label={fullLabel}
+      className="flex items-center gap-1.5 h-8 px-3 rounded-full border border-neutral-200 text-xs font-semibold text-neutral-600 hover:border-neutral-400 hover:text-black hover:bg-neutral-50 transition-all"
     >
-      {icon}
+      <span className="text-neutral-400">{icon}</span>
+      {label}
     </a>
+  )
+}
+
+// ── Hero Card (single featured product) ───────────────────────
+function HeroProductCard({ product, accent }: { product: Product; accent: string }) {
+  const radius = 'rounded-2xl'
+  return (
+    <Link href={`/p/${product.slug}`} className="group block">
+      <div className={cn(
+        'bg-white border border-neutral-200 overflow-hidden transition-all duration-200 shadow-sm hover:shadow-xl hover:-translate-y-0.5',
+        radius,
+      )}>
+        <div className="sm:flex">
+          {/* Image — square on mobile, fixed size on desktop */}
+          <div className="aspect-square sm:w-64 sm:aspect-auto sm:h-64 relative overflow-hidden bg-neutral-50 flex-shrink-0">
+            <ProductImage src={product.thumbnailUrl} alt={product.name} productType={product.productType} fill iconSize="lg" />
+          </div>
+
+          {/* Content */}
+          <div className="p-6 sm:p-8 flex flex-col flex-1">
+            <div className="flex items-center gap-2 mb-3">
+              <span
+                className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full"
+                style={{ backgroundColor: accent + '15', color: accent }}
+              >
+                ✦ Featured
+              </span>
+              <span className="text-[10px] text-neutral-400 font-semibold uppercase tracking-wide">
+                {TYPE_SHORT[product.productType]}
+              </span>
+            </div>
+
+            <h3 className="text-xl sm:text-2xl font-black text-black leading-tight group-hover:opacity-80 transition-opacity">
+              {product.name}
+            </h3>
+
+            {product.shortDescription && (
+              <p className="text-neutral-500 text-sm mt-2 leading-relaxed flex-1 line-clamp-3">
+                {product.shortDescription}
+              </p>
+            )}
+
+            <div className="mt-6 flex items-center justify-between">
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-black text-black">
+                  {formatCurrency(product.price, product.currency)}
+                </span>
+                {product.compareAtPrice && (
+                  <span className="text-sm text-neutral-400 line-through font-medium">
+                    {formatCurrency(product.compareAtPrice)}
+                  </span>
+                )}
+              </div>
+              <span
+                className="flex items-center gap-1.5 text-sm font-bold px-5 py-2.5 rounded-xl text-white transition-all group-hover:opacity-90 group-hover:scale-[0.98]"
+                style={{ backgroundColor: accent }}
+              >
+                {product.ctaText} <ArrowRight size={14} />
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Link>
   )
 }
 
@@ -250,53 +414,56 @@ function ProductCard({ product, accent, featured }: { product: Product; accent: 
       <div className={cn(
         'bg-white rounded-2xl border overflow-hidden transition-all duration-200 h-full flex flex-col',
         featured
-          ? 'border-neutral-200 shadow-sm hover:shadow-lg hover:-translate-y-0.5'
-          : 'border-neutral-150 hover:border-neutral-300 hover:shadow-md',
+          ? 'border-neutral-200 shadow-sm hover:shadow-xl hover:-translate-y-1'
+          : 'border-neutral-100 hover:border-neutral-300 hover:shadow-lg hover:-translate-y-0.5',
       )}>
-        {/* Image */}
-        <div className="aspect-video relative overflow-hidden bg-neutral-50">
+        {/* Image — 4:3 ratio feels less "video" and more "product" */}
+        <div className="aspect-[4/3] relative overflow-hidden bg-neutral-50 flex-shrink-0">
           <ProductImage src={product.thumbnailUrl} alt={product.name} productType={product.productType} fill iconSize="md" />
+          {/* Featured accent overlay */}
+          {featured && (
+            <div
+              className="absolute top-3 left-3 text-[10px] font-bold px-2 py-0.5 rounded-full text-white"
+              style={{ backgroundColor: accent }}
+            >
+              ✦ Featured
+            </div>
+          )}
         </div>
 
         {/* Body */}
-        <div className="p-4 sm:p-5 flex flex-col flex-1">
-          {/* Type badge */}
-          <div className="flex items-center gap-1.5 mb-2">
-            <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">
-              {TYPE_LABELS[product.productType]}
-            </span>
-            {featured && (
-              <span
-                className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md"
-                style={{ backgroundColor: accent + '18', color: accent }}
-              >
-                Featured
-              </span>
-            )}
-          </div>
+        <div className="p-4 sm:p-5 flex flex-col flex-1 gap-2">
+          {/* Type tag */}
+          <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">
+            {TYPE_SHORT[product.productType]}
+          </span>
 
           {/* Name */}
-          <p className="font-bold text-black text-sm sm:text-base leading-tight group-hover:underline underline-offset-2 decoration-neutral-300">
+          <p className="font-bold text-black text-sm sm:text-[15px] leading-snug group-hover:opacity-75 transition-opacity">
             {product.name}
           </p>
 
           {/* Short description */}
           {product.shortDescription && (
-            <p className="text-xs sm:text-sm text-neutral-500 mt-1.5 leading-relaxed line-clamp-2 flex-1">
+            <p className="text-xs text-neutral-500 leading-relaxed line-clamp-2 flex-1">
               {product.shortDescription}
             </p>
           )}
 
-          {/* Price row */}
-          <div className="flex items-center justify-between mt-3 pt-3 border-t border-neutral-100">
-            <div className="flex items-baseline gap-2">
-              <span className="font-black text-black text-base">{formatCurrency(product.price, product.currency)}</span>
+          {/* Price + CTA */}
+          <div className="flex items-center justify-between pt-3 mt-auto border-t border-neutral-100">
+            <div className="flex items-baseline gap-1.5">
+              <span className="font-black text-black text-base leading-none">
+                {formatCurrency(product.price, product.currency)}
+              </span>
               {product.compareAtPrice && (
-                <span className="text-xs text-neutral-400 line-through">{formatCurrency(product.compareAtPrice)}</span>
+                <span className="text-xs text-neutral-400 line-through">
+                  {formatCurrency(product.compareAtPrice)}
+                </span>
               )}
             </div>
             <span
-              className="text-xs font-semibold px-3 py-1 rounded-lg text-white transition-opacity group-hover:opacity-90"
+              className="text-[11px] font-bold px-3 py-1.5 rounded-lg text-white transition-all group-hover:opacity-80"
               style={{ backgroundColor: accent }}
             >
               {product.ctaText}
