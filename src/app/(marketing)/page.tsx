@@ -83,6 +83,11 @@ export default function HomePage() {
       </section>
 
       {/* ══════════════════════════════════════════════════════════════
+          INTEGRATIONS — Connect the platforms you already sell on
+      ══════════════════════════════════════════════════════════════ */}
+      <PlatformIntegrationsSection />
+
+      {/* ══════════════════════════════════════════════════════════════
           BENEFITS — Why creators choose SellBop (Stan-style)
       ══════════════════════════════════════════════════════════════ */}
       <section className="border-t border-neutral-100 py-20 sm:py-28 bg-white">
@@ -191,81 +196,6 @@ export default function HomePage() {
       </section>
 
       {/* ══════════════════════════════════════════════════════════════
-          SECTION 2 — Why creators choose SellBop
-      ══════════════════════════════════════════════════════════════ */}
-      <section className="py-24 sm:py-32">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-16">
-            <p className="text-xs font-bold uppercase tracking-[0.3em] text-neutral-400 mb-4">Why SellBop</p>
-            <h2 className="text-3xl sm:text-5xl font-black text-black tracking-tight leading-tight mb-4">
-              Everything you need to sell<br className="hidden sm:block" /> without the mess
-            </h2>
-            <p className="text-neutral-500 text-base sm:text-lg max-w-md mx-auto">
-              Powerful where it matters. Simple everywhere else.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-            {[
-              {
-                icon: <Pencil size={18} />,
-                bg: 'bg-violet-50',
-                color: 'text-violet-600',
-                title: 'Visual Store Editor',
-                desc: 'Edit your storefront visually with live preview. Drag sections, arrange products, pick your theme.',
-              },
-              {
-                icon: <Download size={18} />,
-                bg: 'bg-blue-50',
-                color: 'text-blue-600',
-                title: 'Digital Products + Services',
-                desc: 'Sell downloads, coaching sessions, subscriptions, and bundles — all product types supported.',
-              },
-              {
-                icon: <FileText size={18} />,
-                bg: 'bg-black',
-                color: 'text-white',
-                title: 'Dedicated Product Pages',
-                desc: 'Send buyers to focused pages designed to convert. Not just a link — a real sell page.',
-              },
-              {
-                icon: <ShoppingBag size={18} />,
-                bg: 'bg-emerald-50',
-                color: 'text-emerald-600',
-                title: 'Marketplace Discovery',
-                desc: 'Let buyers find your products beyond your own audience. More visibility, more sales.',
-              },
-              {
-                icon: <MapPin size={18} />,
-                bg: 'bg-amber-50',
-                color: 'text-amber-600',
-                title: 'Simple Pricing',
-                desc: 'No monthly fee. Just 10% + $0.50 when you sell. Zero risk to get started.',
-              },
-              {
-                icon: <Zap size={18} />,
-                bg: 'bg-rose-50',
-                color: 'text-rose-600',
-                title: 'Fast Setup',
-                desc: 'Launch your store and first product in minutes. No developer needed.',
-              },
-            ].map(f => (
-              <div
-                key={f.title}
-                className="bg-white border border-neutral-200 rounded-2xl p-6 sm:p-7 hover:border-neutral-300 hover:shadow-sm transition-all"
-              >
-                <div className={`w-9 h-9 rounded-xl ${f.bg} ${f.color} flex items-center justify-center mb-5`}>
-                  {f.icon}
-                </div>
-                <h3 className="text-base font-bold text-black mb-2 leading-tight">{f.title}</h3>
-                <p className="text-sm text-neutral-500 leading-relaxed">{f.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════════════════════════════
           SECTION 4 — Pricing
       ══════════════════════════════════════════════════════════════ */}
       <section className="py-24 sm:py-32 bg-neutral-50">
@@ -344,11 +274,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
-      {/* ══════════════════════════════════════════════════════════════
-          INTEGRATIONS — Connect the platforms you already sell on
-      ══════════════════════════════════════════════════════════════ */}
-      <PlatformIntegrationsSection />
 
       {/* ══════════════════════════════════════════════════════════════
           SECTION 5 — Strategy Call (help launching)
@@ -542,7 +467,6 @@ function PlatformIntegrationsSection() {
     { name: 'Amazon',   desc: 'Feature products, buy on Amazon',         badge: 'Coming soon', iconBg: 'bg-[#FF9900]', initial: 'A' },
     { name: 'Etsy',     desc: 'Showcase listings, checkout on Etsy',     badge: 'Coming soon', iconBg: 'bg-[#F45800]', initial: 'E' },
     { name: 'eBay',     desc: 'Connect listings and buying flows',       badge: 'Coming soon', iconBg: 'bg-[#E53238]', initial: 'e' },
-    { name: 'Thousands More', desc: 'Via direct integrations — connect any platform you already sell on', badge: 'Soon', iconBg: 'bg-neutral-700', initial: '+' },
   ]
 
   return (
