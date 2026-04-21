@@ -18,8 +18,6 @@ import { cn } from '@/lib/utils'
 import { formatCurrency } from '@/lib/utils'
 import { ProductImage } from '@/components/ui/product-image'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import { useStoreEditor } from '@/context/store-editor-context'
 import { DEMO_SELLER_PROFILE } from '@/lib/demo-data/seed'
 import { toast } from 'sonner'
@@ -364,80 +362,72 @@ function SortableSectionItem({ id }: { id: string }) {
 // ─────────────────────────────────────────────────────────────
 
 function ProfileTab() {
-  const { config, update } = useStoreEditor()
+  const { config } = useStoreEditor()
+
+  const socialCount = [
+    config.socialLinks.twitter,
+    config.socialLinks.instagram,
+    config.socialLinks.youtube,
+    config.socialLinks.website,
+  ].filter(Boolean).length
 
   return (
-    <div className="max-w-2xl mx-auto px-5 py-8 space-y-5">
-      {/* Store Info */}
+    <div className="max-w-2xl mx-auto px-5 py-8 space-y-4">
+
+      {/* Identity preview card */}
       <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
+        <CardContent className="pt-6">
+          {/* Avatar + name row */}
+          <div className="flex items-center gap-4 mb-5">
             <div
-              className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-white text-sm font-bold"
+              className="w-14 h-14 rounded-xl flex-shrink-0 flex items-center justify-center text-white text-2xl font-black shadow-sm"
               style={{ backgroundColor: config.themeColor }}
             >
-              {config.title.charAt(0)}
+              {config.title.charAt(0).toUpperCase()}
             </div>
-            <CardTitle>Store Info</CardTitle>
+            <div className="flex-1 min-w-0">
+              <p className="text-base font-bold text-black leading-tight truncate">
+                {config.title}
+              </p>
+              {config.headline ? (
+                <p className="text-sm text-neutral-500 mt-0.5 truncate">{config.headline}</p>
+              ) : (
+                <p className="text-sm text-neutral-300 mt-0.5 italic">No headline set</p>
+              )}
+              {config.bio ? (
+                <p className="text-xs text-neutral-400 mt-1.5 line-clamp-2 leading-relaxed">{config.bio}</p>
+              ) : (
+                <p className="text-xs text-neutral-300 mt-1.5 italic">No bio set</p>
+              )}
+            </div>
           </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Input
-            label="Store Name"
-            value={config.title}
-            onChange={e => update({ title: e.target.value })}
-            placeholder="Alex Creates"
-          />
-          <Input
-            label="Headline"
-            value={config.headline ?? ''}
-            onChange={e => update({ headline: e.target.value || null })}
-            placeholder="Short tagline shown below your name…"
-          />
-          <Textarea
-            label="Bio"
-            value={config.bio ?? ''}
-            onChange={e => update({ bio: e.target.value || null })}
-            placeholder="Tell buyers who you are and what you create…"
-            rows={4}
-          />
+
+          {/* Social link count */}
+          <p className="text-xs text-neutral-400 mb-4">
+            {socialCount > 0 ? `${socialCount} social link${socialCount > 1 ? 's' : ''} connected` : 'No social links connected'}
+          </p>
+
+          {/* CTA */}
+          <Link
+            href="/dashboard/storefront"
+            className="inline-flex items-center gap-2 h-9 px-4 rounded-lg text-sm font-semibold bg-black text-white hover:bg-neutral-800 transition-colors"
+          >
+            Edit Store Profile
+          </Link>
         </CardContent>
       </Card>
 
-      {/* Social Links */}
+      {/* Helper note */}
       <Card>
-        <CardHeader>
-          <CardTitle>Social Links</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Input
-            label="Twitter / X"
-            value={config.socialLinks.twitter ?? ''}
-            onChange={e => update({ socialLinks: { ...config.socialLinks, twitter: e.target.value || undefined } })}
-            placeholder="https://twitter.com/yourhandle"
-            type="url"
-          />
-          <Input
-            label="Instagram"
-            value={config.socialLinks.instagram ?? ''}
-            onChange={e => update({ socialLinks: { ...config.socialLinks, instagram: e.target.value || undefined } })}
-            placeholder="https://instagram.com/yourhandle"
-            type="url"
-          />
-          <Input
-            label="YouTube"
-            value={config.socialLinks.youtube ?? ''}
-            onChange={e => update({ socialLinks: { ...config.socialLinks, youtube: e.target.value || undefined } })}
-            placeholder="https://youtube.com/@yourchannel"
-            type="url"
-          />
-          <Input
-            label="Website"
-            value={config.socialLinks.website ?? ''}
-            onChange={e => update({ socialLinks: { ...config.socialLinks, website: e.target.value || undefined } })}
-            placeholder="https://yoursite.com"
-            type="url"
-          />
+        <CardContent className="pt-5 pb-5">
+          <p className="text-sm font-semibold text-black mb-1">Profile is managed in Store Profile</p>
+          <p className="text-xs text-neutral-500 leading-relaxed">
+            Your store name, photo, headline, bio, and social links are all managed from the{' '}
+            <Link href="/dashboard/storefront" className="font-semibold text-black underline underline-offset-2">
+              Store Profile
+            </Link>{' '}
+            page. Use the tabs below to arrange products, adjust layout, and customise your theme.
+          </p>
         </CardContent>
       </Card>
     </div>
@@ -756,10 +746,10 @@ function EditorTopBar() {
       <div className="h-14 bg-white border-b border-neutral-200 flex items-center justify-between px-4 shrink-0">
         {/* Left: store avatar chip + title + dirty badge */}
         <div className="flex items-center gap-2.5 min-w-0">
-          {/* Store identity chip — avatar + store name */}
+          {/* Store identity chip — rounded-square avatar + store name */}
           <div className="flex items-center gap-2 shrink-0">
             <div
-              className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-black select-none"
+              className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-[11px] font-black select-none"
               style={{ backgroundColor: config.themeColor }}
             >
               {config.title.charAt(0).toUpperCase()}

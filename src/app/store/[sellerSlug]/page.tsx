@@ -168,16 +168,16 @@ function StoreHeader({ storefront }: { storefront: Storefront }) {
     return (
       <header className="py-16 sm:py-24">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 flex flex-col items-center text-center">
-          {/* Avatar with ring */}
+          {/* Avatar — rounded-square, consistent with dashboard identity style */}
           <div className="relative mb-7">
             <div
-              className="w-28 h-28 sm:w-32 sm:h-32 rounded-full flex items-center justify-center text-white font-black shadow-2xl"
+              className="w-28 h-28 sm:w-32 sm:h-32 rounded-2xl flex items-center justify-center text-white font-black shadow-2xl"
               style={{ backgroundColor: storefront.themeColor, fontSize: 52 }}
             >
               {storefront.title.charAt(0)}
             </div>
             <div
-              className="absolute inset-0 rounded-full pointer-events-none"
+              className="absolute inset-0 rounded-2xl pointer-events-none"
               style={{ boxShadow: `0 0 0 4px white, 0 0 0 7px ${storefront.themeColor}40` }}
             />
           </div>

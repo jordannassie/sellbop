@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { ExternalLink, Copy, Check } from 'lucide-react'
+import { ExternalLink, Copy, Check, Camera } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Storefront } from '@/lib/domain/entities'
 import { StoreIdentityCard } from '@/components/dashboard/store-identity-card'
@@ -93,8 +93,8 @@ export default function StoreProfilePage() {
         <p className="text-neutral-500 text-sm mt-1">Manage your public store identity.</p>
       </div>
 
-      {/* Store identity banner — avatar, name, headline, View Store + Edit Store */}
-      <StoreIdentityCard className="mb-5" />
+      {/* Store identity preview — shows saved state; left side links to this page (self), actions kept */}
+      <StoreIdentityCard className="mb-5" showEditorLink={false} />
 
       {/* Public URL row */}
       <div className="mb-6 bg-white border border-neutral-200 rounded-xl px-4 py-3 flex items-center gap-3">
@@ -121,7 +121,38 @@ export default function StoreProfilePage() {
 
       {/* Form */}
       <form onSubmit={handleSave} className="space-y-5">
-        {/* Store Info */}
+
+        {/* ── Store Image ────────────────────────────────────── */}
+        <Card>
+          <CardHeader><CardTitle>Store Image</CardTitle></CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-4">
+              {/* Live preview of the rounded-square avatar */}
+              <div
+                className="w-16 h-16 rounded-xl flex-shrink-0 flex items-center justify-center text-white text-2xl font-black shadow-sm"
+                style={{ backgroundColor: storefront?.themeColor ?? '#000000' }}
+                aria-hidden="true"
+              >
+                {(title || 'S').charAt(0).toUpperCase()}
+              </div>
+              {/* Upload CTA */}
+              <div className="flex-1 min-w-0">
+                <button
+                  type="button"
+                  disabled
+                  className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium text-neutral-500 border border-neutral-200 bg-neutral-50 cursor-not-allowed opacity-60"
+                >
+                  <Camera size={12} /> Upload Photo
+                </button>
+                <p className="text-xs text-neutral-400 mt-2 leading-relaxed">
+                  Photo upload coming soon. Your store initial and accent colour are used until then.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* ── Store Info ─────────────────────────────────────── */}
         <Card>
           <CardHeader><CardTitle>Store Info</CardTitle></CardHeader>
           <CardContent className="space-y-4">
