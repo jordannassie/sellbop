@@ -733,7 +733,7 @@ function ThemeTab() {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Top header bar
+// Top header bar (+ mobile action strip)
 // ─────────────────────────────────────────────────────────────
 
 function EditorTopBar() {
@@ -751,57 +751,98 @@ function EditorTopBar() {
   }
 
   return (
-    <div className="h-14 bg-white border-b border-neutral-200 flex items-center justify-between px-4 shrink-0">
-      {/* Left: title + dirty badge */}
-      <div className="flex items-center gap-3 min-w-0">
-        <div>
-          <h1 className="text-sm font-bold text-black tracking-tight leading-none">Store Editor</h1>
-          <p className="text-[10px] text-neutral-400 leading-none mt-0.5 hidden sm:block">Edit your storefront</p>
-        </div>
-        {isDirty && (
-          <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-bold px-2.5 py-1 rounded-full">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse flex-shrink-0" />
-            <span className="hidden sm:inline">Unsaved changes</span>
-            <span className="sm:hidden">Unsaved</span>
+    <>
+      {/* ── Main header row ────────────────────────────────────── */}
+      <div className="h-14 bg-white border-b border-neutral-200 flex items-center justify-between px-4 shrink-0">
+        {/* Left: title + dirty badge */}
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div>
+            <h1 className="text-sm font-bold text-black tracking-tight leading-none">Store Editor</h1>
+            <p className="text-[10px] text-neutral-400 leading-none mt-0.5 hidden sm:block">Edit your storefront</p>
           </div>
-        )}
-      </div>
-
-      {/* Right: actions */}
-      <div className="flex items-center gap-2">
-        <button
-          onClick={copyLink}
-          title="Copy public link"
-          className="hidden sm:flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium text-neutral-600 border border-neutral-200 hover:bg-neutral-50 hover:border-neutral-300 transition-colors"
-        >
-          {copied ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
-          {copied ? 'Copied!' : 'Copy Link'}
-        </button>
-
-        <Link
-          href={storeUrl}
-          target="_blank"
-          className="hidden sm:flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium text-neutral-600 border border-neutral-200 hover:bg-neutral-50 hover:border-neutral-300 transition-colors"
-        >
-          <ExternalLink size={12} />
-          Open Store
-        </Link>
-
-        <button
-          onClick={saveChanges}
-          disabled={!isDirty || isSaving}
-          className={cn(
-            'flex items-center gap-1.5 h-8 px-4 rounded-lg text-xs font-bold transition-all duration-150',
-            isDirty && !isSaving
-              ? 'bg-black text-white hover:bg-neutral-800 shadow-sm ring-1 ring-black/20'
-              : 'bg-neutral-100 text-neutral-400 cursor-not-allowed',
+          {isDirty && (
+            <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-bold px-2 py-1 rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse flex-shrink-0" />
+              <span className="hidden sm:inline">Unsaved changes</span>
+              <span className="sm:hidden">Unsaved</span>
+            </div>
           )}
-        >
-          <CloudUpload size={13} />
-          {isSaving ? 'Saving…' : 'Save Changes'}
-        </button>
+        </div>
+
+        {/* Right: actions */}
+        <div className="flex items-center gap-2">
+          {/* Copy Link — desktop only */}
+          <button
+            onClick={copyLink}
+            title="Copy public link"
+            className="hidden sm:flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium text-neutral-600 border border-neutral-200 hover:bg-neutral-50 hover:border-neutral-300 transition-colors"
+          >
+            {copied ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
+            {copied ? 'Copied!' : 'Copy Link'}
+          </button>
+
+          {/* Open Store — desktop only */}
+          <Link
+            href={storeUrl}
+            target="_blank"
+            className="hidden sm:flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium text-neutral-600 border border-neutral-200 hover:bg-neutral-50 hover:border-neutral-300 transition-colors"
+          >
+            <ExternalLink size={12} />
+            Open Store
+          </Link>
+
+          {/* Save Changes — always visible, label adapts */}
+          <button
+            onClick={saveChanges}
+            disabled={!isDirty || isSaving}
+            className={cn(
+              'flex items-center gap-1.5 h-8 px-3 sm:px-4 rounded-lg text-xs font-bold transition-all duration-150',
+              isDirty && !isSaving
+                ? 'bg-black text-white hover:bg-neutral-800 shadow-sm ring-1 ring-black/20'
+                : 'bg-neutral-100 text-neutral-400 cursor-not-allowed',
+            )}
+          >
+            <CloudUpload size={13} />
+            <span className="hidden sm:inline">{isSaving ? 'Saving…' : 'Save Changes'}</span>
+            <span className="sm:hidden">{isSaving ? 'Saving…' : 'Save'}</span>
+          </button>
+        </div>
       </div>
-    </div>
+
+      {/* ── Mobile action strip (sm:hidden) ───────────────────── */}
+      {/* Shows public URL + copy + open store for mobile users   */}
+      <div className="sm:hidden bg-white border-b border-neutral-100 px-4 pb-3 pt-1 shrink-0">
+        <div className="flex items-center gap-2 bg-neutral-50 border border-neutral-200 rounded-lg px-3 py-2">
+          {/* URL label + value */}
+          <span className="text-[10px] font-semibold text-neutral-400 flex-shrink-0 uppercase tracking-wide">URL</span>
+          <span className="flex-1 text-[11px] text-neutral-700 font-medium truncate min-w-0">
+            /store/{DEMO_SELLER_PROFILE.slug}
+          </span>
+          {/* Copy icon */}
+          <button
+            onClick={copyLink}
+            title="Copy link"
+            className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-md text-neutral-400 hover:text-black hover:bg-neutral-100 transition-colors"
+          >
+            {copied
+              ? <Check size={13} className="text-emerald-500" />
+              : <Copy size={13} />
+            }
+          </button>
+          {/* Divider */}
+          <div className="w-px h-4 bg-neutral-200 flex-shrink-0" />
+          {/* Open Store icon */}
+          <Link
+            href={storeUrl}
+            target="_blank"
+            title="Open store"
+            className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-md text-neutral-400 hover:text-black hover:bg-neutral-100 transition-colors"
+          >
+            <ExternalLink size={13} />
+          </Link>
+        </div>
+      </div>
+    </>
   )
 }
 
