@@ -8,6 +8,7 @@ import { GradientImageFallback } from '@/components/ui/gradient-image-fallback'
 import { DEMO_SELLER_PROFILE, DEMO_STOREFRONT, DEMO_PRODUCTS } from '@/lib/demo-data/seed'
 import { demoStorefrontRepo, demoProductRepo } from '@/lib/adapters/demo/repositories'
 import { formatCurrency, cn } from '@/lib/utils'
+import { printifyMinPrice, printifyHasPriceRange } from '@/lib/printify/normalize'
 import type { Product, Storefront } from '@/lib/domain/entities'
 
 // ── Social Icons ──────────────────────────────────────────────
@@ -359,8 +360,18 @@ function ClothingProductCard({ product, accent }: { product: Product; accent: st
             <p className="text-[10px] text-neutral-400">{product.variants.length} sizes available</p>
           )}
           <div className="flex items-center justify-between pt-3 mt-auto border-t border-neutral-100">
-            <div className="flex items-baseline gap-1.5">
-              <span className="font-black text-black text-base leading-none">{formatCurrency(product.price, product.currency)}</span>
+            <div className="flex items-baseline gap-1">
+              {printifyHasPriceRange(product.variants) && (
+                <span className="text-[10px] font-semibold text-neutral-400 mr-0.5">From</span>
+              )}
+              <span className="font-black text-black text-base leading-none">
+                {formatCurrency(
+                  printifyHasPriceRange(product.variants)
+                    ? printifyMinPrice(product.variants)
+                    : product.price,
+                  product.currency,
+                )}
+              </span>
             </div>
             <span className="text-[10px] font-bold px-3 py-1.5 rounded-lg text-white transition-all group-hover:opacity-80 flex items-center gap-1" style={{ backgroundColor: accent }}>
               {product.ctaText} <ArrowRight size={9} />

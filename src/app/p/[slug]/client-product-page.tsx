@@ -88,6 +88,52 @@ function TrustRow({ icon, text }: { icon: React.ReactNode; text: React.ReactNode
   )
 }
 
+// ── Clean dropdown selector ────────────────────────────────────
+function SelectDropdown({
+  label, value, onChange, options, placeholder, disabled = false,
+}: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+  options: string[]
+  placeholder: string
+  disabled?: boolean
+}) {
+  return (
+    <div>
+      <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wider">
+        {label}
+      </label>
+      <div className="relative">
+        <select
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          disabled={disabled}
+          className={`w-full px-3.5 py-3 border-2 rounded-xl text-sm font-medium appearance-none bg-white
+            focus:outline-none focus:ring-2 focus:ring-black/10 transition-colors ${
+            disabled
+              ? 'border-neutral-100 text-neutral-300 cursor-not-allowed bg-neutral-50'
+              : value
+                ? 'border-black text-black'
+                : 'border-neutral-200 text-neutral-500 hover:border-neutral-300'
+          }`}
+        >
+          <option value="">{placeholder}</option>
+          {options.map(opt => (
+            <option key={opt} value={opt}>{opt}</option>
+          ))}
+        </select>
+        <ChevronDown
+          size={14}
+          className={`absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none ${
+            disabled ? 'text-neutral-200' : 'text-neutral-400'
+          }`}
+        />
+      </div>
+    </div>
+  )
+}
+
 // ── Merch variant selector ─────────────────────────────────────
 function MerchVariantSelector({
   product,
@@ -100,22 +146,30 @@ function MerchVariantSelector({
   onQtyChange: (q: number) => void
   accent: string
 }) {
-  const variants = product.variants
-  const colors   = useMemo(() => printifyColors(variants), [variants])
+  const variants  = product.variants
+  const colors    = useMemo(() => printifyColors(variants), [variants])
   const hasColors = colors.length > 0
 
-  const [selectedColor, setSelectedColor] = useState<string | null>(
-    hasColors ? null : null,
+  // Auto-preselect when only one option exists
+  const [selectedColor, setSelectedColor] = useState<string>(
+    hasColors && colors.length === 1 ? colors[0] : '',
   )
-  const [selectedSize, setSelectedSize]   = useState<string | null>(null)
-  const [qty, setQty]                     = useState(1)
+  const [selectedSize, setSelectedSize] = useState<string>('')
+  const [qty, setQty]                   = useState(1)
 
   const availableSizes = useMemo(
-    () => printifySizes(variants, selectedColor ?? undefined),
+    () => printifySizes(variants, selectedColor || undefined),
     [variants, selectedColor],
   )
 
-  // Derive the matching variant whenever selections change
+  // Auto-preselect size when only one is available
+  useEffect(() => {
+    if (availableSizes.length === 1 && !selectedSize) {
+      setSelectedSize(availableSizes[0])
+    }
+  }, [availableSizes, selectedSize])
+
+  // Derive the matching variant from current selections
   const selectedVariant = useMemo<ProductVariant | null>(() => {
     if (!selectedSize) return null
     return variants.find(v => {
@@ -125,101 +179,77 @@ function MerchVariantSelector({
     }) ?? null
   }, [variants, selectedColor, selectedSize, hasColors])
 
-  // Bubble up changes
   useEffect(() => { onVariantChange(selectedVariant) }, [selectedVariant, onVariantChange])
   useEffect(() => { onQtyChange(qty) }, [qty, onQtyChange])
 
-  // When color changes, reset size if it's no longer available
-  function handleColorSelect(color: string) {
+  function handleColorChange(color: string) {
     setSelectedColor(color)
-    const sizesForColor = printifySizes(variants, color)
-    if (selectedSize && !sizesForColor.includes(selectedSize)) {
-      setSelectedSize(null)
+    // Reset size if it's unavailable for the new color
+    if (selectedSize) {
+      const sizesForColor = printifySizes(variants, color || undefined)
+      if (!sizesForColor.includes(selectedSize)) setSelectedSize('')
     }
   }
 
-  const priceDisplay = selectedVariant
+  // Price: show selected variant price, or "From $X" range
+  const minPrice   = printifyMinPrice(variants)
+  const maxPrice   = printifyMaxPrice(variants)
+  const hasRange   = printifyHasPriceRange(variants)
+  const displayPrice = selectedVariant
     ? formatCurrency(selectedVariant.price, product.currency)
-    : printifyHasPriceRange(variants)
-      ? `From ${formatCurrency(printifyMinPrice(variants), product.currency)}`
-      : formatCurrency(printifyMinPrice(variants), product.currency)
+    : hasRange
+      ? `From ${formatCurrency(minPrice, product.currency)}`
+      : formatCurrency(minPrice, product.currency)
 
   return (
-    <div className="space-y-5">
-      {/* Price */}
-      <div>
-        <span className="text-3xl font-black text-black">{priceDisplay}</span>
-        {!selectedVariant && printifyHasPriceRange(variants) && (
-          <span className="ml-2 text-sm text-neutral-400">
-            — up to {formatCurrency(printifyMaxPrice(variants), product.currency)}
+    <div className="space-y-4">
+      {/* Price — prominent */}
+      <div className="flex items-baseline gap-2 pb-1">
+        <span className="text-3xl font-black text-black tracking-tight">{displayPrice}</span>
+        {!selectedVariant && hasRange && (
+          <span className="text-sm text-neutral-400 font-medium">
+            – {formatCurrency(maxPrice, product.currency)}
           </span>
         )}
       </div>
 
-      {/* Color picker */}
+      {/* Color dropdown */}
       {hasColors && (
-        <div>
-          <p className="text-xs font-bold text-neutral-700 mb-2.5 uppercase tracking-wider">
-            Color{selectedColor ? <span className="normal-case font-normal text-neutral-500 ml-1">— {selectedColor}</span> : ''}
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {colors.map(color => (
-              <button
-                key={color}
-                onClick={() => handleColorSelect(color)}
-                className={`px-3.5 py-1.5 rounded-xl text-sm font-semibold border-2 transition-all ${
-                  selectedColor === color
-                    ? 'border-black text-black bg-black/5'
-                    : 'border-neutral-200 text-neutral-600 hover:border-neutral-400'
-                }`}
-              >
-                {color}
-              </button>
-            ))}
-          </div>
-        </div>
+        <SelectDropdown
+          label="Color"
+          value={selectedColor}
+          onChange={handleColorChange}
+          options={colors}
+          placeholder="Select a color"
+        />
       )}
 
-      {/* Size picker */}
-      <div>
-        <p className="text-xs font-bold text-neutral-700 mb-2.5 uppercase tracking-wider">
-          Size{selectedSize ? <span className="normal-case font-normal text-neutral-500 ml-1">— {selectedSize}</span> : ''}
-        </p>
-        {hasColors && !selectedColor ? (
-          <p className="text-xs text-neutral-400 italic">Select a color first</p>
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            {availableSizes.map(size => (
-              <button
-                key={size}
-                onClick={() => setSelectedSize(size)}
-                className={`min-w-[44px] px-3 py-1.5 rounded-xl text-sm font-semibold border-2 transition-all ${
-                  selectedSize === size
-                    ? 'border-black text-black bg-black/5'
-                    : 'border-neutral-200 text-neutral-600 hover:border-neutral-400'
-                }`}
-              >
-                {size}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+      {/* Size dropdown */}
+      <SelectDropdown
+        label="Size"
+        value={selectedSize}
+        onChange={setSelectedSize}
+        options={availableSizes}
+        placeholder={hasColors && !selectedColor ? 'Select color first' : 'Select a size'}
+        disabled={hasColors && !selectedColor}
+      />
 
-      {/* Quantity */}
+      {/* Quantity stepper */}
       <div>
-        <p className="text-xs font-bold text-neutral-700 mb-2.5 uppercase tracking-wider">Quantity</p>
+        <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wider">Quantity</label>
         <div className="flex items-center gap-3">
           <button
+            type="button"
             onClick={() => setQty(q => Math.max(1, q - 1))}
-            className="w-9 h-9 rounded-xl border border-neutral-200 flex items-center justify-center hover:border-neutral-400 transition-colors"
+            className="w-10 h-10 rounded-xl border-2 border-neutral-200 flex items-center justify-center hover:border-neutral-400 transition-colors"
           >
             <Minus size={14} />
           </button>
-          <span className="text-base font-bold w-6 text-center">{qty}</span>
+          <span className="text-base font-bold w-8 text-center tabular-nums">{qty}</span>
           <button
+            type="button"
             onClick={() => setQty(q => Math.min(10, q + 1))}
-            className="w-9 h-9 rounded-xl border border-neutral-200 flex items-center justify-center hover:border-neutral-400 transition-colors"
+            className="w-10 h-10 rounded-xl border-2 border-neutral-200 flex items-center justify-center hover:border-neutral-400 transition-colors"
           >
             <Plus size={14} />
           </button>
@@ -237,7 +267,7 @@ function MerchVariantSelector({
       />
 
       {/* Fulfillment note */}
-      <p className="text-xs text-neutral-400 flex items-center gap-1.5">
+      <p className="text-xs text-neutral-400 flex items-center gap-1.5 pt-1">
         <Shirt size={11} />
         Printed on demand · Fulfilled by Printify · Ships to your door
       </p>
@@ -259,14 +289,14 @@ function MerchBuyButton({
   quantity: number
   accent: string
   hasColors: boolean
-  selectedColor: string | null
+  selectedColor: string   // empty string = nothing selected
 }) {
-  const router = useRouter()
+  const router  = useRouter()
   const isReady = selectedVariant !== null
 
   let helperText = ''
-  if (hasColors && !selectedColor)   helperText = 'Please select a color'
-  else if (!selectedVariant)         helperText = 'Please select a size'
+  if (hasColors && !selectedColor)  helperText = 'Choose a color to continue'
+  else if (!selectedVariant)        helperText = 'Choose a size to continue'
 
   function handleBuy() {
     if (!selectedVariant) return
@@ -278,18 +308,21 @@ function MerchBuyButton({
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 pt-1">
       <button
+        type="button"
         onClick={handleBuy}
         disabled={!isReady}
         className={`w-full py-3.5 px-4 rounded-xl text-sm font-bold text-white transition-all ${
           isReady
-            ? 'hover:opacity-90 active:scale-[0.99]'
-            : 'opacity-40 cursor-not-allowed'
+            ? 'hover:opacity-90 active:scale-[0.99] shadow-sm'
+            : 'opacity-30 cursor-not-allowed'
         }`}
-        style={{ backgroundColor: isReady ? accent : '#9ca3af' }}
+        style={{ backgroundColor: accent }}
       >
-        {isReady ? `Buy Now — ${formatCurrency(selectedVariant!.price * quantity, product.currency)}` : 'Select options to continue'}
+        {isReady
+          ? `Buy Now — ${formatCurrency(selectedVariant.price * quantity, product.currency)}`
+          : 'Select options to continue'}
       </button>
       {helperText && (
         <p className="text-xs text-neutral-400 text-center">{helperText}</p>
