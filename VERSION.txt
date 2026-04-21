@@ -1,0 +1,5 @@
+Version 4.0 — SellBop.com
+Saved: Mon Apr 20 18:21:14 PDT 2026
+Commit: 189f0c386e445ab0d85753a05208c26270345b7c
+Netlify: https://stately-mandazi-9500be.netlify.app
+GitHub:  https://github.com/jordannassie/sellbop
