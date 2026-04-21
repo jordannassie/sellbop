@@ -1,11 +1,11 @@
 // ============================================================
 // POST /api/printify/sync
-// Fetches Printify products and returns normalized SellBop products.
-// Client-side saves them to localStorage via the demo repo.
+// Fetches products from Printify (real or mock) and returns
+// normalized SellBop Products. The client saves them to localStorage.
 // ============================================================
 
 import { NextResponse, type NextRequest } from 'next/server'
-import { hasPrintifyToken, fetchProducts } from '@/lib/printify/client'
+import { getTokenFromRequest, getShopIdFromRequest, hasTokenFromRequest, fetchProducts } from '@/lib/printify/client'
 import { MOCK_PRODUCTS, MOCK_SHOPS } from '@/lib/printify/mock-data'
 import { normalizePrintifyProduct } from '@/lib/printify/normalize'
 import { DEMO_SELLER_PROFILE } from '@/lib/demo-data/seed'
@@ -13,26 +13,34 @@ import { DEMO_SELLER_PROFILE } from '@/lib/demo-data/seed'
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}))
-    const shopId: string = body.shopId ?? process.env.PRINTIFY_SHOP_ID ?? String(MOCK_SHOPS[0].id)
+    const shopIdOverride = body.shopId as string | undefined
 
-    let rawProducts = MOCK_PRODUCTS
-    let isDemo = true
-
-    if (hasPrintifyToken()) {
-      const page = await fetchProducts(shopId)
-      rawProducts = page.data
-      isDemo = false
+    if (!hasTokenFromRequest(req)) {
+      // Demo/mock fallback
+      const demoShopId = String(MOCK_SHOPS[0].id)
+      const normalized = MOCK_PRODUCTS.map(p =>
+        normalizePrintifyProduct(p, demoShopId, DEMO_SELLER_PROFILE.id),
+      )
+      return NextResponse.json({ products: normalized, count: normalized.length, shopId: demoShopId, demo: true })
     }
 
-    const normalized = rawProducts.map(p =>
-      normalizePrintifyProduct(p, String(shopId), DEMO_SELLER_PROFILE.id),
+    const token  = getTokenFromRequest(req)!
+    const shopId = getShopIdFromRequest(req, shopIdOverride)
+
+    if (!shopId) {
+      return NextResponse.json({ error: 'No shop selected. Please select a shop and try again.' }, { status: 400 })
+    }
+
+    const page     = await fetchProducts(token, shopId)
+    const normalized = page.data.map(p =>
+      normalizePrintifyProduct(p, shopId, DEMO_SELLER_PROFILE.id),
     )
 
     return NextResponse.json({
       products: normalized,
       count: normalized.length,
       shopId,
-      demo: isDemo,
+      demo: false,
     })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'

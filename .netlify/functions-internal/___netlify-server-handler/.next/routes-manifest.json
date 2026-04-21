@@ -115,6 +115,18 @@
       "namedRegex": "^/_not\\-found(?:/)?$"
     },
     {
+      "page": "/api/printify/connect",
+      "regex": "^/api/printify/connect(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/printify/connect(?:/)?$"
+    },
+    {
+      "page": "/api/printify/disconnect",
+      "regex": "^/api/printify/disconnect(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/printify/disconnect(?:/)?$"
+    },
+    {
       "page": "/api/printify/order",
       "regex": "^/api/printify/order(?:/)?$",
       "routeKeys": {},
@@ -127,10 +139,22 @@
       "namedRegex": "^/api/printify/products(?:/)?$"
     },
     {
+      "page": "/api/printify/select-shop",
+      "regex": "^/api/printify/select\\-shop(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/printify/select\\-shop(?:/)?$"
+    },
+    {
       "page": "/api/printify/shops",
       "regex": "^/api/printify/shops(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/api/printify/shops(?:/)?$"
+    },
+    {
+      "page": "/api/printify/status",
+      "regex": "^/api/printify/status(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/printify/status(?:/)?$"
     },
     {
       "page": "/api/printify/sync",
