@@ -7,9 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { ExternalLink, Copy, Check, Layers } from 'lucide-react'
+import { ExternalLink, Copy, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Storefront } from '@/lib/domain/entities'
+import { StoreIdentityCard } from '@/components/dashboard/store-identity-card'
 
 export default function StoreProfilePage() {
   const [storefront, setStorefront] = useState<Storefront | null>(null)
@@ -87,23 +88,19 @@ export default function StoreProfilePage() {
   return (
     <div className="max-w-2xl">
       {/* Page header */}
-      <div className="mb-8 flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-black">Store Profile</h1>
-          <p className="text-neutral-500 text-sm mt-1">Manage your public store identity.</p>
-        </div>
-        <Link href={storeUrl} target="_blank">
-          <Button variant="secondary" size="sm">
-            <ExternalLink size={13} /> View Store
-          </Button>
-        </Link>
+      <div className="mb-5">
+        <h1 className="text-xl sm:text-2xl font-bold text-black">Store Profile</h1>
+        <p className="text-neutral-500 text-sm mt-1">Manage your public store identity.</p>
       </div>
 
-      {/* Public store card */}
-      <div className="mb-6 bg-white border border-neutral-200 rounded-xl p-4 flex items-center gap-4">
+      {/* Store identity banner — avatar, name, headline, View Store + Edit Store */}
+      <StoreIdentityCard className="mb-5" />
+
+      {/* Public URL row */}
+      <div className="mb-6 bg-white border border-neutral-200 rounded-xl px-4 py-3 flex items-center gap-3">
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-semibold text-neutral-500 mb-1">Public URL</p>
-          <p className="text-sm text-neutral-900 font-mono truncate">/store/{DEMO_SELLER_PROFILE.slug}</p>
+          <p className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wide mb-0.5">Public URL</p>
+          <p className="text-sm text-neutral-800 font-mono truncate">/store/{DEMO_SELLER_PROFILE.slug}</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <button
@@ -112,7 +109,7 @@ export default function StoreProfilePage() {
             className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium text-neutral-600 border border-neutral-200 hover:bg-neutral-50 transition-colors"
           >
             {copied ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
-            {copied ? 'Copied' : 'Copy'}
+            <span>{copied ? 'Copied' : 'Copy'}</span>
           </button>
           <Link href={storeUrl} target="_blank">
             <button className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium text-neutral-600 border border-neutral-200 hover:bg-neutral-50 transition-colors">
@@ -120,19 +117,6 @@ export default function StoreProfilePage() {
             </button>
           </Link>
         </div>
-      </div>
-
-      {/* Store Editor CTA — light/subtle */}
-      <div className="mb-6 bg-neutral-50 border border-neutral-200 rounded-xl p-4 flex items-center justify-between gap-4">
-        <div className="min-w-0">
-          <p className="text-sm font-semibold text-black">Open Store Editor</p>
-          <p className="text-xs text-neutral-500 mt-0.5">Arrange sections, choose featured products, and customise your theme.</p>
-        </div>
-        <Link href="/dashboard/store-editor" className="shrink-0">
-          <Button variant="secondary" size="sm">
-            <Layers size={13} /> Store Editor
-          </Button>
-        </Link>
       </div>
 
       {/* Form */}

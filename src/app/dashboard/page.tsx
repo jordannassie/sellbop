@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { DollarSign, ShoppingBag, Package, Users, TrendingUp } from 'lucide-react'
 import type { Order, Product } from '@/lib/domain/entities'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
+import { StoreIdentityCard } from '@/components/dashboard/store-identity-card'
 
 export default function DashboardOverview() {
   const [orders, setOrders] = useState<Order[]>([])
@@ -46,13 +47,17 @@ export default function DashboardOverview() {
 
   return (
     <div>
-      <div className="mb-8 flex items-center justify-between">
+      {/* Page header */}
+      <div className="mb-5 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-black">Overview</h1>
           <p className="text-neutral-500 text-sm mt-1">Welcome back, {DEMO_SELLER_PROFILE.displayName}.</p>
         </div>
         <Link href="/dashboard/products/new"><Button size="sm">+ New Product</Button></Link>
       </div>
+
+      {/* Store identity banner */}
+      <StoreIdentityCard className="mb-8" />
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">

@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Package, ExternalLink, Pencil } from 'lucide-react'
 import { ProductImage } from '@/components/ui/product-image'
+import { StoreIdentityCard } from '@/components/dashboard/store-identity-card'
 import type { Product } from '@/lib/domain/entities'
 
 const TYPE_LABELS: Record<string, string> = {
@@ -30,13 +31,16 @@ export default function ProductsPage() {
 
   return (
     <div>
-      <div className="mb-8 flex items-center justify-between">
+      <div className="mb-5 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-black">Products</h1>
           <p className="text-neutral-500 text-sm mt-1">{products.length} products · {products.filter(p => p.status === 'published').length} live</p>
         </div>
         <Link href="/dashboard/products/new"><Button>+ New Product</Button></Link>
       </div>
+
+      {/* Store identity — quick link back to storefront view */}
+      <StoreIdentityCard className="mb-8" showEditorLink={false} />
 
       <Card>
         <CardHeader>

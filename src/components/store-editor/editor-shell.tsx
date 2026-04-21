@@ -737,7 +737,7 @@ function ThemeTab() {
 // ─────────────────────────────────────────────────────────────
 
 function EditorTopBar() {
-  const { isDirty, isSaving, saveChanges } = useStoreEditor()
+  const { config, isDirty, isSaving, saveChanges } = useStoreEditor()
   const [copied, setCopied] = useState(false)
   const storeUrl = `/store/${DEMO_SELLER_PROFILE.slug}`
 
@@ -754,12 +754,29 @@ function EditorTopBar() {
     <>
       {/* ── Main header row ────────────────────────────────────── */}
       <div className="h-14 bg-white border-b border-neutral-200 flex items-center justify-between px-4 shrink-0">
-        {/* Left: title + dirty badge */}
+        {/* Left: store avatar chip + title + dirty badge */}
         <div className="flex items-center gap-2.5 min-w-0">
-          <div>
-            <h1 className="text-sm font-bold text-black tracking-tight leading-none">Store Editor</h1>
-            <p className="text-[10px] text-neutral-400 leading-none mt-0.5 hidden sm:block">Edit your storefront</p>
+          {/* Store identity chip — avatar + store name */}
+          <div className="flex items-center gap-2 shrink-0">
+            <div
+              className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-black select-none"
+              style={{ backgroundColor: config.themeColor }}
+            >
+              {config.title.charAt(0).toUpperCase()}
+            </div>
+            <span className="text-sm font-bold text-black tracking-tight leading-none hidden sm:inline truncate max-w-[120px]">
+              {config.title}
+            </span>
           </div>
+
+          {/* Divider */}
+          <div className="w-px h-4 bg-neutral-200 flex-shrink-0" />
+
+          {/* Editor label */}
+          <div>
+            <p className="text-[11px] font-semibold text-neutral-500 leading-none">Store Editor</p>
+          </div>
+
           {isDirty && (
             <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-bold px-2 py-1 rounded-full">
               <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse flex-shrink-0" />
