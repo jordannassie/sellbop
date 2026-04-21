@@ -346,6 +346,11 @@ export default function HomePage() {
       </section>
 
       {/* ══════════════════════════════════════════════════════════════
+          INTEGRATIONS — Connect the platforms you already sell on
+      ══════════════════════════════════════════════════════════════ */}
+      <PlatformIntegrationsSection />
+
+      {/* ══════════════════════════════════════════════════════════════
           SECTION 5 — Strategy Call (help launching)
       ══════════════════════════════════════════════════════════════ */}
       <StrategyCallSection />
@@ -525,6 +530,120 @@ function BenefitProductTypesMockup() {
         </div>
       ))}
     </div>
+  )
+}
+
+// ── Platform Integrations Section ─────────────────────────────────────────────
+
+function PlatformIntegrationsSection() {
+  const platforms = [
+    { name: 'Shopify',  desc: 'Show products, checkout on Shopify',      badge: 'Connected',   iconBg: 'bg-[#96BF48]', initial: 'S' },
+    { name: 'Printify', desc: 'Sync merch, fulfill through Printify',    badge: 'Connected',   iconBg: 'bg-[#00172B]', initial: 'P' },
+    { name: 'Amazon',   desc: 'Feature products, buy on Amazon',         badge: 'Coming soon', iconBg: 'bg-[#FF9900]', initial: 'A' },
+    { name: 'Etsy',     desc: 'Showcase listings, checkout on Etsy',     badge: 'Coming soon', iconBg: 'bg-[#F45800]', initial: 'E' },
+    { name: 'eBay',     desc: 'Connect listings and buying flows',       badge: 'Coming soon', iconBg: 'bg-[#E53238]', initial: 'e' },
+    { name: 'Thousands More', desc: 'Via direct integrations — connect any platform you already sell on', badge: 'Soon', iconBg: 'bg-neutral-700', initial: '+' },
+  ]
+
+  return (
+    <section className="border-t border-neutral-100 py-16 sm:py-20 bg-white">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6">
+
+        {/* Compact header */}
+        <div className="text-center mb-10 sm:mb-12">
+          <p className="text-xs font-bold uppercase tracking-[0.3em] text-neutral-400 mb-3">Integrations</p>
+          <h2 className="text-2xl sm:text-4xl font-black text-black tracking-tight leading-tight mb-3">
+            Connect the platforms you already sell on
+          </h2>
+          <p className="text-neutral-500 text-sm sm:text-base max-w-md mx-auto">
+            Bring your products into SellBop and sell from one central hub.
+          </p>
+        </div>
+
+        {/* Hub + spoke layout */}
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-8 sm:gap-0">
+
+          {/* LEFT — SellBop hub */}
+          <div className="flex flex-col items-center gap-3 flex-shrink-0 sm:pt-6 sm:w-40">
+            {/* Big rounded square icon */}
+            <div className="relative">
+              <div className="w-20 h-20 rounded-2xl bg-black flex items-center justify-center shadow-lg">
+                <span className="text-white font-black text-3xl tracking-tight" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>S</span>
+              </div>
+              {/* Live dot */}
+              <span className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full border-2 border-white flex items-center justify-center">
+                <span className="w-2 h-2 bg-white rounded-full" />
+              </span>
+            </div>
+            <div className="text-center">
+              <p className="text-sm font-bold text-black">SellBop</p>
+              <p className="text-[11px] text-neutral-400 mt-0.5">Your selling hub</p>
+            </div>
+          </div>
+
+          {/* CENTER — connecting bridge (desktop only) */}
+          <div className="hidden sm:flex flex-col items-center justify-center w-16 flex-shrink-0" style={{ marginTop: 38 }}>
+            {/* Horizontal dashed line + dot */}
+            <div className="flex items-center w-full">
+              <div className="flex-1 border-t-2 border-dashed border-neutral-200" />
+              <div className="w-2 h-2 rounded-full bg-neutral-300 flex-shrink-0" />
+            </div>
+          </div>
+
+          {/* Mobile connector */}
+          <div className="flex sm:hidden flex-col items-center gap-1">
+            <div className="w-px h-6 border-l-2 border-dashed border-neutral-200" />
+            <div className="w-2 h-2 rounded-full bg-neutral-300" />
+          </div>
+
+          {/* RIGHT — platform rows */}
+          <div className="flex-1 w-full relative">
+            {/* Vertical dashed line (desktop) */}
+            <div className="hidden sm:block absolute left-0 top-4 bottom-4 border-l-2 border-dashed border-neutral-200" />
+
+            <div className="space-y-2 sm:pl-6">
+              {platforms.map((p, i) => (
+                <div
+                  key={p.name}
+                  className="relative flex items-center gap-3 bg-white border border-neutral-100 rounded-xl px-4 py-3 hover:border-neutral-200 hover:shadow-sm transition-all"
+                >
+                  {/* Connection dot on the vertical line */}
+                  <div className="hidden sm:block absolute -left-[25px] top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-white border-2 border-neutral-300" />
+
+                  {/* Platform icon */}
+                  <div className={`w-8 h-8 rounded-lg ${p.iconBg} flex items-center justify-center flex-shrink-0 shadow-sm`}>
+                    <span className="text-white text-xs font-black">{p.initial}</span>
+                  </div>
+
+                  {/* Name + desc */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-black leading-tight">{p.name}</p>
+                    <p className="text-[11px] text-neutral-400 leading-tight mt-0.5 truncate">{p.desc}</p>
+                  </div>
+
+                  {/* Status badge */}
+                  <span className={`text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full flex-shrink-0 ${
+                    p.badge === 'Connected'
+                      ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
+                      : 'bg-neutral-100 text-neutral-400 border border-neutral-100'
+                  }`}>
+                    {p.badge}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom CTA */}
+        <p className="text-center text-sm text-neutral-400 mt-8">
+          Already selling somewhere?{' '}
+          <Link href="/signup" className="text-black font-semibold hover:underline underline-offset-2">
+            Bring it all into SellBop →
+          </Link>
+        </p>
+      </div>
+    </section>
   )
 }
 
