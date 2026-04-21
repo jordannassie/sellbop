@@ -13,6 +13,7 @@ import { SellBopLogo } from '@/components/ui/sellbop-logo'
 
 const NAV = [
   { href: '/dashboard',               label: 'Overview',       icon: LayoutDashboard, exact: true },
+  { href: '/dashboard/storefront',    label: 'Store Profile',  icon: Globe },
   { href: '/dashboard/store-editor',  label: 'Store Editor',   icon: Layers },
   { href: '/dashboard/products',      label: 'Products',       icon: Package },
   { href: '/dashboard/orders',        label: 'Orders',         icon: ShoppingBag },
@@ -22,7 +23,6 @@ const NAV = [
   { href: '/dashboard/discounts',     label: 'Discounts',      icon: Tag },
   { href: '/dashboard/payouts',       label: 'Payouts',        icon: DollarSign },
   { href: '/dashboard/files',         label: 'Files',          icon: FileDown },
-  { href: '/dashboard/storefront',    label: 'Storefront',     icon: Globe },
   { href: '/dashboard/billing',       label: 'Billing',        icon: CreditCard },
   { href: '/dashboard/settings',      label: 'Settings',       icon: Settings },
 ]
