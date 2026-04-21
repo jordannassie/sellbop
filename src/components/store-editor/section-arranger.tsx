@@ -12,7 +12,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import {
   Lock, ChevronDown, ChevronRight,
-  Star, Eye, EyeOff, Pencil, Package, Plus,
+  Star, Eye, EyeOff, Pencil, Package, Plus, ExternalLink,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatCurrency } from '@/lib/utils'
@@ -198,6 +198,15 @@ function SortableProductRow({
           className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-300 hover:text-neutral-700 hover:bg-neutral-100 transition-colors"
         >
           <Pencil size={11} />
+        </Link>
+        <Link
+          href={`/p/${product.slug}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Preview product page"
+          className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-300 hover:text-neutral-700 hover:bg-neutral-100 transition-colors"
+        >
+          <ExternalLink size={11} />
         </Link>
       </div>
     </div>

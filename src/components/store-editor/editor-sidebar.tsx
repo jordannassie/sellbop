@@ -290,9 +290,19 @@ export function EditorSidebar() {
               placeholder="Tell buyers who you are and what you create…"
               rows={3}
             />
+            {!config.bio && (
+              <p className="text-[10px] text-amber-600 bg-amber-50 px-2 py-1.5 rounded-lg mt-1.5">
+                ✦ Add your bio — buyers want to know who you are.
+              </p>
+            )}
           </div>
           <div className="space-y-2">
             <FieldLabel>Social Links</FieldLabel>
+            {!config.socialLinks.twitter && !config.socialLinks.instagram && !config.socialLinks.website && !config.socialLinks.youtube && (
+              <p className="text-[10px] text-amber-600 bg-amber-50 px-2 py-1.5 rounded-lg">
+                ✦ Add your social links — they appear as buttons on your store.
+              </p>
+            )}
             <div className="flex items-center gap-2">
               <span className="text-neutral-400 flex-shrink-0"><TwitterIcon /></span>
               <FieldInput
