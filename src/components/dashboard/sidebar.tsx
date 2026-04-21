@@ -7,12 +7,13 @@ import { cn } from '@/lib/utils'
 import {
   LayoutDashboard, Package, ShoppingBag, Repeat2, Users,
   BarChart3, Tag, DollarSign, FileDown, Globe, CreditCard,
-  Settings, LogOut, Menu, X,
+  Settings, LogOut, Menu, X, Layers,
 } from 'lucide-react'
 import { SellBopLogo } from '@/components/ui/sellbop-logo'
 
 const NAV = [
   { href: '/dashboard',               label: 'Overview',       icon: LayoutDashboard, exact: true },
+  { href: '/dashboard/store-editor',  label: 'Store Editor',   icon: Layers },
   { href: '/dashboard/products',      label: 'Products',       icon: Package },
   { href: '/dashboard/orders',        label: 'Orders',         icon: ShoppingBag },
   { href: '/dashboard/subscriptions', label: 'Subscriptions',  icon: Repeat2 },

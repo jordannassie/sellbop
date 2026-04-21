@@ -4,6 +4,7 @@ import type {
   AnalyticsEvent, EmailLog, PayoutRecord, Storefront,
   RefundStatus, AccessStatus,
 } from '@/lib/domain/entities'
+import { DEFAULT_SECTION_ORDER, DEFAULT_SECTION_VISIBILITY } from '@/lib/domain/entities'
 
 // ─── USERS ──────────────────────────────────────────────────
 export const DEMO_USERS: User[] = [
@@ -52,10 +53,20 @@ export const DEMO_STOREFRONT: Storefront = {
   sellerId: 'seller-1',
   slug: 'alexjohnson',
   title: 'Alex Creates',
+  headline: 'Digital products for creators who build with clarity.',
   bio: 'Creator, coach, and digital product designer. Everything I make is designed to help you work and live with clarity.',
   avatarUrl: null,
+  bannerUrl: null,
   featuredProductIds: ['product-1', 'product-3', 'product-5'],
+  productOrder: ['product-1', 'product-2', 'product-3', 'product-4', 'product-5', 'product-6'],
+  hiddenProductIds: [],
   themeColor: '#000000',
+  buttonStyle: 'rounded',
+  cardStyle: 'soft_shadow',
+  headerLayout: 'left_avatar',
+  cardDensity: 'comfortable',
+  sectionOrder: [...DEFAULT_SECTION_ORDER],
+  sectionVisibility: { ...DEFAULT_SECTION_VISIBILITY },
   socialLinks: {
     twitter: 'https://twitter.com/alexcreates',
     website: 'https://alexcreates.com',

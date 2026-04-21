@@ -37,9 +37,20 @@ export default function StorefrontPage() {
     await demoStorefrontRepo.upsert({
       sellerId: DEMO_SELLER_PROFILE.id,
       slug: DEMO_SELLER_PROFILE.slug,
-      title, bio: bio || null, avatarUrl: null,
+      title, bio: bio || null,
+      headline: storefront?.headline ?? null,
+      avatarUrl: null,
+      bannerUrl: null,
       featuredProductIds: storefront?.featuredProductIds ?? [],
-      themeColor: '#000000',
+      productOrder: storefront?.productOrder ?? [],
+      hiddenProductIds: storefront?.hiddenProductIds ?? [],
+      themeColor: storefront?.themeColor ?? '#000000',
+      buttonStyle: storefront?.buttonStyle ?? 'rounded',
+      cardStyle: storefront?.cardStyle ?? 'soft_shadow',
+      headerLayout: storefront?.headerLayout ?? 'left_avatar',
+      cardDensity: storefront?.cardDensity ?? 'comfortable',
+      sectionOrder: storefront?.sectionOrder ?? [],
+      sectionVisibility: storefront?.sectionVisibility ?? {},
       socialLinks: { twitter: twitter || undefined, instagram: instagram || undefined, website: website || undefined },
       published: true,
     })
@@ -51,11 +62,24 @@ export default function StorefrontPage() {
     <div className="max-w-2xl">
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-black">Storefront</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-black">Storefront</h1>
           <p className="text-neutral-500 text-sm mt-1">Your public creator store.</p>
         </div>
         <Link href={`/store/${DEMO_SELLER_PROFILE.slug}`} target="_blank">
           <Button variant="secondary" size="sm"><ExternalLink size={13} />View Store</Button>
+        </Link>
+      </div>
+
+      {/* Banner pointing to new Store Editor */}
+      <div className="mb-6 p-4 bg-black text-white rounded-xl flex items-center justify-between gap-4">
+        <div>
+          <p className="text-sm font-semibold">✨ Try the new Store Editor</p>
+          <p className="text-xs text-neutral-300 mt-0.5">Visual editing, live preview, drag-and-drop sections.</p>
+        </div>
+        <Link href="/dashboard/store-editor">
+          <Button size="sm" className="bg-white text-black hover:bg-neutral-100 text-xs shrink-0">
+            Open Editor
+          </Button>
         </Link>
       </div>
 

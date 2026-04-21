@@ -6,6 +6,19 @@
 // ============================================================
 
 export type ProductType = 'digital_download' | 'service_offer' | 'subscription' | 'bundle' | 'membership_ready'
+export type ButtonStyle = 'rounded' | 'soft_rounded' | 'square'
+export type CardStyle = 'minimal' | 'soft_shadow' | 'outline'
+export type HeaderLayout = 'left_avatar' | 'centered' | 'banner_avatar'
+export type CardDensity = 'compact' | 'comfortable' | 'large'
+
+export const SECTION_IDS = ['header', 'featured', 'all_products', 'about', 'links', 'testimonials', 'faq'] as const
+export type SectionId = (typeof SECTION_IDS)[number]
+
+export const DEFAULT_SECTION_ORDER: SectionId[] = ['header', 'featured', 'all_products', 'about', 'links', 'testimonials', 'faq']
+export const DEFAULT_SECTION_VISIBILITY: Record<SectionId, boolean> = {
+  header: true, featured: true, all_products: true,
+  about: true, links: true, testimonials: false, faq: false,
+}
 export type ProductStatus = 'draft' | 'published' | 'archived'
 export type OrderStatus = 'pending' | 'completed' | 'refunded' | 'failed'
 export type PaymentStatus = 'unpaid' | 'paid' | 'refunded' | 'failed'
@@ -279,10 +292,20 @@ export interface Storefront {
   sellerId: string
   slug: string
   title: string
+  headline: string | null
   bio: string | null
   avatarUrl: string | null
+  bannerUrl: string | null
   featuredProductIds: string[]
+  productOrder: string[]
+  hiddenProductIds: string[]
   themeColor: string
+  buttonStyle: ButtonStyle
+  cardStyle: CardStyle
+  headerLayout: HeaderLayout
+  cardDensity: CardDensity
+  sectionOrder: string[]
+  sectionVisibility: Record<string, boolean>
   socialLinks: {
     twitter?: string
     instagram?: string

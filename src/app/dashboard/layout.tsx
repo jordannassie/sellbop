@@ -1,12 +1,15 @@
 'use client'
 import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
 import { DashboardSidebar } from '@/components/dashboard/sidebar'
+import { cn } from '@/lib/utils'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { session, loading } = useAuth()
   const router = useRouter()
+  const pathname = usePathname()
+  const isStoreEditor = pathname.startsWith('/dashboard/store-editor')
 
   useEffect(() => {
     if (!loading && !session) router.push('/login')
@@ -27,7 +30,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <DashboardSidebar />
       {/* pt-14 offsets the mobile fixed top bar; removed on lg where sidebar is always shown */}
       <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden pt-14 lg:pt-0">
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-6xl">{children}</main>
+        <main className={cn(
+          'flex-1',
+          isStoreEditor ? 'p-0 overflow-hidden' : 'p-4 sm:p-6 lg:p-8 max-w-6xl',
+        )}>
+          {children}
+        </main>
       </div>
     </div>
   )
