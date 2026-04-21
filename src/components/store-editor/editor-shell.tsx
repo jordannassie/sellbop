@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { Pencil, LayoutGrid, Eye, ExternalLink, Copy, Check, Save } from 'lucide-react'
+import { Pencil, LayoutGrid, Eye, ExternalLink, Copy, Check, CloudUpload } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { EditorSidebar } from './editor-sidebar'
@@ -13,7 +13,7 @@ import { toast } from 'sonner'
 type Tab = 'edit' | 'arrange' | 'preview'
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
-  { id: 'edit', label: 'Edit', icon: <Pencil size={13} /> },
+  { id: 'edit',    label: 'Edit',    icon: <Pencil size={13} /> },
   { id: 'arrange', label: 'Arrange', icon: <LayoutGrid size={13} /> },
   { id: 'preview', label: 'Preview', icon: <Eye size={13} /> },
 ]
@@ -34,48 +34,59 @@ function EditorTopBar() {
   }
 
   return (
-    <div className="h-12 bg-white border-b border-neutral-100 flex items-center justify-between px-4 shrink-0">
-      {/* Left: title + unsaved indicator */}
-      <div className="flex items-center gap-3">
-        <h1 className="text-sm font-bold text-black tracking-tight">Store Editor</h1>
+    <div className="h-14 bg-white border-b border-neutral-150 flex items-center justify-between px-4 shrink-0 shadow-[0_1px_0_0_#e5e5e5]">
+      {/* Left: title + dirty badge */}
+      <div className="flex items-center gap-3 min-w-0">
+        <div>
+          <h1 className="text-sm font-bold text-black tracking-tight leading-none">Store Editor</h1>
+          <p className="text-[10px] text-neutral-400 leading-none mt-0.5 hidden sm:block">Visual storefront builder</p>
+        </div>
+
+        {/* Unsaved changes — visible pill when dirty */}
         {isDirty && (
-          <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-            Unsaved
-          </span>
+          <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-bold px-2.5 py-1 rounded-full">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse flex-shrink-0" />
+            <span className="hidden sm:inline">Unsaved changes</span>
+            <span className="sm:hidden">Unsaved</span>
+          </div>
         )}
       </div>
 
       {/* Right: actions */}
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-2">
+        {/* Copy link */}
         <button
           onClick={copyLink}
           title="Copy public link"
-          className="hidden sm:flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium text-neutral-600 border border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50 transition-colors"
+          className="hidden sm:flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium text-neutral-600 border border-neutral-200 hover:bg-neutral-50 hover:border-neutral-300 transition-colors"
         >
-          {copied ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
-          {copied ? 'Copied' : 'Copy Link'}
+          {copied ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
+          {copied ? 'Copied!' : 'Copy Link'}
         </button>
+
+        {/* Open Store */}
         <Link
           href={storeUrl}
           target="_blank"
-          className="hidden sm:flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium text-neutral-600 border border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50 transition-colors"
+          className="hidden sm:flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium text-neutral-600 border border-neutral-200 hover:bg-neutral-50 hover:border-neutral-300 transition-colors"
         >
           <ExternalLink size={12} />
           Open Store
         </Link>
+
+        {/* Save — prominent when dirty */}
         <button
           onClick={saveChanges}
           disabled={!isDirty || isSaving}
           className={cn(
-            'flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold transition-all',
+            'flex items-center gap-1.5 h-8 px-4 rounded-lg text-xs font-bold transition-all duration-150',
             isDirty && !isSaving
-              ? 'bg-black text-white hover:bg-neutral-800 shadow-sm'
+              ? 'bg-black text-white hover:bg-neutral-800 shadow-sm ring-1 ring-black/20'
               : 'bg-neutral-100 text-neutral-400 cursor-not-allowed',
           )}
         >
-          <Save size={12} />
-          {isSaving ? 'Saving…' : 'Save'}
+          <CloudUpload size={13} />
+          {isSaving ? 'Saving…' : 'Save Changes'}
         </button>
       </div>
     </div>
@@ -92,17 +103,17 @@ export function StoreEditorShell() {
       <EditorTopBar />
 
       {/* ── Desktop: 3-col layout ──────────────────────────────── */}
-      <div className="hidden lg:grid lg:grid-cols-[268px_1fr_360px] flex-1 min-h-0 divide-x divide-neutral-100">
+      <div className="hidden lg:grid lg:grid-cols-[272px_1fr_368px] flex-1 min-h-0 divide-x divide-neutral-100">
         {/* Left — Edit Controls */}
-        <div className="overflow-hidden flex flex-col">
+        <div className="overflow-hidden flex flex-col bg-white">
           <EditorSidebar />
         </div>
         {/* Center — Section Arranger */}
-        <div className="overflow-hidden flex flex-col bg-neutral-50/60">
+        <div className="overflow-hidden flex flex-col bg-[#f8f8f8]">
           <SectionArranger />
         </div>
-        {/* Right — Live Preview (sticky, fills remaining height) */}
-        <div className="overflow-hidden flex flex-col">
+        {/* Right — Live Preview (fills height, sticky) */}
+        <div className="overflow-hidden flex flex-col bg-[#f0f0f0]">
           <PreviewPanel />
         </div>
       </div>
@@ -116,10 +127,10 @@ export function StoreEditorShell() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                'flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold transition-colors',
+                'flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-semibold transition-colors',
                 activeTab === tab.id
                   ? 'text-black border-b-2 border-black'
-                  : 'text-neutral-400 hover:text-black',
+                  : 'text-neutral-400 hover:text-neutral-700',
               )}
             >
               {tab.icon}
@@ -131,17 +142,17 @@ export function StoreEditorShell() {
         {/* Tab Content */}
         <div className="flex-1 min-h-0 overflow-hidden">
           {activeTab === 'edit' && (
-            <div className="h-full overflow-y-auto">
+            <div className="h-full overflow-y-auto bg-white">
               <EditorSidebar />
             </div>
           )}
           {activeTab === 'arrange' && (
-            <div className="h-full overflow-hidden flex flex-col bg-neutral-50/60">
+            <div className="h-full overflow-hidden flex flex-col bg-[#f8f8f8]">
               <SectionArranger />
             </div>
           )}
           {activeTab === 'preview' && (
-            <div className="h-full overflow-hidden flex flex-col">
+            <div className="h-full overflow-hidden flex flex-col bg-[#f0f0f0]">
               <PreviewPanel />
             </div>
           )}
