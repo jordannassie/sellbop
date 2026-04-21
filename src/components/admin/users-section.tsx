@@ -1,5 +1,7 @@
 'use client'
 
+import Link from 'next/link'
+import { ExternalLink } from 'lucide-react'
 import { DEMO_USERS, DEMO_CUSTOMERS, DEMO_ORDERS, DEMO_SUBSCRIPTIONS, DEMO_PRODUCTS, DEMO_SELLER_PROFILE } from '@/lib/demo-data/seed'
 import { formatCurrency } from '@/lib/utils'
 
@@ -117,6 +119,7 @@ export function SellersSection() {
       name: DEMO_SELLER_PROFILE.displayName,
       email: 'creator@sellbop.demo',
       plan: DEMO_SELLER_PROFILE.plan,
+      slug: DEMO_SELLER_PROFILE.slug,
       productCount: DEMO_PRODUCTS.length,
       revenue: DEMO_ORDERS.reduce((s, o) => s + o.amount, 0),
       customerCount: DEMO_CUSTOMERS.length,
@@ -133,9 +136,9 @@ export function SellersSection() {
       </div>
       <div className="bg-white border border-neutral-200 rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[640px]">
+          <table className="w-full min-w-[700px]">
             <thead className="border-b border-neutral-100 bg-neutral-50">
-              <tr><TH>Name</TH><TH>Email</TH><TH>Plan</TH><TH>Products</TH><TH>Revenue</TH><TH>Customers</TH><TH>{''}</TH></tr>
+              <tr><TH>Name</TH><TH>Email</TH><TH>Plan</TH><TH>Products</TH><TH>Revenue</TH><TH>Customers</TH><TH>Store</TH></tr>
             </thead>
             <tbody className="divide-y divide-neutral-50">
               {sellers.length === 0 && <EmptyDemo entity="sellers" />}
@@ -144,7 +147,10 @@ export function SellersSection() {
                   <TD>
                     <div className="flex items-center gap-3">
                       <Avatar name={s.name} />
-                      <span className="font-medium text-black whitespace-nowrap">{s.name}</span>
+                      <div>
+                        <p className="font-medium text-black whitespace-nowrap">{s.name}</p>
+                        <p className="text-[11px] text-neutral-400">/{s.slug}</p>
+                      </div>
                     </div>
                   </TD>
                   <TD className="text-neutral-500 whitespace-nowrap">{s.email}</TD>
@@ -154,8 +160,16 @@ export function SellersSection() {
                   <TD className="text-neutral-600">{s.productCount}</TD>
                   <TD className="font-semibold text-black whitespace-nowrap">{formatCurrency(s.revenue)}</TD>
                   <TD className="text-neutral-600">{s.customerCount}</TD>
-                  <TD className="text-right">
-                    <button className="text-xs text-neutral-400 hover:text-black font-medium">View →</button>
+                  <TD>
+                    <Link
+                      href={`/store/${s.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-black bg-neutral-100 hover:bg-neutral-200 border border-neutral-200 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
+                    >
+                      <ExternalLink size={11} />
+                      View Store
+                    </Link>
                   </TD>
                 </tr>
               ))}

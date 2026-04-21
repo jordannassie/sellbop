@@ -25,7 +25,13 @@ export function MarketingNav() {
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur border-b border-neutral-100">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between h-14">
           {/* Logo */}
-          <Link href="/" onClick={() => setOpen(false)}>
+          <Link
+            href="/"
+            onClick={() => {
+              setOpen(false)
+              window.scrollTo({ top: 0, behavior: 'smooth' })
+            }}
+          >
             <SellBopLogo size="lg" />
           </Link>
 

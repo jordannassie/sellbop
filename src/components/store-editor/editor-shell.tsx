@@ -1,8 +1,9 @@
 'use client'
-import { useState } from 'react'
+import React, { useState } from 'react'
 import {
   ExternalLink, Copy, Check, CloudUpload,
   Star, Eye, EyeOff, Pencil, Plus, Lock, Package, Zap, Shirt,
+  Image, Video, Ban, X,
 } from 'lucide-react'
 import Link from 'next/link'
 import {
@@ -21,7 +22,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { useStoreEditor } from '@/context/store-editor-context'
 import { DEMO_SELLER_PROFILE } from '@/lib/demo-data/seed'
 import { toast } from 'sonner'
-import type { Storefront, Product } from '@/lib/domain/entities'
+import type { Storefront, Product, HeaderMediaType } from '@/lib/domain/entities'
 
 // ─────────────────────────────────────────────────────────────
 // Types & constants
@@ -787,6 +788,168 @@ function ProductsTab() {
 }
 
 // ─────────────────────────────────────────────────────────────
+// Header Media card (used inside LayoutTab)
+// ─────────────────────────────────────────────────────────────
+
+const MEDIA_OPTIONS: { id: HeaderMediaType; label: string; icon: React.ReactNode; desc: string }[] = [
+  { id: 'none',  label: 'None',  icon: <Ban size={16} />,   desc: 'Clean header only' },
+  { id: 'photo', label: 'Photo', icon: <Image size={16} />, desc: 'Banner image'       },
+  { id: 'video', label: 'Video', icon: <Video size={16} />, desc: 'Embedded video'     },
+]
+
+function getYouTubeId(url: string): string | null {
+  try {
+    const u = new URL(url)
+    if (u.hostname.includes('youtu.be')) return u.pathname.slice(1).split('?')[0]
+    if (u.hostname.includes('youtube.com')) return u.searchParams.get('v')
+  } catch { /* invalid URL */ }
+  return null
+}
+
+function HeaderMediaCard() {
+  const { config, update } = useStoreEditor()
+  const media     = config.headerMedia ?? 'none'
+  const photoUrl  = config.headerPhotoUrl ?? ''
+  const videoUrl  = config.headerVideoUrl ?? ''
+
+  const [localPhoto, setLocalPhoto] = useState(photoUrl)
+  const [localVideo, setLocalVideo] = useState(videoUrl)
+
+  function commitPhoto() {
+    update({ headerPhotoUrl: localPhoto.trim() || null })
+  }
+  function commitVideo() {
+    update({ headerVideoUrl: localVideo.trim() || null })
+  }
+
+  const ytId = getYouTubeId(localVideo)
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Header Media</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-5">
+        <p className="text-sm text-neutral-500">
+          Add a banner photo or video below your store header, or keep it clean with None.
+        </p>
+
+        {/* Segmented option picker */}
+        <div className="grid grid-cols-3 gap-2">
+          {MEDIA_OPTIONS.map(opt => {
+            const active = media === opt.id
+            return (
+              <button
+                key={opt.id}
+                onClick={() => update({ headerMedia: opt.id })}
+                className={[
+                  'rounded-xl border-2 p-3 text-left transition-all',
+                  active
+                    ? 'border-black bg-neutral-50'
+                    : 'border-neutral-200 hover:border-neutral-300 bg-white',
+                ].join(' ')}
+              >
+                <div className={['mb-2', active ? 'text-black' : 'text-neutral-400'].join(' ')}>
+                  {opt.icon}
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-black">{opt.label}</span>
+                  {active && (
+                    <span className="w-4 h-4 rounded-full bg-black flex items-center justify-center flex-shrink-0">
+                      <Check size={9} className="text-white" />
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-neutral-400 mt-0.5">{opt.desc}</p>
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Photo inputs */}
+        {media === 'photo' && (
+          <div className="space-y-3">
+            <label className="block text-sm font-semibold text-black">Banner Image URL</label>
+            <div className="flex gap-2">
+              <input
+                type="url"
+                value={localPhoto}
+                onChange={e => setLocalPhoto(e.target.value)}
+                onBlur={commitPhoto}
+                placeholder="https://example.com/banner.jpg"
+                className="flex-1 h-10 rounded-xl border border-neutral-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
+              />
+              {localPhoto && (
+                <button
+                  onClick={() => { setLocalPhoto(''); update({ headerPhotoUrl: null }) }}
+                  className="w-10 h-10 rounded-xl border border-neutral-200 flex items-center justify-center text-neutral-400 hover:text-red-500 hover:border-red-200 transition-colors"
+                  title="Remove"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+            {localPhoto && (
+              <div className="rounded-xl overflow-hidden border border-neutral-100 bg-neutral-50 aspect-[3/1]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={localPhoto}
+                  alt="Banner preview"
+                  className="w-full h-full object-cover"
+                  onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+                />
+              </div>
+            )}
+            <p className="text-[11px] text-neutral-400">Paste a direct image URL. Recommended ratio: 3:1 (e.g. 1200×400).</p>
+          </div>
+        )}
+
+        {/* Video inputs */}
+        {media === 'video' && (
+          <div className="space-y-3">
+            <label className="block text-sm font-semibold text-black">Video URL</label>
+            <div className="flex gap-2">
+              <input
+                type="url"
+                value={localVideo}
+                onChange={e => setLocalVideo(e.target.value)}
+                onBlur={commitVideo}
+                placeholder="https://www.youtube.com/watch?v=..."
+                className="flex-1 h-10 rounded-xl border border-neutral-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
+              />
+              {localVideo && (
+                <button
+                  onClick={() => { setLocalVideo(''); update({ headerVideoUrl: null }) }}
+                  className="w-10 h-10 rounded-xl border border-neutral-200 flex items-center justify-center text-neutral-400 hover:text-red-500 hover:border-red-200 transition-colors"
+                  title="Remove"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+            {localVideo && ytId && (
+              <div className="rounded-xl overflow-hidden border border-neutral-100 bg-black aspect-video">
+                <iframe
+                  src={`https://www.youtube.com/embed/${ytId}`}
+                  title="Video preview"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="w-full h-full"
+                />
+              </div>
+            )}
+            {localVideo && !ytId && (
+              <p className="text-[11px] text-amber-600">Only YouTube links are supported right now. Paste a YouTube URL above.</p>
+            )}
+            <p className="text-[11px] text-neutral-400">Paste a YouTube link. It will appear as an embedded video on your store.</p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────
 // Tab: Layout
 // ─────────────────────────────────────────────────────────────
 
@@ -894,6 +1057,9 @@ function LayoutTab() {
           </div>
         </CardContent>
       </Card>
+
+      {/* ── Header Media ─────────────────────────────────────── */}
+      <HeaderMediaCard />
 
       {/* ── Section order / visibility ───────────────────────── */}
       <Card>

@@ -2,8 +2,10 @@
 // Normalize Printify products into SellBop Product shape
 //
 // PRICING NOTE:
-//   Printify's API returns variant `price` as an INTEGER IN CENTS.
-//   e.g. 2499 = $24.99.  We divide by 100 exactly once here.
+//   Printify's documented API returns variant `price` in cents (2499 = $24.99).
+//   However some products/shops return the value already in dollars (27 = $27.00).
+//   We use a heuristic: if price >= 100, treat as cents (divide by 100);
+//   otherwise treat as already in dollars.  This covers both formats safely.
 //   Never divide again in display code — use formatCurrency(price, currency).
 // ============================================================
 
@@ -17,8 +19,42 @@ function slugify(text: string): string {
     .replace(/^-|-$/g, '')
 }
 
+function decodeHtmlEntities(text: string): string {
+  return text
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&ldquo;/g, '\u201C')
+    .replace(/&rdquo;/g, '\u201D')
+    .replace(/&lsquo;/g, '\u2018')
+    .replace(/&rsquo;/g, '\u2019')
+    .replace(/&mdash;/g, '\u2014')
+    .replace(/&ndash;/g, '\u2013')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&hellip;/g, '\u2026')
+    .replace(/&reg;/g, '\u00AE')
+    .replace(/&trade;/g, '\u2122')
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(parseInt(code, 10)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+}
+
 function stripHtml(html: string): string {
-  return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+  const stripped = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+  return decodeHtmlEntities(stripped)
+}
+
+/**
+ * Convert a Printify variant price to dollars.
+ * Printify's documented format is integer cents (2499 = $24.99), but some
+ * shop/product responses return the value already in dollars (27 = $27.00).
+ * Heuristic: >= 100 → cents; < 100 → already dollars.
+ */
+function toPrice(value: number): number {
+  if (!value || value === 0) return 0
+  return value >= 100 ? value / 100 : value
 }
 
 /**
@@ -55,11 +91,11 @@ export function normalizePrintifyProduct(
 ): Product {
   const enabledVariants = p.variants.filter(v => v.is_enabled)
 
-  // ── Pricing: Printify prices are in cents (integer). Divide by 100 once. ──
+  // ── Pricing: convert to dollars via toPrice() (handles cents or dollars) ──
   const defaultVariant = enabledVariants.find(v => v.is_default) ?? enabledVariants[0]
   const prices         = enabledVariants.map(v => v.price)
-  const minPriceCents  = prices.length ? Math.min(...prices) : 0
-  const defaultPrice   = (defaultVariant?.price ?? minPriceCents) / 100
+  const minPrice       = prices.length ? Math.min(...prices) : 0
+  const defaultPrice   = toPrice(defaultVariant?.price ?? minPrice)
 
   // ── Images ──────────────────────────────────────────────────────────────
   const defaultImage  = p.images.find(i => i.is_default) ?? p.images[0]
@@ -77,7 +113,7 @@ export function normalizePrintifyProduct(
       id:               `pv-${v.id}`,
       productId:        id,
       name:             v.title,
-      price:            v.price / 100,   // cents → dollars
+      price:            toPrice(v.price), // cents or dollars → dollars
       compareAtPrice:   null,
       sku:              v.sku || null,
       description:      null,

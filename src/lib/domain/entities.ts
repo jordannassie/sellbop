@@ -11,8 +11,9 @@ export type FulfillmentProvider = 'printify' | null
 export type FulfillmentStatus = 'pending' | 'sent_to_printify' | 'fulfilled' | null
 export type ButtonStyle = 'rounded' | 'soft_rounded' | 'square'
 export type CardStyle = 'minimal' | 'soft_shadow' | 'outline'
-export type HeaderLayout = 'left_avatar' | 'centered' | 'banner_avatar'
-export type CardDensity = 'compact' | 'comfortable' | 'large'
+export type HeaderLayout   = 'left_avatar' | 'centered' | 'banner_avatar'
+export type HeaderMediaType = 'none' | 'photo' | 'video'
+export type CardDensity    = 'compact' | 'comfortable' | 'large'
 
 export const SECTION_IDS = ['header', 'featured', 'all_products', 'about', 'links', 'testimonials', 'faq'] as const
 export type SectionId = (typeof SECTION_IDS)[number]
@@ -378,5 +379,8 @@ export interface Storefront {
     youtube?: string
     website?: string
   }
+  headerMedia: HeaderMediaType
+  headerPhotoUrl: string | null
+  headerVideoUrl: string | null
   published: boolean
 }

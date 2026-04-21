@@ -51,8 +51,8 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* Section content */}
-        <div className="p-8 max-w-6xl">
+        {/* Section content — support uses full width / height */}
+        <div className={section === 'support' ? 'p-8 pb-0' : 'p-8 max-w-6xl'}>
           <SectionContent section={section} />
         </div>
       </main>

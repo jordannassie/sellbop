@@ -21,6 +21,32 @@ import {
 } from '@/lib/printify/normalize'
 import type { Product, ProductVariant } from '@/lib/domain/entities'
 
+function decodeEntities(text: string): string {
+  return text
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&ldquo;/g, '\u201C')
+    .replace(/&rdquo;/g, '\u201D')
+    .replace(/&lsquo;/g, '\u2018')
+    .replace(/&rsquo;/g, '\u2019')
+    .replace(/&mdash;/g, '\u2014')
+    .replace(/&ndash;/g, '\u2013')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&hellip;/g, '\u2026')
+    .replace(/&reg;/g, '\u00AE')
+    .replace(/&trade;/g, '\u2122')
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(parseInt(code, 10)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+}
+
+function cleanText(raw: string): string {
+  return decodeEntities(raw.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim())
+}
+
 const TYPE_LABELS: Record<string, string> = {
   digital_download: 'Digital Download',
   service_offer: 'Service',
@@ -356,7 +382,7 @@ function MerchProductPage({ product, accent }: { product: Product; accent: strin
     }
   }, [selectedVariant, product])
 
-  const cleanDesc = product.description.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+  const cleanDesc = cleanText(product.description)
   const allImages = [
     ...(product.coverImageUrl ? [product.coverImageUrl] : []),
     ...product.galleryImageUrls,
@@ -495,7 +521,7 @@ function DigitalProductPage({ product, accent }: { product: Product; accent: str
     ? Math.round((1 - product.price / product.compareAtPrice) * 100)
     : 0
 
-  const cleanDesc = product.description.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+  const cleanDesc = cleanText(product.description)
   const bullets   = cleanDesc
     .split(/[.!?]+/)
     .map(s => s.trim())

@@ -9,7 +9,7 @@ import { DEMO_SELLER_PROFILE, DEMO_STOREFRONT, DEMO_PRODUCTS } from '@/lib/demo-
 import { demoStorefrontRepo, demoProductRepo } from '@/lib/adapters/demo/repositories'
 import { formatCurrency, cn } from '@/lib/utils'
 import { printifyMinPrice, printifyHasPriceRange } from '@/lib/printify/normalize'
-import type { Product, Storefront } from '@/lib/domain/entities'
+import type { Product, Storefront, HeaderMediaType } from '@/lib/domain/entities'
 
 // ── Social Icons ──────────────────────────────────────────────
 function TwitterIcon({ size = 14 }: { size?: number }) {
@@ -55,7 +55,8 @@ export function ClientStorefront({ sellerSlug }: { sellerSlug: string }) {
       demoStorefrontRepo.findBySellerId(DEMO_SELLER_PROFILE.id),
       demoProductRepo.findAll(DEMO_SELLER_PROFILE.id),
     ]).then(([s, products]) => {
-      if (s) setStorefront(s as Storefront)
+      // Merge with DEMO_STOREFRONT defaults so new fields always have a value
+      if (s) setStorefront({ ...DEMO_STOREFRONT, ...(s as Storefront) })
       if (products.length > 0) setAllProducts(products)
       setReady(true)
     })
@@ -113,6 +114,9 @@ export function ClientStorefront({ sellerSlug }: { sellerSlug: string }) {
 
       {/* ── Store header ───────────────────────────────────────── */}
       <StoreHeader storefront={storefront} />
+
+      {/* ── Header media (photo / video / none) ─────────────────── */}
+      <HeaderMediaBlock storefront={storefront} />
 
       {/* ── Main content ───────────────────────────────────────── */}
       <div id="products" className="max-w-3xl mx-auto px-4 sm:px-6 pb-24">
@@ -193,6 +197,55 @@ function SectionHeading({ label, accent, count }: { label: string; accent: strin
 }
 
 // ── Store Header ──────────────────────────────────────────────
+// ── Header Media Block ────────────────────────────────────────
+function getYouTubeId(url: string): string | null {
+  try {
+    const u = new URL(url)
+    if (u.hostname.includes('youtu.be')) return u.pathname.slice(1).split('?')[0]
+    if (u.hostname.includes('youtube.com')) return u.searchParams.get('v')
+  } catch { /* invalid URL */ }
+  return null
+}
+
+function HeaderMediaBlock({ storefront }: { storefront: Storefront }) {
+  const type: HeaderMediaType = storefront.headerMedia ?? 'none'
+
+  if (type === 'photo' && storefront.headerPhotoUrl) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-6 pb-2">
+        <div className="rounded-2xl overflow-hidden border border-neutral-100 shadow-sm aspect-[3/1] bg-neutral-50">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={storefront.headerPhotoUrl}
+            alt="Store banner"
+            className="w-full h-full object-cover"
+          />
+        </div>
+      </div>
+    )
+  }
+
+  if (type === 'video' && storefront.headerVideoUrl) {
+    const ytId = getYouTubeId(storefront.headerVideoUrl)
+    if (!ytId) return null
+    return (
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-6 pb-2">
+        <div className="rounded-2xl overflow-hidden border border-neutral-100 shadow-sm aspect-video bg-black">
+          <iframe
+            src={`https://www.youtube.com/embed/${ytId}?modestbranding=1&rel=0`}
+            title="Store video"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            className="w-full h-full"
+          />
+        </div>
+      </div>
+    )
+  }
+
+  return null
+}
+
 function StoreHeader({ storefront }: { storefront: Storefront }) {
   const socialLinks = [
     storefront.socialLinks.twitter    && { href: storefront.socialLinks.twitter,    icon: <TwitterIcon />,     label: 'X',        fullLabel: 'Twitter / X' },

@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 import { useAuth } from '@/context/auth-context'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -30,12 +31,15 @@ function AuthForm() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  // readOnly starts true so browsers skip autofill; lifted on first interaction
+  const [pwdReadOnly, setPwdReadOnly] = useState(true)
 
   useEffect(() => {
     setError('')
     setName('')
     setEmail('')
     setPassword('')
+    setPwdReadOnly(true)
   }, [mode])
 
   async function handleSubmit(e: React.FormEvent) {
@@ -62,10 +66,10 @@ function AuthForm() {
     <div className="w-full max-w-sm">
       <div className="bg-white border border-neutral-200 rounded-2xl shadow-sm overflow-hidden">
 
-        {/* Toggle */}
+        {/* Toggle — Sign up LEFT, Log in RIGHT */}
         <div className="p-2 border-b border-neutral-100 bg-neutral-50">
           <div className="flex rounded-xl bg-neutral-100 p-1 gap-1">
-            {(['login', 'signup'] as const).map(m => (
+            {(['signup', 'login'] as const).map(m => (
               <button
                 key={m}
                 type="button"
@@ -119,7 +123,7 @@ function AuthForm() {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-3">
+          <form onSubmit={handleSubmit} className="space-y-3" autoComplete="off">
             {mode === 'signup' && (
               <Input
                 label="Full Name"
@@ -138,18 +142,33 @@ function AuthForm() {
               value={email}
               onChange={e => setEmail(e.target.value)}
               required
-              autoComplete="email"
+              autoComplete="username"
             />
-            <Input
-              label="Password"
-              type="password"
-              placeholder={mode === 'signup' ? 'At least 8 characters' : '••••••••'}
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              required
-              autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-              minLength={mode === 'signup' ? 8 : undefined}
-            />
+
+            {/* Password — plain placeholder avoids visual auto-fill confusion */}
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-neutral-700">Password</label>
+                {mode === 'login' && (
+                  <Link href="#" className="text-[11px] font-medium text-neutral-400 hover:text-black transition-colors">
+                    Forgot password?
+                  </Link>
+                )}
+              </div>
+              <input
+                type="password"
+                placeholder={mode === 'signup' ? 'At least 8 characters' : 'Enter your password'}
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+                readOnly={pwdReadOnly}
+                onFocus={() => setPwdReadOnly(false)}
+                onClick={() => setPwdReadOnly(false)}
+                autoComplete="new-password"
+                minLength={mode === 'signup' ? 8 : undefined}
+                className="w-full px-3 py-2 text-sm rounded-lg border border-neutral-200 bg-white text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+              />
+            </div>
 
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2 rounded-lg">
@@ -160,6 +179,24 @@ function AuthForm() {
             <Button type="submit" loading={loading} className="w-full !mt-5">
               {mode === 'login' ? 'Log in' : 'Create Account'}
             </Button>
+
+            {/* Legal links */}
+            {mode === 'signup' && (
+              <p className="text-center text-[11px] text-neutral-400 leading-relaxed pt-1">
+                By continuing, you agree to our{' '}
+                <Link href="/terms" className="underline underline-offset-2 hover:text-black transition-colors text-neutral-500 font-medium">Terms of Use</Link>
+                {' '}and{' '}
+                <Link href="/privacy" className="underline underline-offset-2 hover:text-black transition-colors text-neutral-500 font-medium">Privacy Policy</Link>.
+              </p>
+            )}
+
+            {mode === 'login' && (
+              <div className="flex items-center justify-center gap-4 pt-1">
+                <Link href="/terms" className="text-[11px] text-neutral-400 hover:text-black underline underline-offset-2 transition-colors">Terms of Use</Link>
+                <span className="text-neutral-200 text-xs">·</span>
+                <Link href="/privacy" className="text-[11px] text-neutral-400 hover:text-black underline underline-offset-2 transition-colors">Privacy Policy</Link>
+              </div>
+            )}
           </form>
         </div>
       </div>

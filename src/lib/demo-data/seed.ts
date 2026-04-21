@@ -72,6 +72,9 @@ export const DEMO_STOREFRONT: Storefront = {
     website: 'https://alexcreates.com',
     instagram: 'https://instagram.com/alexcreates',
   },
+  headerMedia: 'none',
+  headerPhotoUrl: null,
+  headerVideoUrl: null,
   published: true,
 }
 

@@ -79,6 +79,9 @@ export default function StoreProfilePage() {
         youtube:   youtube   || undefined,
         website:   website   || undefined,
       },
+      headerMedia: storefront?.headerMedia ?? 'none',
+      headerPhotoUrl: storefront?.headerPhotoUrl ?? null,
+      headerVideoUrl: storefront?.headerVideoUrl ?? null,
       published: true,
     })
     toast.success('Store profile saved.')

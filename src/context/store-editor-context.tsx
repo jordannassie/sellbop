@@ -30,7 +30,10 @@ export function StoreEditorProvider({ children }: { children: ReactNode }) {
   // Load persisted storefront + ALL account products (including Printify) on mount
   useEffect(() => {
     demoStorefrontRepo.findBySellerId(DEMO_SELLER_PROFILE.id).then(s => {
-      if (s) setConfig(s as Storefront)
+      if (s) {
+        // Merge with DEMO_STOREFRONT defaults so new fields added later are always present
+        setConfig({ ...DEMO_STOREFRONT, ...(s as Storefront) })
+      }
     })
     demoProductRepo.findAll(DEMO_SELLER_PROFILE.id).then(all => {
       setProducts(all.length > 0 ? all : [])
@@ -64,6 +67,9 @@ export function StoreEditorProvider({ children }: { children: ReactNode }) {
         sectionOrder: config.sectionOrder,
         sectionVisibility: config.sectionVisibility,
         socialLinks: config.socialLinks,
+        headerMedia: config.headerMedia,
+        headerPhotoUrl: config.headerPhotoUrl,
+        headerVideoUrl: config.headerVideoUrl,
         published: config.published,
       })
       setIsDirty(false)
