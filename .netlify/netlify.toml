@@ -18,7 +18,7 @@ package = "@netlify/plugin-nextjs"
 publish = "/Users/jordannassie/REPO/Buy-1/selli-v2-gumroad-engine/.next"
 publishOrigin = "config"
 commandOrigin = "config"
-command = "npm run build"
+command = "rm -rf node_modules/@img/sharp-darwin-arm64 node_modules/@img/sharp-libvips-darwin-arm64 node_modules/@img/sharp-darwin-x64 node_modules/@img/sharp-libvips-darwin-x64 && npm run build"
 
 [build.environment]
 
