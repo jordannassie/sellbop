@@ -1,8 +1,7 @@
 'use client'
 import { useState } from 'react'
 import {
-  User, Palette, LayoutGrid, Package2,
-  ExternalLink, Copy, Check, CloudUpload, Globe,
+  ExternalLink, Copy, Check, CloudUpload,
   Star, Eye, EyeOff, Pencil, Plus, Lock, Package,
 } from 'lucide-react'
 import Link from 'next/link'
@@ -18,6 +17,9 @@ import { CSS } from '@dnd-kit/utilities'
 import { cn } from '@/lib/utils'
 import { formatCurrency } from '@/lib/utils'
 import { ProductImage } from '@/components/ui/product-image'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { useStoreEditor } from '@/context/store-editor-context'
 import { DEMO_SELLER_PROFILE } from '@/lib/demo-data/seed'
 import { toast } from 'sonner'
@@ -78,34 +80,8 @@ const THEME_PRESETS: ThemePreset[] = [
 ]
 
 // ─────────────────────────────────────────────────────────────
-// Small SVG icons
+// Drag handle SVG
 // ─────────────────────────────────────────────────────────────
-
-function TwitterIcon() {
-  return (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.259 5.63 5.905-5.63Zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-    </svg>
-  )
-}
-
-function InstagramIcon() {
-  return (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
-      <circle cx="12" cy="12" r="4" />
-      <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" stroke="none" />
-    </svg>
-  )
-}
-
-function YoutubeIcon() {
-  return (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-    </svg>
-  )
-}
 
 function GripDots() {
   return (
@@ -120,40 +96,8 @@ function GripDots() {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Form field components
+// Theme control components (OptionPills, ColorPicker, Toggle)
 // ─────────────────────────────────────────────────────────────
-
-function FieldLabel({ children }: { children: React.ReactNode }) {
-  return <p className="text-xs font-semibold text-neutral-600 mb-1.5">{children}</p>
-}
-
-function FieldInput({ value, onChange, placeholder, type = 'text' }: {
-  value: string; onChange: (v: string) => void; placeholder?: string; type?: string
-}) {
-  return (
-    <input
-      type={type}
-      value={value}
-      onChange={e => onChange(e.target.value)}
-      placeholder={placeholder}
-      className="w-full text-sm border border-neutral-200 rounded-xl px-3.5 py-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-neutral-400 placeholder:text-neutral-300 transition-colors"
-    />
-  )
-}
-
-function FieldTextarea({ value, onChange, placeholder, rows = 4 }: {
-  value: string; onChange: (v: string) => void; placeholder?: string; rows?: number
-}) {
-  return (
-    <textarea
-      value={value}
-      onChange={e => onChange(e.target.value)}
-      placeholder={placeholder}
-      rows={rows}
-      className="w-full text-sm border border-neutral-200 rounded-xl px-3.5 py-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-neutral-400 placeholder:text-neutral-300 resize-none transition-colors"
-    />
-  )
-}
 
 function OptionPills<T extends string>({ value, options, onChange }: {
   value: T
@@ -228,17 +172,6 @@ function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: (
         )}
       />
     </button>
-  )
-}
-
-// Horizontal rule with title for grouping content within a tab
-function SectionDivider({ children, right }: { children: React.ReactNode; right?: React.ReactNode }) {
-  return (
-    <div className="flex items-center gap-3 mb-5">
-      <p className="text-sm font-bold text-black whitespace-nowrap">{children}</p>
-      {right && <span>{right}</span>}
-      <div className="flex-1 border-t border-neutral-150" />
-    </div>
   )
 }
 
@@ -434,104 +367,79 @@ function ProfileTab() {
   const { config, update } = useStoreEditor()
 
   return (
-    <div className="max-w-xl mx-auto px-5 py-8 space-y-9">
-      {/* Avatar preview */}
-      <div className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-neutral-150 shadow-sm">
-        <div
-          className="w-14 h-14 rounded-full flex items-center justify-center text-white text-xl font-black flex-shrink-0"
-          style={{ backgroundColor: config.themeColor }}
-        >
-          {config.title.charAt(0)}
-        </div>
-        <div className="min-w-0">
-          <p className="text-sm font-bold text-black truncate">{config.title || 'Your Store'}</p>
-          <p className="text-xs text-neutral-400 mt-0.5 truncate">{config.headline || 'Add a headline below'}</p>
-          <p className="text-[10px] text-neutral-300 mt-1">Avatar upload — coming soon</p>
-        </div>
-      </div>
+    <div className="max-w-2xl mx-auto px-5 py-8 space-y-5">
+      {/* Store Info */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div
+              className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-white text-sm font-bold"
+              style={{ backgroundColor: config.themeColor }}
+            >
+              {config.title.charAt(0)}
+            </div>
+            <CardTitle>Store Info</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Input
+            label="Store Name"
+            value={config.title}
+            onChange={e => update({ title: e.target.value })}
+            placeholder="Alex Creates"
+          />
+          <Input
+            label="Headline"
+            value={config.headline ?? ''}
+            onChange={e => update({ headline: e.target.value || null })}
+            placeholder="Short tagline shown below your name…"
+          />
+          <Textarea
+            label="Bio"
+            value={config.bio ?? ''}
+            onChange={e => update({ bio: e.target.value || null })}
+            placeholder="Tell buyers who you are and what you create…"
+            rows={4}
+          />
+        </CardContent>
+      </Card>
 
-      {/* Store info */}
-      <div>
-        <SectionDivider>Store Info</SectionDivider>
-        <div className="space-y-5">
-          <div>
-            <FieldLabel>Store Name</FieldLabel>
-            <FieldInput value={config.title} onChange={v => update({ title: v })} placeholder="Alex Creates" />
-          </div>
-          <div>
-            <FieldLabel>Headline</FieldLabel>
-            <FieldInput
-              value={config.headline ?? ''}
-              onChange={v => update({ headline: v || null })}
-              placeholder="Short tagline…"
-            />
-          </div>
-          <div>
-            <FieldLabel>Bio</FieldLabel>
-            <FieldTextarea
-              value={config.bio ?? ''}
-              onChange={v => update({ bio: v || null })}
-              placeholder="Tell buyers who you are and what you create…"
-              rows={4}
-            />
-            {!config.bio && (
-              <p className="text-[10px] text-amber-600 bg-amber-50 px-3 py-2 rounded-xl mt-2 font-medium">
-                ✦ Add your bio — buyers want to know who you are.
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Social links */}
-      <div>
-        <SectionDivider>Social Links</SectionDivider>
-        {!config.socialLinks.twitter && !config.socialLinks.instagram && !config.socialLinks.website && !config.socialLinks.youtube && (
-          <p className="text-[10px] text-amber-600 bg-amber-50 px-3 py-2 rounded-xl mb-4 font-medium">
-            ✦ Add your social links — they appear as buttons on your store.
-          </p>
-        )}
-        <div className="space-y-3">
-          <div className="flex items-center gap-3">
-            <span className="text-neutral-400 flex-shrink-0 w-5 flex items-center justify-center"><TwitterIcon /></span>
-            <FieldInput
-              value={config.socialLinks.twitter ?? ''}
-              onChange={v => update({ socialLinks: { ...config.socialLinks, twitter: v || undefined } })}
-              placeholder="https://twitter.com/handle"
-              type="url"
-            />
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-neutral-400 flex-shrink-0 w-5 flex items-center justify-center"><InstagramIcon /></span>
-            <FieldInput
-              value={config.socialLinks.instagram ?? ''}
-              onChange={v => update({ socialLinks: { ...config.socialLinks, instagram: v || undefined } })}
-              placeholder="https://instagram.com/handle"
-              type="url"
-            />
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-neutral-400 flex-shrink-0 w-5 flex items-center justify-center"><YoutubeIcon /></span>
-            <FieldInput
-              value={config.socialLinks.youtube ?? ''}
-              onChange={v => update({ socialLinks: { ...config.socialLinks, youtube: v || undefined } })}
-              placeholder="https://youtube.com/@handle"
-              type="url"
-            />
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-neutral-400 flex-shrink-0 w-5 flex items-center justify-center">
-              <Globe size={12} />
-            </span>
-            <FieldInput
-              value={config.socialLinks.website ?? ''}
-              onChange={v => update({ socialLinks: { ...config.socialLinks, website: v || undefined } })}
-              placeholder="https://yoursite.com"
-              type="url"
-            />
-          </div>
-        </div>
-      </div>
+      {/* Social Links */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Social Links</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Input
+            label="Twitter / X"
+            value={config.socialLinks.twitter ?? ''}
+            onChange={e => update({ socialLinks: { ...config.socialLinks, twitter: e.target.value || undefined } })}
+            placeholder="https://twitter.com/yourhandle"
+            type="url"
+          />
+          <Input
+            label="Instagram"
+            value={config.socialLinks.instagram ?? ''}
+            onChange={e => update({ socialLinks: { ...config.socialLinks, instagram: e.target.value || undefined } })}
+            placeholder="https://instagram.com/yourhandle"
+            type="url"
+          />
+          <Input
+            label="YouTube"
+            value={config.socialLinks.youtube ?? ''}
+            onChange={e => update({ socialLinks: { ...config.socialLinks, youtube: e.target.value || undefined } })}
+            placeholder="https://youtube.com/@yourchannel"
+            type="url"
+          />
+          <Input
+            label="Website"
+            value={config.socialLinks.website ?? ''}
+            onChange={e => update({ socialLinks: { ...config.socialLinks, website: e.target.value || undefined } })}
+            placeholder="https://yoursite.com"
+            type="url"
+          />
+        </CardContent>
+      </Card>
     </div>
   )
 }
@@ -582,71 +490,79 @@ function ProductsTab() {
   const canFeature = config.featuredProductIds.length < 3
 
   return (
-    <div className="max-w-xl mx-auto px-5 py-8 space-y-10">
-      {/* Featured */}
-      <div>
-        <SectionDivider right={
-          <span className="text-[10px] font-semibold text-amber-600 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full whitespace-nowrap">
+    <div className="max-w-2xl mx-auto px-5 py-8 space-y-5">
+      {/* Featured Products */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Featured Products</CardTitle>
+          <span className="text-[11px] font-semibold text-amber-600 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full">
             {config.featuredProductIds.length} / 3 slots
           </span>
-        }>
-          Featured Products
-        </SectionDivider>
-
-        {featuredProducts.length === 0 ? (
-          <div className="flex flex-col items-center py-10 text-center gap-3 bg-white rounded-2xl border border-dashed border-neutral-200">
-            <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center">
-              <Star size={16} className="text-amber-400" />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-neutral-700">No featured products yet</p>
-              <p className="text-xs text-neutral-400 mt-1">
-                Click <Star size={9} className="inline -mt-0.5 text-amber-500" /> on any product below to feature it.
-              </p>
-            </div>
-          </div>
-        ) : (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={e => handleProductDragEnd(e, config.featuredProductIds, 'featuredProductIds')}
-          >
-            <SortableContext items={config.featuredProductIds} strategy={verticalListSortingStrategy}>
-              <div className="space-y-2">
-                {featuredProducts.map(p => (
-                  <SortableProductRow
-                    key={p.id}
-                    product={p}
-                    isFeatured
-                    onToggleFeatured={() => toggleFeatured(p.id)}
-                    onToggleHidden={() => toggleHidden(p.id)}
-                    isHidden={config.hiddenProductIds.includes(p.id)}
-                    canFeature={canFeature}
-                  />
-                ))}
+        </CardHeader>
+        <CardContent>
+          {featuredProducts.length === 0 ? (
+            <div className="flex flex-col items-center py-8 text-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center">
+                <Star size={16} className="text-amber-400" />
               </div>
-            </SortableContext>
-          </DndContext>
-        )}
-      </div>
+              <div>
+                <p className="text-sm font-semibold text-neutral-700">No featured products yet</p>
+                <p className="text-xs text-neutral-500 mt-1">
+                  Click <Star size={9} className="inline -mt-0.5 text-amber-500" /> on any product below to feature it.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={e => handleProductDragEnd(e, config.featuredProductIds, 'featuredProductIds')}
+            >
+              <SortableContext items={config.featuredProductIds} strategy={verticalListSortingStrategy}>
+                <div className="space-y-2">
+                  {featuredProducts.map(p => (
+                    <SortableProductRow
+                      key={p.id}
+                      product={p}
+                      isFeatured
+                      onToggleFeatured={() => toggleFeatured(p.id)}
+                      onToggleHidden={() => toggleHidden(p.id)}
+                      isHidden={config.hiddenProductIds.includes(p.id)}
+                      canFeature={canFeature}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+          )}
+        </CardContent>
+      </Card>
 
-      {/* All products */}
-      <div>
-        <SectionDivider>All Products</SectionDivider>
-        {products.length === 0 ? (
-          <div className="flex flex-col items-center py-10 text-center gap-3 bg-white rounded-2xl border border-dashed border-neutral-200">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center">
-              <Package size={16} className="text-blue-400" />
+      {/* All Products */}
+      <Card>
+        <CardHeader>
+          <CardTitle>All Products</CardTitle>
+          <Link
+            href="/dashboard/products/new"
+            className="flex items-center gap-1 text-xs font-semibold text-neutral-600 hover:text-black transition-colors"
+          >
+            <Plus size={12} /> Add product
+          </Link>
+        </CardHeader>
+        <CardContent>
+          {products.length === 0 ? (
+            <div className="flex flex-col items-center py-8 text-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center">
+                <Package size={16} className="text-blue-400" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-neutral-700">No products yet</p>
+                <Link href="/dashboard/products/new" className="text-xs text-black font-semibold underline underline-offset-2 mt-1 inline-block">
+                  Add your first product →
+                </Link>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-bold text-neutral-700">No products yet</p>
-              <Link href="/dashboard/products/new" className="text-xs text-black font-bold underline underline-offset-2 mt-1 inline-block">
-                Add your first product →
-              </Link>
-            </div>
-          </div>
-        ) : (
-          <>
+          ) : (
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
@@ -668,15 +584,9 @@ function ProductsTab() {
                 </div>
               </SortableContext>
             </DndContext>
-            <Link
-              href="/dashboard/products/new"
-              className="flex items-center justify-center gap-1.5 w-full py-3 rounded-xl border border-dashed border-neutral-200 text-xs font-bold text-neutral-400 hover:text-neutral-600 hover:border-neutral-300 hover:bg-neutral-50 transition-all mt-3"
-            >
-              <Plus size={12} /> Add product
-            </Link>
-          </>
-        )}
-      </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }
@@ -702,20 +612,26 @@ function LayoutTab() {
   }
 
   return (
-    <div className="max-w-xl mx-auto px-5 py-8">
-      <SectionDivider>Store Layout</SectionDivider>
-      <p className="text-xs text-neutral-500 mb-6">
-        Drag sections to reorder them. Toggle to show or hide each section on your store.
-      </p>
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSectionDragEnd}>
-        <SortableContext items={config.sectionOrder} strategy={verticalListSortingStrategy}>
-          <div className="space-y-2">
-            {config.sectionOrder.map(id => (
-              <SortableSectionItem key={id} id={id} />
-            ))}
-          </div>
-        </SortableContext>
-      </DndContext>
+    <div className="max-w-2xl mx-auto px-5 py-8">
+      <Card>
+        <CardHeader>
+          <CardTitle>Store Layout</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-neutral-500 mb-5">
+            Drag sections to reorder them. Toggle to show or hide each section on your store.
+          </p>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSectionDragEnd}>
+            <SortableContext items={config.sectionOrder} strategy={verticalListSortingStrategy}>
+              <div className="space-y-2">
+                {config.sectionOrder.map(id => (
+                  <SortableSectionItem key={id} id={id} />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+        </CardContent>
+      </Card>
     </div>
   )
 }
@@ -728,78 +644,90 @@ function ThemeTab() {
   const { config, update } = useStoreEditor()
 
   return (
-    <div className="max-w-xl mx-auto px-5 py-8 space-y-9">
-      <div>
-        <SectionDivider>Theme Preset</SectionDivider>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          {THEME_PRESETS.map(p => (
-            <button
-              key={p.label}
-              onClick={() => update(p.patch)}
-              className="text-sm border border-neutral-200 rounded-xl py-2.5 px-3 text-center font-semibold text-neutral-700 hover:border-black hover:bg-neutral-50 transition-colors"
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
-      </div>
+    <div className="max-w-2xl mx-auto px-5 py-8 space-y-5">
+      {/* Appearance card: presets + color */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Appearance</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div>
+            <p className="text-sm font-medium text-neutral-700 mb-3">Theme Preset</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {THEME_PRESETS.map(p => (
+                <button
+                  key={p.label}
+                  onClick={() => update(p.patch)}
+                  className="text-sm border border-neutral-200 rounded-lg py-2 px-3 text-center font-medium text-neutral-700 hover:border-neutral-400 hover:bg-neutral-50 transition-colors"
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="border-t border-neutral-100 pt-6">
+            <p className="text-sm font-medium text-neutral-700 mb-3">Accent Color</p>
+            <ColorPicker value={config.themeColor} onChange={v => update({ themeColor: v })} />
+          </div>
+        </CardContent>
+      </Card>
 
-      <div>
-        <SectionDivider>Accent Color</SectionDivider>
-        <ColorPicker value={config.themeColor} onChange={v => update({ themeColor: v })} />
-      </div>
-
-      <div>
-        <SectionDivider>Button Style</SectionDivider>
-        <OptionPills
-          value={config.buttonStyle}
-          onChange={v => update({ buttonStyle: v })}
-          options={[
-            { value: 'rounded',      label: 'Rounded' },
-            { value: 'soft_rounded', label: 'Pill'    },
-            { value: 'square',       label: 'Square'  },
-          ]}
-        />
-      </div>
-
-      <div>
-        <SectionDivider>Card Style</SectionDivider>
-        <OptionPills
-          value={config.cardStyle}
-          onChange={v => update({ cardStyle: v })}
-          options={[
-            { value: 'minimal',     label: 'Minimal' },
-            { value: 'soft_shadow', label: 'Shadow'  },
-            { value: 'outline',     label: 'Outline' },
-          ]}
-        />
-      </div>
-
-      <div>
-        <SectionDivider>Header Layout</SectionDivider>
-        <OptionPills
-          value={config.headerLayout}
-          onChange={v => update({ headerLayout: v })}
-          options={[
-            { value: 'left_avatar',  label: 'Left'     },
-            { value: 'centered',     label: 'Centered' },
-            { value: 'banner_avatar', label: 'Banner'  },
-          ]}
-        />
-      </div>
-
-      <div>
-        <SectionDivider>Card Density</SectionDivider>
-        <OptionPills
-          value={config.cardDensity}
-          onChange={v => update({ cardDensity: v })}
-          options={[
-            { value: 'compact',     label: 'Compact' },
-            { value: 'comfortable', label: 'Comfy'   },
-            { value: 'large',       label: 'Large'   },
-          ]}
-        />
-      </div>
+      {/* Style card: button + card + header + density */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Style Options</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div>
+            <p className="text-sm font-medium text-neutral-700 mb-3">Button Style</p>
+            <OptionPills
+              value={config.buttonStyle}
+              onChange={v => update({ buttonStyle: v })}
+              options={[
+                { value: 'rounded',      label: 'Rounded' },
+                { value: 'soft_rounded', label: 'Pill'    },
+                { value: 'square',       label: 'Square'  },
+              ]}
+            />
+          </div>
+          <div className="border-t border-neutral-100 pt-6">
+            <p className="text-sm font-medium text-neutral-700 mb-3">Card Style</p>
+            <OptionPills
+              value={config.cardStyle}
+              onChange={v => update({ cardStyle: v })}
+              options={[
+                { value: 'minimal',     label: 'Minimal' },
+                { value: 'soft_shadow', label: 'Shadow'  },
+                { value: 'outline',     label: 'Outline' },
+              ]}
+            />
+          </div>
+          <div className="border-t border-neutral-100 pt-6">
+            <p className="text-sm font-medium text-neutral-700 mb-3">Header Layout</p>
+            <OptionPills
+              value={config.headerLayout}
+              onChange={v => update({ headerLayout: v })}
+              options={[
+                { value: 'left_avatar',   label: 'Left'     },
+                { value: 'centered',      label: 'Centered' },
+                { value: 'banner_avatar', label: 'Banner'   },
+              ]}
+            />
+          </div>
+          <div className="border-t border-neutral-100 pt-6">
+            <p className="text-sm font-medium text-neutral-700 mb-3">Card Density</p>
+            <OptionPills
+              value={config.cardDensity}
+              onChange={v => update({ cardDensity: v })}
+              options={[
+                { value: 'compact',     label: 'Compact' },
+                { value: 'comfortable', label: 'Comfy'   },
+                { value: 'large',       label: 'Large'   },
+              ]}
+            />
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }
