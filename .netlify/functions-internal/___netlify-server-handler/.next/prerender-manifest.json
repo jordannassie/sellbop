@@ -338,6 +338,30 @@
         "x-next-revalidate-tag-token"
       ]
     },
+    "/dashboard/printify": {
+      "experimentalBypassFor": [
+        {
+          "type": "header",
+          "key": "next-action"
+        },
+        {
+          "type": "header",
+          "key": "content-type",
+          "value": "multipart/form-data;.*"
+        }
+      ],
+      "initialRevalidateSeconds": false,
+      "srcRoute": "/dashboard/printify",
+      "dataRoute": "/dashboard/printify.rsc",
+      "allowHeader": [
+        "host",
+        "x-matched-path",
+        "x-prerender-revalidate",
+        "x-prerender-revalidate-if-generated",
+        "x-next-revalidated-tags",
+        "x-next-revalidate-tag-token"
+      ]
+    },
     "/dashboard/products": {
       "experimentalBypassFor": [
         {
@@ -779,8 +803,8 @@
   "dynamicRoutes": {},
   "notFoundRoutes": [],
   "preview": {
-    "previewModeId": "3cac3ec9191ccc4106c3d505ce00e205",
-    "previewModeSigningKey": "95d038c0d6b9fc9fe61f4221a3ca5b2eacc979d2b87f1655d5122436f7d819d8",
-    "previewModeEncryptionKey": "773161bdbcbbe43b70242f11847cdaf9abdf6858545d45815bdba7ae5d917e98"
+    "previewModeId": "0c140320b2cd3587d9a16be11b10d1e8",
+    "previewModeSigningKey": "37f097c6c672937c17d6363799ac5b9db38bc06f8ea0f9a93801c9dc7b299930",
+    "previewModeEncryptionKey": "4bacd97638fc3fd174a6f01f56c783e38e4e15f1c54c33855ced3cf3e76a8eae"
   }
 }

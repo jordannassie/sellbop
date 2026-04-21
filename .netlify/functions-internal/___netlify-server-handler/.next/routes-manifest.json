@@ -115,6 +115,30 @@
       "namedRegex": "^/_not\\-found(?:/)?$"
     },
     {
+      "page": "/api/printify/order",
+      "regex": "^/api/printify/order(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/printify/order(?:/)?$"
+    },
+    {
+      "page": "/api/printify/products",
+      "regex": "^/api/printify/products(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/printify/products(?:/)?$"
+    },
+    {
+      "page": "/api/printify/shops",
+      "regex": "^/api/printify/shops(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/printify/shops(?:/)?$"
+    },
+    {
+      "page": "/api/printify/sync",
+      "regex": "^/api/printify/sync(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/printify/sync(?:/)?$"
+    },
+    {
       "page": "/checkout/cancel",
       "regex": "^/checkout/cancel(?:/)?$",
       "routeKeys": {},
@@ -179,6 +203,12 @@
       "regex": "^/dashboard/payouts(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/dashboard/payouts(?:/)?$"
+    },
+    {
+      "page": "/dashboard/printify",
+      "regex": "^/dashboard/printify(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/printify(?:/)?$"
     },
     {
       "page": "/dashboard/products",

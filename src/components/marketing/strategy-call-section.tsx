@@ -297,19 +297,19 @@ export function StrategyCallSection() {
 
   return (
     <>
-      <section className="py-20">
+      <section className="py-20 border-t border-neutral-100 bg-neutral-50">
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
-          <div className="bg-black rounded-3xl overflow-hidden">
+          <div className="bg-white border border-neutral-200 rounded-3xl overflow-hidden shadow-sm">
             <div className="grid lg:grid-cols-[1fr_auto_340px] gap-0">
 
-              {/* Left: copy + includes + CTA */}
+              {/* Left column — copy */}
               <div className="p-8 sm:p-12 flex flex-col justify-center gap-6">
                 <div>
                   <p className="text-xs font-bold uppercase tracking-[0.3em] text-neutral-400 mb-3">1-on-1 Expert Session</p>
-                  <h2 className="text-3xl sm:text-4xl font-bold text-white leading-tight mb-3">
+                  <h2 className="text-3xl sm:text-4xl font-bold text-black leading-tight mb-3">
                     Need help selling more?
                   </h2>
-                  <p className="text-neutral-400 text-sm leading-relaxed">
+                  <p className="text-neutral-500 text-sm leading-relaxed">
                     Book a 30-minute SellBop Strategy Call and get expert feedback on your product, pricing, page setup, and traffic plan.
                   </p>
                 </div>
@@ -317,10 +317,10 @@ export function StrategyCallSection() {
                 <div className="space-y-2.5">
                   {INCLUDES.map(item => (
                     <div key={item} className="flex items-start gap-2.5">
-                      <div className="w-4 h-4 rounded-full border border-neutral-600 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <Check size={9} className="text-neutral-300" />
+                      <div className="w-4 h-4 rounded-full bg-neutral-100 border border-neutral-200 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <Check size={9} className="text-neutral-500" />
                       </div>
-                      <span className="text-sm text-neutral-300">{item}</span>
+                      <span className="text-sm text-neutral-600">{item}</span>
                     </div>
                   ))}
                 </div>
@@ -328,39 +328,39 @@ export function StrategyCallSection() {
                 <div>
                   <button
                     onClick={() => setOpen(true)}
-                    className="inline-flex items-center gap-2 bg-white text-black text-sm font-bold px-6 py-3 rounded-xl hover:bg-neutral-100 transition-colors"
+                    className="inline-flex items-center gap-2 bg-black text-white text-sm font-bold px-6 py-3 rounded-xl hover:bg-neutral-800 transition-colors"
                   >
                     Book a Strategy Call <ArrowRight size={14} />
                   </button>
                 </div>
               </div>
 
-              {/* Middle: price panel */}
-              <div className="border-t lg:border-t-0 lg:border-l border-neutral-800 bg-neutral-900 p-8 sm:p-10 flex flex-col justify-center gap-6 min-w-[220px]">
+              {/* Middle column — pricing card */}
+              <div className="border-t lg:border-t-0 lg:border-l border-neutral-100 p-8 sm:p-10 flex flex-col justify-center gap-6 min-w-[220px] bg-neutral-50">
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.3em] text-neutral-500 mb-3">One-time</p>
-                  <p className="text-5xl font-bold text-white leading-none">$500</p>
-                  <p className="text-neutral-500 text-sm mt-2">Single session · No subscription</p>
+                  <p className="text-xs font-bold uppercase tracking-[0.3em] text-neutral-400 mb-3">One-time</p>
+                  <p className="text-5xl font-bold text-black leading-none">$500</p>
+                  <p className="text-neutral-400 text-sm mt-2">Single session · No subscription</p>
                 </div>
 
-                <div className="border-t border-neutral-800 pt-5 space-y-3">
-                  <div className="flex items-center gap-2.5 text-sm text-neutral-400">
-                    <Clock size={13} className="text-neutral-600 flex-shrink-0" />
+                <div className="border-t border-neutral-200 pt-5 space-y-3">
+                  <div className="flex items-center gap-2.5 text-sm text-neutral-600">
+                    <Clock size={13} className="text-neutral-400 flex-shrink-0" />
                     30 minutes via video call
                   </div>
-                  <div className="flex items-center gap-2.5 text-sm text-neutral-400">
-                    <Calendar size={13} className="text-neutral-600 flex-shrink-0" />
+                  <div className="flex items-center gap-2.5 text-sm text-neutral-600">
+                    <Calendar size={13} className="text-neutral-400 flex-shrink-0" />
                     Book your slot instantly
                   </div>
-                  <div className="flex items-center gap-2.5 text-sm text-neutral-400">
-                    <Check size={13} className="text-neutral-600 flex-shrink-0" />
+                  <div className="flex items-center gap-2.5 text-sm text-neutral-600">
+                    <Check size={13} className="text-neutral-400 flex-shrink-0" />
                     Written action plan included
                   </div>
                 </div>
 
                 <button
                   onClick={() => setOpen(true)}
-                  className="w-full flex items-center justify-center gap-2 border border-neutral-700 text-neutral-200 text-sm font-semibold py-3 rounded-xl hover:border-neutral-500 hover:bg-neutral-800 transition-colors"
+                  className="w-full flex items-center justify-center gap-2 border border-neutral-200 text-black text-sm font-semibold py-3 rounded-xl hover:bg-white hover:border-neutral-400 transition-colors"
                 >
                   View Available Times
                 </button>
@@ -375,8 +375,8 @@ export function StrategyCallSection() {
                   className="object-cover object-center"
                   unoptimized
                 />
-                {/* subtle left gradient to blend into dark card */}
-                <div className="absolute inset-0 bg-gradient-to-r from-neutral-900/60 via-transparent to-transparent" />
+                {/* blend left edge into white card */}
+                <div className="absolute inset-0 bg-gradient-to-r from-neutral-50/60 via-transparent to-transparent" />
               </div>
 
             </div>

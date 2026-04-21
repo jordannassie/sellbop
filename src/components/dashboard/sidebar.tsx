@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils'
 import {
   LayoutDashboard, Package, ShoppingBag, Repeat2, Users,
   BarChart3, Tag, DollarSign, FileDown, Globe, CreditCard,
-  Settings, LogOut, Menu, X, Layers,
+  Settings, LogOut, Menu, X, Layers, Shirt,
 } from 'lucide-react'
 import { SellBopLogo } from '@/components/ui/sellbop-logo'
 
@@ -16,6 +16,7 @@ const NAV = [
   { href: '/dashboard/storefront',    label: 'Store Profile',  icon: Globe },
   { href: '/dashboard/store-editor',  label: 'Store Editor',   icon: Layers },
   { href: '/dashboard/products',      label: 'Products',       icon: Package },
+  { href: '/dashboard/printify',      label: 'Clothing',       icon: Shirt },
   { href: '/dashboard/orders',        label: 'Orders',         icon: ShoppingBag },
   { href: '/dashboard/subscriptions', label: 'Subscriptions',  icon: Repeat2 },
   { href: '/dashboard/customers',     label: 'Customers',      icon: Users },

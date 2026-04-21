@@ -92,6 +92,8 @@ export async function completeCheckout(
     })
   }
 
+  const isPrintify = session.product.source === 'printify'
+
   // Create order
   const order = await demoOrderRepo.create({
     sellerId,
@@ -117,6 +119,11 @@ export async function completeCheckout(
     stripeSessionId: session.id,
     receiptSent: true,
     internalNotes: null,
+    // ── Printify fulfillment ────────────────────────────────
+    fulfillmentProvider: isPrintify ? 'printify' : null,
+    fulfillmentStatus: isPrintify ? 'pending' : null,
+    printifyOrderId: null,
+    shippingAddress: null,
   })
 
   // Increment coupon use

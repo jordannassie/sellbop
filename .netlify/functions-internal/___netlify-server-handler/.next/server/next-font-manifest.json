@@ -72,6 +72,9 @@
     "[project]/src/app/dashboard/payouts/page": [
       "static/media/caa3a2e1cccd8315-s.p.16t1db8_9y2o~.woff2"
     ],
+    "[project]/src/app/dashboard/printify/page": [
+      "static/media/caa3a2e1cccd8315-s.p.16t1db8_9y2o~.woff2"
+    ],
     "[project]/src/app/dashboard/products/[id]/page": [
       "static/media/caa3a2e1cccd8315-s.p.16t1db8_9y2o~.woff2"
     ],

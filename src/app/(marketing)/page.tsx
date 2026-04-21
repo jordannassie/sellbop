@@ -4,8 +4,8 @@ import { Button } from '@/components/ui/button'
 import { ProductImage } from '@/components/ui/product-image'
 import { RotatingWord } from '@/components/marketing/rotating-word'
 import { StrategyCallSection } from '@/components/marketing/strategy-call-section'
-import { Check, ArrowRight, Store, FileText, ShoppingBag, Pencil, Download, MapPin, Zap, Sparkles } from 'lucide-react'
-import { DEMO_PRODUCTS } from '@/lib/demo-data/seed'
+import { Check, ArrowRight, FileText, ShoppingBag, Pencil, Download, MapPin, Zap, Sparkles } from 'lucide-react'
+import { DEMO_PRODUCTS, DEMO_STOREFRONT, DEMO_SELLER_PROFILE } from '@/lib/demo-data/seed'
 import { formatCurrency } from '@/lib/utils'
 
 export default function HomePage() {
@@ -56,12 +56,22 @@ export default function HomePage() {
                   <ProductImage src={p.thumbnailUrl} alt={p.name} productType={p.productType} fill iconSize="md" />
                 </div>
                 <p className="text-xs text-neutral-400 mb-1 capitalize">{p.productType.replace('_', ' ')}</p>
-                <p className="font-semibold text-black text-sm mb-2 group-hover:underline underline-offset-2">{p.name}</p>
-                <div className="flex items-center justify-between">
+                <p className="font-semibold text-black text-sm mb-3 group-hover:underline underline-offset-2">{p.name}</p>
+                <div className="flex items-center justify-between mb-3">
                   <span className="text-sm font-bold text-black">{formatCurrency(p.price, p.currency)}</span>
                   {p.compareAtPrice && (
                     <span className="text-xs text-neutral-400 line-through">{formatCurrency(p.compareAtPrice)}</span>
                   )}
+                </div>
+                {/* Creator chip */}
+                <div className="flex items-center gap-2 pt-3 border-t border-neutral-100">
+                  <div
+                    className="rounded-lg flex-shrink-0 flex items-center justify-center text-white font-black"
+                    style={{ width: 26, height: 26, fontSize: 10, backgroundColor: DEMO_STOREFRONT.themeColor }}
+                  >
+                    {DEMO_SELLER_PROFILE.displayName.charAt(0)}
+                  </div>
+                  <span className="text-xs text-neutral-500 truncate">{DEMO_SELLER_PROFILE.displayName}</span>
                 </div>
               </div>
             </Link>
@@ -181,103 +191,6 @@ export default function HomePage() {
       </section>
 
       {/* ══════════════════════════════════════════════════════════════
-          SECTION 1 — Sell in three powerful ways
-      ══════════════════════════════════════════════════════════════ */}
-      <section className="border-t border-neutral-100 bg-neutral-50 py-24 sm:py-32">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-16">
-            <p className="text-xs font-bold uppercase tracking-[0.3em] text-neutral-400 mb-4">Platform</p>
-            <h2 className="text-3xl sm:text-5xl font-black text-black tracking-tight leading-tight mb-4">
-              Sell in three powerful ways
-            </h2>
-            <p className="text-neutral-500 text-base sm:text-lg max-w-lg mx-auto leading-relaxed">
-              SellBop gives creators a storefront, dedicated product pages, and marketplace discovery — all in one platform.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6">
-            {/* Card 1: Creator Storefront */}
-            <div className="bg-white border border-neutral-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-              {/* Mini storefront preview */}
-              <div className="bg-neutral-50 border-b border-neutral-100 p-5">
-                <StorefrontMockup />
-              </div>
-              <div className="p-6">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-7 h-7 rounded-lg bg-violet-100 flex items-center justify-center">
-                    <Store size={14} className="text-violet-600" />
-                  </div>
-                  <span className="text-xs font-bold uppercase tracking-widest text-neutral-400">Surface 1</span>
-                </div>
-                <h3 className="text-lg font-black text-black mb-2">Creator Storefront</h3>
-                <p className="text-sm text-neutral-500 leading-relaxed mb-4">
-                  Build a clean branded store page for your audience, products, and links.
-                </p>
-                <Link
-                  href="/store/alexjohnson"
-                  className="inline-flex items-center gap-1 text-xs font-bold text-black hover:opacity-60 transition-opacity"
-                >
-                  View example store <ArrowRight size={12} />
-                </Link>
-              </div>
-            </div>
-
-            {/* Card 2: Product Pages */}
-            <div className="bg-white border border-neutral-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-              {/* Mini product page preview */}
-              <div className="bg-neutral-50 border-b border-neutral-100 p-5">
-                <ProductPageMockup />
-              </div>
-              <div className="p-6">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
-                    <FileText size={14} className="text-blue-600" />
-                  </div>
-                  <span className="text-xs font-bold uppercase tracking-widest text-neutral-400">Surface 2</span>
-                </div>
-                <h3 className="text-lg font-black text-black mb-2">Product Pages</h3>
-                <p className="text-sm text-neutral-500 leading-relaxed mb-4">
-                  Every product gets its own focused sell page built to convert.
-                </p>
-                <Link
-                  href="/p/notion-template-pack"
-                  className="inline-flex items-center gap-1 text-xs font-bold text-black hover:opacity-60 transition-opacity"
-                >
-                  View example product <ArrowRight size={12} />
-                </Link>
-              </div>
-            </div>
-
-            {/* Card 3: Marketplace */}
-            <div className="bg-white border border-neutral-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-              {/* Mini marketplace preview */}
-              <div className="bg-neutral-50 border-b border-neutral-100 p-5">
-                <MarketplaceMockup />
-              </div>
-              <div className="p-6">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-7 h-7 rounded-lg bg-emerald-100 flex items-center justify-center">
-                    <ShoppingBag size={14} className="text-emerald-600" />
-                  </div>
-                  <span className="text-xs font-bold uppercase tracking-widest text-neutral-400">Surface 3</span>
-                </div>
-                <h3 className="text-lg font-black text-black mb-2">Marketplace</h3>
-                <p className="text-sm text-neutral-500 leading-relaxed mb-4">
-                  Get discovered by buyers browsing products across the SellBop marketplace.
-                </p>
-                <Link
-                  href="/marketplace"
-                  className="inline-flex items-center gap-1 text-xs font-bold text-black hover:opacity-60 transition-opacity"
-                >
-                  Browse marketplace <ArrowRight size={12} />
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════════════════════════════
           SECTION 2 — Why creators choose SellBop
       ══════════════════════════════════════════════════════════════ */}
       <section className="py-24 sm:py-32">
@@ -339,7 +252,7 @@ export default function HomePage() {
             ].map(f => (
               <div
                 key={f.title}
-                className="bg-white border border-neutral-150 rounded-2xl p-6 sm:p-7 hover:border-neutral-300 hover:shadow-sm transition-all"
+                className="bg-white border border-neutral-200 rounded-2xl p-6 sm:p-7 hover:border-neutral-300 hover:shadow-sm transition-all"
               >
                 <div className={`w-9 h-9 rounded-xl ${f.bg} ${f.color} flex items-center justify-center mb-5`}>
                   {f.icon}
@@ -353,143 +266,81 @@ export default function HomePage() {
       </section>
 
       {/* ══════════════════════════════════════════════════════════════
-          SECTION 3 — Three surfaces. One selling system.
-      ══════════════════════════════════════════════════════════════ */}
-      <section className="bg-black py-24 sm:py-32">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-16">
-            <p className="text-xs font-bold uppercase tracking-[0.3em] text-neutral-500 mb-4">The Platform</p>
-            <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight mb-4">
-              Three surfaces.<br className="hidden sm:block" /> One selling system.
-            </h2>
-            <p className="text-neutral-400 text-base sm:text-lg max-w-lg mx-auto leading-relaxed">
-              SellBop gives creators a complete selling flow — from discovery to checkout.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
-            {/* Marketplace panel */}
-            <div className="bg-neutral-900 border border-neutral-800 rounded-2xl overflow-hidden">
-              <div className="p-5 border-b border-neutral-800">
-                <MarketplaceMockupDark />
-              </div>
-              <div className="p-5">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                  <span className="text-xs font-bold uppercase tracking-widest text-neutral-400">Marketplace</span>
-                </div>
-                <p className="text-white font-bold text-base leading-tight mb-1">Discover products</p>
-                <p className="text-neutral-500 text-xs leading-relaxed">
-                  Buyers browse by category, search by topic, and find your products organically.
-                </p>
-              </div>
-            </div>
-
-            {/* Storefront panel */}
-            <div className="bg-neutral-900 border border-neutral-800 rounded-2xl overflow-hidden sm:scale-[1.03] sm:shadow-2xl sm:z-10 relative">
-              <div className="p-5 border-b border-neutral-800">
-                <StorefrontMockupDark />
-              </div>
-              <div className="p-5">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2 h-2 rounded-full bg-violet-400" />
-                  <span className="text-xs font-bold uppercase tracking-widest text-neutral-400">Storefront</span>
-                </div>
-                <p className="text-white font-bold text-base leading-tight mb-1">Build your creator page</p>
-                <p className="text-neutral-500 text-xs leading-relaxed">
-                  Your branded hub with your profile, products, and social links — all in one place.
-                </p>
-              </div>
-            </div>
-
-            {/* Product page panel */}
-            <div className="bg-neutral-900 border border-neutral-800 rounded-2xl overflow-hidden">
-              <div className="p-5 border-b border-neutral-800">
-                <ProductPageMockupDark />
-              </div>
-              <div className="p-5">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2 h-2 rounded-full bg-blue-400" />
-                  <span className="text-xs font-bold uppercase tracking-widest text-neutral-400">Product Page</span>
-                </div>
-                <p className="text-white font-bold text-base leading-tight mb-1">Convert every click</p>
-                <p className="text-neutral-500 text-xs leading-relaxed">
-                  Each product has its own focused sell page with pricing, details, and checkout.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Flow arrow */}
-          <div className="flex items-center justify-center gap-3 sm:gap-6 mt-12 flex-wrap">
-            <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest">Marketplace</span>
-            <ArrowRight size={14} className="text-neutral-600 flex-shrink-0" />
-            <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest">Storefront</span>
-            <ArrowRight size={14} className="text-neutral-600 flex-shrink-0" />
-            <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest">Product Page</span>
-            <ArrowRight size={14} className="text-neutral-600 flex-shrink-0" />
-            <span className="text-xs font-bold text-white uppercase tracking-widest">Checkout</span>
-          </div>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════════════════════════════
           SECTION 4 — Pricing
       ══════════════════════════════════════════════════════════════ */}
-      <section className="py-24 sm:py-32 bg-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-12">
-            <p className="text-xs font-bold uppercase tracking-[0.3em] text-neutral-400 mb-4">Pricing</p>
-            <h2 className="text-3xl sm:text-5xl font-black text-black tracking-tight leading-tight mb-3">
-              Simple, transparent pricing
-            </h2>
-            <p className="text-neutral-500 text-base sm:text-lg">
-              No monthly fees. No setup fees. Only pay when you sell.
-            </p>
+      <section className="py-24 sm:py-32 bg-neutral-50">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
+
+          {/* Headline — benefit-first */}
+          <p className="text-xs font-bold uppercase tracking-[0.3em] text-neutral-400 mb-5">Pricing</p>
+          <h2 className="text-3xl sm:text-5xl font-black text-black tracking-tight leading-tight mb-4">
+            No hidden fees.<br className="hidden sm:block" /> No monthly charges.
+          </h2>
+          <p className="text-neutral-500 text-base sm:text-lg mb-12">
+            Start free and only pay when you sell.
+          </p>
+
+          {/* Two pricing cards */}
+          <div className="grid sm:grid-cols-2 gap-4 mb-8">
+
+            {/* Card 1: Direct */}
+            <div className="bg-white border border-neutral-200 rounded-2xl p-8 text-left shadow-sm">
+              <div className="flex items-center gap-2 mb-5">
+                <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">Direct Sales</p>
+              </div>
+              <p className="text-4xl font-black text-black leading-none mb-1">
+                10%<span className="text-2xl text-neutral-400"> + $0.50</span>
+              </p>
+              <p className="text-sm text-neutral-500 mt-2 leading-relaxed">
+                When customers buy from your store, product page, or direct link.
+              </p>
+              <div className="mt-5 space-y-2">
+                {['No monthly fee', 'Every product type', 'Full store control'].map(t => (
+                  <div key={t} className="flex items-center gap-2 text-sm text-neutral-600">
+                    <Check size={12} className="text-emerald-500 flex-shrink-0" /> {t}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Card 2: Marketplace */}
+            <div className="bg-white border border-neutral-200 rounded-2xl p-8 text-left shadow-sm">
+              <div className="flex items-center gap-2 mb-5">
+                <div className="w-2 h-2 rounded-full bg-violet-500" />
+                <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">Marketplace Sales</p>
+              </div>
+              <p className="text-4xl font-black text-black leading-none mb-1">30%</p>
+              <p className="text-sm text-neutral-500 mt-2 leading-relaxed">
+                When SellBop brings you the customer through marketplace discovery.
+              </p>
+              <div className="mt-5 space-y-2">
+                {['Built-in buyer discovery', 'No extra marketing needed', 'Only when SellBop sends the sale'].map(t => (
+                  <div key={t} className="flex items-center gap-2 text-sm text-neutral-600">
+                    <Check size={12} className="text-violet-500 flex-shrink-0" /> {t}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
-          <div className="bg-black rounded-3xl p-10 sm:p-14 text-center">
-            <p className="text-xs font-bold uppercase tracking-[0.4em] text-neutral-500 mb-4">Direct Sales</p>
-            <p className="text-5xl sm:text-7xl font-black text-white leading-none mb-3">
-              10% <span className="text-neutral-500">+</span> $0.50
-            </p>
-            <p className="text-neutral-400 text-base sm:text-lg mb-10">per sale · no monthly subscription required</p>
+          {/* Fairness note */}
+          <p className="text-xs text-neutral-400 mb-10">
+            Marketplace pricing only applies when SellBop brings you the buyer. Your direct sales always stay at 10% + $0.50.
+          </p>
 
-            <div className="grid sm:grid-cols-2 gap-3 text-left max-w-xl mx-auto mb-10">
-              {[
-                ['No monthly subscription required',   'Keep control of your store'],
-                ['Every product type supported',       'Marketplace discovery included'],
-                ['Launch in minutes',                  'Payment processing fees may apply'],
-              ].map(([l, r], i) => (
-                <div key={i} className="contents">
-                  <div className="flex items-center gap-2.5 text-sm text-neutral-300">
-                    <Check size={13} className="text-neutral-500 flex-shrink-0" />
-                    {l}
-                  </div>
-                  <div className="flex items-center gap-2.5 text-sm text-neutral-300">
-                    <Check size={13} className="text-neutral-500 flex-shrink-0" />
-                    {r}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Link href="/signup">
-                <button className="inline-flex items-center gap-2 bg-white text-black text-sm font-bold px-7 py-3.5 rounded-xl hover:bg-neutral-100 transition-colors">
-                  Start Free <ArrowRight size={14} />
-                </button>
-              </Link>
-              <Link href="/pricing">
-                <button className="inline-flex items-center gap-2 border border-neutral-700 text-neutral-300 text-sm font-semibold px-7 py-3.5 rounded-xl hover:border-neutral-500 hover:bg-neutral-900 transition-colors">
-                  View full pricing
-                </button>
-              </Link>
-            </div>
-
-            <p className="text-xs text-neutral-600 mt-8 border-t border-neutral-800 pt-6">
-              Marketplace discovery sales (when SellBop brings the buyer): 30% per transaction.
-            </p>
+          {/* CTAs */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link href="/signup">
+              <button className="inline-flex items-center gap-2 bg-black text-white text-sm font-bold px-7 py-3.5 rounded-xl hover:bg-neutral-800 transition-colors">
+                Start Free <ArrowRight size={14} />
+              </button>
+            </Link>
+            <Link href="/pricing">
+              <button className="inline-flex items-center gap-2 border border-neutral-200 text-neutral-600 text-sm font-semibold px-7 py-3.5 rounded-xl hover:border-neutral-400 hover:bg-white transition-colors">
+                View full pricing
+              </button>
+            </Link>
           </div>
         </div>
       </section>
@@ -677,198 +528,3 @@ function BenefitProductTypesMockup() {
   )
 }
 
-// ── Mini Mockup Components ────────────────────────────────────
-
-function StorefrontMockup() {
-  return (
-    <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden text-left shadow-sm">
-      {/* Header strip */}
-      <div className="flex items-center gap-2.5 px-3 py-2.5 border-b border-neutral-100">
-        <div className="w-8 h-8 rounded-lg bg-neutral-900 flex items-center justify-center text-white text-xs font-black">A</div>
-        <div>
-          <div className="w-16 h-2 bg-neutral-900 rounded-full" />
-          <div className="w-24 h-1.5 bg-neutral-200 rounded-full mt-1" />
-        </div>
-      </div>
-      {/* Socials */}
-      <div className="flex gap-1.5 px-3 py-2">
-        {['Twitter', 'Web'].map(s => (
-          <div key={s} className="h-5 px-2 rounded-full bg-neutral-100 border border-neutral-200 flex items-center">
-            <div className="w-8 h-1.5 bg-neutral-300 rounded-full" />
-          </div>
-        ))}
-      </div>
-      {/* Product grid */}
-      <div className="grid grid-cols-2 gap-2 px-3 pb-3">
-        {[0, 1, 2, 3].map(i => (
-          <div key={i} className="bg-neutral-50 rounded-lg border border-neutral-100 overflow-hidden">
-            <div className="h-8 bg-neutral-200" />
-            <div className="p-1.5">
-              <div className="w-full h-1.5 bg-neutral-300 rounded-full" />
-              <div className="w-8 h-1.5 bg-neutral-900 rounded-full mt-1" />
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function ProductPageMockup() {
-  return (
-    <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden shadow-sm">
-      <div className="flex gap-2.5 p-3">
-        {/* Left: image */}
-        <div className="w-20 flex-shrink-0 rounded-lg bg-neutral-100 border border-neutral-200 overflow-hidden">
-          <div className="h-16 bg-gradient-to-br from-neutral-200 to-neutral-300" />
-        </div>
-        {/* Right: content */}
-        <div className="flex-1 min-w-0 py-0.5">
-          <div className="w-8 h-1.5 bg-neutral-300 rounded-full mb-1.5" />
-          <div className="w-full h-2 bg-neutral-900 rounded-full mb-1" />
-          <div className="w-3/4 h-2 bg-neutral-900 rounded-full mb-3" />
-          <div className="w-10 h-2.5 bg-neutral-700 rounded-full mb-3" />
-          <div className="w-full h-6 bg-neutral-900 rounded-lg flex items-center justify-center">
-            <div className="w-16 h-1.5 bg-white/50 rounded-full" />
-          </div>
-        </div>
-      </div>
-      {/* Trust strip */}
-      <div className="border-t border-neutral-100 px-3 py-2 flex gap-3">
-        {[0, 1].map(i => (
-          <div key={i} className="flex items-center gap-1">
-            <div className="w-2.5 h-2.5 rounded-full bg-neutral-200" />
-            <div className="w-14 h-1.5 bg-neutral-200 rounded-full" />
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function MarketplaceMockup() {
-  const categories = ['Templates', 'Courses', 'Coaching']
-  return (
-    <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden shadow-sm">
-      {/* Search bar */}
-      <div className="px-3 py-2 border-b border-neutral-100">
-        <div className="h-5 bg-neutral-100 rounded-lg border border-neutral-200 flex items-center px-2 gap-1.5">
-          <div className="w-2.5 h-2.5 rounded-full border border-neutral-300" />
-          <div className="w-24 h-1.5 bg-neutral-200 rounded-full" />
-        </div>
-      </div>
-      {/* Categories */}
-      <div className="flex gap-1.5 px-3 py-2">
-        {categories.map((c, i) => (
-          <div key={c} className={`h-5 px-2 rounded-full text-[8px] font-bold flex items-center border ${i === 0 ? 'bg-neutral-900 border-neutral-900 text-white' : 'bg-neutral-50 border-neutral-200 text-neutral-500'}`}>
-            {c}
-          </div>
-        ))}
-      </div>
-      {/* Product grid */}
-      <div className="grid grid-cols-3 gap-1.5 px-3 pb-3">
-        {[0, 1, 2, 3, 4, 5].map(i => (
-          <div key={i} className="bg-neutral-50 rounded-lg border border-neutral-100 overflow-hidden">
-            <div className={`h-6 ${i % 3 === 0 ? 'bg-violet-100' : i % 3 === 1 ? 'bg-blue-100' : 'bg-emerald-100'}`} />
-            <div className="p-1">
-              <div className="w-full h-1 bg-neutral-200 rounded-full" />
-              <div className="w-5 h-1 bg-neutral-300 rounded-full mt-1" />
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-// ── Dark variants for Section 3 ───────────────────────────────
-
-function StorefrontMockupDark() {
-  return (
-    <div className="bg-neutral-800 rounded-xl border border-neutral-700 overflow-hidden">
-      <div className="flex items-center gap-2 px-3 py-2.5 border-b border-neutral-700">
-        <div className="w-7 h-7 rounded-lg bg-violet-500 flex items-center justify-center text-white text-xs font-black">A</div>
-        <div>
-          <div className="w-16 h-1.5 bg-white rounded-full" />
-          <div className="w-20 h-1 bg-neutral-600 rounded-full mt-1" />
-        </div>
-      </div>
-      <div className="flex gap-1 px-3 py-2">
-        {[0, 1, 2].map(i => (
-          <div key={i} className="h-4 px-2 rounded-full bg-neutral-700 border border-neutral-600 flex items-center">
-            <div className="w-6 h-1 bg-neutral-500 rounded-full" />
-          </div>
-        ))}
-      </div>
-      <div className="grid grid-cols-2 gap-1.5 px-3 pb-3">
-        {[0, 1, 2, 3].map(i => (
-          <div key={i} className="bg-neutral-700 rounded-lg overflow-hidden border border-neutral-600">
-            <div className="h-7 bg-neutral-600" />
-            <div className="p-1.5">
-              <div className="w-full h-1 bg-neutral-500 rounded-full" />
-              <div className="w-6 h-1 bg-violet-400 rounded-full mt-1" />
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function ProductPageMockupDark() {
-  return (
-    <div className="bg-neutral-800 rounded-xl border border-neutral-700 overflow-hidden">
-      <div className="flex gap-2 p-3">
-        <div className="w-16 flex-shrink-0 rounded-lg bg-neutral-700 border border-neutral-600 overflow-hidden">
-          <div className="h-12 bg-gradient-to-br from-blue-900/50 to-neutral-700" />
-        </div>
-        <div className="flex-1 py-0.5">
-          <div className="w-6 h-1 bg-neutral-600 rounded-full mb-1.5" />
-          <div className="w-full h-1.5 bg-white rounded-full mb-1" />
-          <div className="w-2/3 h-1.5 bg-neutral-400 rounded-full mb-2.5" />
-          <div className="w-8 h-2 bg-neutral-500 rounded-full mb-2" />
-          <div className="w-full h-5 bg-blue-500 rounded-lg" />
-        </div>
-      </div>
-      <div className="border-t border-neutral-700 px-3 py-1.5 flex gap-2">
-        {[0, 1].map(i => (
-          <div key={i} className="flex items-center gap-1">
-            <div className="w-2 h-2 rounded-full bg-neutral-600" />
-            <div className="w-12 h-1 bg-neutral-700 rounded-full" />
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function MarketplaceMockupDark() {
-  return (
-    <div className="bg-neutral-800 rounded-xl border border-neutral-700 overflow-hidden">
-      <div className="px-3 py-2 border-b border-neutral-700">
-        <div className="h-4 bg-neutral-700 rounded-lg border border-neutral-600 flex items-center px-2 gap-1">
-          <div className="w-2 h-2 rounded-full border border-neutral-500" />
-          <div className="w-16 h-1 bg-neutral-600 rounded-full" />
-        </div>
-      </div>
-      <div className="flex gap-1 px-3 py-1.5">
-        {['All', 'Templates', 'Courses'].map((c, i) => (
-          <div key={c} className={`h-4 px-2 rounded-full text-[7px] font-bold flex items-center border ${i === 0 ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-neutral-700 border-neutral-600 text-neutral-500'}`}>
-            {c}
-          </div>
-        ))}
-      </div>
-      <div className="grid grid-cols-3 gap-1.5 px-3 pb-3">
-        {[0, 1, 2, 3, 4, 5].map(i => (
-          <div key={i} className="bg-neutral-700 rounded-lg border border-neutral-600 overflow-hidden">
-            <div className={`h-5 ${i % 3 === 0 ? 'bg-violet-900/50' : i % 3 === 1 ? 'bg-blue-900/50' : 'bg-emerald-900/50'}`} />
-            <div className="p-1">
-              <div className="w-full h-1 bg-neutral-600 rounded-full" />
-              <div className="w-4 h-1 bg-neutral-500 rounded-full mt-0.5" />
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}

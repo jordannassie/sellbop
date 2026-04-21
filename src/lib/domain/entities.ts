@@ -6,6 +6,9 @@
 // ============================================================
 
 export type ProductType = 'digital_download' | 'service_offer' | 'subscription' | 'bundle' | 'membership_ready'
+export type ProductSource = 'printify' | null
+export type FulfillmentProvider = 'printify' | null
+export type FulfillmentStatus = 'pending' | 'sent_to_printify' | 'fulfilled' | null
 export type ButtonStyle = 'rounded' | 'soft_rounded' | 'square'
 export type CardStyle = 'minimal' | 'soft_shadow' | 'outline'
 export type HeaderLayout = 'left_avatar' | 'centered' | 'banner_avatar'
@@ -119,6 +122,17 @@ export interface Product {
   marketplaceVisible: boolean
   /** Short excerpt shown on marketplace cards (falls back to shortDescription). Max ~120 chars. */
   marketplaceExcerpt: string | null
+  // ── Printify / external fulfillment (optional — null for regular products) ──
+  /** 'printify' if imported from Printify; omitted/null for standard products */
+  source?: ProductSource
+  /** Printify product ID */
+  printifyProductId?: string | null
+  /** Printify shop ID */
+  printifyShopId?: string | null
+  /** Who fulfills this product post-purchase */
+  fulfillmentProvider?: FulfillmentProvider
+  /** Fulfillment status — only relevant for Printify/physical products */
+  fulfillmentStatus?: FulfillmentStatus
 }
 
 export interface Order {
@@ -147,6 +161,23 @@ export interface Order {
   receiptSent: boolean
   internalNotes: string | null
   createdAt: string
+  // ── Printify fulfillment (optional) ────────────────────
+  printifyOrderId?: string | null
+  fulfillmentProvider?: FulfillmentProvider
+  fulfillmentStatus?: FulfillmentStatus
+  shippingAddress?: PrintifyShippingAddress | null
+}
+
+export interface PrintifyShippingAddress {
+  firstName: string
+  lastName: string
+  address1: string
+  address2?: string
+  city: string
+  region: string
+  zip: string
+  country: string
+  phone?: string
 }
 
 export interface Customer {

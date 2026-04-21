@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { DEMO_ORDERS, DEMO_PRODUCTS, DEMO_SUBSCRIPTIONS } from '@/lib/demo-data/seed'
+import { DEMO_PRODUCTS, DEMO_SUBSCRIPTIONS } from '@/lib/demo-data/seed'
+import { demoOrderRepo } from '@/lib/adapters/demo/repositories'
 import { formatCurrency, formatDate } from '@/lib/utils'
-import { ArrowLeft, AlertTriangle, CheckCircle2, Clock, XCircle, Download, RotateCcw, Mail, Shield, Repeat2 } from 'lucide-react'
+import { ArrowLeft, AlertTriangle, CheckCircle2, Clock, XCircle, Download, RotateCcw, Mail, Shield, Repeat2, Shirt, Zap, Send } from 'lucide-react'
 import type { Order, RefundStatus, AccessStatus } from '@/lib/domain/entities'
 
 // ─── Badges ───────────────────────────────────────────────────────────────────
@@ -90,21 +91,85 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const [processing, setProcessing] = useState(false)
   const [confirmRefund, setConfirmRefund] = useState(false)
   const [toastMsg, setToastMsg] = useState<string | null>(null)
+  const [sendingToPrintify, setSendingToPrintify] = useState(false)
+  const [printifyOrderId, setPrintifyOrderId] = useState<string | null>(null)
+  const [fulfillmentStatus, setFulfillmentStatus] = useState<string | null>(null)
 
   useEffect(() => { params.then(({ id }) => setOrderId(id)) }, [params])
 
   useEffect(() => {
     if (!orderId) return
-    const found = DEMO_ORDERS.find(o => o.id === orderId)
-    if (found) {
-      setOrder(found)
-      setRefundStatus(found.refundStatus)
-      setRefundedAt(found.refundedAt)
-      setAccessStatus(found.accessStatus)
-      setRefundReason(found.refundReason ?? '')
-      setInternalNotes(found.internalNotes ?? '')
-    }
+    // Read from repo (localStorage) so recently created checkout orders appear
+    demoOrderRepo.findById(orderId).then(found => {
+      if (found) {
+        setOrder(found)
+        setRefundStatus(found.refundStatus)
+        setRefundedAt(found.refundedAt)
+        setAccessStatus(found.accessStatus)
+        setRefundReason(found.refundReason ?? '')
+        setInternalNotes(found.internalNotes ?? '')
+        setPrintifyOrderId(found.printifyOrderId ?? null)
+        setFulfillmentStatus(found.fulfillmentStatus ?? null)
+      }
+    })
   }, [orderId])
+
+  async function handleSendToPrintify() {
+    if (!order) return
+    setSendingToPrintify(true)
+    try {
+      // Get the product to find Printify IDs
+      const product = DEMO_PRODUCTS.find(p => p.id === order.productId)
+      const variant = product?.variants?.[0]
+
+      const payload = {
+        label: `SellBop Order ${order.id}`,
+        line_items: [{
+          product_id: product?.printifyProductId ?? order.productId,
+          variant_id: Number(variant?.id?.replace('pv-', '') ?? 1),
+          quantity: 1,
+        }],
+        shipping_method: 1,
+        send_shipping_notification: false,
+        address_to: {
+          first_name: order.customerName.split(' ')[0] || order.customerName,
+          last_name: order.customerName.split(' ').slice(1).join(' ') || 'N/A',
+          email: order.customerEmail,
+          country: 'US',
+          region: 'CA',
+          address1: '123 Demo St',
+          city: 'Los Angeles',
+          zip: '90001',
+        },
+      }
+
+      const shopId = product?.printifyShopId ?? '99001'
+      const res = await fetch('/api/printify/order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ shopId, payload }),
+      })
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+
+      // Update order in localStorage
+      await demoOrderRepo.update(order.id, {
+        printifyOrderId: data.printifyOrderId,
+        fulfillmentStatus: 'sent_to_printify',
+        fulfillmentProvider: 'printify',
+      })
+
+      setPrintifyOrderId(data.printifyOrderId)
+      setFulfillmentStatus('sent_to_printify')
+      showToast(data.demo
+        ? `Demo: Order stubbed as ${data.printifyOrderId}`
+        : `Sent to Printify — Order ID: ${data.printifyOrderId}`)
+    } catch (err) {
+      showToast('Error: ' + (err instanceof Error ? err.message : 'Unknown error'))
+    } finally {
+      setSendingToPrintify(false)
+    }
+  }
 
   function showToast(msg: string) {
     setToastMsg(msg)
@@ -137,6 +202,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const product = DEMO_PRODUCTS.find(p => p.id === order.productId)
   const subscription = order.subscriptionId ? DEMO_SUBSCRIPTIONS.find(s => s.id === order.subscriptionId) : null
   const isDownload = order.productType === 'digital_download' || order.productType === 'bundle'
+  const isPrintifyOrder = order.fulfillmentProvider === 'printify'
 
   return (
     <div className="max-w-2xl">
@@ -180,6 +246,55 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           <Row label="Date"          value={formatDate(order.createdAt, 'long')} />
           {isDownload && <Row label="Download grant" value={accessStatus === 'active' ? <span className="text-emerald-600 font-medium">Active</span> : <span className="text-neutral-400">Revoked</span>} />}
         </Section>
+
+        {/* Printify Fulfillment */}
+        {isPrintifyOrder && (
+          <Section title="Printify Fulfillment" icon={<Shirt size={14} />}>
+            <div className="py-3 space-y-3">
+              <div className="flex items-center gap-3 mb-1">
+                <Zap size={14} className="text-violet-500" />
+                <span className="text-sm font-semibold text-black">Fulfilled via Printify</span>
+              </div>
+
+              <Row label="Fulfillment" value={
+                <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-violet-50 text-violet-600 border border-violet-100">
+                  <Zap size={9} /> Printify
+                </span>
+              } />
+
+              <Row label="Status" value={
+                fulfillmentStatus === 'sent_to_printify'
+                  ? <span className="text-emerald-600 font-medium text-sm">Sent to Printify</span>
+                  : <span className="text-amber-600 font-medium text-sm">Pending — not yet sent</span>
+              } />
+
+              {printifyOrderId && (
+                <Row label="Printify Order ID" value={<span className="font-mono text-xs">{printifyOrderId}</span>} />
+              )}
+
+              {fulfillmentStatus !== 'sent_to_printify' && (
+                <div className="pt-2">
+                  <button
+                    onClick={handleSendToPrintify}
+                    disabled={sendingToPrintify}
+                    className="flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-xl bg-violet-600 text-white hover:bg-violet-700 transition-colors disabled:opacity-60"
+                  >
+                    <Send size={13} className={sendingToPrintify ? 'animate-pulse' : ''} />
+                    {sendingToPrintify ? 'Sending…' : 'Send to Printify'}
+                  </button>
+                  <p className="text-xs text-neutral-400 mt-2">Sends order details to Printify for production and shipping.</p>
+                </div>
+              )}
+
+              {fulfillmentStatus === 'sent_to_printify' && (
+                <div className="bg-violet-50 border border-violet-100 rounded-xl px-4 py-3 text-sm text-violet-700">
+                  <p className="font-semibold mb-0.5">Order sent to Printify</p>
+                  <p className="text-xs text-violet-500">Production, fulfillment, and shipping are managed inside your Printify dashboard.</p>
+                </div>
+              )}
+            </div>
+          </Section>
+        )}
 
         {/* Customer */}
         <Section title="Customer" icon={<Mail size={14} />}>

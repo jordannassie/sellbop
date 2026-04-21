@@ -74,11 +74,15 @@ function Stars({ rating }: { rating: number }) {
 // ─── Avatar ───────────────────────────────────────────────────────────────────
 
 const AVATAR_COLORS = ['bg-blue-100 text-blue-700','bg-violet-100 text-violet-700','bg-emerald-100 text-emerald-700','bg-amber-100 text-amber-700','bg-pink-100 text-pink-700','bg-cyan-100 text-cyan-700','bg-orange-100 text-orange-700','bg-indigo-100 text-indigo-700']
-function Avatar({ name, size = 6 }: { name: string; size?: number }) {
+function Avatar({ name, size = 28 }: { name: string; size?: number }) {
   const idx = name.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % AVATAR_COLORS.length
   const initials = name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
+  const fontSize = size <= 24 ? 9 : size <= 28 ? 10 : 11
   return (
-    <div className={`w-${size} h-${size} rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${AVATAR_COLORS[idx]}`}>
+    <div
+      className={`rounded-lg flex items-center justify-center font-bold flex-shrink-0 ${AVATAR_COLORS[idx]}`}
+      style={{ width: size, height: size, fontSize }}
+    >
       {initials}
     </div>
   )
@@ -124,7 +128,7 @@ function ProductCard({ product }: { product: MarketProduct }) {
           className="flex items-center gap-2 w-fit hover:opacity-70 transition-opacity"
           onClick={e => e.stopPropagation()}
         >
-          <Avatar name={product.creator} size={5} />
+          <Avatar name={product.creator} size={28} />
           <span className="text-xs text-neutral-500 truncate">{product.creator}</span>
         </Link>
 
@@ -178,7 +182,7 @@ function FeaturedCard({ product }: { product: MarketProduct }) {
           className="flex items-center gap-2 hover:opacity-70 transition-opacity"
           onClick={e => e.stopPropagation()}
         >
-          <Avatar name={product.creator} size={6} />
+          <Avatar name={product.creator} size={32} />
           <span className="text-xs text-neutral-500">{product.creator}</span>
         </Link>
         <span className="text-base font-bold text-black">

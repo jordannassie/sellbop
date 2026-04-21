@@ -27,20 +27,20 @@ import type { Storefront, Product } from '@/lib/domain/entities'
 // Types & constants
 // ─────────────────────────────────────────────────────────────
 
-type EditorTab = 'profile' | 'products' | 'layout' | 'theme'
+type EditorTab = 'products' | 'layout' | 'theme' | 'profile'
 
 const TABS: { id: EditorTab; label: string }[] = [
-  { id: 'profile',  label: 'Profile' },
   { id: 'products', label: 'Products' },
   { id: 'layout',   label: 'Layout' },
   { id: 'theme',    label: 'Theme' },
+  { id: 'profile',  label: 'Profile' },
 ]
 
 const TAB_DESCRIPTIONS: Record<EditorTab, string> = {
-  profile:  'Add your store details and social links',
-  products: 'Choose featured items and arrange product order',
+  products: 'Arrange what appears on your store — featured, order, and visibility',
   layout:   'Control which sections appear on your store',
   theme:    'Pick the look and feel of your store',
+  profile:  'Your store identity is managed in Store Profile',
 }
 
 const SECTION_META: Record<string, { label: string; description: string; locked?: boolean; color: string }> = {
@@ -287,6 +287,60 @@ function SortableProductRow({ product, isFeatured, onToggleFeatured, onToggleHid
 }
 
 // ─────────────────────────────────────────────────────────────
+// Available product row (non-draggable; products not on store)
+// ─────────────────────────────────────────────────────────────
+
+function AvailableProductRow({ product, onAddToStore }: {
+  product: Product
+  onAddToStore: () => void
+}) {
+  const isLive = product.status === 'published'
+  return (
+    <div className="flex items-center rounded-xl bg-neutral-50 border border-neutral-200 border-dashed hover:border-neutral-300 hover:bg-white hover:shadow-sm transition-all duration-150 overflow-hidden">
+      {/* Thumbnail */}
+      <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-neutral-100 my-2.5 ml-3 mr-0.5">
+        <ProductImage src={product.thumbnailUrl} alt={product.name} productType={product.productType} fill iconSize="sm" />
+      </div>
+
+      {/* Info */}
+      <div className="flex-1 min-w-0 px-2.5 py-2.5">
+        <p className="text-xs font-bold leading-tight truncate text-neutral-600">{product.name}</p>
+        <div className="flex items-center gap-1 mt-1 flex-wrap">
+          {isLive ? (
+            <span className="inline-flex items-center gap-1 text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded-full">
+              <span className="w-1 h-1 rounded-full bg-emerald-500 flex-shrink-0" /> Live
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded-full">
+              <span className="w-1 h-1 rounded-full bg-amber-400 flex-shrink-0" /> Draft
+            </span>
+          )}
+          <span className="text-[9px] text-neutral-400 font-semibold">{TYPE_LABELS[product.productType]}</span>
+          <span className="text-[9px] text-neutral-500 font-bold">{formatCurrency(product.price, product.currency)}</span>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center gap-1.5 pr-3 flex-shrink-0">
+        <button
+          onClick={onAddToStore}
+          className="flex items-center gap-1 h-7 px-2.5 rounded-lg text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-colors whitespace-nowrap"
+        >
+          <Eye size={10} /> Add to Store
+        </button>
+        <Link
+          href={`/dashboard/products/${product.id}`}
+          title="Edit Product"
+          className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-300 hover:text-neutral-700 hover:bg-neutral-100 transition-all"
+        >
+          <Pencil size={11} />
+        </Link>
+      </div>
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────
 // Sortable section item (Layout tab)
 // ─────────────────────────────────────────────────────────────
 
@@ -446,12 +500,37 @@ function ProductsTab() {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   )
 
-  function handleProductDragEnd(event: DragEndEvent, ids: string[], field: 'productOrder' | 'featuredProductIds') {
+  // ── Computed groups ───────────────────────────────────────────
+  const orderMap = new Map(config.productOrder.map((pid, i) => [pid, i]))
+  const allSorted = [...products].sort((a, b) => (orderMap.get(a.id) ?? 999) - (orderMap.get(b.id) ?? 999))
+
+  const featuredProducts  = config.featuredProductIds
+    .map(fid => products.find(p => p.id === fid))
+    .filter(Boolean) as Product[]
+
+  // "On store" = exists and not in hiddenProductIds
+  const storeProducts     = allSorted.filter(p => !config.hiddenProductIds.includes(p.id))
+  // "Available" = exists but is in hiddenProductIds (not currently shown)
+  const availableProducts = allSorted.filter(p =>  config.hiddenProductIds.includes(p.id))
+
+  const storeProductIds = storeProducts.map(p => p.id)
+  const canFeature      = config.featuredProductIds.length < 3
+
+  // ── Actions ───────────────────────────────────────────────────
+
+  function handleFeaturedDragEnd(event: DragEndEvent) {
     const { active, over } = event
     if (!over || active.id === over.id) return
-    const oldIndex = ids.indexOf(active.id as string)
-    const newIndex = ids.indexOf(over.id as string)
-    update({ [field]: arrayMove(ids, oldIndex, newIndex) })
+    const ids = config.featuredProductIds
+    update({ featuredProductIds: arrayMove(ids, ids.indexOf(active.id as string), ids.indexOf(over.id as string)) })
+  }
+
+  function handleStoreDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const newStoreOrder = arrayMove(storeProductIds, storeProductIds.indexOf(active.id as string), storeProductIds.indexOf(over.id as string))
+    // Merge: reordered store products + available (hidden) products appended
+    update({ productOrder: [...newStoreOrder, ...availableProducts.map(p => p.id)] })
   }
 
   function toggleFeatured(productId: string) {
@@ -463,51 +542,63 @@ function ProductsTab() {
     })
   }
 
-  function toggleHidden(productId: string) {
-    const cur = config.hiddenProductIds
+  function hideFromStore(productId: string) {
+    // Remove from featured too — hidden products can't be featured
     update({
-      hiddenProductIds: cur.includes(productId)
-        ? cur.filter(id => id !== productId)
-        : [...cur, productId],
+      hiddenProductIds:    [...config.hiddenProductIds, productId],
+      featuredProductIds:  config.featuredProductIds.filter(id => id !== productId),
     })
   }
 
-  const orderMap = new Map(config.productOrder.map((pid, i) => [pid, i]))
-  const allSorted = [...products].sort((a, b) => (orderMap.get(a.id) ?? 999) - (orderMap.get(b.id) ?? 999))
-  const featuredProducts = config.featuredProductIds
-    .map(fid => products.find(p => p.id === fid))
-    .filter(Boolean) as Product[]
-  const canFeature = config.featuredProductIds.length < 3
+  function addToStore(productId: string) {
+    // Unhide: bring back to Store Products (appended at end)
+    const newHidden   = config.hiddenProductIds.filter(id => id !== productId)
+    const newOrder    = [...storeProductIds, productId, ...newHidden]
+    update({ hiddenProductIds: newHidden, productOrder: newOrder })
+  }
 
   return (
     <div className="max-w-2xl mx-auto px-5 py-8 space-y-5">
-      {/* Featured Products */}
+
+      {/* ── Page action bar ─────────────────────────────────── */}
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-bold text-black">Store Products</p>
+          <p className="text-xs text-neutral-500 mt-0.5">Manage what appears on your public store</p>
+        </div>
+        <Link
+          href="/dashboard/products/new"
+          className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold bg-black text-white hover:bg-neutral-800 transition-colors"
+        >
+          <Plus size={12} /> Create New Product
+        </Link>
+      </div>
+
+      {/* ── 1. FEATURED PRODUCTS ────────────────────────────── */}
       <Card>
         <CardHeader>
-          <CardTitle>Featured Products</CardTitle>
+          <div className="flex items-center gap-2">
+            <Star size={13} className="text-amber-500" fill="currentColor" />
+            <CardTitle>Featured Products</CardTitle>
+          </div>
           <span className="text-[11px] font-semibold text-amber-600 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full">
             {config.featuredProductIds.length} / 3 slots
           </span>
         </CardHeader>
         <CardContent>
+          <p className="text-[11px] text-neutral-400 mb-3 leading-relaxed">
+            Highlighted at the top of your store. Drag to reorder. Use <Star size={9} className="inline text-amber-500" fill="currentColor" /> on store products below to add them here.
+          </p>
           {featuredProducts.length === 0 ? (
-            <div className="flex flex-col items-center py-8 text-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center">
-                <Star size={16} className="text-amber-400" />
+            <div className="flex flex-col items-center py-6 text-center gap-2">
+              <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center">
+                <Star size={14} className="text-amber-400" />
               </div>
-              <div>
-                <p className="text-sm font-semibold text-neutral-700">No featured products yet</p>
-                <p className="text-xs text-neutral-500 mt-1">
-                  Click <Star size={9} className="inline -mt-0.5 text-amber-500" /> on any product below to feature it.
-                </p>
-              </div>
+              <p className="text-sm font-semibold text-neutral-600">No featured products yet</p>
+              <p className="text-xs text-neutral-400">Click <Star size={9} className="inline text-amber-500" fill="currentColor" /> on a store product below to feature it.</p>
             </div>
           ) : (
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={e => handleProductDragEnd(e, config.featuredProductIds, 'featuredProductIds')}
-            >
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleFeaturedDragEnd}>
               <SortableContext items={config.featuredProductIds} strategy={verticalListSortingStrategy}>
                 <div className="space-y-2">
                   {featuredProducts.map(p => (
@@ -516,8 +607,8 @@ function ProductsTab() {
                       product={p}
                       isFeatured
                       onToggleFeatured={() => toggleFeatured(p.id)}
-                      onToggleHidden={() => toggleHidden(p.id)}
-                      isHidden={config.hiddenProductIds.includes(p.id)}
+                      onToggleHidden={() => hideFromStore(p.id)}
+                      isHidden={false}
                       canFeature={canFeature}
                     />
                   ))}
@@ -528,46 +619,41 @@ function ProductsTab() {
         </CardContent>
       </Card>
 
-      {/* All Products */}
+      {/* ── 2. STORE PRODUCTS ───────────────────────────────── */}
       <Card>
         <CardHeader>
-          <CardTitle>All Products</CardTitle>
-          <Link
-            href="/dashboard/products/new"
-            className="flex items-center gap-1 text-xs font-semibold text-neutral-600 hover:text-black transition-colors"
-          >
-            <Plus size={12} /> Add product
-          </Link>
+          <div className="flex items-center gap-2">
+            <Eye size={13} className="text-blue-500" />
+            <CardTitle>Store Products</CardTitle>
+          </div>
+          <span className="text-[11px] font-semibold text-blue-600 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-full">
+            {storeProducts.length} visible
+          </span>
         </CardHeader>
         <CardContent>
-          {products.length === 0 ? (
-            <div className="flex flex-col items-center py-8 text-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center">
-                <Package size={16} className="text-blue-400" />
+          <p className="text-[11px] text-neutral-400 mb-3 leading-relaxed">
+            Drag to reorder. These products are visible on your public store page.
+          </p>
+          {storeProducts.length === 0 ? (
+            <div className="flex flex-col items-center py-6 text-center gap-2">
+              <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center">
+                <Package size={14} className="text-blue-400" />
               </div>
-              <div>
-                <p className="text-sm font-semibold text-neutral-700">No products yet</p>
-                <Link href="/dashboard/products/new" className="text-xs text-black font-semibold underline underline-offset-2 mt-1 inline-block">
-                  Add your first product →
-                </Link>
-              </div>
+              <p className="text-sm font-semibold text-neutral-600">No products on your store yet</p>
+              <p className="text-xs text-neutral-400">Add products from below, or create a new one.</p>
             </div>
           ) : (
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={e => handleProductDragEnd(e, config.productOrder, 'productOrder')}
-            >
-              <SortableContext items={config.productOrder} strategy={verticalListSortingStrategy}>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleStoreDragEnd}>
+              <SortableContext items={storeProductIds} strategy={verticalListSortingStrategy}>
                 <div className="space-y-2">
-                  {allSorted.map(p => (
+                  {storeProducts.map(p => (
                     <SortableProductRow
                       key={p.id}
                       product={p}
                       isFeatured={config.featuredProductIds.includes(p.id)}
                       onToggleFeatured={() => toggleFeatured(p.id)}
-                      onToggleHidden={() => toggleHidden(p.id)}
-                      isHidden={config.hiddenProductIds.includes(p.id)}
+                      onToggleHidden={() => hideFromStore(p.id)}
+                      isHidden={false}
                       canFeature={canFeature}
                     />
                   ))}
@@ -577,6 +663,45 @@ function ProductsTab() {
           )}
         </CardContent>
       </Card>
+
+      {/* ── 3. AVAILABLE PRODUCTS (hidden / not on store) ───── */}
+      {(availableProducts.length > 0 || products.length === 0) && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <EyeOff size={13} className="text-neutral-400" />
+              <CardTitle>Available Products</CardTitle>
+            </div>
+            {availableProducts.length > 0 && (
+              <span className="text-[11px] font-semibold text-neutral-500 bg-neutral-100 border border-neutral-200 px-2.5 py-1 rounded-full">
+                {availableProducts.length} not on store
+              </span>
+            )}
+          </CardHeader>
+          <CardContent>
+            <p className="text-[11px] text-neutral-400 mb-3 leading-relaxed">
+              These products exist in your account but are not shown on your public store. Click <strong className="text-neutral-600">Add to Store</strong> to make one visible.
+            </p>
+            {availableProducts.length === 0 && products.length === 0 ? (
+              <div className="flex flex-col items-center py-6 text-center gap-2">
+                <div className="w-9 h-9 rounded-xl bg-neutral-50 border border-neutral-200 flex items-center justify-center">
+                  <Package size={14} className="text-neutral-400" />
+                </div>
+                <p className="text-sm font-semibold text-neutral-600">No products yet</p>
+                <Link href="/dashboard/products/new" className="text-xs text-black font-semibold underline underline-offset-2 mt-0.5 inline-block">
+                  Create your first product →
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {availableProducts.map(p => (
+                  <AvailableProductRow key={p.id} product={p} onAddToStore={() => addToStore(p.id)} />
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }
@@ -601,11 +726,99 @@ function LayoutTab() {
     update({ sectionOrder: arrayMove(config.sectionOrder, oldIndex, newIndex) })
   }
 
+  const isSide   = config.headerLayout !== 'centered'
+  const isCenter = config.headerLayout === 'centered'
+
   return (
-    <div className="max-w-2xl mx-auto px-5 py-8">
+    <div className="max-w-2xl mx-auto px-5 py-8 space-y-5">
+
+      {/* ── Header Layout ───────────────────────────────────── */}
       <Card>
         <CardHeader>
-          <CardTitle>Store Layout</CardTitle>
+          <CardTitle>Header Layout</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-neutral-500 mb-4">
+            Choose how your store header is arranged.
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+
+            {/* Side option */}
+            <button
+              onClick={() => update({ headerLayout: 'left_avatar' })}
+              className={[
+                'rounded-xl border-2 p-3 text-left transition-all',
+                isSide
+                  ? 'border-black bg-neutral-50'
+                  : 'border-neutral-200 hover:border-neutral-300 bg-white',
+              ].join(' ')}
+            >
+              {/* Mini preview */}
+              <div className="bg-white rounded-lg border border-neutral-100 p-2.5 mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-neutral-800 flex-shrink-0" />
+                  <div className="flex-1 space-y-1">
+                    <div className="w-3/4 h-1.5 bg-neutral-800 rounded-full" />
+                    <div className="w-1/2 h-1 bg-neutral-300 rounded-full" />
+                  </div>
+                </div>
+                <div className="flex gap-1 mt-2">
+                  <div className="h-3 w-8 bg-neutral-100 border border-neutral-200 rounded-full" />
+                  <div className="h-3 w-8 bg-neutral-100 border border-neutral-200 rounded-full" />
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-semibold text-black">Side</span>
+                {isSide && (
+                  <span className="w-4 h-4 rounded-full bg-black flex items-center justify-center flex-shrink-0">
+                    <Check size={9} className="text-white" />
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-neutral-400 mt-0.5">Avatar left, info right</p>
+            </button>
+
+            {/* Center option */}
+            <button
+              onClick={() => update({ headerLayout: 'centered' })}
+              className={[
+                'rounded-xl border-2 p-3 text-left transition-all',
+                isCenter
+                  ? 'border-black bg-neutral-50'
+                  : 'border-neutral-200 hover:border-neutral-300 bg-white',
+              ].join(' ')}
+            >
+              {/* Mini preview */}
+              <div className="bg-white rounded-lg border border-neutral-100 p-2.5 mb-3">
+                <div className="flex flex-col items-center gap-1.5">
+                  <div className="w-7 h-7 rounded-lg bg-neutral-800" />
+                  <div className="w-2/3 h-1.5 bg-neutral-800 rounded-full" />
+                  <div className="w-1/2 h-1 bg-neutral-300 rounded-full" />
+                  <div className="flex gap-1 mt-0.5">
+                    <div className="h-3 w-6 bg-neutral-100 border border-neutral-200 rounded-full" />
+                    <div className="h-3 w-6 bg-neutral-100 border border-neutral-200 rounded-full" />
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-semibold text-black">Center</span>
+                {isCenter && (
+                  <span className="w-4 h-4 rounded-full bg-black flex items-center justify-center flex-shrink-0">
+                    <Check size={9} className="text-white" />
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-neutral-400 mt-0.5">Avatar and info centered</p>
+            </button>
+
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ── Section order / visibility ───────────────────────── */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Store Sections</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-neutral-500 mb-5">
@@ -689,18 +902,6 @@ function ThemeTab() {
                 { value: 'minimal',     label: 'Minimal' },
                 { value: 'soft_shadow', label: 'Shadow'  },
                 { value: 'outline',     label: 'Outline' },
-              ]}
-            />
-          </div>
-          <div className="border-t border-neutral-100 pt-6">
-            <p className="text-sm font-medium text-neutral-700 mb-3">Header Layout</p>
-            <OptionPills
-              value={config.headerLayout}
-              onChange={v => update({ headerLayout: v })}
-              options={[
-                { value: 'left_avatar',   label: 'Left'     },
-                { value: 'centered',      label: 'Centered' },
-                { value: 'banner_avatar', label: 'Banner'   },
               ]}
             />
           </div>
@@ -858,7 +1059,7 @@ function EditorTopBar() {
 // ─────────────────────────────────────────────────────────────
 
 export function StoreEditorShell() {
-  const [activeTab, setActiveTab] = useState<EditorTab>('profile')
+  const [activeTab, setActiveTab] = useState<EditorTab>('products')
 
   return (
     <div className="flex flex-col h-screen lg:h-full bg-[#f9f9f9]">

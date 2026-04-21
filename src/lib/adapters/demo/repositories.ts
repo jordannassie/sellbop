@@ -78,6 +78,17 @@ export class DemoProductRepository implements IProductRepository {
     const all = getStored<Product>(this.key, DEMO_PRODUCTS)
     setStored(this.key, all.map(p => p.id === id ? { ...p, viewCount: p.viewCount + 1 } : p))
   }
+  /** Save a full Product (preserving its existing ID). Inserts if new, replaces if ID exists. */
+  async upsert(product: Product): Promise<void> {
+    const all = getStored<Product>(this.key, DEMO_PRODUCTS)
+    const idx = all.findIndex(p => p.id === product.id)
+    if (idx >= 0) {
+      all[idx] = { ...all[idx], ...product, updatedAt: new Date().toISOString() }
+      setStored(this.key, all)
+    } else {
+      setStored(this.key, [...all, product])
+    }
+  }
 }
 
 // ─── ORDER REPO ──────────────────────────────────────────────

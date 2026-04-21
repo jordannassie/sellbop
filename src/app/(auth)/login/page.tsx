@@ -89,7 +89,7 @@ function AuthForm() {
               {mode === 'login' ? 'Welcome back' : 'Create your account'}
             </h1>
             <p className="text-sm text-neutral-500 mt-1">
-              {mode === 'login' ? 'Log in to your SellBop account' : 'Start sellbopng in minutes.'}
+              {mode === 'login' ? 'Log in to your SellBop account' : 'Start selling in minutes.'}
             </p>
           </div>
 
