@@ -1,6 +1,6 @@
 'use client'
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { demoProductRepo } from '@/lib/adapters/demo/repositories'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ImageUpload } from '@/components/dashboard/image-upload'
 import { toast } from 'sonner'
 import { slugify, formatCurrency } from '@/lib/utils'
-import { ExternalLink } from 'lucide-react'
+import { ExternalLink, ArrowLeft } from 'lucide-react'
 import type { Product, ProductType } from '@/lib/domain/entities'
 import Link from 'next/link'
 
@@ -31,8 +31,10 @@ const CTA_OPTIONS = [
   { value: 'Get the Bundle', label: 'Get the Bundle' },
 ]
 
-export default function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
+function EditProductForm({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const fromEditor = searchParams.get('from') === 'store-editor'
   const [product, setProduct] = useState<Product | null>(null)
   const [name, setName] = useState('')
   const [slug, setSlug] = useState('')
@@ -79,7 +81,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
         publishedAt: published ? (product.publishedAt || new Date().toISOString()) : null,
       })
       toast.success('Product updated.')
-      router.push('/dashboard/products')
+      router.push(fromEditor ? '/dashboard/store-editor' : '/dashboard/products')
     } catch { toast.error('Failed to update product.') }
     finally { setSaving(false) }
   }
@@ -89,13 +91,25 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
     setDeleting(true)
     await demoProductRepo.delete(product.id)
     toast.success('Product deleted.')
-    router.push('/dashboard/products')
+    router.push(fromEditor ? '/dashboard/store-editor' : '/dashboard/products')
   }
 
   if (!product) return <div className="text-sm text-neutral-500 py-8">Loading…</div>
 
   return (
     <div className="max-w-2xl">
+      {/* Back to Store Editor — shown on mobile when arriving from editor */}
+      {fromEditor && (
+        <div className="mb-5 sm:hidden">
+          <Link
+            href="/dashboard/store-editor"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-neutral-500 hover:text-black transition-colors"
+          >
+            <ArrowLeft size={14} />
+            Back to Store Editor
+          </Link>
+        </div>
+      )}
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-black">Edit Product</h1>
@@ -165,5 +179,13 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
         </div>
       </form>
     </div>
+  )
+}
+
+export default function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
+  return (
+    <Suspense fallback={<div className="text-sm text-neutral-500 py-8">Loading…</div>}>
+      <EditProductForm params={params} />
+    </Suspense>
   )
 }

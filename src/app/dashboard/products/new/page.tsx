@@ -1,6 +1,8 @@
 'use client'
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
+import { ArrowLeft } from 'lucide-react'
 import { demoProductRepo } from '@/lib/adapters/demo/repositories'
 import { DEMO_SELLER_PROFILE } from '@/lib/demo-data/seed'
 import { Button } from '@/components/ui/button'
@@ -30,8 +32,10 @@ const CTA_OPTIONS = [
   { value: 'Get the Bundle', label: 'Get the Bundle' },
 ]
 
-export default function NewProductPage() {
+function NewProductForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const fromEditor = searchParams.get('from') === 'store-editor'
   const [name, setName] = useState('')
   const [slug, setSlug] = useState('')
   const [description, setDescription] = useState('')
@@ -75,13 +79,25 @@ export default function NewProductPage() {
         marketplaceVisible: true, marketplaceExcerpt: null,
       })
       toast.success('Product created!')
-      router.push('/dashboard/products')
+      router.push(fromEditor ? '/dashboard/store-editor' : '/dashboard/products')
     } catch { toast.error('Failed to create product.') }
     finally { setSaving(false) }
   }
 
   return (
     <div className="max-w-2xl">
+      {/* Back to Store Editor — shown on mobile when arriving from editor */}
+      {fromEditor && (
+        <div className="mb-5 sm:hidden">
+          <Link
+            href="/dashboard/store-editor"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-neutral-500 hover:text-black transition-colors"
+          >
+            <ArrowLeft size={14} />
+            Back to Store Editor
+          </Link>
+        </div>
+      )}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-black">New Product</h1>
         <p className="text-neutral-500 text-sm mt-1">Create your sell page.</p>
@@ -141,9 +157,17 @@ export default function NewProductPage() {
 
         <div className="flex gap-3">
           <Button type="submit" loading={saving}>{published ? 'Publish Product' : 'Save as Draft'}</Button>
-          <Button type="button" variant="secondary" onClick={() => router.back()}>Cancel</Button>
-        </div>
-      </form>
-    </div>
+        <Button type="button" variant="secondary" onClick={() => router.back()}>Cancel</Button>
+      </div>
+    </form>
+  </div>
+  )
+}
+
+export default function NewProductPage() {
+  return (
+    <Suspense fallback={null}>
+      <NewProductForm />
+    </Suspense>
   )
 }

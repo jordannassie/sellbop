@@ -4,8 +4,10 @@ import {
   ExternalLink, Copy, Check, CloudUpload,
   Star, Eye, EyeOff, Pencil, Plus, Lock, Package, Zap, Shirt,
   Image, Video, Ban, X, Layers,
+  Smartphone, Palette, User,
 } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor,
   useSensor, useSensors, type DragEndEvent,
@@ -21,6 +23,7 @@ import { ProductImage } from '@/components/ui/product-image'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { useStoreEditor } from '@/context/store-editor-context'
 import { DEMO_SELLER_PROFILE } from '@/lib/demo-data/seed'
+import { StorefrontPreview } from './storefront-preview'
 import { toast } from 'sonner'
 import type { Storefront, Product, HeaderMediaType } from '@/lib/domain/entities'
 
@@ -29,6 +32,7 @@ import type { Storefront, Product, HeaderMediaType } from '@/lib/domain/entities
 // ─────────────────────────────────────────────────────────────
 
 type EditorTab = 'products' | 'layout' | 'theme' | 'profile'
+type MobileSection = 'products' | 'preview' | 'design' | 'profile'
 
 const TABS: { id: EditorTab; label: string }[] = [
   { id: 'products', label: 'Products' },
@@ -1300,27 +1304,180 @@ function EditorTopBar() {
 }
 
 // ─────────────────────────────────────────────────────────────
+// Mobile Preview Section
+// ─────────────────────────────────────────────────────────────
+
+function MobilePreviewSection({ storeUrl }: { storeUrl: string }) {
+  const { config, products } = useStoreEditor()
+  const [copied, setCopied] = useState(false)
+
+  function copyLink() {
+    const url = typeof window !== 'undefined' ? window.location.origin + storeUrl : storeUrl
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true)
+      toast.success('Link copied!')
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
+
+  return (
+    <div className="flex flex-col h-full bg-[#f5f5f5]">
+      {/* Action bar */}
+      <div className="bg-white border-b border-neutral-100 px-4 py-2.5 flex items-center gap-2 shrink-0">
+        <p className="flex-1 text-xs font-semibold text-neutral-600">Live Preview</p>
+        <button
+          onClick={copyLink}
+          className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold border border-neutral-200 text-neutral-600 hover:bg-neutral-50 transition-colors"
+        >
+          {copied ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
+          {copied ? 'Copied!' : 'Copy Link'}
+        </button>
+        <Link
+          href={storeUrl}
+          target="_blank"
+          className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold bg-black text-white hover:bg-neutral-800 active:bg-neutral-900 transition-colors"
+        >
+          <ExternalLink size={12} />
+          View Store
+        </Link>
+      </div>
+
+      {/* Phone mockup */}
+      <div className="flex-1 overflow-y-auto flex items-start justify-center py-6 px-4">
+        <div
+          className="relative flex-shrink-0 bg-neutral-900 rounded-[40px] shadow-2xl"
+          style={{ width: 260, height: 540 }}
+        >
+          {/* Side buttons */}
+          <div className="absolute -left-[3px] top-20 w-[3px] h-8 bg-neutral-700 rounded-l-sm" />
+          <div className="absolute -left-[3px] top-32 w-[3px] h-8 bg-neutral-700 rounded-l-sm" />
+          <div className="absolute -left-[3px] top-44 w-[3px] h-8 bg-neutral-700 rounded-l-sm" />
+          <div className="absolute -right-[3px] top-28 w-[3px] h-12 bg-neutral-700 rounded-r-sm" />
+
+          {/* Screen */}
+          <div
+            className="absolute bg-white overflow-hidden"
+            style={{ top: 10, left: 10, right: 10, bottom: 10, borderRadius: 32 }}
+          >
+            {/* Dynamic Island */}
+            <div
+              className="absolute left-1/2 -translate-x-1/2 bg-neutral-900 z-10 flex items-center justify-center"
+              style={{ top: 8, width: 80, height: 22, borderRadius: 14 }}
+            >
+              <div className="absolute right-3 w-3 h-3 rounded-full bg-neutral-800 border border-neutral-700" />
+            </div>
+
+            {/* Status bar */}
+            <div className="flex items-center justify-between px-4" style={{ paddingTop: 36 }}>
+              <span className="text-[8px] font-bold text-black">9:41</span>
+              <div className="flex items-center gap-1">
+                <svg width="12" height="8" viewBox="0 0 12 8" fill="currentColor" className="text-black">
+                  <rect x="0" y="5" width="2" height="3" rx="0.5" />
+                  <rect x="3" y="3" width="2" height="5" rx="0.5" />
+                  <rect x="6" y="1" width="2" height="7" rx="0.5" />
+                  <rect x="9" y="0" width="2" height="8" rx="0.5" />
+                </svg>
+                <svg width="18" height="9" viewBox="0 0 18 9" fill="none" className="text-black">
+                  <rect x="0.5" y="0.5" width="15" height="8" rx="2" stroke="currentColor" strokeWidth="1" />
+                  <rect x="1.5" y="1.5" width="11" height="6" rx="1.5" fill="currentColor" />
+                  <path d="M16.5 3v3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </div>
+            </div>
+
+            {/* Store content at scaled 390→240 */}
+            <div
+              className="absolute overflow-y-auto overflow-x-hidden"
+              style={{ top: 62, left: 0, right: 0, bottom: 20 }}
+            >
+              <div style={{ width: 390, transformOrigin: 'top left', transform: `scale(${240 / 390})` }}>
+                <StorefrontPreview config={config} products={products} />
+              </div>
+            </div>
+
+            {/* Home indicator */}
+            <div
+              className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/20 rounded-full"
+              style={{ width: 80, height: 4 }}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────
+// Mobile Design Section (merged Layout + Theme)
+// ─────────────────────────────────────────────────────────────
+
+function MobileDesignSection({
+  designSubTab,
+  setDesignSubTab,
+}: {
+  designSubTab: 'layout' | 'theme'
+  setDesignSubTab: (t: 'layout' | 'theme') => void
+}) {
+  return (
+    <div className="flex flex-col h-full">
+      {/* Sub-tab toggle */}
+      <div className="bg-white border-b border-neutral-200 px-4 py-2 flex gap-1.5 shrink-0">
+        <button
+          onClick={() => setDesignSubTab('layout')}
+          className={cn(
+            'flex-1 h-9 rounded-lg text-xs font-semibold transition-colors',
+            designSubTab === 'layout'
+              ? 'bg-black text-white'
+              : 'text-neutral-500 hover:bg-neutral-50 border border-neutral-200',
+          )}
+        >
+          Layout
+        </button>
+        <button
+          onClick={() => setDesignSubTab('theme')}
+          className={cn(
+            'flex-1 h-9 rounded-lg text-xs font-semibold transition-colors',
+            designSubTab === 'theme'
+              ? 'bg-black text-white'
+              : 'text-neutral-500 hover:bg-neutral-50 border border-neutral-200',
+          )}
+        >
+          Theme
+        </button>
+      </div>
+      {/* Content */}
+      <div className="flex-1 min-h-0 overflow-y-auto">
+        {designSubTab === 'layout' ? <LayoutTab /> : <ThemeTab />}
+      </div>
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────
 // Main shell export
 // ─────────────────────────────────────────────────────────────
 
 export function StoreEditorShell() {
-  const [activeTab, setActiveTab] = useState<EditorTab>('products')
+  const [activeTab, setActiveTab]       = useState<EditorTab>('products')
+  const [mobileSection, setMobileSection] = useState<MobileSection>('products')
+  const [designSubTab, setDesignSubTab] = useState<'layout' | 'theme'>('layout')
   const { isDirty, isSaving, saveChanges } = useStoreEditor()
+  const router   = useRouter()
   const storeUrl = `/store/${DEMO_SELLER_PROFILE.slug}`
 
   return (
     <div className="flex flex-col h-screen lg:h-full bg-[#f9f9f9]">
       <EditorTopBar />
 
-      {/* Tab bar */}
-      <div className="bg-white border-b border-neutral-200 shrink-0">
+      {/* ── Desktop tab bar (sm+) ──────────────────────────────── */}
+      <div className="hidden sm:block bg-white border-b border-neutral-200 shrink-0">
         <div className="flex items-end overflow-x-auto scrollbar-none px-4">
           {TABS.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                'px-4 py-3.5 sm:py-3 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap flex-shrink-0',
+                'px-4 py-3 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap flex-shrink-0',
                 activeTab === tab.id
                   ? 'border-black text-black'
                   : 'border-transparent text-neutral-400 hover:text-neutral-700',
@@ -1330,57 +1487,42 @@ export function StoreEditorShell() {
             </button>
           ))}
         </div>
-
-        {/* Mobile quick actions — shortcuts for common tasks */}
-        <div className="sm:hidden flex gap-2 px-3 pb-2.5 pt-1 overflow-x-auto scrollbar-none">
-          <Link
-            href="/dashboard/storefront"
-            className="flex-shrink-0 flex items-center gap-1.5 h-8 px-3 rounded-xl border border-neutral-200 bg-white text-xs font-semibold text-neutral-700 active:bg-neutral-100 transition-colors"
-          >
-            <Pencil size={11} className="text-neutral-500" />
-            Edit Profile
-          </Link>
-          <Link
-            href="/dashboard/products/new"
-            className="flex-shrink-0 flex items-center gap-1.5 h-8 px-3 rounded-xl border border-neutral-200 bg-white text-xs font-semibold text-neutral-700 active:bg-neutral-100 transition-colors"
-          >
-            <Plus size={11} className="text-neutral-500" />
-            Add Product
-          </Link>
-          <button
-            onClick={() => setActiveTab('layout')}
-            className="flex-shrink-0 flex items-center gap-1.5 h-8 px-3 rounded-xl border border-neutral-200 bg-white text-xs font-semibold text-neutral-700 active:bg-neutral-100 transition-colors"
-          >
-            <Layers size={11} className="text-neutral-500" />
-            Change Layout
-          </button>
-          <Link
-            href={storeUrl}
-            target="_blank"
-            className="flex-shrink-0 flex items-center gap-1.5 h-8 px-3 rounded-xl border border-neutral-200 bg-white text-xs font-semibold text-neutral-700 active:bg-neutral-100 transition-colors"
-          >
-            <ExternalLink size={11} className="text-neutral-500" />
-            Preview Store
-          </Link>
-        </div>
       </div>
 
-      {/* Helper description — desktop only */}
+      {/* ── Desktop helper description (sm+) ──────────────────── */}
       <div className="hidden sm:block bg-neutral-50 border-b border-neutral-100 px-5 py-2 shrink-0">
         <p className="text-[11px] text-neutral-400">{TAB_DESCRIPTIONS[activeTab]}</p>
       </div>
 
-      {/* Tab content — scrollable */}
-      <div className={cn('flex-1 min-h-0 overflow-y-auto', isDirty && 'pb-20 sm:pb-0')}>
-        {activeTab === 'profile'  && <ProfileTab />}
-        {activeTab === 'products' && <ProductsTab />}
-        {activeTab === 'layout'   && <LayoutTab />}
-        {activeTab === 'theme'    && <ThemeTab />}
+      {/* ── Content (scrollable) ──────────────────────────────── */}
+      <div className={cn(
+        'flex-1 min-h-0 overflow-y-auto sm:pb-0',
+        isDirty ? 'pb-36' : 'pb-14',
+      )}>
+        {/* Desktop */}
+        <div className="hidden sm:block h-full">
+          {activeTab === 'profile'  && <ProfileTab />}
+          {activeTab === 'products' && <ProductsTab />}
+          {activeTab === 'layout'   && <LayoutTab />}
+          {activeTab === 'theme'    && <ThemeTab />}
+        </div>
+        {/* Mobile — driven by bottom nav section */}
+        <div className="sm:hidden h-full">
+          {mobileSection === 'products' && <ProductsTab />}
+          {mobileSection === 'preview'  && <MobilePreviewSection storeUrl={storeUrl} />}
+          {mobileSection === 'design'   && (
+            <MobileDesignSection
+              designSubTab={designSubTab}
+              setDesignSubTab={setDesignSubTab}
+            />
+          )}
+          {mobileSection === 'profile'  && <ProfileTab />}
+        </div>
       </div>
 
-      {/* Mobile sticky save bar — only when unsaved changes exist */}
+      {/* ── Mobile save bar — floats above bottom nav when dirty ── */}
       {isDirty && (
-        <div className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-neutral-200 px-4 py-3 flex items-center gap-2.5 shadow-[0_-4px_16px_rgba(0,0,0,0.08)]">
+        <div className="sm:hidden fixed bottom-14 left-0 right-0 z-50 bg-white border-t border-neutral-200 px-4 py-3 flex items-center gap-2.5 shadow-[0_-4px_16px_rgba(0,0,0,0.06)]">
           <button
             onClick={saveChanges}
             disabled={isSaving}
@@ -1404,6 +1546,69 @@ export function StoreEditorShell() {
           </Link>
         </div>
       )}
+
+      {/* ── Mobile bottom nav ─────────────────────────────────── */}
+      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-neutral-200 flex items-stretch h-14">
+
+        {/* Products */}
+        <button
+          onClick={() => setMobileSection('products')}
+          className={cn(
+            'flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors',
+            mobileSection === 'products' ? 'text-black' : 'text-neutral-400',
+          )}
+        >
+          <Package size={20} strokeWidth={mobileSection === 'products' ? 2.5 : 1.75} />
+          <span className="text-[10px] font-semibold">Products</span>
+        </button>
+
+        {/* Add — primary action, navigates with editor context */}
+        <button
+          onClick={() => router.push('/dashboard/products/new?from=store-editor')}
+          className="flex-1 flex flex-col items-center justify-center gap-0.5 text-neutral-600"
+        >
+          <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center -mt-1">
+            <Plus size={16} className="text-white" strokeWidth={2.5} />
+          </div>
+          <span className="text-[10px] font-semibold">Add</span>
+        </button>
+
+        {/* Preview */}
+        <button
+          onClick={() => setMobileSection('preview')}
+          className={cn(
+            'flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors',
+            mobileSection === 'preview' ? 'text-black' : 'text-neutral-400',
+          )}
+        >
+          <Smartphone size={20} strokeWidth={mobileSection === 'preview' ? 2.5 : 1.75} />
+          <span className="text-[10px] font-semibold">Preview</span>
+        </button>
+
+        {/* Design */}
+        <button
+          onClick={() => setMobileSection('design')}
+          className={cn(
+            'flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors',
+            mobileSection === 'design' ? 'text-black' : 'text-neutral-400',
+          )}
+        >
+          <Palette size={20} strokeWidth={mobileSection === 'design' ? 2.5 : 1.75} />
+          <span className="text-[10px] font-semibold">Design</span>
+        </button>
+
+        {/* Profile */}
+        <button
+          onClick={() => setMobileSection('profile')}
+          className={cn(
+            'flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors',
+            mobileSection === 'profile' ? 'text-black' : 'text-neutral-400',
+          )}
+        >
+          <User size={20} strokeWidth={mobileSection === 'profile' ? 2.5 : 1.75} />
+          <span className="text-[10px] font-semibold">Profile</span>
+        </button>
+      </div>
     </div>
   )
 }
