@@ -149,14 +149,14 @@ const ROLE_BADGE: Record<string, string> = {
 // HOOKS
 // ═══════════════════════════════════════════════════════════════
 
-// Client-side countdown — fully functional, no backend needed
+// Client-side countdown — fully functional, no backend needed.
+// null initial state avoids a flash of 00:00:00:00 on first paint.
 function useMonthCountdown() {
-  const [time, setTime] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 })
+  const [time, setTime] = useState<{ days: number; hours: number; minutes: number; seconds: number } | null>(null)
 
   useEffect(() => {
     function compute() {
       const now = new Date()
-      // Last moment of the current month
       const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59)
       const diff = Math.max(0, end.getTime() - now.getTime())
       return {
@@ -361,59 +361,59 @@ function CreatePostModal({
 // ═══════════════════════════════════════════════════════════════
 
 function CountdownCard({ topPost }: { topPost: Post | undefined }) {
-  const { days, hours, minutes, seconds } = useMonthCountdown()
+  const time = useMonthCountdown()
+  const { days, hours, minutes, seconds } = time ?? { days: 0, hours: 0, minutes: 0, seconds: 0 }
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+    <div className="bg-zinc-900 border border-violet-500/30 rounded-xl overflow-hidden">
       {/* Header band */}
-      <div className="bg-violet-950/50 px-4 py-3 border-b border-zinc-800">
-        <div className="flex items-center gap-2">
-          <Trophy size={13} className="text-violet-400" />
-          <p className="text-[11px] font-bold uppercase tracking-widest text-violet-300">
-            Top Voted Feature — This Month
-          </p>
-        </div>
+      <div className="bg-violet-950/60 px-4 py-3 border-b border-violet-500/20 flex items-center gap-2">
+        <Trophy size={13} className="text-violet-400 shrink-0" />
+        <p className="text-[11px] font-bold uppercase tracking-widest text-violet-300">
+          Top Voted Feature — This Month
+        </p>
       </div>
 
       <div className="p-4">
         {/* Current leader */}
         {topPost && (
           <div className="mb-4">
-            <p className="text-[10px] font-semibold text-neutral-500 uppercase tracking-wide mb-2">Current Leader</p>
+            <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wide mb-2">Current Leader</p>
             <div className="bg-zinc-950 rounded-lg px-3 py-2.5 border border-zinc-800">
-              <p className="text-xs font-semibold text-white leading-snug line-clamp-2 mb-1">
+              <p className="text-xs font-semibold text-white leading-snug line-clamp-2 mb-1.5">
                 {topPost.title}
               </p>
-              <div className="flex items-center gap-2">
-                <span className="text-emerald-400 text-[11px] font-bold">▲ {topPost.upvotes} votes</span>
-              </div>
+              <span className="text-emerald-400 text-[11px] font-bold">▲ {topPost.upvotes} votes</span>
             </div>
           </div>
         )}
 
         {/* Countdown */}
-        <p className="text-[10px] font-semibold text-neutral-500 uppercase tracking-wide mb-2.5">
-          <Clock size={9} className="inline mr-1" />
-          Voting ends in
+        <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wide mb-2.5 flex items-center gap-1">
+          <Clock size={9} /> Voting ends in
         </p>
         <div className="grid grid-cols-4 gap-1.5 mb-4">
           {[
             { val: days,    label: 'Days' },
-            { val: hours,   label: 'Hrs' },
-            { val: minutes, label: 'Min' },
-            { val: seconds, label: 'Sec' },
+            { val: hours,   label: 'Hrs'  },
+            { val: minutes, label: 'Min'  },
+            { val: seconds, label: 'Sec'  },
           ].map(({ val, label }) => (
             <div key={label} className="bg-zinc-950 border border-zinc-800 rounded-lg py-2.5 text-center">
-              <p className="text-lg font-black text-white tabular-nums leading-none">
-                {String(val).padStart(2, '0')}
-              </p>
-              <p className="text-[9px] text-neutral-600 font-semibold mt-0.5">{label}</p>
+              {time ? (
+                <p className="text-lg font-black text-white tabular-nums leading-none">
+                  {String(val).padStart(2, '0')}
+                </p>
+              ) : (
+                <div className="h-[22px] bg-zinc-800 rounded animate-pulse mx-2" />
+              )}
+              <p className="text-[9px] text-zinc-600 font-semibold mt-1">{label}</p>
             </div>
           ))}
         </div>
 
         {/* Explanation */}
-        <p className="text-[11px] text-neutral-500 leading-relaxed mb-4">
+        <p className="text-[11px] text-zinc-500 leading-relaxed mb-4">
           At the end of each month, the top-voted feature request is selected to help improve creator stores on SellBop. A win-win roadmap, built with creators.
         </p>
 
@@ -426,7 +426,7 @@ function CountdownCard({ topPost }: { topPost: Post | undefined }) {
             Vote on Features
           </button>
           <button
-            className="flex-1 h-8 bg-white/5 border border-white/10 text-neutral-300 text-[11px] font-semibold rounded-lg hover:bg-white/10 transition-colors"
+            className="flex-1 h-8 bg-white/5 border border-white/10 text-zinc-300 text-[11px] font-semibold rounded-lg hover:bg-white/10 transition-colors"
             onClick={() => {}}
           >
             Submit Request
