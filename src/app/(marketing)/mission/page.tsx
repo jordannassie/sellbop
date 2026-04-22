@@ -38,17 +38,31 @@ export default function MissionPage() {
 
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-start">
 
-            {/* Founder image */}
-            <div className="relative rounded-2xl overflow-hidden aspect-[3/4] max-w-sm mx-auto lg:mx-0 lg:max-w-none shadow-lg">
-              <Image
-                src={FOUNDER_IMAGE}
-                alt="Jordan Nassie — Founder of SellBop"
-                fill
-                className="object-cover object-top"
-                priority
-                sizes="(max-width: 1024px) 80vw, 40vw"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+            {/* Founder image — small on mobile, tall on desktop */}
+            <div className="flex justify-center lg:block">
+              {/* Mobile: compact square */}
+              <div className="relative w-24 h-24 rounded-2xl overflow-hidden shadow-md lg:hidden">
+                <Image
+                  src={FOUNDER_IMAGE}
+                  alt="Jordan Nassie — Founder of SellBop"
+                  fill
+                  className="object-cover object-top"
+                  priority
+                  sizes="96px"
+                />
+              </div>
+              {/* Desktop: tall portrait */}
+              <div className="relative hidden lg:block rounded-2xl overflow-hidden aspect-[3/4] shadow-lg">
+                <Image
+                  src={FOUNDER_IMAGE}
+                  alt="Jordan Nassie — Founder of SellBop"
+                  fill
+                  className="object-cover object-top"
+                  priority
+                  sizes="40vw"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+              </div>
             </div>
 
             {/* Founder message */}
