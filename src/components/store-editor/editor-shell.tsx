@@ -4,10 +4,9 @@ import {
   ExternalLink, Copy, Check, CloudUpload,
   Star, Eye, EyeOff, Pencil, Plus, Lock, Package, Zap, Shirt,
   Image, Video, Ban, X, Layers,
-  Smartphone, Palette, User,
 } from 'lucide-react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor,
   useSensor, useSensors, type DragEndEvent,
@@ -1462,16 +1461,19 @@ export function StoreEditorShell() {
   const [mobileSection, setMobileSection] = useState<MobileSection>('products')
   const [designSubTab, setDesignSubTab]   = useState<'layout' | 'theme'>('layout')
   const { isDirty, isSaving, saveChanges } = useStoreEditor()
-  const router   = useRouter()
-  const storeUrl = `/store/${DEMO_SELLER_PROFILE.slug}`
+  const storeUrl    = `/store/${DEMO_SELLER_PROFILE.slug}`
+  const searchParams = useSearchParams()
+  const urlSection  = searchParams.get('section') as MobileSection | null
 
-  // When arriving from a product page via ?section=X, restore that section
+  // Keep mobileSection in sync with the ?section= URL param set by MobileEditorNav
   useEffect(() => {
-    const params  = new URLSearchParams(window.location.search)
-    const section = params.get('section') as MobileSection | null
     const valid: MobileSection[] = ['products', 'preview', 'design', 'profile']
-    if (section && valid.includes(section)) setMobileSection(section)
-  }, [])
+    if (urlSection && valid.includes(urlSection)) {
+      setMobileSection(urlSection)
+    } else {
+      setMobileSection('products')
+    }
+  }, [urlSection])
 
   return (
     <div className="flex flex-col h-screen lg:h-full bg-[#f9f9f9]">
@@ -1555,68 +1557,6 @@ export function StoreEditorShell() {
         </div>
       )}
 
-      {/* ── Mobile bottom nav ─────────────────────────────────── */}
-      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-neutral-200 flex items-stretch h-14">
-
-        {/* Products */}
-        <button
-          onClick={() => setMobileSection('products')}
-          className={cn(
-            'flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors',
-            mobileSection === 'products' ? 'text-black' : 'text-neutral-400',
-          )}
-        >
-          <Package size={20} strokeWidth={mobileSection === 'products' ? 2.5 : 1.75} />
-          <span className="text-[10px] font-semibold">Products</span>
-        </button>
-
-        {/* Add — primary action, navigates with editor context */}
-        <button
-          onClick={() => router.push('/dashboard/products/new?from=store-editor')}
-          className="flex-1 flex flex-col items-center justify-center gap-0.5 text-neutral-600"
-        >
-          <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center -mt-1">
-            <Plus size={16} className="text-white" strokeWidth={2.5} />
-          </div>
-          <span className="text-[10px] font-semibold">Add</span>
-        </button>
-
-        {/* Preview */}
-        <button
-          onClick={() => setMobileSection('preview')}
-          className={cn(
-            'flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors',
-            mobileSection === 'preview' ? 'text-black' : 'text-neutral-400',
-          )}
-        >
-          <Smartphone size={20} strokeWidth={mobileSection === 'preview' ? 2.5 : 1.75} />
-          <span className="text-[10px] font-semibold">Preview</span>
-        </button>
-
-        {/* Design */}
-        <button
-          onClick={() => setMobileSection('design')}
-          className={cn(
-            'flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors',
-            mobileSection === 'design' ? 'text-black' : 'text-neutral-400',
-          )}
-        >
-          <Palette size={20} strokeWidth={mobileSection === 'design' ? 2.5 : 1.75} />
-          <span className="text-[10px] font-semibold">Design</span>
-        </button>
-
-        {/* Profile */}
-        <button
-          onClick={() => setMobileSection('profile')}
-          className={cn(
-            'flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors',
-            mobileSection === 'profile' ? 'text-black' : 'text-neutral-400',
-          )}
-        >
-          <User size={20} strokeWidth={mobileSection === 'profile' ? 2.5 : 1.75} />
-          <span className="text-[10px] font-semibold">Profile</span>
-        </button>
-      </div>
     </div>
   )
 }

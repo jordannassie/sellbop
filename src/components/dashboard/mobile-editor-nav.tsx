@@ -5,7 +5,7 @@ import { Package, Plus, Smartphone, Palette, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 // ─────────────────────────────────────────────────────────────
-// Inner component (needs Suspense because of useSearchParams)
+// Inner nav — reads pathname + searchParams to derive active state
 // ─────────────────────────────────────────────────────────────
 
 function MobileEditorNavInner() {
@@ -14,22 +14,23 @@ function MobileEditorNavInner() {
   const searchParams = useSearchParams()
   const section     = searchParams.get('section')
 
-  const isNewProduct  = pathname === '/dashboard/products/new'
-  const isEditProduct = /^\/dashboard\/products\/[^/]+$/.test(pathname) && !isNewProduct
-  const isStoreEditor = pathname.startsWith('/dashboard/store-editor')
+  const isProductsList = pathname === '/dashboard/products'
+  const isNewProduct   = pathname === '/dashboard/products/new'
+  const isEditProduct  = /^\/dashboard\/products\/.+$/.test(pathname) && !isNewProduct
+  const isStoreEditor  = pathname.startsWith('/dashboard/store-editor')
 
-  // Determine which nav item should appear active
+  // Active item derived purely from URL — single source of truth
   const active =
-    isNewProduct                          ? 'add'      :
-    isEditProduct                         ? 'products' :
-    isStoreEditor && section === 'preview' ? 'preview'  :
-    isStoreEditor && section === 'design'  ? 'design'   :
-    isStoreEditor && section === 'profile' ? 'profile'  :
-                                            'products'
+    isNewProduct                            ? 'add'      :
+    (isProductsList || isEditProduct)       ? 'products' :
+    isStoreEditor && section === 'preview'  ? 'preview'  :
+    isStoreEditor && section === 'design'   ? 'design'   :
+    isStoreEditor && section === 'profile'  ? 'profile'  :
+                                              'products'  // store-editor default + fallback
 
   const items = [
-    { id: 'products', label: 'Products', Icon: Package,    target: '/dashboard/store-editor' },
-    { id: 'add',      label: 'Add',      Icon: Plus,       target: '/dashboard/products/new?from=store-editor', special: true },
+    { id: 'products', label: 'Products', Icon: Package,    target: '/dashboard/products' },
+    { id: 'add',      label: 'Add',      Icon: Plus,       target: '/dashboard/products/new', special: true },
     { id: 'preview',  label: 'Preview',  Icon: Smartphone, target: '/dashboard/store-editor?section=preview' },
     { id: 'design',   label: 'Design',   Icon: Palette,    target: '/dashboard/store-editor?section=design' },
     { id: 'profile',  label: 'Profile',  Icon: User,       target: '/dashboard/store-editor?section=profile' },
@@ -66,8 +67,8 @@ function MobileEditorNavInner() {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Public export — Suspense-wrapped so it's safe to render
-// anywhere in the tree without a parent boundary
+// Public export — always safe to render; Suspense boundary
+// contained here so callers need no extra wrapping
 // ─────────────────────────────────────────────────────────────
 
 export function MobileEditorNav() {

@@ -12,10 +12,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname()
   const isStoreEditor = pathname.startsWith('/dashboard/store-editor')
 
-  // Product create/edit pages share the mobile editor nav and bottom padding
+  // All routes that are part of the mobile editor workspace
   const isProductEditorRoute =
+    pathname === '/dashboard/products' ||
     pathname === '/dashboard/products/new' ||
-    (/^\/dashboard\/products\/.+$/.test(pathname) && pathname !== '/dashboard/products')
+    /^\/dashboard\/products\/.+$/.test(pathname)
+
+  // Show mobile editor nav on store-editor AND all product editor routes
+  const showMobileEditorNav = isStoreEditor || isProductEditorRoute
 
   useEffect(() => {
     if (!loading && !session) router.push('/login')
@@ -51,8 +55,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </main>
       </div>
 
-      {/* Persistent mobile editor nav on product create/edit pages */}
-      {isProductEditorRoute && <MobileEditorNav />}
+      {/* Persistent mobile editor nav across all editor routes */}
+      {showMobileEditorNav && <MobileEditorNav />}
     </div>
   )
 }
