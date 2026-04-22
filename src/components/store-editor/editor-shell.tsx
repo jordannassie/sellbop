@@ -3,7 +3,7 @@ import React, { useState } from 'react'
 import {
   ExternalLink, Copy, Check, CloudUpload,
   Star, Eye, EyeOff, Pencil, Plus, Lock, Package, Zap, Shirt,
-  Image, Video, Ban, X,
+  Image, Video, Ban, X, Layers,
 } from 'lucide-react'
 import Link from 'next/link'
 import {
@@ -479,7 +479,7 @@ function ProfileTab() {
   ].filter(Boolean).length
 
   return (
-    <div className="max-w-2xl mx-auto px-5 py-8 space-y-4">
+    <div className="max-w-2xl mx-auto px-5 py-4 sm:py-8 space-y-4">
 
       {/* Identity preview card */}
       <Card>
@@ -632,7 +632,7 @@ function ProductsTab() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-5 py-8 space-y-5">
+    <div className="max-w-2xl mx-auto px-5 py-4 sm:py-8 space-y-5">
 
       {/* ── Page action bar ─────────────────────────────────── */}
       <div className="flex items-center justify-between">
@@ -973,7 +973,7 @@ function LayoutTab() {
   const isCenter = config.headerLayout === 'centered'
 
   return (
-    <div className="max-w-2xl mx-auto px-5 py-8 space-y-5">
+    <div className="max-w-2xl mx-auto px-5 py-4 sm:py-8 space-y-5">
 
       {/* ── Header Layout ───────────────────────────────────── */}
       <Card>
@@ -1093,7 +1093,7 @@ function ThemeTab() {
   const { config, update } = useStoreEditor()
 
   return (
-    <div className="max-w-2xl mx-auto px-5 py-8 space-y-5">
+    <div className="max-w-2xl mx-auto px-5 py-4 sm:py-8 space-y-5">
       {/* Appearance card: presets + color */}
       <Card>
         <CardHeader>
@@ -1245,27 +1245,26 @@ function EditorTopBar() {
             Open Store
           </Link>
 
-          {/* Save Changes — always visible, label adapts */}
+          {/* Save Changes — desktop only; mobile uses sticky bottom bar */}
           <button
             onClick={saveChanges}
             disabled={!isDirty || isSaving}
             className={cn(
-              'flex items-center gap-1.5 h-8 px-3 sm:px-4 rounded-lg text-xs font-bold transition-all duration-150',
+              'hidden sm:flex items-center gap-1.5 h-8 px-3 sm:px-4 rounded-lg text-xs font-bold transition-all duration-150',
               isDirty && !isSaving
                 ? 'bg-black text-white hover:bg-neutral-800 shadow-sm ring-1 ring-black/20'
                 : 'bg-neutral-100 text-neutral-400 cursor-not-allowed',
             )}
           >
             <CloudUpload size={13} />
-            <span className="hidden sm:inline">{isSaving ? 'Saving…' : 'Save Changes'}</span>
-            <span className="sm:hidden">{isSaving ? 'Saving…' : 'Save'}</span>
+            <span>{isSaving ? 'Saving…' : 'Save Changes'}</span>
           </button>
         </div>
       </div>
 
       {/* ── Mobile action strip (sm:hidden) ───────────────────── */}
       {/* Shows public URL + copy + open store for mobile users   */}
-      <div className="sm:hidden bg-white border-b border-neutral-100 px-4 pb-3 pt-1 shrink-0">
+      <div className="sm:hidden bg-white border-b border-neutral-100 px-4 py-2 shrink-0">
         <div className="flex items-center gap-2 bg-neutral-50 border border-neutral-200 rounded-lg px-3 py-2">
           {/* URL label + value */}
           <span className="text-[10px] font-semibold text-neutral-400 flex-shrink-0 uppercase tracking-wide">URL</span>
@@ -1306,6 +1305,8 @@ function EditorTopBar() {
 
 export function StoreEditorShell() {
   const [activeTab, setActiveTab] = useState<EditorTab>('products')
+  const { isDirty, isSaving, saveChanges } = useStoreEditor()
+  const storeUrl = `/store/${DEMO_SELLER_PROFILE.slug}`
 
   return (
     <div className="flex flex-col h-screen lg:h-full bg-[#f9f9f9]">
@@ -1319,7 +1320,7 @@ export function StoreEditorShell() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                'px-4 py-3 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap flex-shrink-0',
+                'px-4 py-3.5 sm:py-3 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap flex-shrink-0',
                 activeTab === tab.id
                   ? 'border-black text-black'
                   : 'border-transparent text-neutral-400 hover:text-neutral-700',
@@ -1329,20 +1330,80 @@ export function StoreEditorShell() {
             </button>
           ))}
         </div>
+
+        {/* Mobile quick actions — shortcuts for common tasks */}
+        <div className="sm:hidden flex gap-2 px-3 pb-2.5 pt-1 overflow-x-auto scrollbar-none">
+          <Link
+            href="/dashboard/storefront"
+            className="flex-shrink-0 flex items-center gap-1.5 h-8 px-3 rounded-xl border border-neutral-200 bg-white text-xs font-semibold text-neutral-700 active:bg-neutral-100 transition-colors"
+          >
+            <Pencil size={11} className="text-neutral-500" />
+            Edit Profile
+          </Link>
+          <Link
+            href="/dashboard/products/new"
+            className="flex-shrink-0 flex items-center gap-1.5 h-8 px-3 rounded-xl border border-neutral-200 bg-white text-xs font-semibold text-neutral-700 active:bg-neutral-100 transition-colors"
+          >
+            <Plus size={11} className="text-neutral-500" />
+            Add Product
+          </Link>
+          <button
+            onClick={() => setActiveTab('layout')}
+            className="flex-shrink-0 flex items-center gap-1.5 h-8 px-3 rounded-xl border border-neutral-200 bg-white text-xs font-semibold text-neutral-700 active:bg-neutral-100 transition-colors"
+          >
+            <Layers size={11} className="text-neutral-500" />
+            Change Layout
+          </button>
+          <Link
+            href={storeUrl}
+            target="_blank"
+            className="flex-shrink-0 flex items-center gap-1.5 h-8 px-3 rounded-xl border border-neutral-200 bg-white text-xs font-semibold text-neutral-700 active:bg-neutral-100 transition-colors"
+          >
+            <ExternalLink size={11} className="text-neutral-500" />
+            Preview Store
+          </Link>
+        </div>
       </div>
 
-      {/* Helper description */}
-      <div className="bg-neutral-50 border-b border-neutral-100 px-5 py-2 shrink-0">
+      {/* Helper description — desktop only */}
+      <div className="hidden sm:block bg-neutral-50 border-b border-neutral-100 px-5 py-2 shrink-0">
         <p className="text-[11px] text-neutral-400">{TAB_DESCRIPTIONS[activeTab]}</p>
       </div>
 
       {/* Tab content — scrollable */}
-      <div className="flex-1 min-h-0 overflow-y-auto">
+      <div className={cn('flex-1 min-h-0 overflow-y-auto', isDirty && 'pb-20 sm:pb-0')}>
         {activeTab === 'profile'  && <ProfileTab />}
         {activeTab === 'products' && <ProductsTab />}
         {activeTab === 'layout'   && <LayoutTab />}
         {activeTab === 'theme'    && <ThemeTab />}
       </div>
+
+      {/* Mobile sticky save bar — only when unsaved changes exist */}
+      {isDirty && (
+        <div className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-neutral-200 px-4 py-3 flex items-center gap-2.5 shadow-[0_-4px_16px_rgba(0,0,0,0.08)]">
+          <button
+            onClick={saveChanges}
+            disabled={isSaving}
+            className={cn(
+              'flex-1 flex items-center justify-center gap-2 h-11 rounded-xl text-sm font-bold transition-all',
+              isSaving
+                ? 'bg-neutral-100 text-neutral-400 cursor-not-allowed'
+                : 'bg-black text-white hover:bg-neutral-800 active:bg-neutral-900 shadow-sm',
+            )}
+          >
+            <CloudUpload size={15} />
+            {isSaving ? 'Saving…' : 'Save Changes'}
+          </button>
+          <Link
+            href={storeUrl}
+            target="_blank"
+            className="flex-shrink-0 flex items-center justify-center gap-1.5 h-11 px-4 rounded-xl border border-neutral-200 text-sm font-semibold text-neutral-600 bg-white active:bg-neutral-50 transition-colors"
+          >
+            <ExternalLink size={13} />
+            Preview
+          </Link>
+        </div>
+      )}
     </div>
   )
 }
