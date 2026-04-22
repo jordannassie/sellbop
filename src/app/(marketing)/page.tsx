@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { ProductImage } from '@/components/ui/product-image'
 import { RotatingWord } from '@/components/marketing/rotating-word'
 import { StrategyCallSection } from '@/components/marketing/strategy-call-section'
-import { Check, ArrowRight, FileText, ShoppingBag, Pencil, Download, MapPin, Zap, Sparkles } from 'lucide-react'
+import { Check, ArrowRight, FileText, ShoppingBag, Pencil, Download, MapPin, Zap, Sparkles, Tag, Star, Users2, ThumbsUp, Bell } from 'lucide-react'
 import { DEMO_PRODUCTS, DEMO_STOREFRONT, DEMO_SELLER_PROFILE } from '@/lib/demo-data/seed'
 import { formatCurrency } from '@/lib/utils'
 
@@ -276,6 +276,11 @@ export default function HomePage() {
       </section>
 
       {/* ══════════════════════════════════════════════════════════════
+          FOUNDER CREATORS PROGRAM
+      ══════════════════════════════════════════════════════════════ */}
+      <FounderCreatorsProgramSection />
+
+      {/* ══════════════════════════════════════════════════════════════
           SECTION 5 — Strategy Call (help launching)
       ══════════════════════════════════════════════════════════════ */}
       <StrategyCallSection />
@@ -455,6 +460,74 @@ function BenefitProductTypesMockup() {
         </div>
       ))}
     </div>
+  )
+}
+
+// ── Founder Creators Program Section ─────────────────────────────────────────
+
+const FOUNDER_BENEFITS = [
+  { Icon: Tag,      label: '$0 platform fees',          desc: 'Pay nothing during the beta period.' },
+  { Icon: Star,     label: 'Founder badge',             desc: 'Permanently on your public profile.' },
+  { Icon: Users2,   label: 'Community access',          desc: 'Discuss ideas with other founders.' },
+  { Icon: ThumbsUp, label: 'Vote on features',          desc: 'Directly influence the roadmap.' },
+  { Icon: Bell,     label: 'Early updates',             desc: 'First access to every new release.' },
+]
+
+function FounderCreatorsProgramSection() {
+  return (
+    <section className="py-24 sm:py-32 bg-black">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6">
+
+        {/* Header */}
+        <div className="text-center mb-12 sm:mb-16">
+          <p className="text-xs font-bold uppercase tracking-[0.3em] text-neutral-500 mb-5">
+            Founder Creators Program
+          </p>
+          <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight mb-4">
+            Join beta and pay $0 platform fees
+          </h2>
+          <p className="text-neutral-400 text-base sm:text-lg max-w-lg mx-auto leading-relaxed">
+            Be one of the first creators on SellBop. Launch early, shape the roadmap, and grow with the platform.
+          </p>
+        </div>
+
+        {/* Benefit cards */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-12">
+          {FOUNDER_BENEFITS.map(({ Icon, label, desc }) => (
+            <div
+              key={label}
+              className="bg-white/5 border border-white/10 rounded-xl p-4 text-center hover:bg-white/8 transition-colors"
+            >
+              <div className="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center mx-auto mb-3">
+                <Icon size={16} className="text-white" />
+              </div>
+              <p className="text-xs font-semibold text-white leading-snug mb-1">{label}</p>
+              <p className="text-[11px] text-neutral-500 leading-relaxed">{desc}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* CTAs */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <Link href="/login?mode=signup">
+            <button className="inline-flex items-center gap-2 bg-white text-black text-sm font-bold px-7 py-3.5 rounded-xl hover:bg-neutral-100 transition-colors">
+              Join the Beta <ArrowRight size={14} />
+            </button>
+          </Link>
+          <Link href="/community">
+            <button className="inline-flex items-center gap-2 border border-white/20 text-white text-sm font-semibold px-7 py-3.5 rounded-xl hover:bg-white/10 transition-colors">
+              Explore Community
+            </button>
+          </Link>
+        </div>
+
+        {/* Tag line */}
+        <p className="text-center text-xs text-neutral-600 mt-6">
+          Build your store. Shape the platform. More than a storefront — a creator-built platform.
+        </p>
+
+      </div>
+    </section>
   )
 }
 

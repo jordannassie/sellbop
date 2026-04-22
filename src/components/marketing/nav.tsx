@@ -9,7 +9,7 @@ import { Menu, X } from 'lucide-react'
 
 const LINKS = [
   { href: '/marketplace',       label: 'Marketplace' },
-  { href: '/courses',           label: 'Courses' },
+  { href: '/community',         label: 'Community' },
   { href: '/pricing',           label: 'Pricing' },
   { href: '/demo',              label: 'Demo' },
   { href: '/store/alexjohnson', label: 'Example Store' },
