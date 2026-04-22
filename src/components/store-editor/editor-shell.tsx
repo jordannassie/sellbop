@@ -1341,8 +1341,8 @@ function MobilePreviewSection({ storeUrl }: { storeUrl: string }) {
         </Link>
       </div>
 
-      {/* Phone mockup */}
-      <div className="flex-1 overflow-y-auto flex items-start justify-center py-6 px-4">
+      {/* Phone mockup — pt-5 pb-2 keeps breathing room without dead space */}
+      <div className="flex-1 overflow-y-auto flex items-start justify-center pt-5 pb-2 px-4">
         <div
           className="relative flex-shrink-0 bg-neutral-900 rounded-[40px] shadow-2xl"
           style={{ width: 260, height: 540 }}
@@ -1507,7 +1507,9 @@ export function StoreEditorShell() {
       {/* ── Content (scrollable) ──────────────────────────────── */}
       <div className={cn(
         'flex-1 min-h-0 overflow-y-auto sm:pb-0',
-        isDirty ? 'pb-36' : 'pb-14',
+        // In preview mode the save bar overlays the phone frame cleanly — no giant gap needed.
+        // In other sections, pb-36 reserves space above the save bar when dirty.
+        isDirty && mobileSection !== 'preview' ? 'pb-36' : 'pb-14',
       )}>
         {/* Desktop */}
         <div className="hidden sm:block h-full">

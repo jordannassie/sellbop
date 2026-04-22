@@ -7,7 +7,8 @@ import { StorefrontPreview } from './storefront-preview'
 
 export function PreviewPanel() {
   const { config, products } = useStoreEditor()
-  const [mode, setMode] = useState<'desktop' | 'mobile'>('desktop')
+  // Default to mobile phone frame — matches the mobile preview experience
+  const [mode, setMode] = useState<'desktop' | 'mobile'>('mobile')
 
   return (
     <div className="flex flex-col h-full bg-[#f5f5f5]">

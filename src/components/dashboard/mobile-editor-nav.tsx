@@ -1,46 +1,47 @@
 'use client'
 import { Suspense } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
-import { Package, Plus, Smartphone, Palette, User } from 'lucide-react'
+import { Layers, ShoppingBag, BarChart3, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 // ─────────────────────────────────────────────────────────────
-// Inner nav — reads pathname + searchParams to derive active state
+// Main mobile bottom nav — 4 primary destinations.
+// "Editor" is first and covers all store-editor + product routes
+// so the user always feels inside one editing workspace.
 // ─────────────────────────────────────────────────────────────
 
 function MobileEditorNavInner() {
   const router       = useRouter()
   const pathname     = usePathname()
   const searchParams = useSearchParams()
-  const section      = searchParams.get('section')
 
-  const isProductsList = pathname === '/dashboard/products'
-  const isNewProduct   = pathname === '/dashboard/products/new'
-  const isEditProduct  = /^\/dashboard\/products\/.+$/.test(pathname) && !isNewProduct
-  const isStoreEditor  = pathname.startsWith('/dashboard/store-editor')
-  const isStorefront   = pathname === '/dashboard/storefront'
+  // "Editor" is active for all store-editor AND product-management routes
+  const isEditorArea =
+    pathname.startsWith('/dashboard/store-editor') ||
+    pathname === '/dashboard/products' ||
+    pathname === '/dashboard/products/new' ||
+    /^\/dashboard\/products\/.+$/.test(pathname)
 
-  // Active item derived purely from URL — single source of truth
   const active =
-    isNewProduct                           ? 'add'      :
-    (isProductsList || isEditProduct)      ? 'products' :
-    isStoreEditor && section === 'preview' ? 'preview'  :
-    isStoreEditor && section === 'design'  ? 'design'   :
-    isStorefront                           ? 'profile'  :
-    isStoreEditor                          ? 'products' : // store-editor default (no section)
-                                             ''           // other dashboard pages — nothing active
+    isEditorArea                          ? 'editor'    :
+    pathname.startsWith('/dashboard/orders')    ? 'orders'    :
+    pathname.startsWith('/dashboard/analytics') ? 'analytics' :
+    pathname === '/dashboard/storefront'        ? 'profile'   :
+                                                  ''
+
+  // Suppress unused-var warning — searchParams is read by useSearchParams
+  void searchParams
 
   const items = [
-    { id: 'products', label: 'Products', Icon: Package,    target: '/dashboard/products' },
-    { id: 'add',      label: 'Add',      Icon: Plus,       target: '/dashboard/products/new', special: true },
-    { id: 'preview',  label: 'Preview',  Icon: Smartphone, target: '/dashboard/store-editor?section=preview' },
-    { id: 'design',   label: 'Design',   Icon: Palette,    target: '/dashboard/store-editor?section=design' },
-    { id: 'profile',  label: 'Profile',  Icon: User,       target: '/dashboard/storefront' },
+    { id: 'editor',    label: 'Editor',    Icon: Layers,      target: '/dashboard/store-editor' },
+    { id: 'orders',    label: 'Orders',    Icon: ShoppingBag, target: '/dashboard/orders' },
+    { id: 'analytics', label: 'Analytics', Icon: BarChart3,   target: '/dashboard/analytics' },
+    { id: 'profile',   label: 'Profile',   Icon: User,        target: '/dashboard/storefront' },
   ]
 
   return (
     <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-neutral-200 flex items-stretch h-14">
-      {items.map(({ id, label, Icon, target, special }) => (
+      {items.map(({ id, label, Icon, target }) => (
         <button
           key={id}
           onClick={() => router.push(target)}
@@ -49,19 +50,8 @@ function MobileEditorNavInner() {
             active === id ? 'text-black' : 'text-neutral-400',
           )}
         >
-          {special ? (
-            <>
-              <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center -mt-1">
-                <Icon size={16} className="text-white" strokeWidth={2.5} />
-              </div>
-              <span className="text-[10px] font-semibold">{label}</span>
-            </>
-          ) : (
-            <>
-              <Icon size={20} strokeWidth={active === id ? 2.5 : 1.75} />
-              <span className="text-[10px] font-semibold">{label}</span>
-            </>
-          )}
+          <Icon size={20} strokeWidth={active === id ? 2.5 : 1.75} />
+          <span className="text-[10px] font-semibold">{label}</span>
         </button>
       ))}
     </div>
@@ -69,8 +59,7 @@ function MobileEditorNavInner() {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Public export — always safe to render; Suspense boundary
-// contained here so callers need no extra wrapping
+// Public export — Suspense boundary so useSearchParams is safe
 // ─────────────────────────────────────────────────────────────
 
 export function MobileEditorNav() {
