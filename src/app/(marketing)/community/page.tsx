@@ -6,6 +6,7 @@ import {
   Trophy, X, Send, Clock, Users, Zap,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { DEMO_AVATAR_PHOTOS } from '@/lib/demo-avatars'
 
 // ═══════════════════════════════════════════════════════════════
 // TYPES
@@ -45,9 +46,8 @@ interface Profile {
 // All data below is mock/demo — structured for real API swap-in.
 // ═══════════════════════════════════════════════════════════════
 
-const AV = 'https://api.dicebear.com/7.x/lorelei/svg?seed='
-
 // Mock profiles — wire to real user table when backend is ready
+// avatarUrl: Pravatar.cc real face photos (reliable CDN, no API key)
 const DEMO_PROFILES: Record<string, Profile> = {
   'SellBop': {
     displayName: 'SellBop', handle: 'SellBop',
@@ -56,52 +56,52 @@ const DEMO_PROFILES: Record<string, Profile> = {
   },
   'sarahcreates': {
     displayName: 'Sarah Creates', handle: 'sarahcreates',
-    avatarUrl: `${AV}SarahCreates`, color: '#2563EB', initials: 'SC',
+    avatarUrl: DEMO_AVATAR_PHOTOS.sarahcreates, color: '#2563EB', initials: 'SC',
     role: 'Founder', online: true, stat: '14 posts · 127 votes',
   },
   'alexjohnson': {
     displayName: 'Alex Builds', handle: 'alexjohnson',
-    avatarUrl: `${AV}AlexBuilds`, color: '#7C3AED', initials: 'AB',
+    avatarUrl: DEMO_AVATAR_PHOTOS.alexjohnson, color: '#7C3AED', initials: 'AB',
     role: 'Founder', online: true, stat: '9 posts · 84 votes',
   },
   'collab_fan': {
     displayName: 'Jordan Studio', handle: 'collab_fan',
-    avatarUrl: `${AV}JordanStudio`, color: '#059669', initials: 'JS',
+    avatarUrl: DEMO_AVATAR_PHOTOS.collab_fan, color: '#059669', initials: 'JS',
     role: 'Beta Member', online: false, stat: '6 posts · 61 votes',
   },
   'videopro_j': {
     displayName: 'Maya Digital', handle: 'videopro_j',
-    avatarUrl: `${AV}MayaDigital`, color: '#D97706', initials: 'MD',
+    avatarUrl: DEMO_AVATAR_PHOTOS.videopro_j, color: '#D97706', initials: 'MD',
     role: 'Creator', online: true, stat: '4 posts · 47 votes',
   },
   'markd': {
     displayName: 'Mark Davidson', handle: 'markd',
-    avatarUrl: `${AV}MarkDavidson`, color: '#DC2626', initials: 'MD',
+    avatarUrl: DEMO_AVATAR_PHOTOS.markd, color: '#DC2626', initials: 'MD',
     role: 'Beta Member', online: false, stat: '3 posts · 21 votes',
   },
   'bundlebuilder': {
     displayName: 'Bundle Builder', handle: 'bundlebuilder',
-    avatarUrl: `${AV}BundleBuilder`, color: '#0891B2', initials: 'BB',
+    avatarUrl: DEMO_AVATAR_PHOTOS.bundlebuilder, color: '#0891B2', initials: 'BB',
     role: 'Creator', online: false, stat: '5 posts · 29 votes',
   },
   'noah_maker': {
     displayName: 'Noah Maker', handle: 'noah_maker',
-    avatarUrl: `${AV}NoahMaker`, color: '#7C3AED', initials: 'NM',
+    avatarUrl: DEMO_AVATAR_PHOTOS.noah_maker, color: '#7C3AED', initials: 'NM',
     role: 'Founder', online: true, stat: '8 posts · 53 votes',
   },
   'emma_launch': {
     displayName: 'Emma Launch', handle: 'emma_launch',
-    avatarUrl: `${AV}EmmaLaunch`, color: '#e11d48', initials: 'EL',
+    avatarUrl: DEMO_AVATAR_PHOTOS.emma_launch, color: '#e11d48', initials: 'EL',
     role: 'Beta Member', online: true, stat: '5 posts · 38 votes',
   },
   'chloe_store': {
     displayName: 'Chloe Store', handle: 'chloe_store',
-    avatarUrl: `${AV}ChloeStore`, color: '#0d9488', initials: 'CS',
+    avatarUrl: DEMO_AVATAR_PHOTOS.chloe_store, color: '#0d9488', initials: 'CS',
     role: 'Creator', online: false, stat: '3 posts · 17 votes',
   },
   'ryan_growth': {
     displayName: 'Ryan Growth', handle: 'ryan_growth',
-    avatarUrl: `${AV}RyanGrowth`, color: '#ea580c', initials: 'RG',
+    avatarUrl: DEMO_AVATAR_PHOTOS.ryan_growth, color: '#ea580c', initials: 'RG',
     role: 'Founder', online: true, stat: '7 posts · 62 votes',
   },
 }
@@ -497,10 +497,12 @@ function CreatePostModal({
       const name   = authorName.trim() || 'You'
       const handle = name.toLowerCase().replace(/\s+/g, '_')
       if (!DEMO_PROFILES[handle]) {
+        // Generate a deterministic Pravatar from name length for new authors
+        const imgIdx = (name.length % 69) + 1
         DEMO_PROFILES[handle] = {
           displayName: name,
           handle,
-          avatarUrl: `${AV}${encodeURIComponent(name)}`,
+          avatarUrl: `https://i.pravatar.cc/150?img=${imgIdx}`,
           color: '#6366f1',
           initials: name.charAt(0).toUpperCase(),
           role: 'Beta Member',

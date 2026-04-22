@@ -7,6 +7,7 @@ import { StrategyCallSection } from '@/components/marketing/strategy-call-sectio
 import { Check, ArrowRight, FileText, ShoppingBag, Pencil, Download, MapPin, Zap, Sparkles, Tag, Star, Users2, ThumbsUp, Bell } from 'lucide-react'
 import { DEMO_PRODUCTS, DEMO_STOREFRONT, DEMO_SELLER_PROFILE } from '@/lib/demo-data/seed'
 import { formatCurrency } from '@/lib/utils'
+import { HERO_FACEPILE_PHOTOS } from '@/lib/demo-avatars'
 
 export default function HomePage() {
   const featured = DEMO_PRODUCTS.filter(p => p.status === 'published').slice(0, 3)
@@ -25,11 +26,35 @@ export default function HomePage() {
         <p className="text-lg sm:text-xl text-neutral-500 max-w-xl mx-auto mb-10">
           Create beautiful sell pages for digital downloads, coaching, subscriptions, and memberships. Get paid instantly.
         </p>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-8">
           <Link href="/signup"><Button size="lg">Start Free</Button></Link>
           <Link href="/demo"><Button size="lg" variant="secondary">See Demo</Button></Link>
         </div>
-        <p className="text-xs text-neutral-400 mt-4">Demo accounts available · No credit card required</p>
+
+        {/* Social proof facepile */}
+        <div className="flex flex-col items-center gap-3">
+          <div className="flex items-center -space-x-2.5">
+            {HERO_FACEPILE_PHOTOS.map((url, i) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                key={i}
+                src={url}
+                alt="Founder creator"
+                width={36}
+                height={36}
+                className="w-9 h-9 rounded-full border-2 border-white object-cover shadow-sm"
+              />
+            ))}
+            <div className="w-9 h-9 rounded-full border-2 border-white bg-neutral-100 flex items-center justify-center text-[10px] font-bold text-neutral-500 shadow-sm">
+              +99
+            </div>
+          </div>
+          <p className="text-sm text-neutral-500">
+            <span className="font-semibold text-black">142 creators</span> active this week
+          </p>
+        </div>
+
+        <p className="text-xs text-neutral-400 mt-5">Demo accounts available · No credit card required</p>
       </section>
 
       {/* ── Hero photo ───────────────────────────────────────────── */}

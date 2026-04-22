@@ -52,8 +52,19 @@ export function MarketingNav() {
           <div className="flex items-center gap-2 sm:gap-3">
             {session ? (
               <>
-                <Link href="/dashboard" className="text-sm text-neutral-600 hover:text-black transition-colors hidden sm:block">Dashboard</Link>
-                <Link href="/signup"><Button size="sm">Get Started</Button></Link>
+                {/* Profile identity chip — links to creator storefront profile */}
+                <Link
+                  href="/dashboard/storefront"
+                  className="hidden sm:flex items-center gap-2 h-8 pl-1.5 pr-3 rounded-xl border border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50 transition-all group"
+                >
+                  <div className="w-5 h-5 rounded-lg bg-neutral-900 flex items-center justify-center text-white text-[9px] font-black flex-shrink-0">
+                    {(session.name?.charAt(0) ?? session.email.charAt(0)).toUpperCase()}
+                  </div>
+                  <span className="text-xs font-medium text-neutral-700 group-hover:text-black transition-colors max-w-[72px] truncate leading-none">
+                    {session.name?.split(' ')[0] ?? session.email.split('@')[0]}
+                  </span>
+                </Link>
+                <Link href="/dashboard"><Button size="sm" variant="secondary">Dashboard</Button></Link>
               </>
             ) : (
               <>
@@ -97,13 +108,20 @@ export function MarketingNav() {
               <div className="pt-2 pb-1 border-t border-neutral-100 mt-2 flex flex-col gap-2">
                 {session ? (
                   <>
+                    {/* Mobile logged-in: profile row + dashboard */}
+                    <Link href="/dashboard/storefront" onClick={() => setOpen(false)} className="flex items-center gap-3 h-11 px-3 rounded-xl hover:bg-neutral-50 transition-colors">
+                      <div className="w-7 h-7 rounded-lg bg-neutral-900 flex items-center justify-center text-white text-[11px] font-black flex-shrink-0">
+                        {(session.name?.charAt(0) ?? session.email.charAt(0)).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-black truncate">{session.name?.split(' ')[0] ?? session.email.split('@')[0]}</p>
+                        <p className="text-[11px] text-neutral-400 truncate">{session.email}</p>
+                      </div>
+                    </Link>
                     <Link href="/dashboard" onClick={() => setOpen(false)}>
                       <button className="w-full h-11 text-sm font-medium text-neutral-700 border border-neutral-200 rounded-xl hover:border-neutral-400 transition-colors">
                         Dashboard
                       </button>
-                    </Link>
-                    <Link href="/signup" onClick={() => setOpen(false)}>
-                      <Button className="w-full" size="sm">Get Started</Button>
                     </Link>
                   </>
                 ) : (
