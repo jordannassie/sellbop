@@ -40,7 +40,7 @@ interface Profile {
 
 // Mock profiles — wire to real user table when ready
 const DEMO_PROFILES: Record<string, Profile> = {
-  'SellBop':      { displayName: 'SellBop',        handle: 'SellBop',      color: '#000000', initials: 'S',  role: 'Official'    },
+  'SellBop':      { displayName: 'SellBop',        handle: 'SellBop',      color: '#18181b', initials: 'S',  role: 'Official'    },
   'alexjohnson':  { displayName: 'Alex Builds',    handle: 'alexjohnson',  color: '#7C3AED', initials: 'AB', role: 'Founder'     },
   'sarahcreates': { displayName: 'Sarah Creates',  handle: 'sarahcreates', color: '#2563EB', initials: 'SC', role: 'Founder'     },
   'collab_fan':   { displayName: 'Jordan Studio',  handle: 'collab_fan',   color: '#059669', initials: 'JS', role: 'Beta Member' },
@@ -141,8 +141,8 @@ const CAT_PILL: Record<PostCategory, string> = {
 const ROLE_BADGE: Record<string, string> = {
   'Official':    'bg-white text-black',
   'Founder':     'bg-amber-500/20 text-amber-300 border border-amber-500/30',
-  'Beta Member': 'bg-green-500/20 text-green-300 border border-green-500/30',
-  'Creator':     'bg-neutral-700 text-neutral-300',
+  'Beta Member': 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25',
+  'Creator':     'bg-zinc-700/60 text-zinc-300 border border-zinc-600/40',
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -251,10 +251,10 @@ function CreatePostModal({
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative w-full max-w-lg bg-[#1a1d24] border border-[#2a2d34] rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
+      <div className="relative w-full max-w-lg bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
 
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[#2a2d34] shrink-0">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-800 shrink-0">
           <h2 className="text-sm font-bold text-white">Create Post</h2>
           <button
             onClick={onClose}
@@ -269,26 +269,26 @@ function CreatePostModal({
 
           {/* Author name */}
           <div>
-            <label className="block text-[11px] font-semibold text-neutral-400 uppercase tracking-wide mb-1.5">
+            <label className="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wide mb-1.5">
               Your name
             </label>
             <input
               value={authorName}
               onChange={e => setAuthorName(e.target.value)}
               placeholder="Your name or handle"
-              className="w-full px-3 py-2 bg-[#0f1117] border border-[#2a2d34] rounded-lg text-sm text-white placeholder:text-neutral-600 focus:outline-none focus:border-violet-500/60 transition-colors"
+              className="w-full px-3 py-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-violet-500/60 transition-colors"
             />
           </div>
 
           {/* Category */}
           <div>
-            <label className="block text-[11px] font-semibold text-neutral-400 uppercase tracking-wide mb-1.5">
+            <label className="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wide mb-1.5">
               Category
             </label>
             <select
               value={category}
               onChange={e => setCategory(e.target.value as PostCategory)}
-              className="w-full px-3 py-2 bg-[#0f1117] border border-[#2a2d34] rounded-lg text-sm text-white focus:outline-none focus:border-violet-500/60 transition-colors cursor-pointer"
+              className="w-full px-3 py-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-white focus:outline-none focus:border-violet-500/60 transition-colors cursor-pointer"
             >
               {CATEGORIES.slice(1).map(c => (
                 <option key={c} value={c}>{c}</option>
@@ -298,7 +298,7 @@ function CreatePostModal({
 
           {/* Title */}
           <div>
-            <label className="block text-[11px] font-semibold text-neutral-400 uppercase tracking-wide mb-1.5">
+            <label className="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wide mb-1.5">
               Title <span className="text-red-400">*</span>
             </label>
             <input
@@ -307,28 +307,28 @@ function CreatePostModal({
               placeholder="What's on your mind?"
               maxLength={300}
               required
-              className="w-full px-3 py-2 bg-[#0f1117] border border-[#2a2d34] rounded-lg text-sm text-white placeholder:text-neutral-600 focus:outline-none focus:border-violet-500/60 transition-colors"
+              className="w-full px-3 py-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-violet-500/60 transition-colors"
             />
-            <p className="text-right text-[10px] text-neutral-600 mt-1">{title.length}/300</p>
+            <p className="text-right text-[10px] text-zinc-600 mt-1">{title.length}/300</p>
           </div>
 
           {/* Body */}
           <div>
-            <label className="block text-[11px] font-semibold text-neutral-400 uppercase tracking-wide mb-1.5">
-              Body <span className="text-neutral-600">(optional)</span>
+            <label className="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wide mb-1.5">
+              Body <span className="text-zinc-600">(optional)</span>
             </label>
             <textarea
               value={body}
               onChange={e => setBody(e.target.value)}
               placeholder="Share more detail, context, or ideas..."
               rows={4}
-              className="w-full px-3 py-2 bg-[#0f1117] border border-[#2a2d34] rounded-lg text-sm text-white placeholder:text-neutral-600 focus:outline-none focus:border-violet-500/60 transition-colors resize-none"
+              className="w-full px-3 py-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-violet-500/60 transition-colors resize-none"
             />
           </div>
 
           {/* Demo notice */}
-          <p className="text-[11px] text-neutral-600 bg-[#0f1117] border border-[#2a2d34] rounded-lg px-3 py-2">
-            <span className="text-neutral-500 font-semibold">Demo mode:</span> Your post appears live in the feed immediately. Backend persistence coming soon.
+          <p className="text-[11px] text-zinc-600 bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2">
+            <span className="text-zinc-500 font-semibold">Demo mode:</span> Your post appears live in the feed immediately. Backend persistence coming soon.
           </p>
 
           {/* Submit */}
@@ -336,7 +336,7 @@ function CreatePostModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 h-10 border border-[#2a2d34] rounded-lg text-xs font-semibold text-neutral-400 hover:text-white hover:border-[#3a3d44] transition-colors"
+              className="flex-1 h-10 border border-zinc-800 rounded-lg text-xs font-semibold text-zinc-400 hover:text-white hover:border-zinc-700 transition-colors"
             >
               Cancel
             </button>
@@ -364,9 +364,9 @@ function CountdownCard({ topPost }: { topPost: Post | undefined }) {
   const { days, hours, minutes, seconds } = useMonthCountdown()
 
   return (
-    <div className="bg-[#1a1d24] border border-violet-500/20 rounded-xl overflow-hidden">
+    <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
       {/* Header band */}
-      <div className="bg-gradient-to-r from-violet-600/30 to-indigo-600/20 px-4 py-3 border-b border-violet-500/20">
+      <div className="bg-violet-950/50 px-4 py-3 border-b border-zinc-800">
         <div className="flex items-center gap-2">
           <Trophy size={13} className="text-violet-400" />
           <p className="text-[11px] font-bold uppercase tracking-widest text-violet-300">
@@ -380,7 +380,7 @@ function CountdownCard({ topPost }: { topPost: Post | undefined }) {
         {topPost && (
           <div className="mb-4">
             <p className="text-[10px] font-semibold text-neutral-500 uppercase tracking-wide mb-2">Current Leader</p>
-            <div className="bg-[#0f1117] rounded-lg px-3 py-2.5 border border-[#2a2d34]">
+            <div className="bg-zinc-950 rounded-lg px-3 py-2.5 border border-zinc-800">
               <p className="text-xs font-semibold text-white leading-snug line-clamp-2 mb-1">
                 {topPost.title}
               </p>
@@ -403,7 +403,7 @@ function CountdownCard({ topPost }: { topPost: Post | undefined }) {
             { val: minutes, label: 'Min' },
             { val: seconds, label: 'Sec' },
           ].map(({ val, label }) => (
-            <div key={label} className="bg-[#0f1117] border border-[#2a2d34] rounded-lg py-2 text-center">
+            <div key={label} className="bg-zinc-950 border border-zinc-800 rounded-lg py-2.5 text-center">
               <p className="text-lg font-black text-white tabular-nums leading-none">
                 {String(val).padStart(2, '0')}
               </p>
@@ -455,10 +455,10 @@ function PostCard({
 
   return (
     <div className={cn(
-      'border rounded-xl p-4 sm:p-5 transition-all hover:border-[#3a3d44] cursor-pointer group',
+      'border rounded-xl p-4 sm:p-5 transition-all cursor-pointer group',
       post.pinned
         ? 'bg-amber-500/5 border-amber-500/20 hover:border-amber-500/40'
-        : 'bg-[#1a1d24] border-[#2a2d34]',
+        : 'bg-zinc-900 border-zinc-800 hover:border-zinc-700',
     )}>
       <div className="flex gap-3 sm:gap-4">
 
@@ -557,7 +557,7 @@ function Sidebar({
     <div className="space-y-4">
 
       {/* Founder Program card */}
-      <div className="bg-[#1a1d24] border border-[#2a2d34] rounded-xl p-5">
+      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
         <div className="inline-flex items-center gap-2 bg-white/10 text-white text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full mb-4">
           <span className="w-1.5 h-1.5 bg-green-400 rounded-full" /> Beta
         </div>
@@ -585,7 +585,7 @@ function Sidebar({
       <CountdownCard topPost={topFeaturePost} />
 
       {/* About Community */}
-      <div className="bg-[#1a1d24] border border-[#2a2d34] rounded-xl p-5">
+      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
         <h3 className="text-sm font-bold text-white mb-3">About Community</h3>
         <ul className="space-y-2.5 mb-4">
           {[
@@ -594,8 +594,8 @@ function Sidebar({
             'Ask questions and get answers',
             'Help shape the SellBop roadmap',
           ].map(item => (
-            <li key={item} className="flex items-start gap-2 text-xs text-neutral-500">
-              <div className="w-1.5 h-1.5 bg-neutral-600 rounded-full mt-1 flex-shrink-0" />
+            <li key={item} className="flex items-start gap-2 text-xs text-zinc-500">
+              <div className="w-1 h-1 bg-zinc-600 rounded-full mt-1.5 flex-shrink-0" />
               {item}
             </li>
           ))}
@@ -606,7 +606,7 @@ function Sidebar({
       </div>
 
       {/* Categories */}
-      <div className="bg-[#1a1d24] border border-[#2a2d34] rounded-xl p-5">
+      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
         <h3 className="text-sm font-bold text-white mb-3">Categories</h3>
         <div className="space-y-1">
           {CATEGORIES.slice(1).map(cat => (
@@ -627,7 +627,7 @@ function Sidebar({
       </div>
 
       {/* Top Founders */}
-      <div className="bg-[#1a1d24] border border-[#2a2d34] rounded-xl p-5">
+      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
         <h3 className="text-sm font-bold text-white mb-3">Founder Creators</h3>
         <div className="space-y-3">
           {(['alexjohnson', 'sarahcreates', 'collab_fan'] as const).map(handle => {
@@ -720,10 +720,10 @@ export default function CommunityPage() {
   const feed = [...pinned, ...sorted]
 
   return (
-    <div className="min-h-screen bg-[#0d0d0f] pt-14">
+    <div className="min-h-screen bg-zinc-950 pt-14">
 
       {/* ── Community banner ─────────────────────────────────── */}
-      <div className="bg-gradient-to-r from-violet-900/40 via-[#0d0d0f] to-[#0d0d0f] border-b border-[#1e1e22]">
+      <div className="bg-zinc-900/40 border-b border-zinc-800/60">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-5">
             <div>
@@ -785,7 +785,7 @@ export default function CommunityPage() {
               <select
                 value={sort}
                 onChange={e => setSort(e.target.value as Sort)}
-                className="flex-shrink-0 h-7 pl-2.5 pr-7 rounded-lg text-[11px] font-semibold text-neutral-400 bg-[#1a1d24] border border-[#2a2d34] hover:border-[#3a3d44] transition-colors cursor-pointer appearance-none"
+                className="flex-shrink-0 h-7 pl-2.5 pr-7 rounded-lg text-[11px] font-semibold text-zinc-400 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 transition-colors cursor-pointer appearance-none"
                 style={{
                   backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23555' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`,
                   backgroundRepeat: 'no-repeat',
@@ -799,7 +799,7 @@ export default function CommunityPage() {
             {/* Posts */}
             <div className="space-y-2.5">
               {feed.length === 0 ? (
-                <div className="bg-[#1a1d24] border border-[#2a2d34] rounded-xl px-6 py-14 text-center">
+                <div className="bg-zinc-900 border border-zinc-800 rounded-xl px-6 py-14 text-center">
                   <p className="text-neutral-600 text-sm">No posts in this category yet.</p>
                   <button
                     onClick={() => setShowModal(true)}
@@ -823,7 +823,7 @@ export default function CommunityPage() {
 
             <div className="mt-5 text-center">
               <button
-                className="h-8 px-6 border border-[#2a2d34] rounded-xl text-[11px] font-semibold text-neutral-600 hover:border-[#3a3d44] hover:text-neutral-400 bg-[#1a1d24] transition-colors"
+                className="h-8 px-6 border border-zinc-800 rounded-xl text-[11px] font-semibold text-zinc-600 hover:border-zinc-700 hover:text-zinc-400 bg-zinc-900 transition-colors"
                 onClick={() => {}}
               >
                 Load more
