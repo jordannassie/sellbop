@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { ProductImage } from '@/components/ui/product-image'
 import { RotatingWord } from '@/components/marketing/rotating-word'
 import { StrategyCallSection } from '@/components/marketing/strategy-call-section'
-import { Check, ArrowRight, FileText, ShoppingBag, Pencil, Download, MapPin, Zap, Sparkles, Tag, Star, Users2, ThumbsUp, Bell } from 'lucide-react'
+import { Check, ArrowRight, FileText, ShoppingBag, Pencil, Download, MapPin, Zap, Sparkles, Tag, Users2, ThumbsUp, Bell } from 'lucide-react'
 import { DEMO_PRODUCTS, DEMO_STOREFRONT, DEMO_SELLER_PROFILE } from '@/lib/demo-data/seed'
 import { formatCurrency } from '@/lib/utils'
 import { HERO_FACEPILE_PHOTOS } from '@/lib/demo-avatars'
@@ -217,86 +217,6 @@ export default function HomePage() {
             ))}
           </div>
 
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════════════════════════════
-          SECTION 4 — Pricing
-      ══════════════════════════════════════════════════════════════ */}
-      <section className="py-24 sm:py-32 bg-neutral-50">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
-
-          {/* Headline — benefit-first */}
-          <p className="text-xs font-bold uppercase tracking-[0.3em] text-neutral-400 mb-5">Pricing</p>
-          <h2 className="text-3xl sm:text-5xl font-black text-black tracking-tight leading-tight mb-4">
-            No hidden fees.<br className="hidden sm:block" /> No monthly charges.
-          </h2>
-          <p className="text-neutral-500 text-base sm:text-lg mb-12">
-            Start free and only pay when you sell.
-          </p>
-
-          {/* Two pricing cards */}
-          <div className="grid sm:grid-cols-2 gap-4 mb-8">
-
-            {/* Card 1: Direct */}
-            <div className="bg-white border border-neutral-200 rounded-2xl p-8 text-left shadow-sm">
-              <div className="flex items-center gap-2 mb-5">
-                <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">Direct Sales</p>
-              </div>
-              <p className="text-4xl font-black text-black leading-none mb-1">
-                10%<span className="text-2xl text-neutral-400"> + $0.50</span>
-              </p>
-              <p className="text-sm text-neutral-500 mt-2 leading-relaxed">
-                When customers buy from your store, product page, or direct link.
-              </p>
-              <div className="mt-5 space-y-2">
-                {['No monthly fee', 'Every product type', 'Full store control'].map(t => (
-                  <div key={t} className="flex items-center gap-2 text-sm text-neutral-600">
-                    <Check size={12} className="text-emerald-500 flex-shrink-0" /> {t}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Card 2: Marketplace */}
-            <div className="bg-white border border-neutral-200 rounded-2xl p-8 text-left shadow-sm">
-              <div className="flex items-center gap-2 mb-5">
-                <div className="w-2 h-2 rounded-full bg-violet-500" />
-                <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">Marketplace Sales</p>
-              </div>
-              <p className="text-4xl font-black text-black leading-none mb-1">30%</p>
-              <p className="text-sm text-neutral-500 mt-2 leading-relaxed">
-                When SellBop brings you the customer through marketplace discovery.
-              </p>
-              <div className="mt-5 space-y-2">
-                {['Built-in buyer discovery', 'No extra marketing needed', 'Only when SellBop sends the sale'].map(t => (
-                  <div key={t} className="flex items-center gap-2 text-sm text-neutral-600">
-                    <Check size={12} className="text-violet-500 flex-shrink-0" /> {t}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Fairness note */}
-          <p className="text-xs text-neutral-400 mb-10">
-            Marketplace pricing only applies when SellBop brings you the buyer. Your direct sales always stay at 10% + $0.50.
-          </p>
-
-          {/* CTAs */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link href="/signup">
-              <button className="inline-flex items-center gap-2 bg-black text-white text-sm font-bold px-7 py-3.5 rounded-xl hover:bg-neutral-800 transition-colors">
-                Start Free <ArrowRight size={14} />
-              </button>
-            </Link>
-            <Link href="/pricing">
-              <button className="inline-flex items-center gap-2 border border-neutral-200 text-neutral-600 text-sm font-semibold px-7 py-3.5 rounded-xl hover:border-neutral-400 hover:bg-white transition-colors">
-                View full pricing
-              </button>
-            </Link>
-          </div>
         </div>
       </section>
 

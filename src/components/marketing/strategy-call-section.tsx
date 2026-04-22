@@ -2,9 +2,25 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import { X, Check, Clock, Calendar, ChevronLeft, ChevronRight, ArrowRight, Phone } from 'lucide-react'
+import { X, Check, Clock, Calendar, ChevronLeft, ChevronRight, ArrowRight, Phone, Video } from 'lucide-react'
 
-// ─── Calendar helpers ────────────────────────────────────────────────────────
+// ─── Call types ───────────────────────────────────────────────────────────────
+
+type CallType = 'voice' | 'zoom'
+
+const CALL_CONFIG: Record<CallType, { label: string; price: number; icon: React.ElementType; medium: string }> = {
+  voice: { label: 'Voice Call', price: 250, icon: Phone, medium: '30-minute 1-on-1 phone call' },
+  zoom:  { label: 'Zoom Call',  price: 500, icon: Video, medium: '30-minute 1-on-1 Zoom call'  },
+}
+
+const INCLUDES = [
+  'Offer and pricing review',
+  'Product page feedback',
+  'Traffic and growth ideas',
+  'Clear action plan to move forward',
+]
+
+// ─── Calendar helpers ─────────────────────────────────────────────────────────
 
 function getDaysInMonth(year: number, month: number) {
   return new Date(year, month + 1, 0).getDate()
@@ -13,7 +29,6 @@ function getFirstDayOfMonth(year: number, month: number) {
   return new Date(year, month, 1).getDay()
 }
 
-// Available days offset from today (skip weekends, next 3 weeks)
 function buildAvailableDates(year: number, month: number): Set<number> {
   const available = new Set<number>()
   const today = new Date()
@@ -21,11 +36,10 @@ function buildAvailableDates(year: number, month: number): Set<number> {
   for (let d = 1; d <= daysInMonth; d++) {
     const date = new Date(year, month, d)
     const dow = date.getDay()
-    if (dow === 0 || dow === 6) continue // no weekends
-    if (date <= today) continue          // no past dates
+    if (dow === 0 || dow === 6) continue
+    if (date <= today) continue
     const diff = Math.floor((date.getTime() - today.getTime()) / 86400000)
-    if (diff > 21) continue              // only next 3 weeks
-    // sparse availability: every other day roughly
+    if (diff > 21) continue
     if (d % 2 === 0 || d % 3 === 0) available.add(d)
   }
   return available
@@ -37,7 +51,8 @@ const DAY_NAMES = ['Su','Mo','Tu','We','Th','Fr','Sa']
 
 // ─── Booking Modal ─────────────────────────────────────────────────────────────
 
-function BookingModal({ onClose }: { onClose: () => void }) {
+function BookingModal({ type, onClose }: { type: CallType; onClose: () => void }) {
+  const config = CALL_CONFIG[type]
   const today = new Date()
   const [viewYear, setViewYear] = useState(today.getFullYear())
   const [viewMonth, setViewMonth] = useState(today.getMonth())
@@ -72,6 +87,8 @@ function BookingModal({ onClose }: { onClose: () => void }) {
     ? `${MONTH_NAMES[viewMonth]} ${selectedDay}, ${viewYear}`
     : null
 
+  const Icon = config.icon
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={onClose}>
       <div
@@ -82,14 +99,16 @@ function BookingModal({ onClose }: { onClose: () => void }) {
         <div className="flex items-start justify-between p-6 border-b border-neutral-100">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <Phone size={14} className="text-neutral-400" />
-              <span className="text-xs font-bold uppercase tracking-widest text-neutral-400">Strategy Call</span>
+              <Icon size={14} className="text-neutral-400" />
+              <span className="text-xs font-bold uppercase tracking-widest text-neutral-400">
+                {config.label}
+              </span>
             </div>
-            <h2 className="text-xl font-bold text-black">SellBop Strategy Call</h2>
+            <h2 className="text-xl font-bold text-black">SellBop {config.label}</h2>
             <div className="flex items-center gap-3 mt-1.5 text-sm text-neutral-500">
               <span className="flex items-center gap-1"><Clock size={13} /> 30 minutes</span>
               <span className="text-neutral-300">·</span>
-              <span className="font-semibold text-black">$500 one-time</span>
+              <span className="font-semibold text-black">${config.price} one-time</span>
             </div>
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-neutral-100 transition-colors">
@@ -98,14 +117,13 @@ function BookingModal({ onClose }: { onClose: () => void }) {
         </div>
 
         {step === 'confirmed' ? (
-          /* ── Confirmation ── */
           <div className="p-10 text-center space-y-4">
             <div className="w-14 h-14 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center mx-auto">
               <Check size={24} className="text-emerald-600" />
             </div>
             <h3 className="text-xl font-bold text-black">You&rsquo;re booked!</h3>
             <p className="text-neutral-500 text-sm max-w-sm mx-auto">
-              Your SellBop Strategy Call is confirmed for{' '}
+              Your {config.label} is confirmed for{' '}
               <strong className="text-black">{selectedDateStr}</strong> at{' '}
               <strong className="text-black">{selectedTime}</strong>.
             </p>
@@ -119,11 +137,10 @@ function BookingModal({ onClose }: { onClose: () => void }) {
           </div>
 
         ) : step === 'form' ? (
-          /* ── Form ── */
           <div className="p-6 space-y-5">
             <div className="bg-neutral-50 border border-neutral-200 rounded-xl p-4 text-sm">
               <p className="font-semibold text-black">{selectedDateStr} · {selectedTime}</p>
-              <p className="text-neutral-500 text-xs mt-0.5">30-minute SellBop Strategy Call</p>
+              <p className="text-neutral-500 text-xs mt-0.5">30-minute {config.label} — ${config.price}</p>
               <button
                 onClick={() => setStep('pick')}
                 className="text-xs text-neutral-400 hover:text-black mt-1 underline underline-offset-2"
@@ -172,15 +189,13 @@ function BookingModal({ onClose }: { onClose: () => void }) {
               disabled={!form.name || !form.email || loading}
               className="w-full flex items-center justify-center gap-2 bg-black text-white text-sm font-semibold py-3 rounded-xl hover:bg-neutral-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
-              {loading ? 'Booking…' : <>Confirm Booking — $500 <ArrowRight size={14} /></>}
+              {loading ? 'Booking…' : <>Confirm Booking — ${config.price} <ArrowRight size={14} /></>}
             </button>
             <p className="text-center text-xs text-neutral-400">You will receive a confirmation email with call details.</p>
           </div>
 
         ) : (
-          /* ── Date + Time picker ── */
           <div className="p-6 grid sm:grid-cols-2 gap-6">
-
             {/* Calendar */}
             <div>
               <div className="flex items-center justify-between mb-4">
@@ -195,14 +210,12 @@ function BookingModal({ onClose }: { onClose: () => void }) {
                 </button>
               </div>
 
-              {/* Day name headers */}
               <div className="grid grid-cols-7 mb-1">
                 {DAY_NAMES.map(d => (
                   <div key={d} className="text-center text-[10px] font-bold text-neutral-400 py-1">{d}</div>
                 ))}
               </div>
 
-              {/* Day cells */}
               <div className="grid grid-cols-7 gap-y-1">
                 {Array.from({ length: firstDay }).map((_, i) => <div key={`empty-${i}`} />)}
                 {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(day => {
@@ -282,28 +295,20 @@ function BookingModal({ onClose }: { onClose: () => void }) {
 
 // ─── Homepage Section ─────────────────────────────────────────────────────────
 
-const INCLUDES = [
-  '30-minute 1-on-1 video call',
-  'Offer and pricing review',
-  'Product page feedback',
-  'Traffic and growth ideas',
-  'Clear action plan to move forward',
-]
-
 const CALL_IMAGE = 'https://phhczohqidgrvcmszets.supabase.co/storage/v1/object/public/Selli/image/alluring_swan_07128_Business_young_man_consolting_call_on_com_a5ca6bc8-fee2-4246-9544-4779217a7683_1.png'
 
 export function StrategyCallSection() {
-  const [open, setOpen] = useState(false)
+  const [openType, setOpenType] = useState<CallType | null>(null)
 
   return (
     <>
       <section className="py-20 border-t border-neutral-100 bg-neutral-50">
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
           <div className="bg-white border border-neutral-200 rounded-3xl overflow-hidden shadow-sm">
-            <div className="grid lg:grid-cols-[1fr_auto_340px] gap-0">
+            <div className="grid lg:grid-cols-[1fr_380px] gap-0">
 
-              {/* Left column — copy */}
-              <div className="p-8 sm:p-12 flex flex-col justify-center gap-6">
+              {/* Left column — copy + option cards */}
+              <div className="p-8 sm:p-12 flex flex-col justify-center gap-8">
                 <div>
                   <p className="text-xs font-bold uppercase tracking-[0.3em] text-neutral-400 mb-3">1-on-1 Expert Session</p>
                   <h2 className="text-3xl sm:text-4xl font-bold text-black leading-tight mb-3">
@@ -314,7 +319,8 @@ export function StrategyCallSection() {
                   </p>
                 </div>
 
-                <div className="space-y-2.5">
+                {/* What&apos;s included */}
+                <div className="space-y-2">
                   {INCLUDES.map(item => (
                     <div key={item} className="flex items-start gap-2.5">
                       <div className="w-4 h-4 rounded-full bg-neutral-100 border border-neutral-200 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -325,45 +331,50 @@ export function StrategyCallSection() {
                   ))}
                 </div>
 
-                <div>
-                  <button
-                    onClick={() => setOpen(true)}
-                    className="inline-flex items-center gap-2 bg-black text-white text-sm font-bold px-6 py-3 rounded-xl hover:bg-neutral-800 transition-colors"
-                  >
-                    Book a Strategy Call <ArrowRight size={14} />
-                  </button>
-                </div>
-              </div>
+                {/* Two option cards */}
+                <div className="grid sm:grid-cols-2 gap-3">
 
-              {/* Middle column — pricing card */}
-              <div className="border-t lg:border-t-0 lg:border-l border-neutral-100 p-8 sm:p-10 flex flex-col justify-center gap-6 min-w-[220px] bg-neutral-50">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.3em] text-neutral-400 mb-3">One-time</p>
-                  <p className="text-5xl font-bold text-black leading-none">$500</p>
-                  <p className="text-neutral-400 text-sm mt-2">Single session · No subscription</p>
-                </div>
+                  {/* Voice Call */}
+                  <div className="border border-neutral-200 rounded-2xl p-5 flex flex-col gap-4 hover:border-neutral-300 hover:shadow-sm transition-all">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <div className="w-6 h-6 rounded-lg bg-neutral-100 flex items-center justify-center">
+                          <Phone size={12} className="text-neutral-500" />
+                        </div>
+                        <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">Voice Call</p>
+                      </div>
+                      <p className="text-3xl font-black text-black leading-none">$250</p>
+                      <p className="text-xs text-neutral-400 mt-1">30 min · Phone</p>
+                    </div>
+                    <button
+                      onClick={() => setOpenType('voice')}
+                      className="w-full flex items-center justify-center gap-1.5 border border-neutral-200 text-black text-xs font-bold py-2.5 rounded-xl hover:bg-neutral-50 hover:border-neutral-400 transition-colors"
+                    >
+                      Book Voice Call <ArrowRight size={11} />
+                    </button>
+                  </div>
 
-                <div className="border-t border-neutral-200 pt-5 space-y-3">
-                  <div className="flex items-center gap-2.5 text-sm text-neutral-600">
-                    <Clock size={13} className="text-neutral-400 flex-shrink-0" />
-                    30 minutes via video call
+                  {/* Zoom Call */}
+                  <div className="border border-black rounded-2xl p-5 flex flex-col gap-4 bg-neutral-950 hover:bg-neutral-900 transition-all">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <div className="w-6 h-6 rounded-lg bg-white/10 flex items-center justify-center">
+                          <Video size={12} className="text-white/70" />
+                        </div>
+                        <p className="text-xs font-bold uppercase tracking-widest text-neutral-400">Zoom Call</p>
+                      </div>
+                      <p className="text-3xl font-black text-white leading-none">$500</p>
+                      <p className="text-xs text-neutral-500 mt-1">30 min · Video</p>
+                    </div>
+                    <button
+                      onClick={() => setOpenType('zoom')}
+                      className="w-full flex items-center justify-center gap-1.5 bg-white text-black text-xs font-bold py-2.5 rounded-xl hover:bg-neutral-100 transition-colors"
+                    >
+                      Book Zoom Call <ArrowRight size={11} />
+                    </button>
                   </div>
-                  <div className="flex items-center gap-2.5 text-sm text-neutral-600">
-                    <Calendar size={13} className="text-neutral-400 flex-shrink-0" />
-                    Book your slot instantly
-                  </div>
-                  <div className="flex items-center gap-2.5 text-sm text-neutral-600">
-                    <Check size={13} className="text-neutral-400 flex-shrink-0" />
-                    Written action plan included
-                  </div>
-                </div>
 
-                <button
-                  onClick={() => setOpen(true)}
-                  className="w-full flex items-center justify-center gap-2 border border-neutral-200 text-black text-sm font-semibold py-3 rounded-xl hover:bg-white hover:border-neutral-400 transition-colors"
-                >
-                  View Available Times
-                </button>
+                </div>
               </div>
 
               {/* Right: photo panel */}
@@ -375,8 +386,7 @@ export function StrategyCallSection() {
                   className="object-cover object-center"
                   unoptimized
                 />
-                {/* blend left edge into white card */}
-                <div className="absolute inset-0 bg-gradient-to-r from-neutral-50/60 via-transparent to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-r from-white/60 via-transparent to-transparent" />
               </div>
 
             </div>
@@ -384,7 +394,7 @@ export function StrategyCallSection() {
         </div>
       </section>
 
-      {open && <BookingModal onClose={() => setOpen(false)} />}
+      {openType && <BookingModal type={openType} onClose={() => setOpenType(null)} />}
     </>
   )
 }

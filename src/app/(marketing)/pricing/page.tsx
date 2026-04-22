@@ -1,180 +1,246 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
-import { ArrowRight, Check, Zap } from 'lucide-react'
+import { Check, ArrowRight, Zap } from 'lucide-react'
 
-export const metadata = {
-  title: 'Pricing — SellBop.com',
-  description: '$0 platform fees during beta. No monthly fees. Only pay when you sell.',
+export const metadata: Metadata = {
+  title: 'Pricing — SellBop',
+  description: 'No monthly fees. No hidden charges. Pay $0 platform fees during beta.',
 }
 
-// FAQ updated to reflect beta offer
-const faq = [
-  { q: 'Do I pay anything right now?', a: 'No. During beta, platform fees are $0 for Founder Creators. You only pay standard payment processing fees through Stripe.' },
-  { q: 'What happens after beta?', a: 'After beta, Direct Sales will be 10% + $0.50 per transaction. Founder Creators who join during beta get early notice before any changes.' },
-  { q: 'When does the 30% marketplace fee apply?', a: 'Only when SellBop brings a customer to you through the future discover marketplace. Not the default fee — and still $0 in beta.' },
-  { q: 'Are there monthly fees?', a: 'No. SellBop never charges monthly. You only pay when you sell — and right now during beta, that platform fee is $0.' },
-]
+// ─── Data ────────────────────────────────────────────────────────────────────
 
-const BETA_BENEFITS = [
+const BETA_BULLETS = [
   '$0 platform fees during beta',
   'Early access to new features',
-  'Vote on what gets built next',
   'Community access',
+  'Vote on what we build next',
 ]
+
+const DIRECT_BENEFITS = [
+  'No monthly fee',
+  'Every product type',
+  'Full store control',
+]
+
+const MARKETPLACE_BENEFITS = [
+  'Built-in buyer discovery',
+  'No extra marketing needed',
+  'Only when SellBop sends the sale',
+]
+
+const FAQ = [
+  {
+    q: 'Is SellBop really $0 during beta?',
+    a: 'Yes. During beta, platform fees are waived for early creators in the Founder Creators Program.',
+  },
+  {
+    q: 'What happens after beta ends?',
+    a: 'Standard platform pricing will apply after beta. Current standard pricing is shown above for transparency.',
+  },
+  {
+    q: 'Are there monthly subscription fees?',
+    a: 'No. SellBop does not charge a monthly platform fee to get started.',
+  },
+  {
+    q: 'Do I still pay payment processing fees?',
+    a: 'Payment processing fees may still apply separately depending on the payment provider.',
+  },
+  {
+    q: 'Does the beta apply to both direct sales and marketplace sales?',
+    a: 'Yes. During beta, platform fees are waived across both direct and marketplace sales.',
+  },
+  {
+    q: 'Why join during beta?',
+    a: 'You get early access, $0 platform fees, community access, and the chance to help shape what SellBop builds next.',
+  },
+]
+
+// ─── Page ────────────────────────────────────────────────────────────────────
 
 export default function PricingPage() {
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-16 sm:py-20 space-y-10">
+    <main className="bg-white">
 
-      {/* ── Page header ─────────────────────────────────────────── */}
-      <div className="text-center space-y-3">
-        <p className="text-sm uppercase tracking-[0.3em] text-neutral-400 font-medium">Pricing</p>
-        <h1 className="text-4xl sm:text-5xl font-bold text-black">Start free during beta.</h1>
-        <p className="text-neutral-500 text-lg max-w-2xl mx-auto">
-          Join the Founder Creators Program and pay $0 platform fees while SellBop is in beta.
+      {/* ── Hero ─────────────────────────────────────────────────────────── */}
+      <section className="pt-24 pb-16 sm:pt-32 sm:pb-20 text-center px-4">
+        <p className="text-xs font-bold uppercase tracking-[0.3em] text-neutral-400 mb-5">Pricing</p>
+        <h1 className="text-4xl sm:text-6xl font-black text-black tracking-tight leading-tight mb-5">
+          No hidden fees.<br className="hidden sm:block" /> No monthly charges.
+        </h1>
+        <p className="text-neutral-500 text-base sm:text-lg max-w-xl mx-auto mb-3">
+          Start free and pay $0 platform fees during beta.
         </p>
-      </div>
+        <p className="text-sm text-neutral-400">Standard pricing begins after beta ends.</p>
+      </section>
 
-      {/* ── Beta callout banner ─────────────────────────────────── */}
-      <div className="bg-black rounded-3xl p-7 sm:p-10 text-white">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-6 sm:gap-10">
-
-          {/* Left: headline */}
-          <div className="flex-1 min-w-0">
-            <div className="inline-flex items-center gap-2 bg-green-500/20 text-green-300 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full mb-4">
-              <span className="relative flex h-1.5 w-1.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-400" />
-              </span>
-              Founder Creators Program — Beta Offer
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-black text-white leading-tight mb-2">
-              $0 platform fees right now
-            </h2>
-            <p className="text-neutral-400 text-sm leading-relaxed max-w-md">
-              During the beta phase, all platform fees are waived for Founder Creators. Launch your store, sell your products, and keep 100% of your revenue — minus standard payment processing only.
+      {/* ── Beta callout band ─────────────────────────────────────────────── */}
+      <section className="px-4 pb-16 sm:pb-20">
+        <div className="max-w-3xl mx-auto bg-black rounded-3xl p-8 sm:p-12 text-white">
+          <div className="flex items-center gap-2 mb-5">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <p className="text-xs font-bold uppercase tracking-[0.3em] text-emerald-400">
+              Founder Creators Program
             </p>
           </div>
+          <h2 className="text-3xl sm:text-4xl font-black leading-tight mb-4">
+            $0 platform fees<br className="hidden sm:block" /> during beta
+          </h2>
+          <p className="text-neutral-400 text-sm sm:text-base leading-relaxed mb-8 max-w-lg">
+            Join early, launch your store, and help shape the platform while SellBop is in beta.
+          </p>
 
-          {/* Right: benefits + CTA */}
-          <div className="sm:w-64 shrink-0">
-            <ul className="space-y-2 mb-5">
-              {BETA_BENEFITS.map(b => (
-                <li key={b} className="flex items-center gap-2.5 text-sm text-neutral-300">
-                  <div className="w-4 h-4 rounded-full bg-green-500/20 border border-green-500/30 flex items-center justify-center flex-shrink-0">
-                    <Check size={9} className="text-green-400" />
-                  </div>
-                  {b}
-                </li>
-              ))}
-            </ul>
-            <Link href="/login?mode=signup">
-              <button className="w-full inline-flex items-center justify-center gap-2 bg-white text-black text-sm font-bold px-5 py-3 rounded-xl hover:bg-neutral-100 transition-colors">
-                Join the Beta <ArrowRight size={13} />
-              </button>
-            </Link>
-          </div>
+          <ul className="space-y-3 mb-10">
+            {BETA_BULLETS.map(b => (
+              <li key={b} className="flex items-center gap-3 text-sm text-neutral-300">
+                <div className="w-5 h-5 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center flex-shrink-0">
+                  <Check size={10} className="text-emerald-400" />
+                </div>
+                {b}
+              </li>
+            ))}
+          </ul>
 
+          <Link href="/signup">
+            <button className="inline-flex items-center gap-2 bg-white text-black text-sm font-bold px-6 py-3 rounded-xl hover:bg-neutral-100 transition-colors">
+              Join the Beta <ArrowRight size={14} />
+            </button>
+          </Link>
         </div>
-      </div>
+      </section>
 
-      {/* ── Pricing cards ───────────────────────────────────────── */}
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-neutral-400 mb-4 text-center">
-          Standard pricing (after beta)
-        </p>
-        <div className="grid lg:grid-cols-[1.4fr,0.6fr] gap-6 items-start">
+      {/* ── Pricing cards ─────────────────────────────────────────────────── */}
+      <section className="px-4 pb-6 sm:pb-8">
+        <div className="max-w-3xl mx-auto">
+          <p className="text-xs font-bold uppercase tracking-[0.3em] text-neutral-400 mb-6 text-center">
+            Standard pricing (after beta)
+          </p>
 
-          {/* Direct sales */}
-          <div className="bg-white border border-neutral-200 rounded-3xl p-6 sm:p-8 space-y-5">
-            <div>
-              <p className="text-xs text-neutral-500 uppercase tracking-[0.4em] font-medium mb-3">Direct sales</p>
-              {/* Crossed-out standard fee */}
-              <div className="flex items-baseline gap-3 mb-1">
-                <p className="text-3xl sm:text-4xl font-bold text-neutral-300 line-through decoration-2">
-                  10% + $0.50
-                </p>
+          <div className="grid sm:grid-cols-2 gap-4">
+
+            {/* Card A — Direct Sales */}
+            <div className="bg-white border border-neutral-200 rounded-2xl p-8 text-left shadow-sm">
+              <div className="flex items-center gap-2 mb-5">
+                <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">Direct Sales</p>
               </div>
+
+              {/* Crossed-out standard price */}
+              <p className="text-2xl font-black text-neutral-300 line-through decoration-2 leading-none mb-2">
+                10% + $0.50
+              </p>
+
               {/* Beta price */}
-              <div className="inline-flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-3 py-1.5 mb-1">
-                <Zap size={12} className="text-green-600" />
-                <span className="text-green-700 font-black text-lg">$0 in beta</span>
+              <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-1.5 mb-4">
+                <Zap size={12} className="text-emerald-600" />
+                <span className="text-sm font-bold text-emerald-700">$0 in beta</span>
               </div>
-              <p className="text-sm text-neutral-500">per direct sale · zero platform fees right now</p>
-            </div>
 
-            <p className="text-neutral-600 text-sm leading-relaxed">
-              Sell downloads, services, subscriptions, and media packs. Only pay when a buyer completes a purchase — and during beta, SellBop takes nothing.
-            </p>
+              <p className="text-sm text-neutral-500 leading-relaxed mb-5">
+                When customers buy from your store, product page, or direct link.
+              </p>
 
-            <ul className="space-y-2.5 text-sm text-neutral-600">
-              {[
-                'No monthly fee, ever',
-                'Simple pricing, simple selling',
-                'Built for creators selling downloads, services, and subscriptions',
-                'Keep more of your revenue than complicated all-in-one tools',
-                'Payment processing fees may apply separately through Stripe',
-              ].map(item => (
-                <li key={item} className="flex items-start gap-2.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-black/40 flex-shrink-0 mt-1.5" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-
-            <Link href="/login?mode=signup">
-              <span className="inline-flex items-center gap-2 bg-black text-white text-sm font-medium px-5 py-2.5 rounded-xl hover:bg-neutral-800 transition-colors">
-                Start selling free →
-              </span>
-            </Link>
-          </div>
-
-          {/* Discover / marketplace */}
-          <div className="bg-neutral-900 text-white rounded-3xl p-7 space-y-4">
-            <p className="text-xs uppercase tracking-[0.4em] text-neutral-400 font-medium">Discover / marketplace</p>
-
-            {/* Crossed-out standard fee */}
-            <div>
-              <p className="text-3xl font-bold text-neutral-400 line-through decoration-2 mb-1">30%</p>
-              <div className="inline-flex items-center gap-2 bg-green-500/15 border border-green-500/25 rounded-lg px-2.5 py-1">
-                <Zap size={10} className="text-green-400" />
-                <span className="text-green-400 font-black text-base">$0 in beta</span>
+              <div className="space-y-2">
+                {DIRECT_BENEFITS.map(t => (
+                  <div key={t} className="flex items-center gap-2 text-sm text-neutral-600">
+                    <Check size={12} className="text-emerald-500 flex-shrink-0" /> {t}
+                  </div>
+                ))}
               </div>
+
+              <Link href="/signup" className="block mt-6">
+                <button className="w-full flex items-center justify-center gap-2 bg-black text-white text-sm font-semibold py-2.5 rounded-xl hover:bg-neutral-800 transition-colors">
+                  Start selling free <ArrowRight size={13} />
+                </button>
+              </Link>
             </div>
 
-            <p className="text-sm text-neutral-300 leading-relaxed">
-              Only when SellBop brings the customer to you through the future discover marketplace. Not the default fee.
-            </p>
-            <p className="text-xs text-neutral-500">Coming soon — discover is not live yet.</p>
+            {/* Card B — Marketplace Sales */}
+            <div className="bg-white border border-neutral-200 rounded-2xl p-8 text-left shadow-sm">
+              <div className="flex items-center gap-2 mb-5">
+                <div className="w-2 h-2 rounded-full bg-violet-500" />
+                <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">Marketplace Sales</p>
+              </div>
+
+              {/* Crossed-out standard price */}
+              <p className="text-2xl font-black text-neutral-300 line-through decoration-2 leading-none mb-2">
+                30%
+              </p>
+
+              {/* Beta price */}
+              <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-1.5 mb-4">
+                <Zap size={12} className="text-emerald-600" />
+                <span className="text-sm font-bold text-emerald-700">$0 in beta</span>
+              </div>
+
+              <p className="text-sm text-neutral-500 leading-relaxed mb-5">
+                When SellBop brings you the customer through marketplace discovery.
+              </p>
+
+              <div className="space-y-2">
+                {MARKETPLACE_BENEFITS.map(t => (
+                  <div key={t} className="flex items-center gap-2 text-sm text-neutral-600">
+                    <Check size={12} className="text-violet-500 flex-shrink-0" /> {t}
+                  </div>
+                ))}
+              </div>
+
+              <Link href="/signup" className="block mt-6">
+                <button className="w-full flex items-center justify-center gap-2 bg-black text-white text-sm font-semibold py-2.5 rounded-xl hover:bg-neutral-800 transition-colors">
+                  Start selling free <ArrowRight size={13} />
+                </button>
+              </Link>
+            </div>
           </div>
-
         </div>
-      </div>
+      </section>
 
-      {/* ── FAQ ─────────────────────────────────────────────────── */}
-      <div className="bg-white border border-neutral-200 rounded-3xl p-6 sm:p-8 space-y-6">
-        <h2 className="text-xl font-semibold text-black">Common questions</h2>
-        <div className="grid sm:grid-cols-2 gap-x-10 gap-y-6">
-          {faq.map(item => (
-            <div key={item.q} className="space-y-1">
-              <p className="text-sm font-medium text-black">{item.q}</p>
-              <p className="text-sm text-neutral-500 leading-relaxed">{item.a}</p>
-            </div>
-          ))}
+      {/* ── Standard pricing note ─────────────────────────────────────────── */}
+      <section className="px-4 pt-6 pb-14 sm:pb-16">
+        <div className="max-w-3xl mx-auto text-center">
+          <p className="text-xs text-neutral-400">
+            During beta, platform fees are waived. Standard pricing applies after beta ends.
+          </p>
         </div>
-      </div>
+      </section>
 
-      {/* ── Final CTA ───────────────────────────────────────────── */}
-      <div className="text-center pt-4">
-        <p className="text-sm text-neutral-500 mb-4">
-          Beta spots are limited. Join now and lock in $0 platform fees.
-        </p>
-        <Link href="/login?mode=signup">
-          <button className="inline-flex items-center gap-2 bg-black text-white text-sm font-bold px-7 py-3.5 rounded-xl hover:bg-neutral-800 transition-colors">
-            Join the Founder Creators Program <ArrowRight size={14} />
-          </button>
-        </Link>
-      </div>
+      {/* ── CTA row ───────────────────────────────────────────────────────── */}
+      <section className="px-4 pb-20 sm:pb-24">
+        <div className="max-w-3xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-3">
+          <Link href="/signup">
+            <button className="inline-flex items-center gap-2 bg-black text-white text-sm font-bold px-7 py-3.5 rounded-xl hover:bg-neutral-800 transition-colors">
+              Join the Beta <ArrowRight size={14} />
+            </button>
+          </Link>
+          <Link href="/signup">
+            <button className="inline-flex items-center gap-2 border border-neutral-200 text-neutral-600 text-sm font-semibold px-7 py-3.5 rounded-xl hover:border-neutral-400 hover:bg-neutral-50 transition-colors">
+              Start Free
+            </button>
+          </Link>
+        </div>
+      </section>
 
-    </div>
+      {/* ── FAQ ───────────────────────────────────────────────────────────── */}
+      <section className="px-4 pb-24 sm:pb-32 border-t border-neutral-100 pt-16 sm:pt-20">
+        <div className="max-w-2xl mx-auto">
+          <p className="text-xs font-bold uppercase tracking-[0.3em] text-neutral-400 mb-4 text-center">FAQ</p>
+          <h2 className="text-2xl sm:text-3xl font-black text-black text-center mb-12">
+            Common questions
+          </h2>
+
+          <div className="space-y-3">
+            {FAQ.map(({ q, a }) => (
+              <div
+                key={q}
+                className="bg-neutral-50 border border-neutral-200 rounded-2xl px-6 py-5"
+              >
+                <p className="text-sm font-bold text-black mb-2">{q}</p>
+                <p className="text-sm text-neutral-500 leading-relaxed">{a}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+    </main>
   )
 }
