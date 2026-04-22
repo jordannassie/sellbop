@@ -8,6 +8,7 @@ import { SellBopLogo } from '@/components/ui/sellbop-logo'
 import { Menu, X } from 'lucide-react'
 
 const LINKS = [
+  { href: '/mission',           label: 'Our Mission' },
   { href: '/marketplace',       label: 'Marketplace' },
   { href: '/community',         label: 'Community' },
   { href: '/pricing',           label: 'Pricing' },
