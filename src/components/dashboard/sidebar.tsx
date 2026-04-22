@@ -153,14 +153,28 @@ export function DashboardSidebar() {
           <SellBopLogo size="lg" />
           <span className="text-[10px] bg-neutral-100 text-neutral-500 px-1.5 py-0.5 rounded font-medium">DEMO</span>
         </div>
-        <button
-          onClick={() => setMobileOpen(o => !o)}
-          className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-neutral-100 transition-colors"
-          aria-label="Toggle navigation menu"
-          aria-expanded={mobileOpen}
-        >
-          {mobileOpen ? <X size={18} /> : <Menu size={18} />}
-        </button>
+        {/* Right-side header actions */}
+        <div className="flex items-center gap-2">
+          {/* User avatar — links to profile, always visible when signed in */}
+          {session && (
+            <Link
+              href="/dashboard/storefront"
+              title="Your profile"
+              className="w-8 h-8 rounded-lg bg-neutral-900 text-white flex items-center justify-center text-xs font-bold shrink-0 hover:bg-neutral-700 transition-colors"
+            >
+              {session.name.charAt(0).toUpperCase()}
+            </Link>
+          )}
+          {/* Hamburger */}
+          <button
+            onClick={() => setMobileOpen(o => !o)}
+            className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-neutral-100 transition-colors"
+            aria-label="Toggle navigation menu"
+            aria-expanded={mobileOpen}
+          >
+            {mobileOpen ? <X size={18} /> : <Menu size={18} />}
+          </button>
+        </div>
       </header>
 
       {/* ── Mobile overlay (click-to-close backdrop) ─────────────────── */}

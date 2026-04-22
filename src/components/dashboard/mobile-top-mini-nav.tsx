@@ -2,12 +2,15 @@
 import { Suspense } from 'react'
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
-import { Package, Plus, Smartphone, Palette, User } from 'lucide-react'
+import {
+  Package, Plus, Smartphone, Palette, User,
+  LayoutDashboard, ShoppingBag, Users, BarChart3, Settings,
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 // ─────────────────────────────────────────────────────────────
-// Editor submenu items — shown above the bottom nav when the
-// user is inside the editing workspace.
+// Contextual submenu — always visible above the bottom nav on
+// ALL signed-in mobile pages. Items switch based on route.
 // ─────────────────────────────────────────────────────────────
 
 const EDITOR_ITEMS = [
@@ -18,41 +21,53 @@ const EDITOR_ITEMS = [
   { id: 'profile',  href: '/dashboard/storefront',                   label: 'Profile',     Icon: User },
 ]
 
-function MobileEditorSubmenuInner() {
+const GENERAL_ITEMS = [
+  { id: 'overview',  href: '/dashboard',            label: 'Overview',  Icon: LayoutDashboard, exact: true },
+  { id: 'orders',    href: '/dashboard/orders',     label: 'Orders',    Icon: ShoppingBag },
+  { id: 'customers', href: '/dashboard/customers',  label: 'Customers', Icon: Users },
+  { id: 'analytics', href: '/dashboard/analytics',  label: 'Analytics', Icon: BarChart3 },
+  { id: 'settings',  href: '/dashboard/settings',   label: 'Settings',  Icon: Settings },
+]
+
+function MobileContextualSubmenuInner() {
   const pathname     = usePathname()
   const searchParams = useSearchParams()
   const section      = searchParams.get('section')
 
-  // Only visible inside the editing workspace
   const isEditorContext =
     pathname.startsWith('/dashboard/store-editor') ||
     pathname === '/dashboard/products' ||
     pathname === '/dashboard/products/new' ||
     /^\/dashboard\/products\/.+$/.test(pathname)
 
-  if (!isEditorContext) return null
+  const items = isEditorContext ? EDITOR_ITEMS : GENERAL_ITEMS
 
-  function isActive(id: string): boolean {
-    switch (id) {
-      case 'products':
-        return (
-          pathname === '/dashboard/products' ||
-          (/^\/dashboard\/products\/.+$/.test(pathname) &&
-            pathname !== '/dashboard/products/new')
-        )
-      case 'add':     return pathname === '/dashboard/products/new'
-      case 'preview': return pathname.startsWith('/dashboard/store-editor') && section === 'preview'
-      case 'design':  return pathname.startsWith('/dashboard/store-editor') && section === 'design'
-      case 'profile': return pathname === '/dashboard/storefront'
-      default:        return false
+  function isActive(id: string, href: string, exact?: boolean): boolean {
+    if (isEditorContext) {
+      switch (id) {
+        case 'products':
+          return (
+            pathname === '/dashboard/products' ||
+            (/^\/dashboard\/products\/.+$/.test(pathname) &&
+              pathname !== '/dashboard/products/new')
+          )
+        case 'add':     return pathname === '/dashboard/products/new'
+        case 'preview': return pathname.startsWith('/dashboard/store-editor') && section === 'preview'
+        case 'design':  return pathname.startsWith('/dashboard/store-editor') && section === 'design'
+        case 'profile': return pathname === '/dashboard/storefront'
+        default:        return false
+      }
     }
+    // General items — match by pathname
+    return exact ? pathname === href : pathname.startsWith(href)
   }
 
   return (
-    // Fixed just above the main bottom nav (bottom-14 = 56px = height of nav)
+    // Fixed just above the main bottom nav (bottom-14 = 56px = nav height)
     <div className="sm:hidden fixed bottom-14 left-0 right-0 z-30 bg-white border-t border-neutral-100 h-10 flex items-center px-2 gap-1 overflow-x-auto scrollbar-none">
-      {EDITOR_ITEMS.map(({ id, href, label, Icon }) => {
-        const active = isActive(id)
+      {items.map(({ id, href, label, Icon, ...rest }) => {
+        const exact = 'exact' in rest ? (rest as { exact?: boolean }).exact : undefined
+        const active = isActive(id, href, exact)
         return (
           <Link
             key={id}
@@ -74,13 +89,15 @@ function MobileEditorSubmenuInner() {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Public export — Suspense for useSearchParams + usePathname
+// Public export — Suspense for useSearchParams
 // ─────────────────────────────────────────────────────────────
 
 export function MobileTopMiniNav() {
   return (
-    <Suspense fallback={null}>
-      <MobileEditorSubmenuInner />
+    <Suspense fallback={
+      <div className="sm:hidden fixed bottom-14 left-0 right-0 z-30 bg-white border-t border-neutral-100 h-10" />
+    }>
+      <MobileContextualSubmenuInner />
     </Suspense>
   )
 }
