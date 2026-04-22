@@ -33,20 +33,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/*
         Mobile top offset:
-          - pt-24: header (56px) + mini nav (40px) on mobile (<sm)
-          - sm:pt-14: only header on tablets (<lg, ≥sm) — mini nav hidden sm:hidden
+          - pt-14: header (56px) only — submenu is now fixed at bottom, not top
           - lg:pt-0: desktop sidebar replaces fixed header entirely
       */}
       <div className={cn(
-        'flex-1 flex flex-col min-w-0 overflow-x-hidden pt-24 sm:pt-14 lg:pt-0',
+        'flex-1 flex flex-col min-w-0 overflow-x-hidden pt-14 lg:pt-0',
         isStoreEditor && 'overflow-hidden',
       )}>
         <main className={cn(
           'flex-1 min-h-0',
           isStoreEditor
             ? 'p-0 overflow-hidden flex flex-col'
-            // All other pages: pb-20 on mobile so content clears the fixed bottom nav
-            : 'p-4 pb-20 sm:p-6 sm:pb-6 lg:p-8 lg:pb-8 max-w-6xl',
+            // pb-24 clears both the bottom nav (56px) and the editor submenu (40px)
+            // on mobile. Safe for all pages — excess clearance is harmless.
+            : 'p-4 pb-24 sm:p-6 sm:pb-6 lg:p-8 lg:pb-8 max-w-6xl',
         )}>
           {children}
         </main>

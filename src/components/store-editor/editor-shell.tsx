@@ -1507,9 +1507,10 @@ export function StoreEditorShell() {
       {/* ── Content (scrollable) ──────────────────────────────── */}
       <div className={cn(
         'flex-1 min-h-0 overflow-y-auto sm:pb-0',
-        // In preview mode the save bar overlays the phone frame cleanly — no giant gap needed.
-        // In other sections, pb-36 reserves space above the save bar when dirty.
-        isDirty && mobileSection !== 'preview' ? 'pb-36' : 'pb-14',
+        // Stack on mobile: bottom nav (56px) + submenu (40px) = 96px (pb-24).
+        // When dirty, save bar sits at bottom-24 and is ~60px tall → needs pb-40.
+        // Preview mode: allow save bar to float without adding giant gap.
+        isDirty && mobileSection !== 'preview' ? 'pb-40' : 'pb-24',
       )}>
         {/* Desktop */}
         <div className="hidden sm:block h-full">
@@ -1532,9 +1533,9 @@ export function StoreEditorShell() {
         </div>
       </div>
 
-      {/* ── Mobile save bar — floats above bottom nav when dirty ── */}
+      {/* ── Mobile save bar — floats above submenu + bottom nav when dirty ── */}
       {isDirty && (
-        <div className="sm:hidden fixed bottom-14 left-0 right-0 z-50 bg-white border-t border-neutral-200 px-4 py-3 flex items-center gap-2.5 shadow-[0_-4px_16px_rgba(0,0,0,0.06)]">
+        <div className="sm:hidden fixed bottom-24 left-0 right-0 z-50 bg-white border-t border-neutral-200 px-4 py-3 flex items-center gap-2.5 shadow-[0_-4px_16px_rgba(0,0,0,0.06)]">
           <button
             onClick={saveChanges}
             disabled={isSaving}
