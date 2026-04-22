@@ -489,67 +489,91 @@ function BenefitProductTypesMockup() {
 }
 
 // ── Founder Creators Program Section ─────────────────────────────────────────
+// No Founder badge — practical creator benefits only
 
 const FOUNDER_BENEFITS = [
-  { Icon: Tag,      label: '$0 platform fees',          desc: 'Pay nothing during the beta period.' },
-  { Icon: Star,     label: 'Founder badge',             desc: 'Permanently on your public profile.' },
-  { Icon: Users2,   label: 'Community access',          desc: 'Discuss ideas with other founders.' },
-  { Icon: ThumbsUp, label: 'Vote on features',          desc: 'Directly influence the roadmap.' },
-  { Icon: Bell,     label: 'Early updates',             desc: 'First access to every new release.' },
+  { Icon: Tag,      label: '$0 platform fees',    desc: 'Pay nothing during beta.' },
+  { Icon: Users2,   label: 'Community access',    desc: 'Discuss ideas with other creators.' },
+  { Icon: ThumbsUp, label: 'Vote on features',    desc: 'Directly influence the roadmap.' },
+  { Icon: Bell,     label: 'Early updates',       desc: 'First access to every new release.' },
 ]
+
+const FCP_PHOTO = 'https://qsvmgzdaashfsavmfjuz.supabase.co/storage/v1/object/public/SELL/images/0_3.jpg'
 
 function FounderCreatorsProgramSection() {
   return (
     <section className="py-24 sm:py-32 bg-black">
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
 
-        {/* Header */}
-        <div className="text-center mb-12 sm:mb-16">
-          <p className="text-xs font-bold uppercase tracking-[0.3em] text-neutral-500 mb-5">
-            Founder Creators Program
-          </p>
-          <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight mb-4">
-            Join beta and pay $0 platform fees
-          </h2>
-          <p className="text-neutral-400 text-base sm:text-lg max-w-lg mx-auto leading-relaxed">
-            Be one of the first creators on SellBop. Launch early, shape the roadmap, and grow with the platform.
-          </p>
-        </div>
+        {/* Two-column layout: photo left, content right */}
+        <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center mb-0">
 
-        {/* Benefit cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-12">
-          {FOUNDER_BENEFITS.map(({ Icon, label, desc }) => (
-            <div
-              key={label}
-              className="bg-white/5 border border-white/10 rounded-xl p-4 text-center hover:bg-white/8 transition-colors"
-            >
-              <div className="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center mx-auto mb-3">
-                <Icon size={16} className="text-white" />
-              </div>
-              <p className="text-xs font-semibold text-white leading-snug mb-1">{label}</p>
-              <p className="text-[11px] text-neutral-500 leading-relaxed">{desc}</p>
+          {/* Left — photo */}
+          <div className="relative rounded-2xl overflow-hidden aspect-[4/3] lg:aspect-auto lg:h-[420px] order-2 lg:order-1">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={FCP_PHOTO}
+              alt="Creator community on SellBop"
+              className="w-full h-full object-cover object-center"
+            />
+            {/* Subtle overlay */}
+            <div className="absolute inset-0 bg-gradient-to-tr from-black/30 to-transparent" />
+            {/* Beta pill overlay */}
+            <div className="absolute top-4 left-4 inline-flex items-center gap-2 bg-black/60 backdrop-blur-sm text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full">
+              <span className="w-1.5 h-1.5 bg-green-400 rounded-full" />
+              Beta — limited spots
             </div>
-          ))}
-        </div>
+          </div>
 
-        {/* CTAs */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-          <Link href="/login?mode=signup">
-            <button className="inline-flex items-center gap-2 bg-white text-black text-sm font-bold px-7 py-3.5 rounded-xl hover:bg-neutral-100 transition-colors">
-              Join the Beta <ArrowRight size={14} />
-            </button>
-          </Link>
-          <Link href="/community">
-            <button className="inline-flex items-center gap-2 border border-white/20 text-white text-sm font-semibold px-7 py-3.5 rounded-xl hover:bg-white/10 transition-colors">
-              Explore Community
-            </button>
-          </Link>
-        </div>
+          {/* Right — content */}
+          <div className="order-1 lg:order-2">
+            <p className="text-xs font-bold uppercase tracking-[0.3em] text-neutral-500 mb-5">
+              Founder Creators Program
+            </p>
+            <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight leading-tight mb-4">
+              Join beta and pay<br />
+              <span className="text-green-400">$0 platform fees</span>
+            </h2>
+            <p className="text-neutral-400 text-base leading-relaxed mb-8">
+              Be one of the first creators on SellBop. Launch early, pay $0 platform fees during beta, and help shape what we build next.
+            </p>
 
-        {/* Tag line */}
-        <p className="text-center text-xs text-neutral-600 mt-6">
-          Build your store. Shape the platform. More than a storefront — a creator-built platform.
-        </p>
+            {/* Benefit cards — 2×2 grid */}
+            <div className="grid grid-cols-2 gap-3 mb-8">
+              {FOUNDER_BENEFITS.map(({ Icon, label, desc }) => (
+                <div
+                  key={label}
+                  className="bg-white/5 border border-white/10 rounded-xl p-4 hover:bg-white/8 transition-colors"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center mb-2.5">
+                    <Icon size={15} className="text-white" />
+                  </div>
+                  <p className="text-xs font-semibold text-white leading-snug mb-1">{label}</p>
+                  <p className="text-[11px] text-neutral-500 leading-relaxed">{desc}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* CTAs */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Link href="/login?mode=signup">
+                <button className="inline-flex items-center gap-2 bg-white text-black text-sm font-bold px-6 py-3 rounded-xl hover:bg-neutral-100 transition-colors">
+                  Join the Beta <ArrowRight size={14} />
+                </button>
+              </Link>
+              <Link href="/community">
+                <button className="inline-flex items-center gap-2 border border-white/20 text-white text-sm font-semibold px-6 py-3 rounded-xl hover:bg-white/10 transition-colors">
+                  Explore Community
+                </button>
+              </Link>
+            </div>
+
+            <p className="text-xs text-neutral-600 mt-4">
+              Build your store. Shape the platform. A win-win roadmap with creators.
+            </p>
+          </div>
+
+        </div>
 
       </div>
     </section>
