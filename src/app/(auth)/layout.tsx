@@ -10,13 +10,77 @@ const BENEFITS = [
   'Help vote on what we build next',
 ]
 
-// Decorative creator avatar stack — illustrative only
 const CREATOR_AVATARS = [
   { initials: 'AJ', color: '#7C3AED' },
   { initials: 'SK', color: '#2563EB' },
   { initials: 'MR', color: '#059669' },
   { initials: 'TW', color: '#D97706' },
 ]
+
+// ─────────────────────────────────────────────────────────────
+// Visual mock composition — illustrative creator community
+// preview inside the promo panel. CSS-only, no image assets.
+// ─────────────────────────────────────────────────────────────
+function CreatorMockVisual() {
+  return (
+    <div className="rounded-2xl bg-white/5 border border-white/10 overflow-hidden mb-8">
+      {/* Store card */}
+      <div className="px-4 pt-4 pb-3 border-b border-white/5">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-violet-500 flex items-center justify-center text-white text-sm font-black flex-shrink-0 shadow-lg">
+            S
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-bold text-white leading-tight">Sarah Creates</p>
+            <p className="text-[10px] text-neutral-500 mt-0.5">Digital artist · sellbop.com/sarah</p>
+          </div>
+          <div className="text-right shrink-0">
+            <p className="text-xs font-bold text-emerald-400">$2,840</p>
+            <p className="text-[10px] text-neutral-500">this month</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Community post preview */}
+      <div className="px-4 py-3 border-b border-white/5">
+        <div className="flex items-start gap-3">
+          <div className="flex flex-col items-center gap-0.5 shrink-0">
+            <div className="text-[10px] font-black text-emerald-400">▲</div>
+            <div className="text-[10px] font-bold text-white">47</div>
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="inline-flex items-center text-[9px] font-bold uppercase tracking-wide bg-violet-500/20 text-violet-300 px-2 py-0.5 rounded-full mb-1.5">
+              Feature Request
+            </div>
+            <p className="text-xs font-semibold text-white leading-snug">Add custom domain support for creator stores</p>
+            <p className="text-[10px] text-neutral-500 mt-1">u/alexjohnson · 12 comments</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Product cards row */}
+      <div className="px-4 py-3 flex gap-2">
+        {[
+          { label: 'Design Pack', price: '$29', color: 'from-violet-600 to-blue-600' },
+          { label: 'Coaching Call', price: '$150', color: 'from-emerald-600 to-teal-600' },
+        ].map(p => (
+          <div key={p.label} className="flex-1 bg-white/5 rounded-xl overflow-hidden">
+            <div className={`h-8 bg-gradient-to-br ${p.color} opacity-60`} />
+            <div className="px-2 py-1.5">
+              <p className="text-[9px] font-semibold text-white truncate">{p.label}</p>
+              <p className="text-[10px] font-black text-white">{p.price}</p>
+            </div>
+          </div>
+        ))}
+        {/* Founder badge card */}
+        <div className="w-14 bg-amber-500/10 border border-amber-500/20 rounded-xl flex flex-col items-center justify-center py-2 px-1">
+          <div className="text-base">🏅</div>
+          <p className="text-[8px] font-bold text-amber-400 text-center leading-tight mt-1">Founder</p>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -35,30 +99,33 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         </div>
 
         {/* ── Right: Founder Creators Program promo ───────── */}
-        {/* Mobile: card below form; Desktop: fixed-width right column */}
         <div className="
           bg-neutral-950 text-white flex flex-col justify-center
           mx-4 mb-8 rounded-2xl px-6 py-10
-          lg:mx-0 lg:mb-0 lg:rounded-none lg:w-[460px] lg:shrink-0 lg:px-12 lg:py-14
+          lg:mx-0 lg:mb-0 lg:rounded-none lg:w-[480px] lg:shrink-0 lg:px-12 lg:py-12
+          lg:overflow-y-auto
         ">
           {/* Eyebrow */}
-          <div className="inline-flex items-center gap-2 bg-white/10 text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full mb-7 self-start">
+          <div className="inline-flex items-center gap-2 bg-white/10 text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full mb-6 self-start">
             <span className="w-1.5 h-1.5 bg-green-400 rounded-full flex-shrink-0" />
             Beta Program
           </div>
 
           {/* Headline */}
-          <h2 className="text-2xl sm:text-3xl font-black text-white leading-tight mb-3">
+          <h2 className="text-2xl sm:text-3xl font-black text-white leading-tight mb-2">
             Join the Founder Creators Program
           </h2>
 
           {/* Subheadline */}
-          <p className="text-neutral-400 text-sm leading-relaxed mb-8">
+          <p className="text-neutral-400 text-sm leading-relaxed mb-7">
             Get $0 platform fees during beta and help shape the future of SellBop.
           </p>
 
+          {/* Visual mock composition */}
+          <CreatorMockVisual />
+
           {/* Benefits */}
-          <ul className="space-y-3 mb-9">
+          <ul className="space-y-3 mb-8">
             {BENEFITS.map(b => (
               <li key={b} className="flex items-center gap-3 text-sm text-neutral-300">
                 <div className="w-5 h-5 rounded-full bg-green-500/20 border border-green-500/40 flex items-center justify-center flex-shrink-0">
@@ -86,7 +153,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           </div>
 
           {/* Social proof strip */}
-          <div className="mt-9 pt-7 border-t border-white/10 flex items-center gap-3">
+          <div className="mt-8 pt-6 border-t border-white/10 flex items-center gap-3">
             <div className="flex -space-x-2">
               {CREATOR_AVATARS.map(({ initials, color }) => (
                 <div
