@@ -12,7 +12,6 @@ const LINKS = [
   { href: '/community',         label: 'Community' },
   { href: '/pricing',           label: 'Pricing' },
   { href: '/demo',              label: 'Demo' },
-  { href: '/store/alexjohnson', label: 'Example Store' },
 ]
 
 export function MarketingNav() {

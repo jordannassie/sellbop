@@ -28,7 +28,15 @@ export default function DemoPage() {
 
       {/* Demo credentials box */}
       <div className="max-w-lg mx-auto mb-12 p-5 bg-neutral-50 border border-neutral-200 rounded-2xl">
-        <p className="text-sm font-semibold text-black mb-3">Demo Accounts</p>
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-sm font-semibold text-black">Demo Accounts</p>
+          <Link
+            href="/store/alexjohnson"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-neutral-600 border border-neutral-200 bg-white px-3 py-1.5 rounded-lg hover:border-neutral-300 hover:text-black transition-colors"
+          >
+            Example Store →
+          </Link>
+        </div>
         <DemoLoginButtons />
       </div>
 
