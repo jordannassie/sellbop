@@ -31,7 +31,7 @@ import type { Storefront, Product, HeaderMediaType } from '@/lib/domain/entities
 // ─────────────────────────────────────────────────────────────
 
 type EditorTab = 'products' | 'layout' | 'theme' | 'profile'
-type MobileSection = 'products' | 'preview' | 'design' | 'profile'
+type MobileSection = 'products' | 'preview' | 'design'
 
 const TABS: { id: EditorTab; label: string }[] = [
   { id: 'products', label: 'Products' },
@@ -1467,7 +1467,7 @@ export function StoreEditorShell() {
 
   // Keep mobileSection in sync with the ?section= URL param set by MobileEditorNav
   useEffect(() => {
-    const valid: MobileSection[] = ['products', 'preview', 'design', 'profile']
+    const valid: MobileSection[] = ['products', 'preview', 'design']
     if (urlSection && valid.includes(urlSection)) {
       setMobileSection(urlSection)
     } else {
@@ -1516,7 +1516,8 @@ export function StoreEditorShell() {
           {activeTab === 'layout'   && <LayoutTab />}
           {activeTab === 'theme'    && <ThemeTab />}
         </div>
-        {/* Mobile — driven by bottom nav section */}
+        {/* Mobile — driven by bottom nav section (preview / design / products) */}
+        {/* Profile is a standalone page: /dashboard/storefront               */}
         <div className="sm:hidden h-full">
           {mobileSection === 'products' && <ProductsTab />}
           {mobileSection === 'preview'  && <MobilePreviewSection storeUrl={storeUrl} />}
@@ -1526,7 +1527,6 @@ export function StoreEditorShell() {
               setDesignSubTab={setDesignSubTab}
             />
           )}
-          {mobileSection === 'profile'  && <ProfileTab />}
         </div>
       </div>
 

@@ -4,6 +4,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
 import { DashboardSidebar } from '@/components/dashboard/sidebar'
 import { MobileEditorNav } from '@/components/dashboard/mobile-editor-nav'
+import { MobileTopMiniNav } from '@/components/dashboard/mobile-top-mini-nav'
 import { cn } from '@/lib/utils'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -11,15 +12,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router = useRouter()
   const pathname = usePathname()
   const isStoreEditor = pathname.startsWith('/dashboard/store-editor')
-
-  // All routes that are part of the mobile editor workspace
-  const isProductEditorRoute =
-    pathname === '/dashboard/products' ||
-    pathname === '/dashboard/products/new' ||
-    /^\/dashboard\/products\/.+$/.test(pathname)
-
-  // Show mobile editor nav on store-editor AND all product editor routes
-  const showMobileEditorNav = isStoreEditor || isProductEditorRoute
 
   useEffect(() => {
     if (!loading && !session) router.push('/login')
@@ -38,25 +30,33 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className={cn('flex bg-neutral-50', isStoreEditor ? 'h-screen overflow-hidden' : 'min-h-screen')}>
       <DashboardSidebar />
-      {/* pt-14 offsets the mobile fixed top bar; removed on lg where sidebar is always shown */}
+
+      {/*
+        Mobile top offset:
+          - pt-24: header (56px) + mini nav (40px) on mobile (<sm)
+          - sm:pt-14: only header on tablets (<lg, ≥sm) — mini nav hidden sm:hidden
+          - lg:pt-0: desktop sidebar replaces fixed header entirely
+      */}
       <div className={cn(
-        'flex-1 flex flex-col min-w-0 overflow-x-hidden pt-14 lg:pt-0',
+        'flex-1 flex flex-col min-w-0 overflow-x-hidden pt-24 sm:pt-14 lg:pt-0',
         isStoreEditor && 'overflow-hidden',
       )}>
         <main className={cn(
           'flex-1 min-h-0',
           isStoreEditor
             ? 'p-0 overflow-hidden flex flex-col'
-            : isProductEditorRoute
-              ? 'p-4 pb-20 sm:p-6 sm:pb-6 lg:p-8 lg:pb-8 max-w-6xl'
-              : 'p-4 sm:p-6 lg:p-8 max-w-6xl',
+            // All other pages: pb-20 on mobile so content clears the fixed bottom nav
+            : 'p-4 pb-20 sm:p-6 sm:pb-6 lg:p-8 lg:pb-8 max-w-6xl',
         )}>
           {children}
         </main>
       </div>
 
-      {/* Persistent mobile editor nav across all editor routes */}
-      {showMobileEditorNav && <MobileEditorNav />}
+      {/* ── Persistent mobile navs — shown on ALL signed-in dashboard pages ── */}
+      {/* Top mini nav: Overview, Orders, Customers, Analytics, Settings      */}
+      <MobileTopMiniNav />
+      {/* Bottom editor nav: Products, Add, Preview, Design, Profile          */}
+      <MobileEditorNav />
     </div>
   )
 }

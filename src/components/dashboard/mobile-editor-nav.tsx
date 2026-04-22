@@ -9,31 +9,33 @@ import { cn } from '@/lib/utils'
 // ─────────────────────────────────────────────────────────────
 
 function MobileEditorNavInner() {
-  const router      = useRouter()
-  const pathname    = usePathname()
+  const router       = useRouter()
+  const pathname     = usePathname()
   const searchParams = useSearchParams()
-  const section     = searchParams.get('section')
+  const section      = searchParams.get('section')
 
   const isProductsList = pathname === '/dashboard/products'
   const isNewProduct   = pathname === '/dashboard/products/new'
   const isEditProduct  = /^\/dashboard\/products\/.+$/.test(pathname) && !isNewProduct
   const isStoreEditor  = pathname.startsWith('/dashboard/store-editor')
+  const isStorefront   = pathname === '/dashboard/storefront'
 
   // Active item derived purely from URL — single source of truth
   const active =
-    isNewProduct                            ? 'add'      :
-    (isProductsList || isEditProduct)       ? 'products' :
-    isStoreEditor && section === 'preview'  ? 'preview'  :
-    isStoreEditor && section === 'design'   ? 'design'   :
-    isStoreEditor && section === 'profile'  ? 'profile'  :
-                                              'products'  // store-editor default + fallback
+    isNewProduct                           ? 'add'      :
+    (isProductsList || isEditProduct)      ? 'products' :
+    isStoreEditor && section === 'preview' ? 'preview'  :
+    isStoreEditor && section === 'design'  ? 'design'   :
+    isStorefront                           ? 'profile'  :
+    isStoreEditor                          ? 'products' : // store-editor default (no section)
+                                             ''           // other dashboard pages — nothing active
 
   const items = [
     { id: 'products', label: 'Products', Icon: Package,    target: '/dashboard/products' },
     { id: 'add',      label: 'Add',      Icon: Plus,       target: '/dashboard/products/new', special: true },
     { id: 'preview',  label: 'Preview',  Icon: Smartphone, target: '/dashboard/store-editor?section=preview' },
     { id: 'design',   label: 'Design',   Icon: Palette,    target: '/dashboard/store-editor?section=design' },
-    { id: 'profile',  label: 'Profile',  Icon: User,       target: '/dashboard/store-editor?section=profile' },
+    { id: 'profile',  label: 'Profile',  Icon: User,       target: '/dashboard/storefront' },
   ]
 
   return (
