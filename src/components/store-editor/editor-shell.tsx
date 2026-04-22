@@ -1,5 +1,5 @@
 'use client'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   ExternalLink, Copy, Check, CloudUpload,
   Star, Eye, EyeOff, Pencil, Plus, Lock, Package, Zap, Shirt,
@@ -1458,12 +1458,20 @@ function MobileDesignSection({
 // ─────────────────────────────────────────────────────────────
 
 export function StoreEditorShell() {
-  const [activeTab, setActiveTab]       = useState<EditorTab>('products')
+  const [activeTab, setActiveTab]         = useState<EditorTab>('products')
   const [mobileSection, setMobileSection] = useState<MobileSection>('products')
-  const [designSubTab, setDesignSubTab] = useState<'layout' | 'theme'>('layout')
+  const [designSubTab, setDesignSubTab]   = useState<'layout' | 'theme'>('layout')
   const { isDirty, isSaving, saveChanges } = useStoreEditor()
   const router   = useRouter()
   const storeUrl = `/store/${DEMO_SELLER_PROFILE.slug}`
+
+  // When arriving from a product page via ?section=X, restore that section
+  useEffect(() => {
+    const params  = new URLSearchParams(window.location.search)
+    const section = params.get('section') as MobileSection | null
+    const valid: MobileSection[] = ['products', 'preview', 'design', 'profile']
+    if (section && valid.includes(section)) setMobileSection(section)
+  }, [])
 
   return (
     <div className="flex flex-col h-screen lg:h-full bg-[#f9f9f9]">

@@ -86,18 +86,16 @@ function NewProductForm() {
 
   return (
     <div className="max-w-2xl">
-      {/* Back to Store Editor — shown on mobile when arriving from editor */}
-      {fromEditor && (
-        <div className="mb-5 sm:hidden">
-          <Link
-            href="/dashboard/store-editor"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-neutral-500 hover:text-black transition-colors"
-          >
-            <ArrowLeft size={14} />
-            Back to Store Editor
-          </Link>
-        </div>
-      )}
+      {/* Back to Store Editor — always shown on mobile (editor nav is persistent) */}
+      <div className="mb-5 sm:hidden">
+        <Link
+          href="/dashboard/store-editor"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-neutral-500 hover:text-black transition-colors"
+        >
+          <ArrowLeft size={14} />
+          Back to Store Editor
+        </Link>
+      </div>
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-black">New Product</h1>
         <p className="text-neutral-500 text-sm mt-1">Create your sell page.</p>

@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
 import { DashboardSidebar } from '@/components/dashboard/sidebar'
+import { MobileEditorNav } from '@/components/dashboard/mobile-editor-nav'
 import { cn } from '@/lib/utils'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -10,6 +11,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router = useRouter()
   const pathname = usePathname()
   const isStoreEditor = pathname.startsWith('/dashboard/store-editor')
+
+  // Product create/edit pages share the mobile editor nav and bottom padding
+  const isProductEditorRoute =
+    pathname === '/dashboard/products/new' ||
+    (/^\/dashboard\/products\/.+$/.test(pathname) && pathname !== '/dashboard/products')
 
   useEffect(() => {
     if (!loading && !session) router.push('/login')
@@ -35,11 +41,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       )}>
         <main className={cn(
           'flex-1 min-h-0',
-          isStoreEditor ? 'p-0 overflow-hidden flex flex-col' : 'p-4 sm:p-6 lg:p-8 max-w-6xl',
+          isStoreEditor
+            ? 'p-0 overflow-hidden flex flex-col'
+            : isProductEditorRoute
+              ? 'p-4 pb-20 sm:p-6 sm:pb-6 lg:p-8 lg:pb-8 max-w-6xl'
+              : 'p-4 sm:p-6 lg:p-8 max-w-6xl',
         )}>
           {children}
         </main>
       </div>
+
+      {/* Persistent mobile editor nav on product create/edit pages */}
+      {isProductEditorRoute && <MobileEditorNav />}
     </div>
   )
 }
