@@ -531,14 +531,14 @@ function PlatformIntegrationsSection() {
         </div>
 
         {/* Hub + spoke layout */}
-        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-8 sm:gap-0">
+        <div className="flex flex-col sm:flex-row items-center gap-8 sm:gap-0">
 
           {/* LEFT — SellBop hub */}
-          <div className="flex flex-col items-center gap-3 flex-shrink-0 sm:pt-6 sm:w-40">
+          <div className="flex flex-col items-center gap-3 flex-shrink-0 sm:w-40">
             {/* Big rounded square icon */}
             <div className="relative">
-              <div className="w-20 h-20 rounded-2xl bg-black flex items-center justify-center shadow-lg">
-                <span className="text-white font-black text-3xl tracking-tight" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>S</span>
+              <div className="w-20 h-20 rounded-2xl bg-[#22C55E] flex items-center justify-center shadow-lg">
+                <ShoppingBag size={34} strokeWidth={2} className="text-white" />
               </div>
               {/* Live dot */}
               <span className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full border-2 border-white flex items-center justify-center">
@@ -552,7 +552,7 @@ function PlatformIntegrationsSection() {
           </div>
 
           {/* CENTER — connecting bridge (desktop only) */}
-          <div className="hidden sm:flex flex-col items-center justify-center w-16 flex-shrink-0" style={{ marginTop: 38 }}>
+          <div className="hidden sm:flex flex-col items-center justify-center w-16 flex-shrink-0">
             {/* Horizontal dashed line + dot */}
             <div className="flex items-center w-full">
               <div className="flex-1 border-t-2 border-dashed border-neutral-200" />
