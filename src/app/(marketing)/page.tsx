@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { ProductImage } from '@/components/ui/product-image'
 import { RotatingWord } from '@/components/marketing/rotating-word'
 import { StrategyCallSection } from '@/components/marketing/strategy-call-section'
+import { MissionSection } from '@/components/marketing/mission-section'
 import { Check, ArrowRight, FileText, ShoppingBag, Pencil, Download, MapPin, Zap, Sparkles, Tag, Users2, ThumbsUp, Bell } from 'lucide-react'
 import { DEMO_PRODUCTS, DEMO_STOREFRONT, DEMO_SELLER_PROFILE } from '@/lib/demo-data/seed'
 import { formatCurrency } from '@/lib/utils'
@@ -70,6 +71,9 @@ export default function HomePage() {
           />
         </div>
       </section>
+
+      {/* ── Our Mission thin section ─────────────────────────────── */}
+      <MissionSection />
 
       {/* ── Live product preview ──────────────────────────────────── */}
       <section className="max-w-5xl mx-auto px-4 sm:px-6 pb-16 sm:pb-24">
