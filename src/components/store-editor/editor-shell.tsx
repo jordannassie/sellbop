@@ -113,10 +113,10 @@ function OptionPills<T extends string>({ value, options, onChange }: {
           key={o.value}
           onClick={() => onChange(o.value)}
           className={cn(
-            'text-sm px-3.5 py-1.5 rounded-xl border transition-colors font-medium',
+            'text-sm px-4 py-2 rounded-full border transition-colors font-medium',
             value === o.value
-              ? 'bg-black text-white border-black'
-              : 'bg-white text-neutral-600 border-neutral-200 hover:border-neutral-400 hover:bg-neutral-50',
+              ? 'bg-neutral-900 text-white border-neutral-900'
+              : 'bg-white text-neutral-600 border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50',
           )}
         >
           {o.label}
@@ -136,7 +136,7 @@ function ColorPicker({ value, onChange }: { value: string; onChange: (v: string)
             title={p.label}
             onClick={() => onChange(p.color)}
             className={cn(
-              'w-7 h-7 rounded-full border-2 transition-transform hover:scale-110',
+              'w-9 h-9 rounded-full border-2 transition-transform hover:scale-110',
               value === p.color ? 'border-neutral-900 scale-110' : 'border-transparent',
             )}
             style={{ backgroundColor: p.color }}
@@ -163,7 +163,7 @@ function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: (
       disabled={disabled}
       className={cn(
         'relative inline-flex h-5 w-9 flex-shrink-0 rounded-full border-2 border-transparent transition-colors',
-        checked ? 'bg-black' : 'bg-neutral-200',
+        checked ? 'bg-neutral-900' : 'bg-neutral-200',
         disabled && 'opacity-40 cursor-not-allowed',
       )}
     >
@@ -199,24 +199,24 @@ function SortableProductRow({ product, isFeatured, onToggleFeatured, onToggleHid
       style={style}
       {...attributes}
       className={cn(
-        'flex items-center rounded-xl bg-white border transition-all duration-150 overflow-hidden',
+        'flex items-center rounded-2xl bg-white transition-all duration-150 overflow-hidden',
         isDragging
-          ? 'shadow-2xl border-black/10 scale-[1.02] z-50'
-          : 'border-neutral-200 hover:border-neutral-300 hover:shadow-sm',
+          ? 'shadow-2xl scale-[1.02] z-50'
+          : 'shadow-[0_1px_4px_rgba(0,0,0,0.06)] hover:shadow-[0_2px_8px_rgba(0,0,0,0.09)]',
         isHidden && !isDragging && 'opacity-50',
       )}
     >
       {/* Drag strip */}
       <span
         {...listeners}
-        className="cursor-grab active:cursor-grabbing touch-none flex items-center justify-center w-9 self-stretch bg-neutral-50 hover:bg-neutral-100 border-r border-neutral-100 transition-colors text-neutral-300 hover:text-neutral-500 flex-shrink-0"
+        className="cursor-grab active:cursor-grabbing touch-none flex items-center justify-center w-8 self-stretch hover:bg-neutral-50 transition-colors text-neutral-300 hover:text-neutral-400 flex-shrink-0"
         title="Drag to reorder"
       >
         <GripDots />
       </span>
 
-      {/* Thumbnail — fixed size, overflow hidden, relative required for fill images */}
-      <div className="relative w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-neutral-100 my-2.5 ml-2.5">
+      {/* Thumbnail */}
+      <div className="relative w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 bg-neutral-100 my-2.5 ml-1.5">
         {product.thumbnailUrl && product.source === 'printify' ? (
           <img src={product.thumbnailUrl} alt={product.name} className="w-full h-full object-cover" />
         ) : (
@@ -267,7 +267,7 @@ function SortableProductRow({ product, isFeatured, onToggleFeatured, onToggleHid
           disabled={!canFeature && !isFeatured}
           title={isFeatured ? 'Remove from featured' : canFeature ? 'Add to featured' : 'Max 3 featured'}
           className={cn(
-            'w-7 h-7 flex items-center justify-center rounded-lg transition-all',
+            'w-7 h-7 flex items-center justify-center rounded-xl transition-all',
             isFeatured
               ? 'text-amber-500 bg-amber-50 hover:bg-amber-100'
               : 'text-neutral-300 hover:text-amber-500 hover:bg-amber-50',
@@ -280,7 +280,7 @@ function SortableProductRow({ product, isFeatured, onToggleFeatured, onToggleHid
           onClick={onToggleHidden}
           title={isHidden ? 'Add to Store' : 'Hide from Store'}
           className={cn(
-            'w-7 h-7 flex items-center justify-center rounded-lg transition-all',
+            'w-7 h-7 flex items-center justify-center rounded-xl transition-all',
             isHidden
               ? 'text-neutral-500 bg-neutral-100 hover:bg-neutral-200'
               : 'text-neutral-300 hover:text-neutral-600 hover:bg-neutral-100',
@@ -292,7 +292,7 @@ function SortableProductRow({ product, isFeatured, onToggleFeatured, onToggleHid
           <Link
             href="/dashboard/printify"
             title="Managed in Printify"
-            className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-300 hover:text-violet-600 hover:bg-violet-50 transition-all"
+            className="w-7 h-7 flex items-center justify-center rounded-xl text-neutral-300 hover:text-violet-600 hover:bg-violet-50 transition-all"
           >
             <Shirt size={11} />
           </Link>
@@ -300,7 +300,7 @@ function SortableProductRow({ product, isFeatured, onToggleFeatured, onToggleHid
           <Link
             href={`/dashboard/products/${product.id}`}
             title="Edit product"
-            className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-300 hover:text-neutral-700 hover:bg-neutral-100 transition-all"
+            className="w-7 h-7 flex items-center justify-center rounded-xl text-neutral-300 hover:text-neutral-700 hover:bg-neutral-100 transition-all"
           >
             <Pencil size={11} />
           </Link>
@@ -324,9 +324,9 @@ function AvailableProductRow({ product, onAddToStore, onAddToFeatured, canFeatur
   const isPrintify  = product.source === 'printify'
 
   return (
-    <div className="flex items-center rounded-xl bg-neutral-50 border border-neutral-200 border-dashed hover:border-neutral-300 hover:bg-white hover:shadow-sm transition-all duration-150 overflow-hidden">
-      {/* Thumbnail — fixed size, overflow hidden, relative required for fill images */}
-      <div className="relative w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-neutral-100 my-2.5 ml-3 mr-0.5">
+    <div className="flex items-center rounded-2xl bg-neutral-50 border border-dashed border-neutral-200 hover:border-neutral-300 hover:bg-white hover:shadow-[0_1px_4px_rgba(0,0,0,0.06)] transition-all duration-150 overflow-hidden">
+      {/* Thumbnail */}
+      <div className="relative w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 bg-neutral-100 my-2.5 ml-3 mr-0.5">
         {product.thumbnailUrl && isPrintify ? (
           <img src={product.thumbnailUrl} alt={product.name} className="w-full h-full object-cover" />
         ) : (
@@ -362,7 +362,7 @@ function AvailableProductRow({ product, onAddToStore, onAddToFeatured, canFeatur
       <div className="flex items-center gap-1 pr-3 flex-shrink-0">
         <button
           onClick={onAddToStore}
-          className="flex items-center gap-1 h-7 px-2 rounded-lg text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-colors whitespace-nowrap"
+          className="flex items-center gap-1 h-7 px-2.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-colors whitespace-nowrap"
         >
           <Eye size={9} /> Add to Store
         </button>
@@ -370,7 +370,7 @@ function AvailableProductRow({ product, onAddToStore, onAddToFeatured, canFeatur
           onClick={onAddToFeatured}
           disabled={!canFeature}
           title={canFeature ? 'Add to Featured' : 'Max 3 featured products'}
-          className="flex items-center gap-1 h-7 px-2 rounded-lg text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-colors whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
+          className="flex items-center gap-1 h-7 px-2.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-colors whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <Star size={9} fill="currentColor" /> Feature
         </button>
@@ -378,7 +378,7 @@ function AvailableProductRow({ product, onAddToStore, onAddToFeatured, canFeatur
           <Link
             href="/dashboard/printify"
             title="Managed in Printify"
-            className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-300 hover:text-violet-600 hover:bg-violet-50 transition-all"
+            className="w-7 h-7 flex items-center justify-center rounded-xl text-neutral-300 hover:text-violet-600 hover:bg-violet-50 transition-all"
           >
             <Shirt size={11} />
           </Link>
@@ -386,7 +386,7 @@ function AvailableProductRow({ product, onAddToStore, onAddToFeatured, canFeatur
           <Link
             href={`/dashboard/products/${product.id}`}
             title="Edit Product"
-            className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-300 hover:text-neutral-700 hover:bg-neutral-100 transition-all"
+            className="w-7 h-7 flex items-center justify-center rounded-xl text-neutral-300 hover:text-neutral-700 hover:bg-neutral-100 transition-all"
           >
             <Pencil size={11} />
           </Link>
@@ -415,20 +415,20 @@ function SortableSectionItem({ id }: { id: string }) {
   return (
     <div ref={setNodeRef} style={style} {...attributes}>
       <div className={cn(
-        'flex items-center bg-white border rounded-xl overflow-hidden transition-all duration-150',
+        'flex items-center bg-white rounded-2xl overflow-hidden transition-all duration-150',
         isDragging
-          ? 'shadow-2xl border-neutral-400 scale-[1.01]'
-          : 'border-neutral-200 hover:border-neutral-300 hover:shadow-sm',
+          ? 'shadow-2xl scale-[1.01]'
+          : 'shadow-[0_1px_4px_rgba(0,0,0,0.06)] hover:shadow-[0_2px_8px_rgba(0,0,0,0.09)]',
         !isVisible && !isDragging && 'opacity-50',
       )}>
         {/* Drag strip */}
         <span
           {...(meta?.locked ? {} : listeners)}
           className={cn(
-            'flex items-center justify-center w-9 self-stretch border-r border-neutral-100 flex-shrink-0 transition-colors',
+            'flex items-center justify-center w-8 self-stretch flex-shrink-0 transition-colors',
             meta?.locked
-              ? 'bg-neutral-50 cursor-not-allowed'
-              : 'bg-neutral-50 hover:bg-neutral-100 cursor-grab active:cursor-grabbing touch-none text-neutral-300 hover:text-neutral-500',
+              ? 'cursor-not-allowed'
+              : 'hover:bg-neutral-50 cursor-grab active:cursor-grabbing touch-none text-neutral-300 hover:text-neutral-400',
           )}
           title={meta?.locked ? 'Header cannot be reordered' : 'Drag to reorder'}
         >
@@ -485,12 +485,12 @@ function ProfileTab() {
     <div className="max-w-2xl mx-auto px-5 py-4 sm:py-8 space-y-4">
 
       {/* Identity preview card */}
-      <Card>
+      <Card className="rounded-2xl border-neutral-100 shadow-none">
         <CardContent className="pt-6">
           {/* Avatar + name row */}
           <div className="flex items-center gap-4 mb-5">
             <div
-              className="w-14 h-14 rounded-xl flex-shrink-0 flex items-center justify-center text-white text-2xl font-black shadow-sm"
+              className="w-14 h-14 rounded-2xl flex-shrink-0 flex items-center justify-center text-white text-2xl font-black shadow-sm"
               style={{ backgroundColor: config.themeColor }}
             >
               {config.title.charAt(0).toUpperCase()}
@@ -520,7 +520,7 @@ function ProfileTab() {
           {/* CTA */}
           <Link
             href="/dashboard/storefront"
-            className="inline-flex items-center gap-2 h-9 px-4 rounded-lg text-sm font-semibold bg-black text-white hover:bg-neutral-800 transition-colors"
+            className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-semibold bg-neutral-900 text-white hover:bg-black transition-colors"
           >
             Edit Store Profile
           </Link>
@@ -528,7 +528,7 @@ function ProfileTab() {
       </Card>
 
       {/* Helper note */}
-      <Card>
+      <Card className="rounded-2xl border-neutral-100 shadow-none">
         <CardContent className="pt-5 pb-5">
           <p className="text-sm font-semibold text-black mb-1">Profile is managed in Store Profile</p>
           <p className="text-xs text-neutral-500 leading-relaxed">
@@ -645,15 +645,15 @@ function ProductsTab() {
         </div>
         <Link
           href="/dashboard/products/new"
-          className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold bg-black text-white hover:bg-neutral-800 transition-colors"
+          className="inline-flex items-center gap-1.5 h-8 px-3.5 rounded-full text-xs font-semibold bg-neutral-900 text-white hover:bg-black transition-colors"
         >
-          <Plus size={12} /> Create New Product
+          <Plus size={12} /> Create New
         </Link>
       </div>
 
       {/* ── 1. FEATURED PRODUCTS ────────────────────────────── */}
-      <Card>
-        <CardHeader>
+      <Card className="rounded-2xl border-neutral-100 shadow-none">
+        <CardHeader className="border-neutral-50">
           <div className="flex items-center gap-2">
             <Star size={13} className="text-amber-500" fill="currentColor" />
             <CardTitle>Featured Products</CardTitle>
@@ -668,7 +668,7 @@ function ProductsTab() {
           </p>
           {featuredProducts.length === 0 ? (
             <div className="flex flex-col items-center py-6 text-center gap-2">
-              <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center">
+              <div className="w-9 h-9 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center">
                 <Star size={14} className="text-amber-400" />
               </div>
               <p className="text-sm font-semibold text-neutral-600">No featured products yet</p>
@@ -697,8 +697,8 @@ function ProductsTab() {
       </Card>
 
       {/* ── 2. STORE PRODUCTS ───────────────────────────────── */}
-      <Card>
-        <CardHeader>
+      <Card className="rounded-2xl border-neutral-100 shadow-none">
+        <CardHeader className="border-neutral-50">
           <div className="flex items-center gap-2">
             <Eye size={13} className="text-blue-500" />
             <CardTitle>Store Products</CardTitle>
@@ -713,7 +713,7 @@ function ProductsTab() {
           </p>
           {storeProducts.length === 0 ? (
             <div className="flex flex-col items-center py-6 text-center gap-2">
-              <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center">
+              <div className="w-9 h-9 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center">
                 <Package size={14} className="text-blue-400" />
               </div>
               <p className="text-sm font-semibold text-neutral-600">No products on your store yet</p>
@@ -743,8 +743,8 @@ function ProductsTab() {
 
       {/* ── 3. AVAILABLE PRODUCTS (hidden / not on store) ───── */}
       {(availableProducts.length > 0 || products.length === 0) && (
-        <Card>
-          <CardHeader>
+        <Card className="rounded-2xl border-neutral-100 shadow-none">
+          <CardHeader className="border-neutral-50">
             <div className="flex items-center gap-2">
               <EyeOff size={13} className="text-neutral-400" />
               <CardTitle>Available Products</CardTitle>
@@ -762,7 +762,7 @@ function ProductsTab() {
             </p>
             {availableProducts.length === 0 && products.length === 0 ? (
               <div className="flex flex-col items-center py-6 text-center gap-2">
-                <div className="w-9 h-9 rounded-xl bg-neutral-50 border border-neutral-200 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-2xl bg-neutral-50 border border-neutral-200 flex items-center justify-center">
                   <Package size={14} className="text-neutral-400" />
                 </div>
                 <p className="text-sm font-semibold text-neutral-600">No products yet</p>
@@ -828,8 +828,8 @@ function HeaderMediaCard() {
   const ytId = getYouTubeId(localVideo)
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="rounded-2xl border-neutral-100 shadow-none">
+      <CardHeader className="border-neutral-50">
         <CardTitle>Header Media</CardTitle>
       </CardHeader>
       <CardContent className="space-y-5">
@@ -846,10 +846,10 @@ function HeaderMediaCard() {
                 key={opt.id}
                 onClick={() => update({ headerMedia: opt.id })}
                 className={[
-                  'rounded-xl border-2 p-3 text-left transition-all',
+                  'rounded-2xl border-2 p-3 text-left transition-all',
                   active
-                    ? 'border-black bg-neutral-50'
-                    : 'border-neutral-200 hover:border-neutral-300 bg-white',
+                    ? 'border-neutral-900 bg-neutral-50'
+                    : 'border-neutral-100 hover:border-neutral-200 bg-white',
                 ].join(' ')}
               >
                 <div className={['mb-2', active ? 'text-black' : 'text-neutral-400'].join(' ')}>
@@ -858,7 +858,7 @@ function HeaderMediaCard() {
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-semibold text-black">{opt.label}</span>
                   {active && (
-                    <span className="w-4 h-4 rounded-full bg-black flex items-center justify-center flex-shrink-0">
+                    <span className="w-4 h-4 rounded-full bg-neutral-900 flex items-center justify-center flex-shrink-0">
                       <Check size={9} className="text-white" />
                     </span>
                   )}
@@ -880,12 +880,12 @@ function HeaderMediaCard() {
                 onChange={e => setLocalPhoto(e.target.value)}
                 onBlur={commitPhoto}
                 placeholder="https://example.com/banner.jpg"
-                className="flex-1 h-10 rounded-xl border border-neutral-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
+                className="flex-1 h-10 rounded-2xl border border-neutral-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
               />
               {localPhoto && (
                 <button
                   onClick={() => { setLocalPhoto(''); update({ headerPhotoUrl: null }) }}
-                  className="w-10 h-10 rounded-xl border border-neutral-200 flex items-center justify-center text-neutral-400 hover:text-red-500 hover:border-red-200 transition-colors"
+                  className="w-10 h-10 rounded-2xl border border-neutral-200 flex items-center justify-center text-neutral-400 hover:text-red-500 hover:border-red-200 transition-colors"
                   title="Remove"
                 >
                   <X size={14} />
@@ -893,7 +893,7 @@ function HeaderMediaCard() {
               )}
             </div>
             {localPhoto && (
-              <div className="rounded-xl overflow-hidden border border-neutral-100 bg-neutral-50 aspect-[3/1]">
+              <div className="rounded-2xl overflow-hidden border border-neutral-100 bg-neutral-50 aspect-[3/1]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={localPhoto}
@@ -918,12 +918,12 @@ function HeaderMediaCard() {
                 onChange={e => setLocalVideo(e.target.value)}
                 onBlur={commitVideo}
                 placeholder="https://www.youtube.com/watch?v=..."
-                className="flex-1 h-10 rounded-xl border border-neutral-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
+                className="flex-1 h-10 rounded-2xl border border-neutral-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
               />
               {localVideo && (
                 <button
                   onClick={() => { setLocalVideo(''); update({ headerVideoUrl: null }) }}
-                  className="w-10 h-10 rounded-xl border border-neutral-200 flex items-center justify-center text-neutral-400 hover:text-red-500 hover:border-red-200 transition-colors"
+                  className="w-10 h-10 rounded-2xl border border-neutral-200 flex items-center justify-center text-neutral-400 hover:text-red-500 hover:border-red-200 transition-colors"
                   title="Remove"
                 >
                   <X size={14} />
@@ -931,7 +931,7 @@ function HeaderMediaCard() {
               )}
             </div>
             {localVideo && ytId && (
-              <div className="rounded-xl overflow-hidden border border-neutral-100 bg-black aspect-video">
+              <div className="rounded-2xl overflow-hidden border border-neutral-100 bg-black aspect-video">
                 <iframe
                   src={`https://www.youtube.com/embed/${ytId}`}
                   title="Video preview"
@@ -979,8 +979,8 @@ function LayoutTab() {
     <div className="max-w-2xl mx-auto px-5 py-4 sm:py-8 space-y-5">
 
       {/* ── Header Layout ───────────────────────────────────── */}
-      <Card>
-        <CardHeader>
+      <Card className="rounded-2xl border-neutral-100 shadow-none">
+        <CardHeader className="border-neutral-50">
           <CardTitle>Header Layout</CardTitle>
         </CardHeader>
         <CardContent>
@@ -993,14 +993,14 @@ function LayoutTab() {
             <button
               onClick={() => update({ headerLayout: 'left_avatar' })}
               className={[
-                'rounded-xl border-2 p-3 text-left transition-all',
+                'rounded-2xl border-2 p-3 text-left transition-all',
                 isSide
-                  ? 'border-black bg-neutral-50'
-                  : 'border-neutral-200 hover:border-neutral-300 bg-white',
+                  ? 'border-neutral-900 bg-neutral-50'
+                  : 'border-neutral-100 hover:border-neutral-200 bg-white',
               ].join(' ')}
             >
               {/* Mini preview */}
-              <div className="bg-white rounded-lg border border-neutral-100 p-2.5 mb-3">
+              <div className="bg-white rounded-xl border border-neutral-100 p-2.5 mb-3">
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 rounded-lg bg-neutral-800 flex-shrink-0" />
                   <div className="flex-1 space-y-1">
@@ -1016,7 +1016,7 @@ function LayoutTab() {
               <div className="flex items-center justify-between">
                 <span className="text-sm font-semibold text-black">Side</span>
                 {isSide && (
-                  <span className="w-4 h-4 rounded-full bg-black flex items-center justify-center flex-shrink-0">
+                  <span className="w-4 h-4 rounded-full bg-neutral-900 flex items-center justify-center flex-shrink-0">
                     <Check size={9} className="text-white" />
                   </span>
                 )}
@@ -1028,14 +1028,14 @@ function LayoutTab() {
             <button
               onClick={() => update({ headerLayout: 'centered' })}
               className={[
-                'rounded-xl border-2 p-3 text-left transition-all',
+                'rounded-2xl border-2 p-3 text-left transition-all',
                 isCenter
-                  ? 'border-black bg-neutral-50'
-                  : 'border-neutral-200 hover:border-neutral-300 bg-white',
+                  ? 'border-neutral-900 bg-neutral-50'
+                  : 'border-neutral-100 hover:border-neutral-200 bg-white',
               ].join(' ')}
             >
               {/* Mini preview */}
-              <div className="bg-white rounded-lg border border-neutral-100 p-2.5 mb-3">
+              <div className="bg-white rounded-xl border border-neutral-100 p-2.5 mb-3">
                 <div className="flex flex-col items-center gap-1.5">
                   <div className="w-7 h-7 rounded-lg bg-neutral-800" />
                   <div className="w-2/3 h-1.5 bg-neutral-800 rounded-full" />
@@ -1049,7 +1049,7 @@ function LayoutTab() {
               <div className="flex items-center justify-between">
                 <span className="text-sm font-semibold text-black">Center</span>
                 {isCenter && (
-                  <span className="w-4 h-4 rounded-full bg-black flex items-center justify-center flex-shrink-0">
+                  <span className="w-4 h-4 rounded-full bg-neutral-900 flex items-center justify-center flex-shrink-0">
                     <Check size={9} className="text-white" />
                   </span>
                 )}
@@ -1065,8 +1065,8 @@ function LayoutTab() {
       <HeaderMediaCard />
 
       {/* ── Section order / visibility ───────────────────────── */}
-      <Card>
-        <CardHeader>
+      <Card className="rounded-2xl border-neutral-100 shadow-none">
+        <CardHeader className="border-neutral-50">
           <CardTitle>Store Sections</CardTitle>
         </CardHeader>
         <CardContent>
@@ -1098,8 +1098,8 @@ function ThemeTab() {
   return (
     <div className="max-w-2xl mx-auto px-5 py-4 sm:py-8 space-y-5">
       {/* Appearance card: presets + color */}
-      <Card>
-        <CardHeader>
+      <Card className="rounded-2xl border-neutral-100 shadow-none">
+        <CardHeader className="border-neutral-50">
           <CardTitle>Appearance</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -1110,14 +1110,14 @@ function ThemeTab() {
                 <button
                   key={p.label}
                   onClick={() => update(p.patch)}
-                  className="text-sm border border-neutral-200 rounded-lg py-2 px-3 text-center font-medium text-neutral-700 hover:border-neutral-400 hover:bg-neutral-50 transition-colors"
+                  className="text-sm border border-neutral-100 rounded-full py-2 px-3 text-center font-medium text-neutral-700 hover:border-neutral-300 hover:bg-neutral-50 transition-colors"
                 >
                   {p.label}
                 </button>
               ))}
             </div>
           </div>
-          <div className="border-t border-neutral-100 pt-6">
+          <div className="border-t border-neutral-50 pt-6">
             <p className="text-sm font-medium text-neutral-700 mb-3">Accent Color</p>
             <ColorPicker value={config.themeColor} onChange={v => update({ themeColor: v })} />
           </div>
@@ -1125,8 +1125,8 @@ function ThemeTab() {
       </Card>
 
       {/* Style card: button + card + header + density */}
-      <Card>
-        <CardHeader>
+      <Card className="rounded-2xl border-neutral-100 shadow-none">
+        <CardHeader className="border-neutral-50">
           <CardTitle>Style Options</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -1142,7 +1142,7 @@ function ThemeTab() {
               ]}
             />
           </div>
-          <div className="border-t border-neutral-100 pt-6">
+          <div className="border-t border-neutral-50 pt-6">
             <p className="text-sm font-medium text-neutral-700 mb-3">Card Style</p>
             <OptionPills
               value={config.cardStyle}
@@ -1154,7 +1154,7 @@ function ThemeTab() {
               ]}
             />
           </div>
-          <div className="border-t border-neutral-100 pt-6">
+          <div className="border-t border-neutral-50 pt-6">
             <p className="text-sm font-medium text-neutral-700 mb-3">Card Density</p>
             <OptionPills
               value={config.cardDensity}
@@ -1193,13 +1193,13 @@ function EditorTopBar() {
   return (
     <>
       {/* ── Main header row ────────────────────────────────────── */}
-      <div className="h-14 bg-white border-b border-neutral-200 flex items-center justify-between px-4 shrink-0">
+      <div className="h-14 bg-white border-b border-neutral-100 flex items-center justify-between px-4 shrink-0">
         {/* Left: store avatar chip + title + dirty badge */}
         <div className="flex items-center gap-2.5 min-w-0">
-          {/* Store identity chip — rounded-square avatar + store name */}
+          {/* Store identity chip */}
           <div className="flex items-center gap-2 shrink-0">
             <div
-              className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-[11px] font-black select-none"
+              className="w-7 h-7 rounded-xl flex items-center justify-center text-white text-[11px] font-black select-none"
               style={{ backgroundColor: config.themeColor }}
             >
               {config.title.charAt(0).toUpperCase()}
@@ -1210,11 +1210,11 @@ function EditorTopBar() {
           </div>
 
           {/* Divider */}
-          <div className="w-px h-4 bg-neutral-200 flex-shrink-0" />
+          <div className="w-px h-4 bg-neutral-100 flex-shrink-0" />
 
           {/* Editor label */}
           <div>
-            <p className="text-[11px] font-semibold text-neutral-500 leading-none">Store Editor</p>
+            <p className="text-[11px] font-semibold text-neutral-400 leading-none">Store Editor</p>
           </div>
 
           {isDirty && (
@@ -1232,7 +1232,7 @@ function EditorTopBar() {
           <button
             onClick={copyLink}
             title="Copy public link"
-            className="hidden sm:flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium text-neutral-600 border border-neutral-200 hover:bg-neutral-50 hover:border-neutral-300 transition-colors"
+            className="hidden sm:flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium text-neutral-600 border border-neutral-200 hover:bg-neutral-50 hover:border-neutral-300 transition-colors"
           >
             {copied ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
             {copied ? 'Copied!' : 'Copy Link'}
@@ -1242,7 +1242,7 @@ function EditorTopBar() {
           <Link
             href={storeUrl}
             target="_blank"
-            className="hidden sm:flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium text-neutral-600 border border-neutral-200 hover:bg-neutral-50 hover:border-neutral-300 transition-colors"
+            className="hidden sm:flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium text-neutral-600 border border-neutral-200 hover:bg-neutral-50 hover:border-neutral-300 transition-colors"
           >
             <ExternalLink size={12} />
             Open Store
@@ -1253,9 +1253,9 @@ function EditorTopBar() {
             onClick={saveChanges}
             disabled={!isDirty || isSaving}
             className={cn(
-              'hidden sm:flex items-center gap-1.5 h-8 px-3 sm:px-4 rounded-lg text-xs font-bold transition-all duration-150',
+              'hidden sm:flex items-center gap-1.5 h-8 px-3 sm:px-4 rounded-full text-xs font-bold transition-all duration-150',
               isDirty && !isSaving
-                ? 'bg-black text-white hover:bg-neutral-800 shadow-sm ring-1 ring-black/20'
+                ? 'bg-neutral-900 text-white hover:bg-black shadow-sm'
                 : 'bg-neutral-100 text-neutral-400 cursor-not-allowed',
             )}
           >
@@ -1266,9 +1266,8 @@ function EditorTopBar() {
       </div>
 
       {/* ── Mobile action strip (sm:hidden) ───────────────────── */}
-      {/* Shows public URL + copy + open store for mobile users   */}
       <div className="sm:hidden bg-white border-b border-neutral-100 px-4 py-2 shrink-0">
-        <div className="flex items-center gap-2 bg-neutral-50 border border-neutral-200 rounded-lg px-3 py-2">
+        <div className="flex items-center gap-2 bg-neutral-50 border border-neutral-100 rounded-2xl px-3 py-2">
           {/* URL label + value */}
           <span className="text-[10px] font-semibold text-neutral-400 flex-shrink-0 uppercase tracking-wide">URL</span>
           <span className="flex-1 text-[11px] text-neutral-700 font-medium truncate min-w-0">
@@ -1278,7 +1277,7 @@ function EditorTopBar() {
           <button
             onClick={copyLink}
             title="Copy link"
-            className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-md text-neutral-400 hover:text-black hover:bg-neutral-100 transition-colors"
+            className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-xl text-neutral-400 hover:text-black hover:bg-neutral-100 transition-colors"
           >
             {copied
               ? <Check size={13} className="text-emerald-500" />
@@ -1286,13 +1285,13 @@ function EditorTopBar() {
             }
           </button>
           {/* Divider */}
-          <div className="w-px h-4 bg-neutral-200 flex-shrink-0" />
+          <div className="w-px h-4 bg-neutral-100 flex-shrink-0" />
           {/* Open Store icon */}
           <Link
             href={storeUrl}
             target="_blank"
             title="Open store"
-            className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-md text-neutral-400 hover:text-black hover:bg-neutral-100 transition-colors"
+            className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-xl text-neutral-400 hover:text-black hover:bg-neutral-100 transition-colors"
           >
             <ExternalLink size={13} />
           </Link>
@@ -1326,7 +1325,7 @@ function MobilePreviewSection({ storeUrl }: { storeUrl: string }) {
         <p className="flex-1 text-xs font-semibold text-neutral-600">Live Preview</p>
         <button
           onClick={copyLink}
-          className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold border border-neutral-200 text-neutral-600 hover:bg-neutral-50 transition-colors"
+          className="flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-semibold border border-neutral-200 text-neutral-600 hover:bg-neutral-50 transition-colors"
         >
           {copied ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
           {copied ? 'Copied!' : 'Copy Link'}
@@ -1334,14 +1333,14 @@ function MobilePreviewSection({ storeUrl }: { storeUrl: string }) {
         <Link
           href={storeUrl}
           target="_blank"
-          className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold bg-black text-white hover:bg-neutral-800 active:bg-neutral-900 transition-colors"
+          className="flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-semibold bg-neutral-900 text-white hover:bg-black active:bg-neutral-900 transition-colors"
         >
           <ExternalLink size={12} />
           View Store
         </Link>
       </div>
 
-      {/* Phone mockup — pt-5 pb-2 keeps breathing room without dead space */}
+      {/* Phone mockup */}
       <div className="flex-1 overflow-y-auto flex items-start justify-center pt-5 pb-2 px-4">
         <div
           className="relative flex-shrink-0 bg-neutral-900 rounded-[40px] shadow-2xl"
@@ -1420,13 +1419,13 @@ function MobileDesignSection({
   return (
     <div className="flex flex-col h-full">
       {/* Sub-tab toggle */}
-      <div className="bg-white border-b border-neutral-200 px-4 py-2 flex gap-1.5 shrink-0">
+      <div className="bg-white border-b border-neutral-100 px-4 py-2.5 flex gap-2 shrink-0">
         <button
           onClick={() => setDesignSubTab('layout')}
           className={cn(
-            'flex-1 h-9 rounded-lg text-xs font-semibold transition-colors',
+            'flex-1 h-9 rounded-full text-xs font-semibold transition-colors',
             designSubTab === 'layout'
-              ? 'bg-black text-white'
+              ? 'bg-neutral-900 text-white'
               : 'text-neutral-500 hover:bg-neutral-50 border border-neutral-200',
           )}
         >
@@ -1435,9 +1434,9 @@ function MobileDesignSection({
         <button
           onClick={() => setDesignSubTab('theme')}
           className={cn(
-            'flex-1 h-9 rounded-lg text-xs font-semibold transition-colors',
+            'flex-1 h-9 rounded-full text-xs font-semibold transition-colors',
             designSubTab === 'theme'
-              ? 'bg-black text-white'
+              ? 'bg-neutral-900 text-white'
               : 'text-neutral-500 hover:bg-neutral-50 border border-neutral-200',
           )}
         >
@@ -1480,28 +1479,28 @@ export function StoreEditorShell() {
       <EditorTopBar />
 
       {/* ── Desktop tab bar (sm+) ──────────────────────────────── */}
-      <div className="hidden sm:block bg-white border-b border-neutral-200 shrink-0">
-        <div className="flex items-end overflow-x-auto scrollbar-none px-4">
+      <div className="hidden sm:block bg-white border-b border-neutral-100 shrink-0">
+        <div className="flex items-center gap-1 px-4 py-2.5 overflow-x-auto scrollbar-none">
           {TABS.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                'px-4 py-3 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap flex-shrink-0',
+                'px-4 py-1.5 text-sm font-semibold rounded-full transition-colors whitespace-nowrap flex-shrink-0',
                 activeTab === tab.id
-                  ? 'border-black text-black'
-                  : 'border-transparent text-neutral-400 hover:text-neutral-700',
+                  ? 'bg-neutral-900 text-white'
+                  : 'text-neutral-500 hover:text-neutral-800 hover:bg-neutral-100',
               )}
             >
               {tab.label}
             </button>
           ))}
-        </div>
-      </div>
 
-      {/* ── Desktop helper description (sm+) ──────────────────── */}
-      <div className="hidden sm:block bg-neutral-50 border-b border-neutral-100 px-5 py-2 shrink-0">
-        <p className="text-[11px] text-neutral-400">{TAB_DESCRIPTIONS[activeTab]}</p>
+          {/* Tab description inline — right side */}
+          <p className="ml-auto text-[11px] text-neutral-400 whitespace-nowrap hidden lg:block pr-1">
+            {TAB_DESCRIPTIONS[activeTab]}
+          </p>
+        </div>
       </div>
 
       {/* ── Content (scrollable) ──────────────────────────────── */}
@@ -1535,15 +1534,15 @@ export function StoreEditorShell() {
 
       {/* ── Mobile save bar — floats above submenu + bottom nav when dirty ── */}
       {isDirty && (
-        <div className="sm:hidden fixed bottom-24 left-0 right-0 z-50 bg-white border-t border-neutral-200 px-4 py-3 flex items-center gap-2.5 shadow-[0_-4px_16px_rgba(0,0,0,0.06)]">
+        <div className="sm:hidden fixed bottom-24 left-0 right-0 z-50 bg-white border-t border-neutral-100 px-4 py-3 flex items-center gap-2.5 shadow-[0_-4px_16px_rgba(0,0,0,0.06)]">
           <button
             onClick={saveChanges}
             disabled={isSaving}
             className={cn(
-              'flex-1 flex items-center justify-center gap-2 h-11 rounded-xl text-sm font-bold transition-all',
+              'flex-1 flex items-center justify-center gap-2 h-11 rounded-2xl text-sm font-bold transition-all',
               isSaving
                 ? 'bg-neutral-100 text-neutral-400 cursor-not-allowed'
-                : 'bg-black text-white hover:bg-neutral-800 active:bg-neutral-900 shadow-sm',
+                : 'bg-neutral-900 text-white hover:bg-black active:bg-neutral-900 shadow-sm',
             )}
           >
             <CloudUpload size={15} />
@@ -1552,7 +1551,7 @@ export function StoreEditorShell() {
           <Link
             href={storeUrl}
             target="_blank"
-            className="flex-shrink-0 flex items-center justify-center gap-1.5 h-11 px-4 rounded-xl border border-neutral-200 text-sm font-semibold text-neutral-600 bg-white active:bg-neutral-50 transition-colors"
+            className="flex-shrink-0 flex items-center justify-center gap-1.5 h-11 px-4 rounded-2xl border border-neutral-200 text-sm font-semibold text-neutral-600 bg-white active:bg-neutral-50 transition-colors"
           >
             <ExternalLink size={13} />
             Preview

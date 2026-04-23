@@ -77,17 +77,17 @@ export function ClientStorefront({ sellerSlug }: { sellerSlug: string }) {
   // Skeleton while we read localStorage (avoids flash of stale seed data)
   if (!ready) {
     return (
-      <div className="min-h-screen bg-white">
-        <nav className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-neutral-100">
-          <div className="max-w-3xl mx-auto px-4 sm:px-6 flex items-center justify-between" style={{ height: 52 }}>
+      <div className="min-h-screen bg-[#fafafa]">
+        <nav className="sticky top-0 z-20 bg-white/80 backdrop-blur-xl">
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 flex items-center justify-between" style={{ height: 60 }}>
             <SellBopLogo size="lg" />
           </div>
         </nav>
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-24 flex flex-col gap-4 animate-pulse">
           <div className="flex items-start gap-8">
-            <div className="w-36 h-36 rounded-2xl bg-neutral-100 flex-shrink-0" />
+            <div className="w-28 h-28 rounded-3xl bg-neutral-200 flex-shrink-0" />
             <div className="flex-1 pt-2 space-y-3">
-              <div className="w-48 h-6 bg-neutral-200 rounded-full" />
+              <div className="w-48 h-7 bg-neutral-200 rounded-full" />
               <div className="w-64 h-4 bg-neutral-100 rounded-full" />
               <div className="w-full h-3 bg-neutral-100 rounded-full" />
             </div>
@@ -98,10 +98,10 @@ export function ClientStorefront({ sellerSlug }: { sellerSlug: string }) {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#fafafa]">
       {/* ── Sticky top nav ──────────────────────────────────────── */}
-      <nav className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-neutral-100">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 flex items-center justify-between" style={{ height: 52 }}>
+      <nav className="sticky top-0 z-20 bg-white/80 backdrop-blur-xl">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 flex items-center justify-between" style={{ height: 60 }}>
           <SellBopLogo size="lg" />
           <a
             href={`/store/${sellerSlug}#products`}
@@ -119,18 +119,18 @@ export function ClientStorefront({ sellerSlug }: { sellerSlug: string }) {
       <HeaderMediaBlock storefront={storefront} />
 
       {/* ── Main content ───────────────────────────────────────── */}
-      <div id="products" className="max-w-3xl mx-auto px-4 sm:px-6 pb-24">
+      <div id="products" className="max-w-3xl mx-auto px-4 sm:px-6 pb-28">
 
         {/* Featured */}
         {featured.length > 0 && storefront.sectionVisibility['featured'] !== false && (
-          <section aria-label="Featured products" className="pt-10 sm:pt-14">
-            <SectionHeading label="Featured" accent={accent} count={featured.length} />
+          <section aria-label="Featured products" className="pt-12 sm:pt-16">
+            <SectionHeading label="Featured" count={featured.length} />
             {featured.length === 1 ? (
               <div className="mt-5">
                 <HeroProductCard product={featured[0]} accent={accent} />
               </div>
             ) : (
-              <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+              <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
                 {featured.map(p => <ProductCard key={p.id} product={p} accent={accent} featured />)}
               </div>
             )}
@@ -139,9 +139,9 @@ export function ClientStorefront({ sellerSlug }: { sellerSlug: string }) {
 
         {/* All digital products */}
         {rest.length > 0 && storefront.sectionVisibility['all_products'] !== false && (
-          <section aria-label="All products" className="pt-12 sm:pt-16">
-            <SectionHeading label="All Products" accent={accent} count={rest.length} />
-            <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+          <section aria-label="All products" className="pt-14 sm:pt-18">
+            <SectionHeading label="All Products" count={rest.length} />
+            <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
               {rest.map(p => <ProductCard key={p.id} product={p} accent={accent} />)}
             </div>
           </section>
@@ -149,9 +149,9 @@ export function ClientStorefront({ sellerSlug }: { sellerSlug: string }) {
 
         {/* Clothing — Printify products */}
         {clothingProducts.length > 0 && (
-          <section aria-label="Clothing" className="pt-12 sm:pt-16">
-            <SectionHeading label="Clothing" accent={accent} count={clothingProducts.length} />
-            <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+          <section aria-label="Clothing" className="pt-14 sm:pt-18">
+            <SectionHeading label="Clothing" count={clothingProducts.length} />
+            <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
               {clothingProducts.map(p => <ClothingProductCard key={p.id} product={p} accent={accent} />)}
             </div>
           </section>
@@ -159,15 +159,15 @@ export function ClientStorefront({ sellerSlug }: { sellerSlug: string }) {
 
         {/* Empty */}
         {digitalProducts.length === 0 && clothingProducts.length === 0 && (
-          <div className="py-32 text-center">
-            <div className="text-5xl mb-4">✦</div>
+          <div className="py-36 text-center">
+            <div className="text-5xl mb-5">✦</div>
             <p className="text-neutral-400 text-sm font-medium">Products coming soon.</p>
           </div>
         )}
       </div>
 
       {/* ── Footer ─────────────────────────────────────────────── */}
-      <footer className="border-t border-neutral-100 py-10">
+      <footer className="py-14">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-neutral-400 flex items-center gap-1.5">
             Powered by <SellBopLogo size="sm" />
@@ -185,13 +185,11 @@ export function ClientStorefront({ sellerSlug }: { sellerSlug: string }) {
 }
 
 // ── Section Heading ───────────────────────────────────────────
-function SectionHeading({ label, accent, count }: { label: string; accent: string; count: number }) {
+function SectionHeading({ label, count }: { label: string; count: number }) {
   return (
     <div className="flex items-center gap-3">
-      <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ backgroundColor: accent }} />
-      <h2 className="text-sm font-bold text-black tracking-tight">{label}</h2>
+      <h2 className="text-xs font-semibold text-neutral-400 uppercase tracking-widest">{label}</h2>
       <span className="text-xs text-neutral-300 font-semibold tabular-nums">{count}</span>
-      <div className="flex-1 h-px bg-neutral-100" />
     </div>
   )
 }
@@ -213,7 +211,7 @@ function HeaderMediaBlock({ storefront }: { storefront: Storefront }) {
   if (type === 'photo' && storefront.headerPhotoUrl) {
     return (
       <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-6 pb-2">
-        <div className="rounded-2xl overflow-hidden border border-neutral-100 shadow-sm aspect-[3/1] bg-neutral-50">
+        <div className="rounded-3xl overflow-hidden aspect-[3/1] bg-neutral-100" style={{ boxShadow: 'var(--shadow-card)' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={storefront.headerPhotoUrl}
@@ -230,7 +228,7 @@ function HeaderMediaBlock({ storefront }: { storefront: Storefront }) {
     if (!ytId) return null
     return (
       <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-6 pb-2">
-        <div className="rounded-2xl overflow-hidden border border-neutral-100 shadow-sm aspect-video bg-black">
+        <div className="rounded-3xl overflow-hidden aspect-video bg-black" style={{ boxShadow: 'var(--shadow-card)' }}>
           <iframe
             src={`https://www.youtube.com/embed/${ytId}?modestbranding=1&rel=0`}
             title="Store video"
@@ -256,27 +254,25 @@ function StoreHeader({ storefront }: { storefront: Storefront }) {
 
   if (storefront.headerLayout === 'centered') {
     return (
-      <header className="border-b border-neutral-100 py-10 sm:py-16">
+      <header className="pt-14 pb-10 sm:pt-20 sm:pb-14">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 flex flex-col items-center text-center">
-          {/* Same avatar size as Side layout */}
-          <div className="flex-shrink-0 mb-6">
+          <div className="flex-shrink-0 mb-7">
             <div
-              className="w-24 h-24 sm:w-36 sm:h-36 lg:w-44 lg:h-44 rounded-2xl flex items-center justify-center text-white font-black shadow-xl"
+              className="w-28 h-28 sm:w-36 sm:h-36 lg:w-44 lg:h-44 rounded-3xl flex items-center justify-center text-white font-black shadow-2xl"
               style={{ backgroundColor: storefront.themeColor, fontSize: 52 }}
             >
               {storefront.title.charAt(0)}
             </div>
           </div>
-          {/* Same text sizes as Side layout */}
-          <h1 className="text-2xl sm:text-4xl font-black text-black tracking-tight leading-tight">{storefront.title}</h1>
+          <h1 className="text-3xl sm:text-5xl font-black text-black tracking-tight leading-tight">{storefront.title}</h1>
           {storefront.headline && (
-            <p className="text-neutral-500 text-sm sm:text-base mt-2 font-semibold leading-snug">{storefront.headline}</p>
+            <p className="text-neutral-500 text-sm sm:text-base mt-2.5 font-semibold leading-snug">{storefront.headline}</p>
           )}
           {storefront.bio && (
-            <p className="text-neutral-500 text-sm sm:text-[15px] mt-3 max-w-xl leading-relaxed">{storefront.bio}</p>
+            <p className="text-neutral-400 text-[15px] mt-4 max-w-sm leading-relaxed">{storefront.bio}</p>
           )}
           {socialLinks.length > 0 && (
-            <div className="flex items-center gap-2 mt-5 flex-wrap justify-center">
+            <div className="flex items-center gap-3 mt-6 flex-wrap justify-center">
               {socialLinks.map((l, i) => (
                 <SocialPill key={l.href} {...l} accent={storefront.themeColor} primary={i === 0} />
               ))}
@@ -289,27 +285,27 @@ function StoreHeader({ storefront }: { storefront: Storefront }) {
 
   // Default: left_avatar (Side)
   return (
-    <header className="border-b border-neutral-100 py-10 sm:py-16">
+    <header className="pt-14 pb-10 sm:pt-20 sm:pb-14">
       <div className="max-w-3xl mx-auto px-4 sm:px-6">
-        <div className="flex items-start gap-5 sm:gap-8 lg:gap-10">
+        <div className="flex items-start gap-6 sm:gap-9 lg:gap-11">
           <div className="flex-shrink-0">
             <div
-              className="w-24 h-24 sm:w-36 sm:h-36 lg:w-44 lg:h-44 rounded-2xl flex items-center justify-center text-white font-black shadow-xl"
+              className="w-28 h-28 sm:w-36 sm:h-36 lg:w-44 lg:h-44 rounded-3xl flex items-center justify-center text-white font-black shadow-2xl"
               style={{ backgroundColor: storefront.themeColor, fontSize: 52 }}
             >
               {storefront.title.charAt(0)}
             </div>
           </div>
           <div className="flex-1 min-w-0 pt-1">
-            <h1 className="text-2xl sm:text-4xl font-black text-black tracking-tight leading-tight">{storefront.title}</h1>
+            <h1 className="text-3xl sm:text-5xl font-black text-black tracking-tight leading-tight">{storefront.title}</h1>
             {storefront.headline && (
-              <p className="text-neutral-500 text-sm sm:text-base mt-2 font-semibold leading-snug">{storefront.headline}</p>
+              <p className="text-neutral-500 text-sm sm:text-base mt-2.5 font-semibold leading-snug">{storefront.headline}</p>
             )}
             {storefront.bio && (
-              <p className="text-neutral-500 text-sm sm:text-[15px] mt-3 max-w-xl leading-relaxed">{storefront.bio}</p>
+              <p className="text-neutral-400 text-[15px] mt-4 max-w-sm leading-relaxed">{storefront.bio}</p>
             )}
             {socialLinks.length > 0 && (
-              <div className="flex items-center gap-2 mt-5 flex-wrap">
+              <div className="flex items-center gap-3 mt-6 flex-wrap">
                 {socialLinks.map((l, i) => (
                   <SocialPill key={l.href} {...l} accent={storefront.themeColor} primary={i === 0} />
                 ))}
@@ -330,10 +326,10 @@ function SocialPill({ href, icon, label, fullLabel, accent, primary }: {
     <a
       href={href} target="_blank" rel="noopener noreferrer" aria-label={fullLabel}
       className={cn(
-        'flex items-center gap-1.5 h-8 px-3.5 rounded-full text-xs font-bold transition-all',
+        'flex items-center gap-2 h-10 px-5 rounded-full text-sm font-bold transition-all',
         primary
           ? 'text-white hover:opacity-90'
-          : 'border border-neutral-200 text-neutral-600 bg-white hover:border-neutral-400 hover:text-black hover:bg-neutral-50',
+          : 'border border-neutral-200 text-neutral-600 bg-white hover:border-neutral-300 hover:text-black',
       )}
       style={primary ? { backgroundColor: accent } : undefined}
     >
@@ -347,7 +343,12 @@ function SocialPill({ href, icon, label, fullLabel, accent, primary }: {
 function HeroProductCard({ product, accent }: { product: Product; accent: string }) {
   return (
     <Link href={`/p/${product.slug}`} className="group block">
-      <div className="bg-white border border-neutral-200 rounded-2xl overflow-hidden transition-all duration-200 shadow-sm hover:shadow-xl hover:-translate-y-0.5">
+      <div
+        className="bg-white rounded-[var(--radius-card)] overflow-hidden transition-all duration-200"
+        style={{ boxShadow: 'var(--shadow-card)' }}
+        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card-hover)' }}
+        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card)' }}
+      >
         <div className="sm:flex">
           <div className="aspect-square sm:w-60 sm:aspect-auto sm:h-60 relative overflow-hidden bg-neutral-50 flex-shrink-0">
             <ProductImage src={product.thumbnailUrl} alt={product.name} productType={product.productType} fill iconSize="lg" />
@@ -370,7 +371,7 @@ function HeroProductCard({ product, accent }: { product: Product; accent: string
                   <span className="text-sm text-neutral-400 line-through font-medium">{formatCurrency(product.compareAtPrice)}</span>
                 )}
               </div>
-              <span className="flex items-center gap-1.5 text-sm font-bold px-5 py-2.5 rounded-xl text-white transition-all group-hover:opacity-90" style={{ backgroundColor: accent }}>
+              <span className="flex items-center gap-1.5 text-sm font-bold px-5 py-2.5 rounded-full text-white transition-all group-hover:opacity-90" style={{ backgroundColor: accent }}>
                 {product.ctaText} <ArrowRight size={14} />
               </span>
             </div>
@@ -385,7 +386,12 @@ function HeroProductCard({ product, accent }: { product: Product; accent: string
 function ClothingProductCard({ product, accent }: { product: Product; accent: string }) {
   return (
     <Link href={`/p/${product.slug}`} className="group block h-full">
-      <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm overflow-hidden transition-all duration-200 h-full flex flex-col hover:shadow-lg hover:border-neutral-300 hover:-translate-y-1">
+      <div
+        className="bg-white rounded-[var(--radius-card)] overflow-hidden transition-all duration-200 h-full flex flex-col"
+        style={{ boxShadow: 'var(--shadow-card)' }}
+        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card-hover)' }}
+        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card)' }}
+      >
         <div className="aspect-[4/3] relative overflow-hidden bg-neutral-50 flex-shrink-0">
           {product.thumbnailUrl ? (
             <img
@@ -398,7 +404,7 @@ function ClothingProductCard({ product, accent }: { product: Product; accent: st
           )}
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/4 transition-all duration-200" />
         </div>
-        <div className="p-4 sm:p-5 flex flex-col flex-1 gap-1.5">
+        <div className="p-5 sm:p-6 flex flex-col flex-1 gap-2">
           <div className="flex items-center gap-1.5">
             <span className="text-[9px] font-black text-neutral-400 uppercase tracking-widest">Clothing</span>
             <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded bg-violet-50 text-violet-500 border border-violet-100">
@@ -412,7 +418,7 @@ function ClothingProductCard({ product, accent }: { product: Product; accent: st
           {product.variants && product.variants.length > 0 && (
             <p className="text-[10px] text-neutral-400">{product.variants.length} sizes available</p>
           )}
-          <div className="flex items-center justify-between pt-3 mt-auto border-t border-neutral-100">
+          <div className="flex items-center justify-between pt-4 mt-auto">
             <div className="flex items-baseline gap-1">
               {printifyHasPriceRange(product.variants) && (
                 <span className="text-[10px] font-semibold text-neutral-400 mr-0.5">From</span>
@@ -426,7 +432,7 @@ function ClothingProductCard({ product, accent }: { product: Product; accent: st
                 )}
               </span>
             </div>
-            <span className="text-[10px] font-bold px-3 py-1.5 rounded-lg text-white transition-all group-hover:opacity-80 flex items-center gap-1" style={{ backgroundColor: accent }}>
+            <span className="text-[10px] font-bold px-3.5 py-2 rounded-full text-white transition-all group-hover:opacity-80 flex items-center gap-1" style={{ backgroundColor: accent }}>
               {product.ctaText} <ArrowRight size={9} />
             </span>
           </div>
@@ -443,7 +449,12 @@ function ClothingProductCard({ product, accent }: { product: Product; accent: st
 function ProductCard({ product, accent, featured }: { product: Product; accent: string; featured?: boolean }) {
   return (
     <Link href={`/p/${product.slug}`} className="group block h-full">
-      <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm overflow-hidden transition-all duration-200 h-full flex flex-col hover:shadow-lg hover:border-neutral-300 hover:-translate-y-1">
+      <div
+        className="bg-white rounded-[var(--radius-card)] overflow-hidden transition-all duration-200 h-full flex flex-col"
+        style={{ boxShadow: 'var(--shadow-card)' }}
+        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card-hover)' }}
+        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card)' }}
+      >
         <div className="aspect-[4/3] relative overflow-hidden bg-neutral-50 flex-shrink-0">
           <ProductImage src={product.thumbnailUrl} alt={product.name} productType={product.productType} fill iconSize="md" />
           {featured && (
@@ -453,20 +464,20 @@ function ProductCard({ product, accent, featured }: { product: Product; accent: 
           )}
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/4 transition-all duration-200" />
         </div>
-        <div className="p-4 sm:p-5 flex flex-col flex-1 gap-1.5">
+        <div className="p-5 sm:p-6 flex flex-col flex-1 gap-2">
           <span className="text-[9px] font-black text-neutral-400 uppercase tracking-widest">{TYPE_SHORT[product.productType]}</span>
           <p className="font-bold text-black text-sm sm:text-[15px] leading-snug group-hover:opacity-70 transition-opacity">{product.name}</p>
           {product.shortDescription && (
             <p className="text-xs text-neutral-400 leading-relaxed line-clamp-2 flex-1">{product.shortDescription}</p>
           )}
-          <div className="flex items-center justify-between pt-3 mt-auto border-t border-neutral-100">
+          <div className="flex items-center justify-between pt-4 mt-auto">
             <div className="flex items-baseline gap-1.5">
               <span className="font-black text-black text-base leading-none">{formatCurrency(product.price, product.currency)}</span>
               {product.compareAtPrice && (
                 <span className="text-xs text-neutral-400 line-through">{formatCurrency(product.compareAtPrice)}</span>
               )}
             </div>
-            <span className="text-[10px] font-bold px-3 py-1.5 rounded-lg text-white transition-all group-hover:opacity-80 flex items-center gap-1" style={{ backgroundColor: accent }}>
+            <span className="text-[10px] font-bold px-3.5 py-2 rounded-full text-white transition-all group-hover:opacity-80 flex items-center gap-1" style={{ backgroundColor: accent }}>
               {product.ctaText} <ArrowRight size={9} />
             </span>
           </div>
