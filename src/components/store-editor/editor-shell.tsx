@@ -216,7 +216,7 @@ function SortableProductRow({ product, isFeatured, onToggleFeatured, onToggleHid
       </span>
 
       {/* Thumbnail */}
-      <div className="relative w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 bg-neutral-100 my-2.5 ml-1.5">
+      <div className="relative w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-neutral-100 my-3 ml-2">
         {product.thumbnailUrl && product.source === 'printify' ? (
           <img src={product.thumbnailUrl} alt={product.name} className="w-full h-full object-cover" />
         ) : (
@@ -225,7 +225,7 @@ function SortableProductRow({ product, isFeatured, onToggleFeatured, onToggleHid
       </div>
 
       {/* Info */}
-      <div className="flex-1 min-w-0 px-2.5 py-2.5">
+      <div className="flex-1 min-w-0 px-2.5 py-3">
         <p className={cn('text-xs font-bold leading-tight truncate', isHidden ? 'text-neutral-400' : 'text-black')}>
           {product.name}
         </p>
@@ -326,7 +326,7 @@ function AvailableProductRow({ product, onAddToStore, onAddToFeatured, canFeatur
   return (
     <div className="flex items-center rounded-2xl bg-neutral-50 border border-dashed border-neutral-200 hover:border-neutral-300 hover:bg-white hover:shadow-[0_1px_4px_rgba(0,0,0,0.06)] transition-all duration-150 overflow-hidden">
       {/* Thumbnail */}
-      <div className="relative w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 bg-neutral-100 my-2.5 ml-3 mr-0.5">
+      <div className="relative w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-neutral-100 my-3 ml-3 mr-0.5">
         {product.thumbnailUrl && isPrintify ? (
           <img src={product.thumbnailUrl} alt={product.name} className="w-full h-full object-cover" />
         ) : (
@@ -335,7 +335,7 @@ function AvailableProductRow({ product, onAddToStore, onAddToFeatured, canFeatur
       </div>
 
       {/* Info */}
-      <div className="flex-1 min-w-0 px-2.5 py-2.5">
+      <div className="flex-1 min-w-0 px-2.5 py-3">
         <p className="text-xs font-bold leading-tight truncate text-neutral-600">{product.name}</p>
         <div className="flex items-center gap-1 mt-1 flex-wrap">
           {isLive ? (
@@ -1480,13 +1480,13 @@ export function StoreEditorShell() {
 
       {/* ── Desktop tab bar (sm+) ──────────────────────────────── */}
       <div className="hidden sm:block bg-white border-b border-neutral-100 shrink-0">
-        <div className="flex items-center gap-1 px-4 py-2.5 overflow-x-auto scrollbar-none">
+        <div className="flex items-center gap-1 px-3 py-2 overflow-x-auto scrollbar-none">
           {TABS.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                'px-4 py-1.5 text-sm font-semibold rounded-full transition-colors whitespace-nowrap flex-shrink-0',
+                'px-3.5 py-1.5 text-[13px] font-semibold rounded-full transition-colors whitespace-nowrap flex-shrink-0',
                 activeTab === tab.id
                   ? 'bg-neutral-900 text-white'
                   : 'text-neutral-500 hover:text-neutral-800 hover:bg-neutral-100',
@@ -1497,7 +1497,7 @@ export function StoreEditorShell() {
           ))}
 
           {/* Tab description inline — right side */}
-          <p className="ml-auto text-[11px] text-neutral-400 whitespace-nowrap hidden lg:block pr-1">
+          <p className="ml-auto text-[11px] text-neutral-400 whitespace-nowrap hidden lg:block pr-2 pl-4">
             {TAB_DESCRIPTIONS[activeTab]}
           </p>
         </div>

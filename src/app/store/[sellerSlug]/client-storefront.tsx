@@ -78,11 +78,11 @@ export function ClientStorefront({ sellerSlug }: { sellerSlug: string }) {
   if (!ready) {
     return (
       <div className="min-h-screen bg-[#fafafa]">
-        <nav className="sticky top-0 z-20 bg-white/80 backdrop-blur-xl">
-          <div className="max-w-3xl mx-auto px-4 sm:px-6 flex items-center justify-between" style={{ height: 60 }}>
-            <SellBopLogo size="lg" />
-          </div>
-        </nav>
+      <nav className="sticky top-0 z-20 bg-white/85 backdrop-blur-xl shadow-[0_1px_0_0_rgba(0,0,0,0.06)]">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 flex items-center justify-between" style={{ height: 60 }}>
+          <SellBopLogo size="lg" />
+        </div>
+      </nav>
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-24 flex flex-col gap-4 animate-pulse">
           <div className="flex items-start gap-8">
             <div className="w-28 h-28 rounded-3xl bg-neutral-200 flex-shrink-0" />
@@ -100,7 +100,7 @@ export function ClientStorefront({ sellerSlug }: { sellerSlug: string }) {
   return (
     <div className="min-h-screen bg-[#fafafa]">
       {/* ── Sticky top nav ──────────────────────────────────────── */}
-      <nav className="sticky top-0 z-20 bg-white/80 backdrop-blur-xl">
+      <nav className="sticky top-0 z-20 bg-white/85 backdrop-blur-xl shadow-[0_1px_0_0_rgba(0,0,0,0.06)]">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 flex items-center justify-between" style={{ height: 60 }}>
           <SellBopLogo size="lg" />
           <a
@@ -187,9 +187,9 @@ export function ClientStorefront({ sellerSlug }: { sellerSlug: string }) {
 // ── Section Heading ───────────────────────────────────────────
 function SectionHeading({ label, count }: { label: string; count: number }) {
   return (
-    <div className="flex items-center gap-3">
-      <h2 className="text-xs font-semibold text-neutral-400 uppercase tracking-widest">{label}</h2>
-      <span className="text-xs text-neutral-300 font-semibold tabular-nums">{count}</span>
+    <div className="flex items-center gap-2.5">
+      <h2 className="text-[11px] font-semibold text-neutral-500 uppercase tracking-widest">{label}</h2>
+      <span className="text-[11px] text-neutral-400 font-medium tabular-nums">{count}</span>
     </div>
   )
 }
@@ -296,7 +296,7 @@ function StoreHeader({ storefront }: { storefront: Storefront }) {
               {storefront.title.charAt(0)}
             </div>
           </div>
-          <div className="flex-1 min-w-0 pt-1">
+          <div className="flex-1 min-w-0 pt-2">
             <h1 className="text-3xl sm:text-5xl font-black text-black tracking-tight leading-tight">{storefront.title}</h1>
             {storefront.headline && (
               <p className="text-neutral-500 text-sm sm:text-base mt-2.5 font-semibold leading-snug">{storefront.headline}</p>
@@ -371,7 +371,7 @@ function HeroProductCard({ product, accent }: { product: Product; accent: string
                   <span className="text-sm text-neutral-400 line-through font-medium">{formatCurrency(product.compareAtPrice)}</span>
                 )}
               </div>
-              <span className="flex items-center gap-1.5 text-sm font-bold px-5 py-2.5 rounded-full text-white transition-all group-hover:opacity-90" style={{ backgroundColor: accent }}>
+              <span className="flex items-center gap-2 text-sm font-semibold px-5 py-2.5 rounded-full text-white transition-all group-hover:opacity-85 shrink-0" style={{ backgroundColor: accent }}>
                 {product.ctaText} <ArrowRight size={14} />
               </span>
             </div>
@@ -404,19 +404,19 @@ function ClothingProductCard({ product, accent }: { product: Product; accent: st
           )}
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/4 transition-all duration-200" />
         </div>
-        <div className="p-5 sm:p-6 flex flex-col flex-1 gap-2">
+        <div className="p-5 sm:p-6 flex flex-col flex-1">
           <div className="flex items-center gap-1.5">
-            <span className="text-[9px] font-black text-neutral-400 uppercase tracking-widest">Clothing</span>
-            <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded bg-violet-50 text-violet-500 border border-violet-100">
+            <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">Clothing</span>
+            <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-violet-50 text-violet-500 border border-violet-100">
               <Zap size={7} /> Printify
             </span>
           </div>
-          <p className="font-bold text-black text-sm sm:text-[15px] leading-snug group-hover:opacity-70 transition-opacity">{product.name}</p>
+          <p className="font-bold text-black text-[15px] leading-snug mt-1.5 group-hover:opacity-70 transition-opacity">{product.name}</p>
           {product.shortDescription && (
-            <p className="text-xs text-neutral-400 leading-relaxed line-clamp-2 flex-1">{product.shortDescription}</p>
+            <p className="text-xs text-neutral-400 leading-relaxed line-clamp-2 flex-1 mt-1.5">{product.shortDescription}</p>
           )}
           {product.variants && product.variants.length > 0 && (
-            <p className="text-[10px] text-neutral-400">{product.variants.length} sizes available</p>
+            <p className="text-[10px] text-neutral-400 mt-1">{product.variants.length} sizes available</p>
           )}
           <div className="flex items-center justify-between pt-4 mt-auto">
             <div className="flex items-baseline gap-1">
@@ -432,11 +432,11 @@ function ClothingProductCard({ product, accent }: { product: Product; accent: st
                 )}
               </span>
             </div>
-            <span className="text-[10px] font-bold px-3.5 py-2 rounded-full text-white transition-all group-hover:opacity-80 flex items-center gap-1" style={{ backgroundColor: accent }}>
-              {product.ctaText} <ArrowRight size={9} />
+            <span className="text-xs font-semibold px-4 py-2 rounded-full text-white transition-all group-hover:opacity-85 flex items-center gap-1.5 shrink-0" style={{ backgroundColor: accent }}>
+              {product.ctaText} <ArrowRight size={11} />
             </span>
           </div>
-          <p className="text-[9px] text-neutral-300 flex items-center gap-1">
+          <p className="text-[9px] text-neutral-300 flex items-center gap-1 mt-2">
             <Shirt size={8} /> Fulfilled via Printify
           </p>
         </div>
@@ -464,11 +464,11 @@ function ProductCard({ product, accent, featured }: { product: Product; accent: 
           )}
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/4 transition-all duration-200" />
         </div>
-        <div className="p-5 sm:p-6 flex flex-col flex-1 gap-2">
-          <span className="text-[9px] font-black text-neutral-400 uppercase tracking-widest">{TYPE_SHORT[product.productType]}</span>
-          <p className="font-bold text-black text-sm sm:text-[15px] leading-snug group-hover:opacity-70 transition-opacity">{product.name}</p>
+        <div className="p-5 sm:p-6 flex flex-col flex-1">
+          <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">{TYPE_SHORT[product.productType]}</span>
+          <p className="font-bold text-black text-[15px] leading-snug mt-1.5 group-hover:opacity-70 transition-opacity">{product.name}</p>
           {product.shortDescription && (
-            <p className="text-xs text-neutral-400 leading-relaxed line-clamp-2 flex-1">{product.shortDescription}</p>
+            <p className="text-xs text-neutral-400 leading-relaxed line-clamp-2 flex-1 mt-1.5">{product.shortDescription}</p>
           )}
           <div className="flex items-center justify-between pt-4 mt-auto">
             <div className="flex items-baseline gap-1.5">
@@ -477,8 +477,8 @@ function ProductCard({ product, accent, featured }: { product: Product; accent: 
                 <span className="text-xs text-neutral-400 line-through">{formatCurrency(product.compareAtPrice)}</span>
               )}
             </div>
-            <span className="text-[10px] font-bold px-3.5 py-2 rounded-full text-white transition-all group-hover:opacity-80 flex items-center gap-1" style={{ backgroundColor: accent }}>
-              {product.ctaText} <ArrowRight size={9} />
+            <span className="text-xs font-semibold px-4 py-2 rounded-full text-white transition-all group-hover:opacity-85 flex items-center gap-1.5 shrink-0" style={{ backgroundColor: accent }}>
+              {product.ctaText} <ArrowRight size={11} />
             </span>
           </div>
         </div>

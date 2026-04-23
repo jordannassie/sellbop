@@ -66,13 +66,13 @@ function NavLinks({ pathname, onNavigate }: { pathname: string; onNavigate?: () 
             href={href}
             onClick={onNavigate}
             className={cn(
-              'flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-colors',
+              'flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-colors',
               active
                 ? 'bg-neutral-900 text-white font-medium'
-                : 'text-neutral-500 hover:text-black hover:bg-neutral-50',
+                : 'text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100',
             )}
           >
-            <Icon size={15} />
+            <Icon size={16} />
             {label}
           </Link>
         )
@@ -97,14 +97,14 @@ function MobileNavLinks({ pathname, onNavigate }: { pathname: string; onNavigate
                   key={href}
                   href={href}
                   onClick={onNavigate}
-                  className={cn(
-                    'flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-colors',
-                    active
-                      ? 'bg-neutral-900 text-white font-medium'
-                      : 'text-neutral-500 hover:text-black hover:bg-neutral-50',
-                  )}
+            className={cn(
+              'flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-colors',
+              active
+                ? 'bg-neutral-900 text-white font-medium'
+                : 'text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100',
+            )}
                 >
-                  <Icon size={15} />
+                  <Icon size={16} />
                   {label}
                 </Link>
               )
@@ -128,19 +128,19 @@ export function DashboardSidebar() {
   }
 
   const userBlock = session && (
-    <div className="px-5 py-3 border-b border-neutral-100">
-      <p className="text-xs font-medium text-neutral-700 truncate">{session.name}</p>
-      <p className="text-xs text-neutral-400 truncate">{session.email}</p>
+    <div className="px-5 py-4 border-b border-neutral-100">
+      <p className="text-xs font-semibold text-neutral-800 truncate">{session.name}</p>
+      <p className="text-xs text-neutral-400 truncate mt-0.5">{session.email}</p>
     </div>
   )
 
   const logoutBtn = (
-    <div className="px-3 py-4 border-t border-neutral-100">
+    <div className="px-3 py-3 border-t border-neutral-100">
       <button
         onClick={handleLogout}
-        className="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-neutral-600 hover:text-red-600 hover:bg-red-50 transition-colors border border-neutral-200 hover:border-red-200"
+        className="flex items-center gap-2.5 w-full px-3 py-2 rounded-xl text-sm font-medium text-neutral-500 hover:text-red-600 hover:bg-red-50 transition-colors"
       >
-        <LogOut size={14} /> Log out
+        <LogOut size={15} /> Log out
       </button>
     </div>
   )
@@ -209,7 +209,7 @@ export function DashboardSidebar() {
           <span className="text-[10px] bg-neutral-100 text-neutral-500 px-1.5 py-0.5 rounded font-medium">DEMO</span>
         </div>
         {userBlock}
-        <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto">
+        <nav className="flex-1 px-2 py-4 space-y-0.5 overflow-y-auto">
           <NavLinks pathname={pathname} />
         </nav>
         {logoutBtn}
