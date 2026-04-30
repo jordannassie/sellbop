@@ -1,9 +1,6 @@
 [build]
-  # Strip macOS-specific native binaries BEFORE Next.js builds so they are
-  # never traced into the server-function bundle. Netlify runs on Linux;
-  # these darwin .node/.dylib files crash the lambda on deploy.
+  # Remove macOS-only sharp binaries before the Linux build runs on Netlify.
   command = "rm -rf node_modules/@img/sharp-darwin-arm64 node_modules/@img/sharp-libvips-darwin-arm64 node_modules/@img/sharp-darwin-x64 node_modules/@img/sharp-libvips-darwin-x64 && npm run build"
   publish = ".next"
 
-[[plugins]]
-  package = "@netlify/plugin-nextjs"
+# Keep runtime secrets in Netlify environment variables, not in this file.

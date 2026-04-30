@@ -1,64 +1,49 @@
 'use client'
+
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
+import {
+  BarChart3,
+  CreditCard,
+  DollarSign,
+  FileDown,
+  Globe,
+  Layers,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  Package,
+  Repeat2,
+  Settings,
+  Shirt,
+  ShoppingBag,
+  Users,
+  X,
+} from 'lucide-react'
 import { useAuth } from '@/context/auth-context'
 import { cn } from '@/lib/utils'
-import {
-  LayoutDashboard, Package, ShoppingBag, Repeat2, Users,
-  BarChart3, Tag, DollarSign, FileDown, Globe, CreditCard,
-  Settings, LogOut, Menu, X, Layers, Shirt,
-} from 'lucide-react'
 import { SellBopLogo } from '@/components/ui/sellbop-logo'
 
-const NAV = [
-  { href: '/dashboard',               label: 'Overview',       icon: LayoutDashboard, exact: true },
-  { href: '/dashboard/storefront',    label: 'Store Profile',  icon: Globe },
-  { href: '/dashboard/store-editor',  label: 'Store Editor',   icon: Layers },
-  { href: '/dashboard/products',      label: 'Products',       icon: Package },
-  { href: '/dashboard/printify',      label: 'Clothing',       icon: Shirt },
-  { href: '/dashboard/orders',        label: 'Orders',         icon: ShoppingBag },
-  { href: '/dashboard/subscriptions', label: 'Subscriptions',  icon: Repeat2 },
-  { href: '/dashboard/customers',     label: 'Customers',      icon: Users },
-  { href: '/dashboard/analytics',     label: 'Analytics',      icon: BarChart3 },
-  { href: '/dashboard/discounts',     label: 'Discounts',      icon: Tag },
-  { href: '/dashboard/payouts',       label: 'Payouts',        icon: DollarSign },
-  { href: '/dashboard/files',         label: 'Files',          icon: FileDown },
-  { href: '/dashboard/billing',       label: 'Billing',        icon: CreditCard },
-  { href: '/dashboard/settings',      label: 'Settings',       icon: Settings },
-]
+interface NavItem {
+  href: string
+  label: string
+  icon: React.ComponentType<{ size?: number }>
+  exact?: boolean
+}
 
-const MOBILE_NAV_GROUPS = [
-  {
-    label: 'Main',
-    items: [
-      { href: '/dashboard',               label: 'Overview',       icon: LayoutDashboard, exact: true },
-      { href: '/dashboard/storefront',    label: 'Store Profile',  icon: Globe },
-      { href: '/dashboard/store-editor',  label: 'Store Editor',   icon: Layers },
-      { href: '/dashboard/products',      label: 'Products',       icon: Package },
-      { href: '/dashboard/orders',        label: 'Orders',         icon: ShoppingBag },
-    ],
-  },
-  {
-    label: 'Business',
-    items: [
-      { href: '/dashboard/printify',      label: 'Clothing',       icon: Shirt },
-      { href: '/dashboard/subscriptions', label: 'Subscriptions',  icon: Repeat2 },
-      { href: '/dashboard/customers',     label: 'Customers',      icon: Users },
-      { href: '/dashboard/analytics',     label: 'Analytics',      icon: BarChart3 },
-      { href: '/dashboard/discounts',     label: 'Discounts',      icon: Tag },
-      { href: '/dashboard/payouts',       label: 'Payouts',        icon: DollarSign },
-      { href: '/dashboard/files',         label: 'Files',          icon: FileDown },
-      { href: '/dashboard/billing',       label: 'Billing',        icon: CreditCard },
-      { href: '/dashboard/settings',      label: 'Settings',       icon: Settings },
-    ],
-  },
-]
-
-function NavLinks({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
+function DashboardSidebarLinks({
+  items,
+  pathname,
+  onNavigate,
+}: {
+  items: NavItem[]
+  pathname: string
+  onNavigate?: () => void
+}) {
   return (
     <>
-      {NAV.map(({ href, label, icon: Icon, exact }) => {
+      {items.map(({ href, label, icon: Icon, exact }) => {
         const active = exact ? pathname === href : pathname.startsWith(href)
         return (
           <Link
@@ -66,10 +51,10 @@ function NavLinks({ pathname, onNavigate }: { pathname: string; onNavigate?: () 
             href={href}
             onClick={onNavigate}
             className={cn(
-              'flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-colors',
+              'flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm transition-colors',
               active
-                ? 'bg-neutral-900 text-white font-medium'
-                : 'text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100',
+                ? 'bg-neutral-900 font-medium text-white'
+                : 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900',
             )}
           >
             <Icon size={16} />
@@ -81,46 +66,31 @@ function NavLinks({ pathname, onNavigate }: { pathname: string; onNavigate?: () 
   )
 }
 
-function MobileNavLinks({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
-  return (
-    <div className="space-y-5">
-      {MOBILE_NAV_GROUPS.map(group => (
-        <div key={group.label}>
-          <p className="px-3 mb-1.5 text-[10px] font-bold text-neutral-400 uppercase tracking-widest">
-            {group.label}
-          </p>
-          <div className="space-y-0.5">
-            {group.items.map(({ href, label, icon: Icon, exact }) => {
-              const active = exact ? pathname === href : pathname.startsWith(href)
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  onClick={onNavigate}
-            className={cn(
-              'flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-colors',
-              active
-                ? 'bg-neutral-900 text-white font-medium'
-                : 'text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100',
-            )}
-                >
-                  <Icon size={16} />
-                  {label}
-                </Link>
-              )
-            })}
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
 export function DashboardSidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const { signOut, session } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
+
+  const nav: NavItem[] = [
+    { href: '/dashboard', label: 'Overview', icon: LayoutDashboard, exact: true },
+    { href: '/dashboard/purchases', label: 'Purchases', icon: ShoppingBag },
+    { href: '/dashboard/storefront', label: 'Store Profile', icon: Globe },
+    { href: '/dashboard/store-editor', label: 'Store Editor', icon: Layers },
+    { href: '/dashboard/products', label: 'Products', icon: Package },
+    { href: '/dashboard/printify', label: 'Clothing', icon: Shirt },
+    { href: '/dashboard/orders', label: 'Orders', icon: ShoppingBag },
+    { href: '/dashboard/subscriptions', label: 'Subscriptions', icon: Repeat2 },
+    { href: '/dashboard/customers', label: 'Customers', icon: Users },
+    { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart3 },
+    { href: '/dashboard/discounts', label: 'Discounts', icon: FileDown },
+    { href: '/dashboard/payouts', label: 'Payouts', icon: DollarSign },
+    { href: '/dashboard/files', label: 'Files', icon: FileDown },
+    { href: '/dashboard/billing', label: 'Billing', icon: CreditCard },
+    { href: '/dashboard/settings', label: 'Settings', icon: Settings },
+  ]
+
+  const navItems = nav
 
   async function handleLogout() {
     await signOut()
@@ -128,17 +98,19 @@ export function DashboardSidebar() {
   }
 
   const userBlock = session && (
-    <div className="px-5 py-4 border-b border-neutral-100">
-      <p className="text-xs font-semibold text-neutral-800 truncate">{session.name}</p>
-      <p className="text-xs text-neutral-400 truncate mt-0.5">{session.email}</p>
+    <div className="border-b border-neutral-100 px-5 py-4">
+      <p className="truncate text-xs font-semibold text-neutral-800">
+        {session.name ?? session.email.split('@')[0]}
+      </p>
+      <p className="mt-0.5 truncate text-xs text-neutral-400">{session.email}</p>
     </div>
   )
 
   const logoutBtn = (
-    <div className="px-3 py-3 border-t border-neutral-100">
+    <div className="border-t border-neutral-100 px-3 py-3">
       <button
         onClick={handleLogout}
-        className="flex items-center gap-2.5 w-full px-3 py-2 rounded-xl text-sm font-medium text-neutral-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+        className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium text-neutral-500 transition-colors hover:bg-red-50 hover:text-red-600"
       >
         <LogOut size={15} /> Log out
       </button>
@@ -147,28 +119,23 @@ export function DashboardSidebar() {
 
   return (
     <>
-      {/* ── Mobile top bar ───────────────────────────────────────────── */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 z-40 h-14 bg-white border-b border-neutral-100 flex items-center justify-between px-4">
+      <header className="fixed left-0 right-0 top-0 z-40 flex h-14 items-center justify-between border-b border-neutral-100 bg-white px-4 lg:hidden">
         <div className="flex items-center gap-2">
           <SellBopLogo size="lg" />
-          <span className="text-[10px] bg-neutral-100 text-neutral-500 px-1.5 py-0.5 rounded font-medium">DEMO</span>
         </div>
-        {/* Right-side header actions */}
         <div className="flex items-center gap-2">
-          {/* User avatar — links to profile, always visible when signed in */}
           {session && (
             <Link
-              href="/dashboard/storefront"
+              href="/dashboard"
               title="Your profile"
-              className="w-8 h-8 rounded-lg bg-neutral-900 text-white flex items-center justify-center text-xs font-bold shrink-0 hover:bg-neutral-700 transition-colors"
+              className="flex h-8 w-8 items-center justify-center rounded-lg bg-neutral-900 text-xs font-bold text-white transition-colors hover:bg-neutral-700"
             >
-              {session.name.charAt(0).toUpperCase()}
+              {(session.name?.charAt(0) ?? session.email.charAt(0)).toUpperCase()}
             </Link>
           )}
-          {/* Hamburger */}
           <button
-            onClick={() => setMobileOpen(o => !o)}
-            className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-neutral-100 transition-colors"
+            onClick={() => setMobileOpen((current) => !current)}
+            className="flex h-9 w-9 items-center justify-center rounded-lg transition-colors hover:bg-neutral-100"
             aria-label="Toggle navigation menu"
             aria-expanded={mobileOpen}
           >
@@ -177,40 +144,40 @@ export function DashboardSidebar() {
         </div>
       </header>
 
-      {/* ── Mobile overlay (click-to-close backdrop) ─────────────────── */}
       <div
         className={cn(
-          'lg:hidden fixed inset-0 z-30 bg-black/25 transition-opacity duration-200',
-          mobileOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none',
+          'fixed inset-0 z-30 bg-black/25 transition-opacity duration-200 lg:hidden',
+          mobileOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0',
         )}
         onClick={() => setMobileOpen(false)}
         aria-hidden="true"
       />
 
-      {/* ── Mobile drawer (slides in from right) ─────────────────────── */}
       <aside
         className={cn(
-          'lg:hidden fixed top-14 right-0 bottom-0 w-72 bg-white border-l border-neutral-100 flex flex-col shadow-xl overflow-y-auto z-40 transition-transform duration-200 ease-out',
-          mobileOpen ? 'translate-x-0' : 'translate-x-full',
+          'fixed bottom-0 right-0 top-14 z-40 flex w-72 translate-x-full flex-col overflow-y-auto border-l border-neutral-100 bg-white shadow-xl transition-transform duration-200 ease-out lg:hidden',
+          mobileOpen && 'translate-x-0',
         )}
         aria-hidden={!mobileOpen}
       >
         {userBlock}
-        <nav className="flex-1 px-2 py-4 overflow-y-auto">
-          <MobileNavLinks pathname={pathname} onNavigate={() => setMobileOpen(false)} />
+        <nav className="flex-1 overflow-y-auto px-2 py-4">
+          <DashboardSidebarLinks
+            items={navItems}
+            pathname={pathname}
+            onNavigate={() => setMobileOpen(false)}
+          />
         </nav>
         {logoutBtn}
       </aside>
 
-      {/* ── Desktop sidebar (always visible on lg+) ───────────────────── */}
-      <aside className="hidden lg:flex w-56 shrink-0 border-r border-neutral-100 bg-white min-h-screen flex-col">
-        <div className="h-14 flex items-center px-5 border-b border-neutral-100 gap-2">
+      <aside className="hidden min-h-screen w-56 shrink-0 flex-col border-r border-neutral-100 bg-white lg:flex">
+        <div className="flex h-14 items-center gap-2 border-b border-neutral-100 px-5">
           <SellBopLogo size="lg" />
-          <span className="text-[10px] bg-neutral-100 text-neutral-500 px-1.5 py-0.5 rounded font-medium">DEMO</span>
         </div>
         {userBlock}
-        <nav className="flex-1 px-2 py-4 space-y-0.5 overflow-y-auto">
-          <NavLinks pathname={pathname} />
+        <nav className="flex-1 space-y-0.5 overflow-y-auto px-2 py-4">
+          <DashboardSidebarLinks items={navItems} pathname={pathname} />
         </nav>
         {logoutBtn}
       </aside>

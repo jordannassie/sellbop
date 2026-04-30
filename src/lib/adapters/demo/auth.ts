@@ -4,7 +4,7 @@ import { DEMO_USERS, DEMO_CREDENTIALS } from '@/lib/demo-data/seed'
 const SESSION_KEY = 'sellbop_demo_session'
 
 export class DemoAuthAdapter implements IAuthProvider {
-  async signIn(email: string, password: string): Promise<AuthSession> {
+  async signIn(email: string, password: string): Promise<void> {
     const expectedPassword = DEMO_CREDENTIALS[email.toLowerCase()]
     if (!expectedPassword || expectedPassword !== password) {
       throw new Error('Invalid email or password.')
@@ -17,30 +17,29 @@ export class DemoAuthAdapter implements IAuthProvider {
       userId: user.id,
       email: user.email,
       name: user.name,
-      role: user.role,
+      avatarUrl: null,
     }
 
     if (typeof window !== 'undefined') {
       localStorage.setItem(SESSION_KEY, JSON.stringify(session))
     }
-
-    return session
   }
 
-  async signUp(email: string, _password: string, name: string): Promise<AuthSession> {
-    // In demo mode, new signups create a temporary buyer session
+  async signUp(email: string, _password: string, name: string): Promise<void> {
     const session: AuthSession = {
       userId: `demo-user-${Date.now()}`,
       email,
       name,
-      role: 'buyer',
+      avatarUrl: null,
     }
 
     if (typeof window !== 'undefined') {
       localStorage.setItem(SESSION_KEY, JSON.stringify(session))
     }
+  }
 
-    return session
+  async signInWithGoogle(): Promise<void> {
+    throw new Error('Demo Google login is no longer supported. Configure Supabase auth instead.')
   }
 
   async signOut(): Promise<void> {

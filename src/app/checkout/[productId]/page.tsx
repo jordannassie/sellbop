@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createCheckoutSession, applyCoupon, completeCheckout } from '@/lib/services/checkout'
-import { demoProductRepo } from '@/lib/adapters/demo/repositories'
 import { formatCurrency } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -45,6 +44,29 @@ export default function CheckoutPage({ params }: { params: Promise<{ productId: 
     if (!session || !name.trim() || !email.trim()) return
     setCompleting(true)
     try {
+      const res = await fetch('/api/checkout/digital', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: session.productId,
+          buyerName: name.trim(),
+          buyerEmail: email.trim(),
+          subtotalCents: session.subtotal,
+          totalCents: session.total,
+        }),
+      })
+
+      const data = (await res.json()) as { mode?: string; orderId?: string; error?: string }
+
+      if (!res.ok) {
+        throw new Error(data.error ?? 'Checkout failed.')
+      }
+
+      if (data.mode === 'live' && data.orderId) {
+        router.push(`/checkout/success?orderId=${data.orderId}&productId=${session.productId}`)
+        return
+      }
+
       const order = await completeCheckout(session, email.trim(), name.trim())
       router.push(`/checkout/success?orderId=${order.id}&productId=${session.productId}`)
     } catch (err) {
@@ -104,7 +126,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ productId: 
 
               {/* Demo payment notice */}
               <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-xs text-blue-700">
-                <strong>Demo mode:</strong> No real payment will be processed. Click &quot;Complete Purchase&quot; to simulate a successful checkout.
+                <strong>Checkout note:</strong> Live Supabase orders are created when this product exists in the marketplace database. Otherwise, SellBop falls back to the demo checkout flow for local testing.
               </div>
 
               <Button type="submit" size="lg" loading={completing} className="w-full">

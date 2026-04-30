@@ -177,6 +177,43 @@ export default function MerchCheckoutPage({ params }: { params: Promise<{ produc
 
     try {
       const address = buildAddress()
+      const liveCheckoutRes = await fetch('/api/checkout/merch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: product.id,
+          buyerName: name.trim(),
+          buyerEmail: email.trim(),
+          buyerPhone: phone.trim() || undefined,
+          subtotalCents,
+          shippingCents,
+          totalCents,
+          shippingAddress: {
+            address1: address.address1,
+            address2: address.address2,
+            city: address.city,
+            region: address.region,
+            zip: address.zip,
+            country: address.country,
+          },
+        }),
+      })
+
+      const liveCheckoutData = (await liveCheckoutRes.json()) as {
+        mode?: string
+        orderId?: string
+        error?: string
+      }
+
+      if (!liveCheckoutRes.ok) {
+        throw new Error(liveCheckoutData.error ?? 'Checkout failed.')
+      }
+
+      if (liveCheckoutData.mode === 'live' && liveCheckoutData.orderId) {
+        router.push(`/checkout/success?orderId=${liveCheckoutData.orderId}&productId=${product.id}`)
+        return
+      }
+
       const sellerId = DEMO_SELLER_PROFILE.id
 
       // 1. Create/update customer
@@ -444,7 +481,7 @@ export default function MerchCheckoutPage({ params }: { params: Promise<{ produc
 
               {/* Demo notice */}
               <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-xs text-blue-700">
-                <strong>Demo mode:</strong> No real payment will be processed. Click &quot;Complete Purchase&quot; to simulate a successful checkout and Printify order.
+                <strong>Checkout note:</strong> Live Supabase orders are created when this product exists in the marketplace database. Otherwise, SellBop falls back to the demo checkout flow for local testing.
               </div>
 
               {/* Submit */}
