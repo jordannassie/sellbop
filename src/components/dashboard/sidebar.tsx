@@ -4,24 +4,18 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
-  BarChart3,
   BookOpen,
-  CreditCard,
-  DollarSign,
-  FileDown,
-  Globe,
-  Layers,
   LayoutDashboard,
   LogOut,
   Menu,
   Package,
-  Repeat2,
+  ShoppingCart,
   Settings,
-  Shirt,
-  ShoppingBag,
-  Sparkles,
-  Users,
+  Store,
+  Globe,
   X,
+  Plus,
+  ChevronDown,
 } from 'lucide-react'
 import { useAuth } from '@/context/auth-context'
 import { cn } from '@/lib/utils'
@@ -32,41 +26,92 @@ interface NavItem {
   label: string
   icon: React.ComponentType<{ size?: number }>
   exact?: boolean
+  /** Additional path prefixes that make this item "active" */
+  activePaths?: string[]
 }
 
-function DashboardSidebarLinks({
-  items,
+// ── Active check ────────────────────────────────────────────────────────────
+
+function isNavActive(item: NavItem, pathname: string): boolean {
+  if (item.exact) return pathname === item.href
+  if (pathname.startsWith(item.href)) return true
+  return (item.activePaths ?? []).some(p => pathname.startsWith(p))
+}
+
+// ── Desktop nav link ────────────────────────────────────────────────────────
+
+function NavLink({
+  item,
   pathname,
-  onNavigate,
+  onClick,
 }: {
-  items: NavItem[]
+  item: NavItem
   pathname: string
-  onNavigate?: () => void
+  onClick?: () => void
 }) {
+  const active = isNavActive(item, pathname)
   return (
-    <>
-      {items.map(({ href, label, icon: Icon, exact }) => {
-        const active = exact ? pathname === href : pathname.startsWith(href)
-        return (
-          <Link
-            key={href}
-            href={href}
-            onClick={onNavigate}
-            className={cn(
-              'flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm transition-colors',
-              active
-                ? 'bg-neutral-900 font-medium text-white'
-                : 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900',
-            )}
-          >
-            <Icon size={16} />
-            {label}
-          </Link>
-        )
-      })}
-    </>
+    <Link
+      href={item.href}
+      onClick={onClick}
+      className={cn(
+        'flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm transition-colors',
+        active
+          ? 'bg-neutral-900 font-medium text-white'
+          : 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900',
+      )}
+    >
+      <item.icon size={16} />
+      {item.label}
+    </Link>
   )
 }
+
+// ── Create menu ─────────────────────────────────────────────────────────────
+
+const CREATE_OPTIONS = [
+  { label: 'Digital Download', href: '/dashboard/products/new?type=digital_download' },
+  { label: 'Subscription / Membership', href: '/dashboard/products/new?type=subscription' },
+  { label: 'Coaching / Service', href: '/dashboard/products/new?type=service_offer' },
+  { label: 'Create with AI', href: '/dashboard/products/ai-builder' },
+  { label: 'Physical Product', href: '/dashboard/printify' },
+]
+
+function CreateMenu({ onNavigate }: { onNavigate?: () => void }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="relative px-2 pt-3 pb-2">
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="flex w-full items-center justify-between gap-2 rounded-xl bg-black px-4 py-2.5 text-sm font-semibold text-white hover:bg-neutral-800 transition-colors"
+      >
+        <span className="flex items-center gap-2">
+          <Plus size={15} /> Create
+        </span>
+        <ChevronDown size={13} className={cn('transition-transform', open && 'rotate-180')} />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="absolute left-2 right-2 top-full z-20 mt-1 rounded-xl border border-neutral-100 bg-white py-1.5 shadow-lg">
+            {CREATE_OPTIONS.map(opt => (
+              <Link
+                key={opt.href}
+                href={opt.href}
+                onClick={() => { setOpen(false); onNavigate?.() }}
+                className="flex items-center px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 hover:text-black transition-colors"
+              >
+                {opt.label}
+              </Link>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+// ── Main sidebar ─────────────────────────────────────────────────────────────
 
 export function DashboardSidebar() {
   const pathname = usePathname()
@@ -75,25 +120,53 @@ export function DashboardSidebar() {
   const [mobileOpen, setMobileOpen] = useState(false)
 
   const nav: NavItem[] = [
-    { href: '/dashboard', label: 'Overview', icon: LayoutDashboard, exact: true },
-    { href: '/dashboard/library', label: 'Library', icon: BookOpen },
-    { href: '/dashboard/storefront', label: 'Store Profile', icon: Globe },
-    { href: '/dashboard/store-editor', label: 'Store Editor', icon: Layers },
-    { href: '/dashboard/products', label: 'Products', icon: Package },
-    { href: '/dashboard/products/ai-builder', label: 'AI Builder', icon: Sparkles },
-    { href: '/dashboard/printify', label: 'Clothing', icon: Shirt },
-    { href: '/dashboard/orders', label: 'Orders', icon: ShoppingBag },
-    { href: '/dashboard/subscriptions', label: 'Subscriptions', icon: Repeat2 },
-    { href: '/dashboard/customers', label: 'Customers', icon: Users },
-    { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart3 },
-    { href: '/dashboard/discounts', label: 'Discounts', icon: FileDown },
-    { href: '/dashboard/payouts', label: 'Payouts', icon: DollarSign },
-    { href: '/dashboard/files', label: 'Files', icon: FileDown },
-    { href: '/dashboard/billing', label: 'Billing', icon: CreditCard },
-    { href: '/dashboard/settings', label: 'Settings', icon: Settings },
+    {
+      href: '/dashboard',
+      label: 'Overview',
+      icon: LayoutDashboard,
+      exact: true,
+    },
+    {
+      href: '/dashboard/store',
+      label: 'Store',
+      icon: Store,
+      activePaths: ['/dashboard/storefront', '/dashboard/store-editor'],
+    },
+    {
+      href: '/dashboard/products',
+      label: 'Products',
+      icon: Package,
+    },
+    {
+      href: '/dashboard/sales',
+      label: 'Sales',
+      icon: ShoppingCart,
+      activePaths: [
+        '/dashboard/orders',
+        '/dashboard/subscriptions',
+        '/dashboard/customers',
+        '/dashboard/analytics',
+        '/dashboard/discounts',
+        '/dashboard/payouts',
+      ],
+    },
+    {
+      href: '/dashboard/library',
+      label: 'Library',
+      icon: BookOpen,
+    },
+    {
+      href: '/marketplace',
+      label: 'Marketplace',
+      icon: Globe,
+    },
+    {
+      href: '/dashboard/settings',
+      label: 'Settings',
+      icon: Settings,
+      activePaths: ['/dashboard/billing'],
+    },
   ]
-
-  const navItems = nav
 
   async function handleLogout() {
     await signOut()
@@ -120,26 +193,32 @@ export function DashboardSidebar() {
     </div>
   )
 
+  const navLinks = (onNavigate?: () => void) => (
+    <nav className="flex-1 space-y-0.5 overflow-y-auto px-2 py-3">
+      {nav.map(item => (
+        <NavLink key={item.href} item={item} pathname={pathname} onClick={onNavigate} />
+      ))}
+    </nav>
+  )
+
   return (
     <>
+      {/* ── Mobile top header ─────────────────────────────────── */}
       <header className="fixed left-0 right-0 top-0 z-40 flex h-14 items-center justify-between border-b border-neutral-100 bg-white px-4 lg:hidden">
-        <div className="flex items-center gap-2">
-          <SellBopLogo size="lg" />
-        </div>
+        <SellBopLogo size="lg" />
         <div className="flex items-center gap-2">
           {session && (
             <Link
               href="/dashboard"
-              title="Your profile"
-              className="flex h-8 w-8 items-center justify-center rounded-lg bg-neutral-900 text-xs font-bold text-white transition-colors hover:bg-neutral-700"
+              className="flex h-8 w-8 items-center justify-center rounded-lg bg-neutral-900 text-xs font-bold text-white"
             >
               {(session.name?.charAt(0) ?? session.email.charAt(0)).toUpperCase()}
             </Link>
           )}
           <button
-            onClick={() => setMobileOpen((current) => !current)}
+            onClick={() => setMobileOpen(v => !v)}
             className="flex h-9 w-9 items-center justify-center rounded-lg transition-colors hover:bg-neutral-100"
-            aria-label="Toggle navigation menu"
+            aria-label="Toggle navigation"
             aria-expanded={mobileOpen}
           >
             {mobileOpen ? <X size={18} /> : <Menu size={18} />}
@@ -147,6 +226,7 @@ export function DashboardSidebar() {
         </div>
       </header>
 
+      {/* ── Mobile overlay ─────────────────────────────────────── */}
       <div
         className={cn(
           'fixed inset-0 z-30 bg-black/25 transition-opacity duration-200 lg:hidden',
@@ -156,6 +236,7 @@ export function DashboardSidebar() {
         aria-hidden="true"
       />
 
+      {/* ── Mobile slide-in drawer ─────────────────────────────── */}
       <aside
         className={cn(
           'fixed bottom-0 right-0 top-14 z-40 flex w-72 translate-x-full flex-col overflow-y-auto border-l border-neutral-100 bg-white shadow-xl transition-transform duration-200 ease-out lg:hidden',
@@ -164,24 +245,19 @@ export function DashboardSidebar() {
         aria-hidden={!mobileOpen}
       >
         {userBlock}
-        <nav className="flex-1 overflow-y-auto px-2 py-4">
-          <DashboardSidebarLinks
-            items={navItems}
-            pathname={pathname}
-            onNavigate={() => setMobileOpen(false)}
-          />
-        </nav>
+        <CreateMenu onNavigate={() => setMobileOpen(false)} />
+        {navLinks(() => setMobileOpen(false))}
         {logoutBtn}
       </aside>
 
+      {/* ── Desktop sidebar ─────────────────────────────────────── */}
       <aside className="hidden min-h-screen w-56 shrink-0 flex-col border-r border-neutral-100 bg-white lg:flex">
-        <div className="flex h-14 items-center gap-2 border-b border-neutral-100 px-5">
+        <div className="flex h-14 items-center border-b border-neutral-100 px-5">
           <SellBopLogo size="lg" />
         </div>
         {userBlock}
-        <nav className="flex-1 space-y-0.5 overflow-y-auto px-2 py-4">
-          <DashboardSidebarLinks items={navItems} pathname={pathname} />
-        </nav>
+        <CreateMenu />
+        {navLinks()}
         {logoutBtn}
       </aside>
     </>

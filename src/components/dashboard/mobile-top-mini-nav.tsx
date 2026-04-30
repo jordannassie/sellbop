@@ -1,73 +1,75 @@
 'use client'
 import { Suspense } from 'react'
 import Link from 'next/link'
-import { usePathname, useSearchParams } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import {
-  Package, Plus, Smartphone, Palette, User,
-  LayoutDashboard, ShoppingBag, Users, BarChart3, Settings,
+  Globe, Layers, Package, Plus, Smartphone, User,
+  ShoppingBag, Users, BarChart3, Tag, DollarSign,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-// ─────────────────────────────────────────────────────────────
-// Contextual submenu — always visible above the bottom nav on
-// ALL signed-in mobile pages. Items switch based on route.
-// ─────────────────────────────────────────────────────────────
-
-const EDITOR_ITEMS = [
-  { id: 'products', href: '/dashboard/products',                     label: 'Products',    Icon: Package },
-  { id: 'add',      href: '/dashboard/products/new',                 label: 'Add Product', Icon: Plus },
-  { id: 'preview',  href: '/dashboard/store-editor?section=preview', label: 'Preview',     Icon: Smartphone },
-  { id: 'design',   href: '/dashboard/store-editor?section=design',  label: 'Design',      Icon: Palette },
-  { id: 'profile',  href: '/dashboard/storefront',                   label: 'Profile',     Icon: User },
-]
-
-const GENERAL_ITEMS = [
-  { id: 'overview',  href: '/dashboard',            label: 'Overview',  Icon: LayoutDashboard, exact: true },
-  { id: 'orders',    href: '/dashboard/orders',     label: 'Orders',    Icon: ShoppingBag },
-  { id: 'customers', href: '/dashboard/customers',  label: 'Customers', Icon: Users },
-  { id: 'analytics', href: '/dashboard/analytics',  label: 'Analytics', Icon: BarChart3 },
-  { id: 'settings',  href: '/dashboard/settings',   label: 'Settings',  Icon: Settings },
-]
+// ── Context-sensitive submenu above the bottom nav ────────────────────────────
+// Adapts based on which section the user is in.
 
 function MobileContextualSubmenuInner() {
-  const pathname     = usePathname()
-  const searchParams = useSearchParams()
-  const section      = searchParams.get('section')
+  const pathname = usePathname()
 
-  const isEditorContext =
-    pathname.startsWith('/dashboard/store-editor') ||
-    pathname === '/dashboard/products' ||
-    pathname === '/dashboard/products/new' ||
-    /^\/dashboard\/products\/.+$/.test(pathname)
+  const isStoreContext =
+    pathname.startsWith('/dashboard/store') ||
+    pathname.startsWith('/dashboard/storefront') ||
+    pathname.startsWith('/dashboard/store-editor')
 
-  const items = isEditorContext ? EDITOR_ITEMS : GENERAL_ITEMS
+  const isProductsContext =
+    pathname.startsWith('/dashboard/products') ||
+    pathname.startsWith('/dashboard/printify')
 
-  function isActive(id: string, href: string, exact?: boolean): boolean {
-    if (isEditorContext) {
-      switch (id) {
-        case 'products':
-          return (
-            pathname === '/dashboard/products' ||
-            (/^\/dashboard\/products\/.+$/.test(pathname) &&
-              pathname !== '/dashboard/products/new')
-          )
-        case 'add':     return pathname === '/dashboard/products/new'
-        case 'preview': return pathname.startsWith('/dashboard/store-editor') && section === 'preview'
-        case 'design':  return pathname.startsWith('/dashboard/store-editor') && section === 'design'
-        case 'profile': return pathname === '/dashboard/storefront'
-        default:        return false
-      }
-    }
-    // General items — match by pathname
-    return exact ? pathname === href : pathname.startsWith(href)
-  }
+  const isSalesContext =
+    pathname.startsWith('/dashboard/sales') ||
+    pathname.startsWith('/dashboard/orders') ||
+    pathname.startsWith('/dashboard/subscriptions') ||
+    pathname.startsWith('/dashboard/customers') ||
+    pathname.startsWith('/dashboard/analytics') ||
+    pathname.startsWith('/dashboard/discounts') ||
+    pathname.startsWith('/dashboard/payouts')
+
+  const storeItems = [
+    { id: 'profile', href: '/dashboard/storefront', label: 'Profile', Icon: User },
+    { id: 'editor', href: '/dashboard/store-editor', label: 'Editor', Icon: Layers },
+    { id: 'preview', href: '/dashboard/store-editor?section=preview', label: 'Preview', Icon: Smartphone },
+    { id: 'marketplace', href: '/marketplace', label: 'Marketplace', Icon: Globe },
+  ]
+
+  const productItems = [
+    { id: 'all', href: '/dashboard/products', label: 'All', Icon: Package },
+    { id: 'new', href: '/dashboard/products/new', label: 'New', Icon: Plus },
+    { id: 'ai', href: '/dashboard/products/ai-builder', label: 'AI Builder', Icon: Layers },
+    { id: 'clothing', href: '/dashboard/printify', label: 'Clothing', Icon: Package },
+  ]
+
+  const salesItems = [
+    { id: 'orders', href: '/dashboard/orders', label: 'Orders', Icon: ShoppingBag },
+    { id: 'customers', href: '/dashboard/customers', label: 'Customers', Icon: Users },
+    { id: 'analytics', href: '/dashboard/analytics', label: 'Analytics', Icon: BarChart3 },
+    { id: 'discounts', href: '/dashboard/discounts', label: 'Discounts', Icon: Tag },
+    { id: 'payouts', href: '/dashboard/payouts', label: 'Payouts', Icon: DollarSign },
+  ]
+
+  const items = isStoreContext
+    ? storeItems
+    : isProductsContext
+      ? productItems
+      : isSalesContext
+        ? salesItems
+        : null
+
+  if (!items) return null
 
   return (
-    // Fixed just above the main bottom nav (bottom-14 = 56px = nav height)
-    <div className="sm:hidden fixed bottom-14 left-0 right-0 z-30 bg-white border-t border-neutral-100 h-10 flex items-center px-2 gap-1 overflow-x-auto scrollbar-none">
-      {items.map(({ id, href, label, Icon, ...rest }) => {
-        const exact = 'exact' in rest ? (rest as { exact?: boolean }).exact : undefined
-        const active = isActive(id, href, exact)
+    <div className="sm:hidden fixed bottom-14 left-0 right-0 z-30 bg-white border-t border-neutral-100 h-10 flex items-center px-2 gap-1 overflow-x-auto">
+      {items.map(({ id, href, label, Icon }) => {
+        const active = href.includes('?')
+          ? pathname.startsWith(href.split('?')[0]!)
+          : pathname === href || pathname.startsWith(href + '/')
         return (
           <Link
             key={id}
@@ -87,10 +89,6 @@ function MobileContextualSubmenuInner() {
     </div>
   )
 }
-
-// ─────────────────────────────────────────────────────────────
-// Public export — Suspense for useSearchParams
-// ─────────────────────────────────────────────────────────────
 
 export function MobileTopMiniNav() {
   return (

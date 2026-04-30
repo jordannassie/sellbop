@@ -50,17 +50,18 @@ const CTA_OPTIONS = [
   { value: 'Get the Bundle', label: 'Get the Bundle' },
 ]
 
-type HubTab = 'overview' | 'edit' | 'files' | 'updates' | 'customers' | 'coupons' | 'reviews' | 'analytics'
+// ── Grouped tabs (5 sections) ─────────────────────────────────────────────────
+type HubTab = 'overview' | 'content' | 'customers' | 'growth' | 'settings'
+type ContentSub = 'edit' | 'files' | 'updates'
+type CustomersSub = 'customers' | 'reviews'
+type GrowthSub = 'coupons' | 'affiliates'
 
 const HUB_TABS: { key: HubTab; label: string; icon: React.ComponentType<{ size?: number }> }[] = [
   { key: 'overview', label: 'Overview', icon: LayoutDashboard },
-  { key: 'edit', label: 'Edit', icon: Pencil },
-  { key: 'files', label: 'Files', icon: FileText },
-  { key: 'updates', label: 'Updates', icon: Rss },
+  { key: 'content', label: 'Content', icon: Pencil },
   { key: 'customers', label: 'Customers', icon: Users },
-  { key: 'coupons', label: 'Coupons', icon: Tag },
-  { key: 'reviews', label: 'Reviews', icon: Star },
-  { key: 'analytics', label: 'Analytics', icon: BarChart3 },
+  { key: 'growth', label: 'Growth', icon: BarChart3 },
+  { key: 'settings', label: 'Settings', icon: Tag },
 ]
 
 // ── Types for local state ─────────────────────────────────────────────────────
@@ -121,6 +122,35 @@ function TabBar({ tab, onChange }: { tab: HubTab; onChange: (t: HubTab) => void 
           )}
         >
           <Icon size={13} />
+          {label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function SubTabBar<T extends string>({
+  items,
+  active,
+  onChange,
+}: {
+  items: { key: T; label: string }[]
+  active: T
+  onChange: (t: T) => void
+}) {
+  return (
+    <div className="flex items-center gap-1 mb-5 border-b border-neutral-100 pb-0">
+      {items.map(({ key, label }) => (
+        <button
+          key={key}
+          onClick={() => onChange(key)}
+          className={cn(
+            'px-3 py-2 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap',
+            active === key
+              ? 'border-neutral-900 text-black'
+              : 'border-transparent text-neutral-400 hover:text-black',
+          )}
+        >
           {label}
         </button>
       ))}
@@ -202,10 +232,10 @@ function OverviewTab({ product, onTabChange }: { product: Product; onTabChange: 
                 </Button>
               </Link>
             )}
-            <Button size="sm" variant="ghost" onClick={() => onTabChange('edit')}>
+            <Button size="sm" variant="ghost" onClick={() => onTabChange('content')}>
               <Pencil size={13} /> Edit Product
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => onTabChange('analytics')}>
+            <Button size="sm" variant="ghost" onClick={() => onTabChange('growth')}>
               <BarChart3 size={13} /> Analytics
             </Button>
           </div>
@@ -1280,6 +1310,9 @@ function ProductHubForm({ params }: { params: Promise<{ id: string }> }) {
   const fromEditor = searchParams.get('from') === 'store-editor'
   const [product, setProduct] = useState<Product | null>(null)
   const [tab, setTab] = useState<HubTab>('overview')
+  const [contentSub, setContentSub] = useState<ContentSub>('edit')
+  const [customersSub, setCustomersSub] = useState<CustomersSub>('customers')
+  const [growthSub, setGrowthSub] = useState<GrowthSub>('coupons')
 
   useEffect(() => {
     params.then(({ id }) => {
@@ -1332,35 +1365,128 @@ function ProductHubForm({ params }: { params: Promise<{ id: string }> }) {
         </p>
       </div>
 
-      {/* Tab navigation */}
+      {/* Primary tab navigation */}
       <TabBar tab={tab} onChange={setTab} />
 
       {/* Tab content */}
       <div className="mt-6">
+        {/* ── Overview ─────────────────────────────────────────── */}
         {tab === 'overview' && (
-          <OverviewTab product={product} onTabChange={setTab} />
-        )}
-        {tab === 'edit' && (
-          <EditTab
-            product={product}
-            fromEditor={fromEditor}
-            onSaved={() => {
-              demoProductRepo.findById(product.id).then(p => { if (p) setProduct(p) })
-            }}
-            onDeleted={() => {}}
-          />
-        )}
-        {tab === 'files' && <FilesTab productSlug={product.slug} />}
-        {tab === 'updates' && <UpdatesTab productSlug={product.slug} />}
-        {tab === 'customers' && <CustomersTab product={product} />}
-        {tab === 'coupons' && <CouponsTab />}
-        {tab === 'reviews' && (
           <div className="space-y-8">
-            <ReviewsTab productSlug={product.slug} />
-            <AffiliateSection product={product} />
+            <OverviewTab product={product} onTabChange={setTab} />
+            <AnalyticsTab product={product} />
           </div>
         )}
-        {tab === 'analytics' && <AnalyticsTab product={product} />}
+
+        {/* ── Content: Edit | Files | Updates ──────────────────── */}
+        {tab === 'content' && (
+          <div>
+            <SubTabBar
+              items={[
+                { key: 'edit' as ContentSub, label: 'Edit' },
+                { key: 'files' as ContentSub, label: 'Files' },
+                { key: 'updates' as ContentSub, label: 'Updates' },
+              ]}
+              active={contentSub}
+              onChange={setContentSub}
+            />
+            {contentSub === 'edit' && (
+              <EditTab
+                product={product}
+                fromEditor={fromEditor}
+                onSaved={() => {
+                  demoProductRepo.findById(product.id).then(p => { if (p) setProduct(p) })
+                }}
+                onDeleted={() => {}}
+              />
+            )}
+            {contentSub === 'files' && <FilesTab productSlug={product.slug} />}
+            {contentSub === 'updates' && <UpdatesTab productSlug={product.slug} />}
+          </div>
+        )}
+
+        {/* ── Customers: Customers | Reviews ────────────────────── */}
+        {tab === 'customers' && (
+          <div>
+            <SubTabBar
+              items={[
+                { key: 'customers' as CustomersSub, label: 'Customers' },
+                { key: 'reviews' as CustomersSub, label: 'Reviews' },
+              ]}
+              active={customersSub}
+              onChange={setCustomersSub}
+            />
+            {customersSub === 'customers' && <CustomersTab product={product} />}
+            {customersSub === 'reviews' && <ReviewsTab productSlug={product.slug} />}
+          </div>
+        )}
+
+        {/* ── Growth: Coupons | Affiliates ──────────────────────── */}
+        {tab === 'growth' && (
+          <div>
+            <SubTabBar
+              items={[
+                { key: 'coupons' as GrowthSub, label: 'Coupons' },
+                { key: 'affiliates' as GrowthSub, label: 'Affiliates' },
+              ]}
+              active={growthSub}
+              onChange={setGrowthSub}
+            />
+            {growthSub === 'coupons' && <CouponsTab />}
+            {growthSub === 'affiliates' && <AffiliateSection product={product} />}
+          </div>
+        )}
+
+        {/* ── Settings ─────────────────────────────────────────── */}
+        {tab === 'settings' && (
+          <div className="space-y-4">
+            <Card>
+              <CardHeader><CardTitle>Product URL</CardTitle></CardHeader>
+              <CardContent className="space-y-2">
+                <div className="flex items-center gap-2 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2.5">
+                  <Link2 size={13} className="text-neutral-400 shrink-0" />
+                  <code className="flex-1 text-xs text-neutral-600 truncate">/p/{product.slug}</code>
+                  <Link href={`/p/${product.slug}`} target="_blank">
+                    <Button size="xs" variant="ghost"><ExternalLink size={11} /> View</Button>
+                  </Link>
+                </div>
+                <p className="text-xs text-neutral-500">
+                  Change the slug in the <button onClick={() => { setTab('content'); setContentSub('edit') }} className="underline hover:text-black">Edit tab</button>.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader><CardTitle>Visibility & Status</CardTitle></CardHeader>
+              <CardContent className="divide-y divide-neutral-50">
+                <div className="py-3 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-neutral-900">Status</p>
+                    <p className="text-xs text-neutral-500">{product.status === 'published' ? 'Live — visible to buyers' : 'Draft — not publicly visible'}</p>
+                  </div>
+                  <Badge variant={product.status === 'published' ? 'success' : 'neutral'}>
+                    {product.status === 'published' ? 'Live' : 'Draft'}
+                  </Badge>
+                </div>
+                <div className="py-3">
+                  <p className="text-xs text-neutral-500">
+                    Change published status in the <button onClick={() => { setTab('content'); setContentSub('edit') }} className="underline hover:text-black">Edit tab</button>.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader><CardTitle>Marketplace</CardTitle></CardHeader>
+              <CardContent>
+                <p className="text-sm text-neutral-500">
+                  Marketplace visibility and badges can be configured in the{' '}
+                  <button onClick={() => { setTab('content'); setContentSub('edit') }} className="underline hover:text-black">Edit tab</button>.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   )
