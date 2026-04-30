@@ -159,7 +159,7 @@ function AuthForm() {
               </div>
               <input
                 type="password"
-                placeholder={mode === 'signup' ? 'At least 8 characters' : 'Enter your password'}
+                placeholder={mode === 'signup' ? 'At least 6 characters' : 'Enter your password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -167,7 +167,7 @@ function AuthForm() {
                 onFocus={() => setPwdReadOnly(false)}
                 onClick={() => setPwdReadOnly(false)}
                 autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
-                minLength={mode === 'signup' ? 8 : undefined}
+                minLength={mode === 'signup' ? 6 : undefined}
                 className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-black"
               />
             </div>
