@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import { ProductImage } from '@/components/ui/product-image'
 import { MissionSection } from '@/components/marketing/mission-section'
 import { AIPromptBar } from '@/components/marketing/ai-prompt-bar'
+import { RotatingWord } from '@/components/marketing/rotating-word'
 import {
   ArrowRight,
   BookOpen,
@@ -35,11 +36,12 @@ export default function HomePage() {
         </div>
 
         {/* Headline */}
-        <h1 className="text-5xl sm:text-7xl font-bold text-black tracking-tight leading-[1.1] mb-5">
-          Start your store<br />with AI.
+        <h1 className="text-5xl sm:text-7xl font-bold text-black tracking-tight leading-[1.15] mb-5">
+          <RotatingWord />.<br />
+          Start your store with AI.
         </h1>
         <p className="text-lg sm:text-xl text-neutral-500 max-w-lg mx-auto mb-10 leading-relaxed">
-          Tell SellBop what you want to sell. We&apos;ll help create your store, product page, pricing, FAQ, checkout copy, and launch plan.
+          Tell SellBop what you want to sell. We&apos;ll help build your store, product page, pricing, FAQ, checkout copy, and launch plan.
         </p>
 
         {/* CTA buttons */}
