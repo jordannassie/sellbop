@@ -227,16 +227,16 @@ export default function HomePage() {
           </p>
           <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight leading-tight mb-4">
             Join beta and pay{' '}
-            <span className="text-green-400">$0 platform fees</span>
+            <span className="text-green-400">$0 SellBop platform fees</span>
           </h2>
           <p className="text-neutral-400 text-base leading-relaxed mb-8 max-w-md mx-auto">
-            Be one of the first creators on SellBop. Launch early, pay $0 platform fees, and help shape what we build next.
+            Be one of the first creators on SellBop. $0 SellBop platform fees during beta. Standard Stripe/payment processing fees still apply.
           </p>
 
           {/* Benefit pills */}
           <div className="flex flex-wrap justify-center gap-2.5 mb-8">
             {[
-              { Icon: Tag, label: '$0 platform fees during beta' },
+              { Icon: Tag, label: '$0 SellBop platform fees during beta' },
               { Icon: Users2, label: 'Founder badge' },
               { Icon: ThumbsUp, label: 'Vote on features' },
               { Icon: Bell, label: 'Help shape SellBop' },

@@ -5,11 +5,11 @@ import { HERO_FACEPILE_PHOTOS } from '@/lib/demo-avatars'
 
 // No Founder badge — practical creator benefits only
 const BENEFITS = [
-  '$0 platform fees during beta',
+  '$0 SellBop platform fees during beta',
+  'Standard Stripe/payment processing fees apply',
   'Early access to new features',
   'Community access',
   'Vote on what gets built next',
-  'Priority product updates',
 ]
 
 const PROMO_PHOTO = 'https://qsvmgzdaashfsavmfjuz.supabase.co/storage/v1/object/public/SELL/images/0_3.jpg'
@@ -66,7 +66,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
               {/* Subheadline */}
               <p className="text-neutral-400 text-sm leading-relaxed mb-6">
-                Be one of the first creators on SellBop. Launch early, pay $0 platform fees during beta, and help shape what we build next.
+                Be one of the first creators on SellBop. Launch early, pay $0 SellBop platform fees during beta, and help shape what we build next. Standard Stripe/payment processing fees still apply.
               </p>
 
               {/* Benefits — no Founder badge */}

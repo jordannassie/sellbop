@@ -4,13 +4,14 @@ import { Check, ArrowRight, Zap } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Pricing — SellBop',
-  description: 'No monthly fees. No hidden charges. Pay $0 platform fees during beta.',
+  description: 'No monthly fees. No hidden charges. $0 SellBop platform fees during beta. Standard Stripe/payment processing fees still apply.',
 }
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
 const BETA_BULLETS = [
-  '$0 platform fees during beta',
+  '$0 SellBop platform fees during beta',
+  'Standard Stripe/payment processing fees still apply',
   'Early access to new features',
   'Community access',
   'Vote on what we build next',
@@ -30,12 +31,12 @@ const MARKETPLACE_BENEFITS = [
 
 const FAQ = [
   {
-    q: 'Is SellBop really $0 during beta?',
-    a: 'Yes. During beta, platform fees are waived for early creators in the Founder Creators Program.',
+    q: 'Is SellBop really $0 platform fees during beta?',
+    a: 'Yes. SellBop platform fees are waived during beta for early creators in the Founder Creators Program. Standard Stripe/payment processing fees still apply separately.',
   },
   {
     q: 'What happens after beta ends?',
-    a: 'Standard platform pricing will apply after beta. Current standard pricing is shown above for transparency.',
+    a: 'Standard SellBop platform pricing will apply after beta. Current standard pricing is shown above for transparency.',
   },
   {
     q: 'Are there monthly subscription fees?',
@@ -43,15 +44,15 @@ const FAQ = [
   },
   {
     q: 'Do I still pay payment processing fees?',
-    a: 'Payment processing fees may still apply separately depending on the payment provider.',
+    a: 'Yes. Standard Stripe/payment processing fees still apply to every transaction. SellBop does not collect these fees — they go to the payment processor.',
   },
   {
     q: 'Does the beta apply to both direct sales and marketplace sales?',
-    a: 'Yes. During beta, platform fees are waived across both direct and marketplace sales.',
+    a: 'Yes. During beta, SellBop platform fees are waived across both direct and marketplace sales. Payment processing fees still apply.',
   },
   {
     q: 'Why join during beta?',
-    a: 'You get early access, $0 platform fees, community access, and the chance to help shape what SellBop builds next.',
+    a: 'You get early access, $0 SellBop platform fees, community access, and the chance to help shape what SellBop builds next.',
   },
 ]
 
@@ -68,9 +69,9 @@ export default function PricingPage() {
           No hidden fees.<br className="hidden sm:block" /> No monthly charges.
         </h1>
         <p className="text-neutral-500 text-base sm:text-lg max-w-xl mx-auto mb-3">
-          Start free and pay $0 platform fees during beta.
+          $0 SellBop platform fees during beta. Standard Stripe/payment processing fees still apply.
         </p>
-        <p className="text-sm text-neutral-400">Standard pricing begins after beta ends.</p>
+        <p className="text-sm text-neutral-400">Standard SellBop pricing begins after beta ends.</p>
       </section>
 
       {/* ── Beta callout band ─────────────────────────────────────────────── */}
@@ -83,10 +84,10 @@ export default function PricingPage() {
             </p>
           </div>
           <h2 className="text-3xl sm:text-4xl font-black leading-tight mb-4">
-            $0 platform fees<br className="hidden sm:block" /> during beta
+            $0 SellBop platform fees<br className="hidden sm:block" /> during beta
           </h2>
           <p className="text-neutral-400 text-sm sm:text-base leading-relaxed mb-8 max-w-lg">
-            Join early, launch your store, and help shape the platform while SellBop is in beta.
+            Join early, launch your store, and help shape the platform while SellBop is in beta. Standard Stripe/payment processing fees still apply.
           </p>
 
           <ul className="space-y-3 mb-10">
@@ -132,7 +133,7 @@ export default function PricingPage() {
               {/* Beta price */}
               <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-1.5 mb-4">
                 <Zap size={12} className="text-emerald-600" />
-                <span className="text-sm font-bold text-emerald-700">$0 in beta</span>
+                <span className="text-sm font-bold text-emerald-700">$0 SellBop fees in beta</span>
               </div>
 
               <p className="text-sm text-neutral-500 leading-relaxed mb-5">
@@ -149,7 +150,7 @@ export default function PricingPage() {
 
               <Link href="/signup" className="block mt-6">
                 <button className="w-full flex items-center justify-center gap-2 bg-black text-white text-sm font-semibold py-2.5 rounded-xl hover:bg-neutral-800 transition-colors">
-                  Start selling free <ArrowRight size={13} />
+                  Join the Beta <ArrowRight size={13} />
                 </button>
               </Link>
             </div>
@@ -169,7 +170,7 @@ export default function PricingPage() {
               {/* Beta price */}
               <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-1.5 mb-4">
                 <Zap size={12} className="text-emerald-600" />
-                <span className="text-sm font-bold text-emerald-700">$0 in beta</span>
+                <span className="text-sm font-bold text-emerald-700">$0 SellBop fees in beta</span>
               </div>
 
               <p className="text-sm text-neutral-500 leading-relaxed mb-5">
@@ -186,7 +187,7 @@ export default function PricingPage() {
 
               <Link href="/signup" className="block mt-6">
                 <button className="w-full flex items-center justify-center gap-2 bg-black text-white text-sm font-semibold py-2.5 rounded-xl hover:bg-neutral-800 transition-colors">
-                  Start selling free <ArrowRight size={13} />
+                  Join the Beta <ArrowRight size={13} />
                 </button>
               </Link>
             </div>
@@ -198,7 +199,7 @@ export default function PricingPage() {
       <section className="px-4 pt-6 pb-14 sm:pb-16">
         <div className="max-w-3xl mx-auto text-center">
           <p className="text-xs text-neutral-400">
-            During beta, platform fees are waived. Standard pricing applies after beta ends.
+            During beta, SellBop platform fees are waived. Standard Stripe/payment processing fees still apply. Standard SellBop pricing begins after beta ends.
           </p>
         </div>
       </section>

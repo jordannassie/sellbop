@@ -126,7 +126,7 @@ const SEED_POSTS: Post[] = [
   {
     id: 5, category: 'Announcements', pinned: true,
     title: 'Founder Creators Program is live — apply now',
-    body: '$0 platform fees during beta for early creators. Join the program, get the Founder badge on your profile, and help shape what we build next. Limited founding spots available.',
+    body: '$0 SellBop platform fees during beta for early creators. Standard Stripe/payment processing fees still apply. Join the program, get the Founder badge on your profile, and help shape what we build next. Limited founding spots available.',
     upvotes: 156, comments: 42, author: 'SellBop', time: '2d ago',
   },
   {
@@ -771,7 +771,7 @@ function Sidebar({
         </div>
         <h3 className="text-sm font-bold text-white mb-2">Founder Creators Program</h3>
         <p className="text-xs text-zinc-500 leading-relaxed mb-3">
-          $0 platform fees during beta. Get your Founder badge and help shape the roadmap.
+          $0 SellBop platform fees during beta. Standard Stripe/payment processing fees still apply. Get your Founder badge and help shape the roadmap.
         </p>
         {/* Facepile under description */}
         <div className="flex items-center gap-2.5 mb-4">
@@ -779,7 +779,7 @@ function Sidebar({
           <p className="text-[11px] text-zinc-500">Founders already inside</p>
         </div>
         <div className="space-y-1.5 mb-4">
-          {['$0 platform fees', 'Founder badge', 'Vote on features'].map(b => (
+          {['$0 SellBop platform fees in beta', 'Founder badge', 'Vote on features'].map(b => (
             <div key={b} className="flex items-center gap-2 text-xs text-zinc-400">
               <Check size={10} className="text-green-400 flex-shrink-0" />
               {b}
