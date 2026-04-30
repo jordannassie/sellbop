@@ -1,10 +1,7 @@
 import type { Metadata } from 'next'
-import { Geist } from 'next/font/google'
 import './globals.css'
 import { AuthProvider } from '@/context/auth-context'
 import { Toaster } from 'sonner'
-
-const geist = Geist({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'SellBop.com — Sell anything in minutes',
@@ -13,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={geist.className}>
+    <html lang="en">
       <body className="bg-white text-neutral-900 antialiased">
         <AuthProvider>
           {children}

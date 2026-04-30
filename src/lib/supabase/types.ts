@@ -1,24 +1,39 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// Supabase database type definitions
-//
-// These are manually maintained until `supabase gen types typescript` is wired
-// into the CI pipeline. They mirror the schema in:
-//   supabase/migrations/001_initial_schema.sql
-//
-// HOW TO REGENERATE (once Supabase CLI is set up):
-//   npx supabase gen types typescript --project-id <your-project-id> \
-//     --schema public > src/lib/supabase/types.ts
-// ─────────────────────────────────────────────────────────────────────────────
-
-export type Json = string | number | boolean | null | { [key: string]: Json } | Json[]
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
 
 export interface Database {
   public: {
     Tables: {
+      profiles: {
+        Row: {
+          user_id: string
+          email: string
+          full_name: string | null
+          avatar_url: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          user_id: string
+          email: string
+          full_name?: string | null
+          avatar_url?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['profiles']['Insert']>
+        Relationships: []
+      }
+
       stores: {
         Row: {
           id: string
-          user_id: string
+          owner_user_id: string
           slug: string
           name: string
           headline: string | null
@@ -30,7 +45,7 @@ export interface Database {
         }
         Insert: {
           id?: string
-          user_id: string
+          owner_user_id: string
           slug: string
           name: string
           headline?: string | null
@@ -41,6 +56,7 @@ export interface Database {
           updated_at?: string
         }
         Update: Partial<Database['public']['Tables']['stores']['Insert']>
+        Relationships: []
       }
 
       products: {
@@ -83,6 +99,7 @@ export interface Database {
           updated_at?: string
         }
         Update: Partial<Database['public']['Tables']['products']['Insert']>
+        Relationships: []
       }
 
       product_variants: {
@@ -109,6 +126,7 @@ export interface Database {
           created_at?: string
         }
         Update: Partial<Database['public']['Tables']['product_variants']['Insert']>
+        Relationships: []
       }
 
       store_product_visibility: {
@@ -131,12 +149,15 @@ export interface Database {
           created_at?: string
         }
         Update: Partial<Database['public']['Tables']['store_product_visibility']['Insert']>
+        Relationships: []
       }
 
       orders: {
         Row: {
           id: string
           store_id: string
+          buyer_user_id: string | null
+          seller_user_id: string | null
           buyer_name: string | null
           buyer_email: string | null
           buyer_phone: string | null
@@ -159,6 +180,8 @@ export interface Database {
         Insert: {
           id?: string
           store_id: string
+          buyer_user_id?: string | null
+          seller_user_id?: string | null
           buyer_name?: string | null
           buyer_email?: string | null
           buyer_phone?: string | null
@@ -179,6 +202,7 @@ export interface Database {
           updated_at?: string
         }
         Update: Partial<Database['public']['Tables']['orders']['Insert']>
+        Relationships: []
       }
 
       order_items: {
@@ -205,6 +229,65 @@ export interface Database {
           created_at?: string
         }
         Update: Partial<Database['public']['Tables']['order_items']['Insert']>
+        Relationships: []
+      }
+
+      purchases: {
+        Row: {
+          id: string
+          buyer_user_id: string | null
+          buyer_email: string
+          product_id: string
+          order_id: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          buyer_user_id?: string | null
+          buyer_email: string
+          product_id: string
+          order_id: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['purchases']['Insert']>
+        Relationships: []
+      }
+
+      subscriptions: {
+        Row: {
+          id: string
+          user_id: string | null
+          customer_email: string
+          product_id: string
+          status: string
+          current_period_start: string | null
+          current_period_end: string | null
+          cancel_at_period_end: boolean
+          canceled_at: string | null
+          amount_cents: number | null
+          currency: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          customer_email: string
+          product_id: string
+          status?: string
+          current_period_start?: string | null
+          current_period_end?: string | null
+          cancel_at_period_end?: boolean
+          canceled_at?: string | null
+          amount_cents?: number | null
+          currency?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['subscriptions']['Insert']>
+        Relationships: []
       }
 
       printify_connections: {
@@ -227,6 +310,7 @@ export interface Database {
           updated_at?: string
         }
         Update: Partial<Database['public']['Tables']['printify_connections']['Insert']>
+        Relationships: []
       }
 
       fulfillment_orders: {
@@ -251,6 +335,7 @@ export interface Database {
           updated_at?: string
         }
         Update: Partial<Database['public']['Tables']['fulfillment_orders']['Insert']>
+        Relationships: []
       }
     }
     Views: Record<string, never>

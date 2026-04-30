@@ -44,6 +44,10 @@ export const env = {
     apiToken: process.env.PRINTIFY_API_TOKEN ?? null,
     shopId:   process.env.PRINTIFY_SHOP_ID   ?? null,
   },
+
+  admin: {
+    allowedEmails: process.env.ADMIN_ALLOWED_EMAILS ?? '',
+  },
 } as const
 
 // ── Guard helpers ─────────────────────────────────────────────────────────────
@@ -56,4 +60,11 @@ export function isSupabaseConfigured(): boolean {
 /** Returns true when the service role key is also present (server-side admin). */
 export function isSupabaseAdminConfigured(): boolean {
   return !!(env.supabase.url && env.supabase.serviceRoleKey)
+}
+
+export function getAllowedAdminEmails(): string[] {
+  return env.admin.allowedEmails
+    .split(',')
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean)
 }

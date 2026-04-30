@@ -1,7 +1,4 @@
-'use client'
-
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { LogOut } from 'lucide-react'
 import { AdminSidebar, type AdminSection } from '@/components/admin/admin-sidebar'
 import { AdminOverview } from '@/components/admin/overview'
@@ -9,51 +6,71 @@ import { UsersSection, SellersSection, BuyersSection, ProductsSection } from '@/
 import { OrdersSection } from '@/components/admin/orders-section'
 import { SubscriptionsSection } from '@/components/admin/subscriptions-section'
 import { SupportSection } from '@/components/admin/support-section'
+import { requireAdminUser } from '@/lib/admin/access'
+import { getAdminOrders, getAdminOverviewData, getAdminSubscriptions, getAdminUsers } from '@/lib/admin/users'
 
-function SectionContent({ section }: { section: AdminSection }) {
-  switch (section) {
-    case 'overview':      return <AdminOverview />
-    case 'users':         return <UsersSection />
-    case 'sellers':       return <SellersSection />
-    case 'buyers':        return <BuyersSection />
-    case 'products':      return <ProductsSection />
-    case 'orders':        return <OrdersSection />
-    case 'subscriptions': return <SubscriptionsSection />
-    case 'support':       return <SupportSection />
-  }
+function isAdminSection(value: string | undefined): value is AdminSection {
+  return value === 'overview'
+    || value === 'users'
+    || value === 'sellers'
+    || value === 'buyers'
+    || value === 'products'
+    || value === 'orders'
+    || value === 'subscriptions'
+    || value === 'support'
 }
 
-export default function AdminPage() {
-  const [section, setSection] = useState<AdminSection>('overview')
-  const router = useRouter()
+export default async function AdminPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ section?: string }>
+}) {
+  await requireAdminUser()
+
+  const params = await searchParams
+  const section: AdminSection = isAdminSection(params.section) ? params.section : 'overview'
+
+  const usersPromise = getAdminUsers()
+  const overviewPromise = getAdminOverviewData()
+  const ordersPromise = getAdminOrders()
+  const subscriptionsPromise = getAdminSubscriptions()
+
+  const [users, overview, orders, subscriptions] = await Promise.all([
+    usersPromise,
+    overviewPromise,
+    ordersPromise,
+    subscriptionsPromise,
+  ])
 
   return (
     <div className="flex h-screen overflow-hidden bg-neutral-50">
-      <AdminSidebar active={section} onChange={setSection} />
+      <AdminSidebar active={section} />
 
       <main className="flex-1 overflow-y-auto">
-        {/* Top bar */}
-        <div className="sticky top-0 z-10 bg-white border-b border-neutral-200 px-8 py-3 flex items-center justify-between">
-          <p className="text-xs text-neutral-400 font-medium capitalize">
-            Admin <span className="text-neutral-300 mx-1">·</span> {section}
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-neutral-200 bg-white px-8 py-3">
+          <p className="text-xs font-medium capitalize text-neutral-400">
+            Admin <span className="mx-1 text-neutral-300">·</span> {section}
           </p>
           <div className="flex items-center gap-3">
-            <span className="text-[10px] font-semibold text-neutral-500 bg-neutral-100 border border-neutral-200 px-2 py-0.5 rounded uppercase tracking-wider">
+            <span className="rounded bg-neutral-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-neutral-500">
               Internal
             </span>
-            <button
-              onClick={() => router.push('/')}
-              className="flex items-center gap-1.5 text-xs text-neutral-500 hover:text-black font-medium transition-colors"
-            >
+            <Link href="/" className="flex items-center gap-1.5 text-xs font-medium text-neutral-500 transition-colors hover:text-black">
               <LogOut size={13} />
               Exit
-            </button>
+            </Link>
           </div>
         </div>
 
-        {/* Section content — support uses full width / height */}
-        <div className={section === 'support' ? 'p-8 pb-0' : 'p-8 max-w-6xl'}>
-          <SectionContent section={section} />
+        <div className={section === 'support' ? 'p-8 pb-0' : 'max-w-6xl p-8'}>
+          {section === 'overview' && <AdminOverview data={overview} />}
+          {section === 'users' && <UsersSection users={users} />}
+          {section === 'sellers' && <SellersSection users={users} />}
+          {section === 'buyers' && <BuyersSection users={users} />}
+          {section === 'products' && <ProductsSection />}
+          {section === 'orders' && <OrdersSection orders={orders} />}
+          {section === 'subscriptions' && <SubscriptionsSection subscriptions={subscriptions} />}
+          {section === 'support' && <SupportSection />}
         </div>
       </main>
     </div>
