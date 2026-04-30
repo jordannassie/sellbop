@@ -40,6 +40,8 @@ export interface Database {
           bio: string | null
           avatar_url: string | null
           header_layout: string | null
+          banner_url: string | null
+          layout_mode: string | null
           created_at: string
           updated_at: string
         }
@@ -52,6 +54,8 @@ export interface Database {
           bio?: string | null
           avatar_url?: string | null
           header_layout?: string | null
+          banner_url?: string | null
+          layout_mode?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -76,6 +80,12 @@ export interface Database {
           external_product_id: string | null
           fulfillment_provider: string | null
           is_live: boolean
+          marketplace_visible: boolean | null
+          marketplace_badge: string | null
+          marketplace_excerpt: string | null
+          cover_image_url: string | null
+          checkout_copy: string | null
+          access_message: string | null
           created_at: string
           updated_at: string
         }
@@ -95,6 +105,12 @@ export interface Database {
           external_product_id?: string | null
           fulfillment_provider?: string | null
           is_live?: boolean
+          marketplace_visible?: boolean | null
+          marketplace_badge?: string | null
+          marketplace_excerpt?: string | null
+          cover_image_url?: string | null
+          checkout_copy?: string | null
+          access_message?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -335,6 +351,149 @@ export interface Database {
           updated_at?: string
         }
         Update: Partial<Database['public']['Tables']['fulfillment_orders']['Insert']>
+        Relationships: []
+      }
+
+      // ── V5 Power Upgrade tables ────────────────────────────────────────────
+
+      product_files: {
+        Row: {
+          id: string
+          product_id: string
+          seller_id: string
+          file_name: string
+          file_url: string
+          file_type: string
+          visibility: string
+          sort_order: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          product_id: string
+          seller_id: string
+          file_name: string
+          file_url: string
+          file_type?: string
+          visibility?: string
+          sort_order?: number
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['product_files']['Insert']>
+        Relationships: []
+      }
+
+      product_updates: {
+        Row: {
+          id: string
+          product_id: string
+          seller_id: string
+          title: string
+          body: string
+          link_url: string | null
+          link_label: string | null
+          status: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          product_id: string
+          seller_id: string
+          title: string
+          body?: string
+          link_url?: string | null
+          link_label?: string | null
+          status?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['product_updates']['Insert']>
+        Relationships: []
+      }
+
+      product_reviews: {
+        Row: {
+          id: string
+          product_id: string
+          seller_id: string
+          customer_name: string
+          customer_email: string | null
+          rating: number
+          message: string
+          approved: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          product_id: string
+          seller_id: string
+          customer_name: string
+          customer_email?: string | null
+          rating: number
+          message?: string
+          approved?: boolean
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['product_reviews']['Insert']>
+        Relationships: []
+      }
+
+      affiliate_links: {
+        Row: {
+          id: string
+          product_id: string
+          seller_id: string
+          affiliate_code: string
+          affiliate_name: string | null
+          affiliate_email: string | null
+          commission_pct: number
+          enabled: boolean
+          total_clicks: number
+          total_orders: number
+          total_revenue: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          product_id: string
+          seller_id: string
+          affiliate_code: string
+          affiliate_name?: string | null
+          affiliate_email?: string | null
+          commission_pct?: number
+          enabled?: boolean
+          total_clicks?: number
+          total_orders?: number
+          total_revenue?: number
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['affiliate_links']['Insert']>
+        Relationships: []
+      }
+
+      affiliate_clicks: {
+        Row: {
+          id: string
+          affiliate_link_id: string
+          product_id: string
+          affiliate_code: string
+          order_id: string | null
+          referrer_url: string | null
+          ip_hash: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          affiliate_link_id: string
+          product_id: string
+          affiliate_code: string
+          order_id?: string | null
+          referrer_url?: string | null
+          ip_hash?: string | null
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['affiliate_clicks']['Insert']>
         Relationships: []
       }
     }

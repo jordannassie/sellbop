@@ -19,10 +19,33 @@ import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { formatCurrency, formatDate } from '@/lib/utils'
 
+interface ProductFile {
+  id: string
+  product_id: string
+  file_name: string
+  file_url: string
+  file_type: string
+  visibility: string
+}
+
+interface ProductUpdate {
+  id: string
+  product_id: string
+  title: string
+  body: string
+  link_url: string | null
+  link_label: string | null
+  created_at: string
+}
+
 interface LibraryOrder {
   id: string
+  productId: string | null
+  productSlug: string | null
   productName: string
-  productType?: string
+  productType?: string | null
+  productFiles?: ProductFile[]
+  productUpdates?: ProductUpdate[]
   amount: number
   status: string
   paymentStatus: string
@@ -200,12 +223,24 @@ export function BuyerLibraryView() {
       ) : tab === 'coaching' ? (
         <CoachingTab orders={coachingOrders} />
       ) : tab === 'updates' ? (
-        <UpdatesTab />
+        <UpdatesTab orders={orders} />
       ) : (
         <SupportTab />
       )}
     </div>
   )
+}
+
+function fileTypeIcon(type: string) {
+  switch (type) {
+    case 'pdf': return '📄'
+    case 'zip': return '🗜️'
+    case 'video': return '🎬'
+    case 'audio': return '🎵'
+    case 'image': return '🖼️'
+    case 'link': return '🔗'
+    default: return '📁'
+  }
 }
 
 // ── Downloads ─────────────────────────────────────────────────────────────────
@@ -244,21 +279,49 @@ function DownloadsTab({ orders }: { orders: LibraryOrder[] }) {
                 </p>
               </div>
             </div>
-            <StatusBadge status={order.paymentStatus === 'paid' ? 'paid' : order.status} />
+            <div className="flex items-center gap-2">
+              {order.productSlug && (
+                <Link href={`/p/${order.productSlug}`}>
+                  <Button size="xs" variant="ghost">
+                    <ExternalLink size={12} /> View
+                  </Button>
+                </Link>
+              )}
+              <StatusBadge status={order.paymentStatus === 'paid' ? 'paid' : order.status} />
+            </div>
           </div>
 
-          <div className="mt-4 flex flex-wrap gap-2">
-            {order.paymentStatus === 'paid' ? (
-              <div className="flex items-center gap-2 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2 text-xs text-neutral-500">
-                <CheckCircle2 size={13} className="text-emerald-500" />
-                Access granted — download delivery will be served via signed links.
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 rounded-xl border border-amber-100 bg-amber-50 px-3 py-2 text-xs text-amber-700">
-                Payment pending — files will be available once confirmed.
-              </div>
-            )}
-          </div>
+          {/* Product files */}
+          {order.paymentStatus === 'paid' && (order.productFiles ?? []).length > 0 ? (
+            <div className="mt-4 space-y-2">
+              {(order.productFiles ?? []).map((file) => (
+                <a
+                  key={file.id}
+                  href={file.file_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2.5 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-sm hover:border-neutral-400 hover:bg-white transition-colors"
+                >
+                  <span className="text-base leading-none">{fileTypeIcon(file.file_type)}</span>
+                  <span className="flex-1 font-medium text-black truncate">{file.file_name}</span>
+                  <Download size={13} className="shrink-0 text-neutral-400" />
+                </a>
+              ))}
+            </div>
+          ) : (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {order.paymentStatus === 'paid' ? (
+                <div className="flex items-center gap-2 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2 text-xs text-neutral-500">
+                  <CheckCircle2 size={13} className="text-emerald-500" />
+                  Access granted — contact the seller for download links.
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 rounded-xl border border-amber-100 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                  Payment pending — files will be available once confirmed.
+                </div>
+              )}
+            </div>
+          )}
         </div>
       ))}
     </div>
@@ -369,19 +432,64 @@ function CoachingTab({ orders }: { orders: LibraryOrder[] }) {
 
 // ── Updates ───────────────────────────────────────────────────────────────────
 
-function UpdatesTab() {
+function UpdatesTab({ orders }: { orders: LibraryOrder[] }) {
+  const allUpdates = orders
+    .flatMap((o) => (o.productUpdates ?? []).map((u) => ({ ...u, productName: o.productName, productSlug: o.productSlug })))
+    .sort((a, b) => b.created_at.localeCompare(a.created_at))
+
+  if (allUpdates.length === 0) {
+    return (
+      <div className="rounded-2xl border border-neutral-200 bg-white p-8 text-center">
+        <EmptyState
+          icon={<Rss size={32} />}
+          title="No updates yet"
+          description="When sellers post buyer-only updates for products you own, they'll appear here."
+          action={
+            <Link href="/marketplace">
+              <Button size="sm">Browse Products</Button>
+            </Link>
+          }
+        />
+      </div>
+    )
+  }
+
   return (
-    <div className="rounded-2xl border border-neutral-200 bg-white p-8 text-center">
-      <EmptyState
-        icon={<Rss size={32} />}
-        title="No updates yet"
-        description="When sellers post buyer-only updates for products you own, they'll appear here."
-        action={
-          <Link href="/marketplace">
-            <Button size="sm">Browse Products</Button>
-          </Link>
-        }
-      />
+    <div className="space-y-3">
+      {allUpdates.map((update) => (
+        <div key={update.id} className="rounded-2xl border border-neutral-200 bg-white p-5">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 flex-wrap mb-1">
+                <p className="font-semibold text-black text-sm">{update.title}</p>
+                <span className="text-[10px] font-medium text-neutral-400">from {update.productName}</span>
+              </div>
+              {update.body && (
+                <p className="text-sm text-neutral-600 leading-relaxed">{update.body}</p>
+              )}
+              {update.link_url && (
+                <a
+                  href={update.link_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-black underline underline-offset-2 hover:no-underline"
+                >
+                  <ExternalLink size={11} />
+                  {update.link_label ?? update.link_url}
+                </a>
+              )}
+              <p className="mt-2 text-xs text-neutral-400">{formatDate(update.created_at)}</p>
+            </div>
+            {update.productSlug && (
+              <Link href={`/p/${update.productSlug}`}>
+                <Button size="xs" variant="ghost">
+                  <ExternalLink size={12} /> Product
+                </Button>
+              </Link>
+            )}
+          </div>
+        </div>
+      ))}
     </div>
   )
 }

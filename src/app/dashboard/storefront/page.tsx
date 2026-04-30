@@ -59,6 +59,8 @@ export default function StoreProfilePage() {
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
+    const effectiveBannerUrl = layoutMode === 'banner' && bannerUrl ? bannerUrl : null
+
     await demoStorefrontRepo.upsert({
       sellerId: DEMO_SELLER_PROFILE.id,
       slug: DEMO_SELLER_PROFILE.slug,
@@ -66,7 +68,7 @@ export default function StoreProfilePage() {
       headline: headline || null,
       bio: bio || null,
       avatarUrl: null,
-      bannerUrl: layoutMode === 'banner' && bannerUrl ? bannerUrl : null,
+      bannerUrl: effectiveBannerUrl,
       featuredProductIds: storefront?.featuredProductIds ?? [],
       productOrder: storefront?.productOrder ?? [],
       hiddenProductIds: storefront?.hiddenProductIds ?? [],
@@ -88,6 +90,14 @@ export default function StoreProfilePage() {
       headerVideoUrl: storefront?.headerVideoUrl ?? null,
       published: true,
     })
+
+    // Also persist banner to Supabase if configured
+    fetch('/api/v5/store-banner', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bannerUrl: effectiveBannerUrl, layoutMode }),
+    }).catch(() => { /* best-effort — localStorage is the primary store */ })
+
     toast.success('Store profile saved.')
     setSaving(false)
   }

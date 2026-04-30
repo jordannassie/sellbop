@@ -706,6 +706,7 @@ function DigitalProductPage({ product, accent }: { product: Product; accent: str
               </div>
             </div>
 
+            <LiveReviewsSection productSlug={product.slug} />
             <ReviewsSection product={product} />
           </div>
 
@@ -740,9 +741,88 @@ function DigitalProductPage({ product, accent }: { product: Product; accent: str
   )
 }
 
+// ── Affiliate click tracker ────────────────────────────────────
+function useAffiliateTracking(slug: string) {
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const affCode = params.get('aff')
+    if (!affCode) return
+
+    // Persist code for checkout to pick up
+    try {
+      sessionStorage.setItem('sellbop_aff_code', affCode)
+      sessionStorage.setItem('sellbop_aff_slug', slug)
+    } catch { /* storage unavailable */ }
+
+    // Fire-and-forget click record
+    fetch('/api/v5/affiliate-click', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ affiliateCode: affCode, productSlug: slug, referrerUrl: document.referrer || undefined }),
+    }).catch(() => { /* best-effort */ })
+  }, [slug])
+}
+
+// ── Live reviews section ───────────────────────────────────────
+function LiveReviewsSection({ productSlug }: { productSlug: string }) {
+  const [reviews, setReviews] = useState<Array<{ id: string; customer_name: string; rating: number; message: string; created_at: string }>>([])
+  const [loaded, setLoaded] = useState(false)
+
+  useEffect(() => {
+    let active = true
+    fetch(`/api/v5/public-reviews?slug=${encodeURIComponent(productSlug)}`)
+      .then(r => r.json())
+      .then((data: { reviews?: Array<{ id: string; customer_name: string; rating: number; message: string; created_at: string }> }) => {
+        if (active) setReviews(data.reviews ?? [])
+      })
+      .catch(() => { /* Supabase not available */ })
+      .finally(() => { if (active) setLoaded(true) })
+    return () => { active = false }
+  }, [productSlug])
+
+  if (!loaded || reviews.length === 0) return null
+
+  const avgRating = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+
+  return (
+    <div className="border border-neutral-100 rounded-2xl p-5 sm:p-6 space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-bold text-black">What customers say</h2>
+        <div className="flex items-center gap-1.5">
+          <ReviewStars rating={Math.round(avgRating)} />
+          <span className="text-xs text-neutral-500 font-medium">
+            {avgRating.toFixed(1)} · {reviews.length} {reviews.length === 1 ? 'review' : 'reviews'}
+          </span>
+        </div>
+      </div>
+      <div className="space-y-4">
+        {reviews.map((r) => (
+          <div key={r.id} className="pb-4 border-b border-neutral-50 last:border-0 last:pb-0">
+            <div className="flex items-start justify-between gap-2 mb-1">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-full bg-neutral-100 flex items-center justify-center text-[9px] font-bold text-neutral-500">
+                  {r.customer_name.charAt(0)}
+                </div>
+                <span className="text-xs font-semibold text-black">{r.customer_name}</span>
+              </div>
+              <ReviewStars rating={r.rating} />
+            </div>
+            <p className="text-xs text-neutral-600 leading-relaxed ml-8">{r.message}</p>
+            <p className="mt-1 text-[10px] text-neutral-400 ml-8">
+              {new Date(r.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short' })}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // ── Main client component ─────────────────────────────────────
 export function ClientProductPage({ slug }: { slug: string }) {
   const [product, setProduct] = useState<Product | null | undefined>(undefined)
+
+  useAffiliateTracking(slug)
 
   useEffect(() => {
     demoProductRepo.findBySlug(slug).then(p => {

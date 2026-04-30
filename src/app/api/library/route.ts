@@ -20,7 +20,17 @@ type OrderItemRow = Pick<
 
 type ProductRow = Pick<
   Database['public']['Tables']['products']['Row'],
-  'id' | 'title' | 'slug' | 'price_cents'
+  'id' | 'title' | 'slug' | 'price_cents' | 'product_type'
+>
+
+type ProductFileRow = Pick<
+  Database['public']['Tables']['product_files']['Row'],
+  'id' | 'product_id' | 'file_name' | 'file_url' | 'file_type' | 'visibility'
+>
+
+type ProductUpdateRow = Pick<
+  Database['public']['Tables']['product_updates']['Row'],
+  'id' | 'product_id' | 'title' | 'body' | 'link_url' | 'link_label' | 'created_at'
 >
 
 type SubscriptionRow = Pick<
@@ -153,7 +163,7 @@ export async function GET() {
   const { data: products, error: productsError } = productIds.length
     ? await admin
         .from('products')
-        .select('id,title,slug,price_cents')
+        .select('id,title,slug,price_cents,product_type')
         .in('id', productIds)
     : { data: [], error: null }
 
@@ -174,17 +184,54 @@ export async function GET() {
     if (!orderTitleByOrderId.has(item.order_id)) {
       orderTitleByOrderId.set(item.order_id, item.title)
     }
-
     if (!productIdByOrderId.has(item.order_id)) {
       productIdByOrderId.set(item.order_id, item.product_id)
     }
+  }
+
+  // ── V5: Fetch product_files and product_updates for purchased products ──
+  const purchasedProductIds = [...new Set(purchases.map(p => p.product_id))]
+
+  const [{ data: rawFiles }, { data: rawUpdates }] = await Promise.all([
+    purchasedProductIds.length
+      ? admin
+          .from('product_files')
+          .select('id,product_id,file_name,file_url,file_type,visibility')
+          .in('product_id', purchasedProductIds)
+          .in('visibility', ['public', 'buyers'])
+          .order('sort_order', { ascending: true })
+      : { data: [] },
+    purchasedProductIds.length
+      ? admin
+          .from('product_updates')
+          .select('id,product_id,title,body,link_url,link_label,created_at')
+          .in('product_id', purchasedProductIds)
+          .eq('status', 'published')
+          .order('created_at', { ascending: false })
+      : { data: [] },
+  ])
+
+  // Group files + updates by product_id
+  const filesByProductId: Record<string, ProductFileRow[]> = {}
+  const updatesByProductId: Record<string, ProductUpdateRow[]> = {}
+
+  for (const f of (rawFiles ?? []) as ProductFileRow[]) {
+    ;(filesByProductId[f.product_id] ??= []).push(f)
+  }
+  for (const u of (rawUpdates ?? []) as ProductUpdateRow[]) {
+    ;(updatesByProductId[u.product_id] ??= []).push(u)
   }
 
   const libraryOrders = new Map<
     string,
     {
       id: string
+      productId: string | null
+      productSlug: string | null
+      productType: string | null
       productName: string
+      productFiles: ProductFileRow[]
+      productUpdates: ProductUpdateRow[]
       amount: number
       status: string
       paymentStatus: string
@@ -198,7 +245,12 @@ export async function GET() {
 
     libraryOrders.set(purchase.order_id, {
       id: purchase.order_id,
+      productId: purchase.product_id,
+      productSlug: product?.slug ?? null,
+      productType: product?.product_type ?? null,
       productName: orderTitleByOrderId.get(purchase.order_id) ?? product?.title ?? 'Purchase',
+      productFiles: filesByProductId[purchase.product_id] ?? [],
+      productUpdates: updatesByProductId[purchase.product_id] ?? [],
       amount: order?.total_cents ?? product?.price_cents ?? 0,
       status: order?.status ?? 'paid',
       paymentStatus: order?.payment_status ?? 'paid',
@@ -207,15 +259,19 @@ export async function GET() {
   }
 
   for (const order of buyerOrders) {
-    if (libraryOrders.has(order.id)) {
-      continue
-    }
+    if (libraryOrders.has(order.id)) continue
 
-    const product = productById.get(productIdByOrderId.get(order.id) ?? '')
+    const productId = productIdByOrderId.get(order.id) ?? ''
+    const product = productById.get(productId)
 
     libraryOrders.set(order.id, {
       id: order.id,
+      productId: productId || null,
+      productSlug: product?.slug ?? null,
+      productType: product?.product_type ?? null,
       productName: orderTitleByOrderId.get(order.id) ?? product?.title ?? 'Order',
+      productFiles: filesByProductId[productId] ?? [],
+      productUpdates: updatesByProductId[productId] ?? [],
       amount: order.total_cents,
       status: order.status,
       paymentStatus: order.payment_status,
@@ -230,6 +286,7 @@ export async function GET() {
       customerEmail: subscription.customer_email,
       productName: productById.get(subscription.product_id)?.title ?? 'Subscription',
       productSlug: productById.get(subscription.product_id)?.slug ?? null,
+      productType: productById.get(subscription.product_id)?.product_type ?? null,
       amount: subscription.amount_cents ?? 0,
       currency: subscription.currency ?? 'usd',
       status: subscription.status,

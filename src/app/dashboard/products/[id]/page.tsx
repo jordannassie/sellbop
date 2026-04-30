@@ -358,9 +358,11 @@ function EditTab({
 
 // ── Files Tab ─────────────────────────────────────────────────────────────────
 
-function FilesTab(_: { productId: string }) {
+function FilesTab({ productSlug }: { productSlug: string }) {
   const [files, setFiles] = useState<ProductFile[]>([])
+  const [loading, setLoading] = useState(true)
   const [adding, setAdding] = useState(false)
+  const [saving, setSaving] = useState(false)
   const [fileName, setFileName] = useState('')
   const [fileUrl, setFileUrl] = useState('')
   const [fileType, setFileType] = useState('link')
@@ -375,29 +377,74 @@ function FilesTab(_: { productId: string }) {
     { value: 'other', label: 'Other' },
   ]
 
-  function handleAdd() {
+  useEffect(() => {
+    let active = true
+    async function load() {
+      setLoading(true)
+      try {
+        const res = await fetch(`/api/v5/product-files?slug=${encodeURIComponent(productSlug)}`)
+        const data = (await res.json()) as { files?: Array<{
+          id: string; file_name: string; file_url: string; file_type: string; visibility: string
+        }> }
+        if (!active) return
+        setFiles((data.files ?? []).map(f => ({
+          id: f.id,
+          fileName: f.file_name,
+          fileUrl: f.file_url,
+          fileType: f.file_type,
+          visibility: f.visibility as 'buyers' | 'public' | 'private',
+        })))
+      } catch {
+        // Supabase not available — start with empty list
+      } finally {
+        if (active) setLoading(false)
+      }
+    }
+    void load()
+    return () => { active = false }
+  }, [productSlug])
+
+  async function handleAdd() {
     if (!fileName.trim() || !fileUrl.trim()) {
       toast.error('File name and URL are required.')
       return
     }
-    const newFile: ProductFile = {
-      id: crypto.randomUUID(),
-      fileName: fileName.trim(),
-      fileUrl: fileUrl.trim(),
-      fileType,
-      visibility: 'buyers',
+    setSaving(true)
+    try {
+      const res = await fetch('/api/v5/product-files', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug: productSlug, fileName: fileName.trim(), fileUrl: fileUrl.trim(), fileType }),
+      })
+      const data = (await res.json()) as { file?: { id: string; file_name?: string; fileName?: string; file_url?: string; fileUrl?: string; file_type?: string; fileType?: string; visibility?: string }; persisted?: boolean }
+      const raw = data.file
+      if (raw) {
+        setFiles(prev => [...prev, {
+          id: raw.id,
+          fileName: raw.file_name ?? raw.fileName ?? fileName.trim(),
+          fileUrl: raw.file_url ?? raw.fileUrl ?? fileUrl.trim(),
+          fileType: raw.file_type ?? raw.fileType ?? fileType,
+          visibility: (raw.visibility ?? 'buyers') as 'buyers' | 'public' | 'private',
+        }])
+      }
+      setFileName(''); setFileUrl(''); setFileType('link')
+      setAdding(false)
+      toast.success(data.persisted ? 'File saved to Supabase.' : 'File added (local session).')
+    } catch {
+      toast.error('Could not save file. Try again.')
+    } finally {
+      setSaving(false)
     }
-    setFiles(prev => [...prev, newFile])
-    setFileName('')
-    setFileUrl('')
-    setFileType('link')
-    setAdding(false)
-    toast.success('File added. Connect Supabase to persist files across sessions.')
   }
 
-  function handleRemove(id: string) {
+  async function handleRemove(id: string) {
     setFiles(prev => prev.filter(f => f.id !== id))
-    toast.success('File removed.')
+    try {
+      await fetch(`/api/v5/product-files/${id}`, { method: 'DELETE' })
+      toast.success('File removed.')
+    } catch {
+      toast.error('Could not delete from Supabase.')
+    }
   }
 
   const fileTypeIcon = (type: string) => {
@@ -421,12 +468,19 @@ function FilesTab(_: { productId: string }) {
             Attach files or links. Buyers see these after purchase.
           </p>
         </div>
-        {!adding && (
+        {!adding && !loading && (
           <Button size="sm" onClick={() => setAdding(true)}>
             <Plus size={13} /> Add File
           </Button>
         )}
       </div>
+
+      {loading && (
+        <div className="flex items-center gap-2 py-6 text-sm text-neutral-400">
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-black border-t-transparent" />
+          Loading files…
+        </div>
+      )}
 
       {adding && (
         <Card>
@@ -437,14 +491,14 @@ function FilesTab(_: { productId: string }) {
             </div>
             <Input label="File URL *" value={fileUrl} onChange={e => setFileUrl(e.target.value)} placeholder="https://..." type="url" hint="Paste a direct link or Supabase storage URL" />
             <div className="flex gap-2">
-              <Button size="sm" onClick={handleAdd}>Save File</Button>
+              <Button size="sm" onClick={handleAdd} loading={saving}>Save File</Button>
               <Button size="sm" variant="ghost" onClick={() => setAdding(false)}>Cancel</Button>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {files.length === 0 && !adding ? (
+      {files.length === 0 && !adding && !loading ? (
         <div className="rounded-2xl border border-dashed border-neutral-200 bg-neutral-50 p-8 text-center">
           <FileText size={28} className="mx-auto mb-2 text-neutral-300" />
           <p className="text-sm font-medium text-neutral-500">No files attached yet</p>
@@ -483,8 +537,8 @@ function FilesTab(_: { productId: string }) {
       )}
 
       <div className="rounded-xl border border-neutral-100 bg-neutral-50 px-4 py-3 text-xs text-neutral-500">
-        Files are stored locally in this session. Connect Supabase Storage to persist files
-        and serve them with signed URLs for buyers.
+        Files are saved to Supabase when the product is live. Add an external file URL or a
+        Supabase Storage signed URL. Buyers see files after purchase.
       </div>
     </div>
   )
@@ -492,51 +546,116 @@ function FilesTab(_: { productId: string }) {
 
 // ── Updates Tab ───────────────────────────────────────────────────────────────
 
-function UpdatesTab(_: { productId: string }) {
+function UpdatesTab({ productSlug }: { productSlug: string }) {
   const [updates, setUpdates] = useState<ProductUpdate[]>([])
+  const [loading, setLoading] = useState(true)
   const [adding, setAdding] = useState(false)
+  const [saving, setSaving] = useState(false)
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
   const [linkUrl, setLinkUrl] = useState('')
   const [linkLabel, setLinkLabel] = useState('')
   const [status, setStatus] = useState<'draft' | 'published'>('draft')
 
-  function handleAdd() {
+  useEffect(() => {
+    let active = true
+    async function load() {
+      setLoading(true)
+      try {
+        const res = await fetch(`/api/v5/product-updates?slug=${encodeURIComponent(productSlug)}`)
+        const data = (await res.json()) as { updates?: Array<{
+          id: string; title: string; body: string; link_url: string | null; link_label: string | null; status: string; created_at: string
+        }> }
+        if (!active) return
+        setUpdates((data.updates ?? []).map(u => ({
+          id: u.id,
+          title: u.title,
+          body: u.body ?? '',
+          linkUrl: u.link_url ?? '',
+          linkLabel: u.link_label ?? '',
+          status: u.status as 'draft' | 'published',
+          createdAt: u.created_at,
+        })))
+      } catch {
+        // Supabase not available
+      } finally {
+        if (active) setLoading(false)
+      }
+    }
+    void load()
+    return () => { active = false }
+  }, [productSlug])
+
+  async function handleAdd() {
     if (!title.trim()) {
       toast.error('Title is required.')
       return
     }
-    const newUpdate: ProductUpdate = {
-      id: crypto.randomUUID(),
-      title: title.trim(),
-      body: body.trim(),
-      linkUrl: linkUrl.trim(),
-      linkLabel: linkLabel.trim(),
-      status,
-      createdAt: new Date().toISOString(),
+    setSaving(true)
+    try {
+      const res = await fetch('/api/v5/product-updates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          slug: productSlug,
+          title: title.trim(),
+          body: body.trim(),
+          linkUrl: linkUrl.trim() || undefined,
+          linkLabel: linkLabel.trim() || undefined,
+          status,
+        }),
+      })
+      const data = (await res.json()) as { update?: { id: string; title: string; body: string; link_url?: string; linkUrl?: string; link_label?: string; linkLabel?: string; status: string; created_at?: string; createdAt?: string }; persisted?: boolean }
+      const raw = data.update
+      if (raw) {
+        setUpdates(prev => [{
+          id: raw.id,
+          title: raw.title,
+          body: raw.body,
+          linkUrl: raw.link_url ?? raw.linkUrl ?? '',
+          linkLabel: raw.link_label ?? raw.linkLabel ?? '',
+          status: raw.status as 'draft' | 'published',
+          createdAt: raw.created_at ?? raw.createdAt ?? new Date().toISOString(),
+        }, ...prev])
+      }
+      setTitle(''); setBody(''); setLinkUrl(''); setLinkLabel(''); setStatus('draft')
+      setAdding(false)
+      toast.success(
+        status === 'published'
+          ? `Update published${data.persisted ? ' to Supabase' : ''} — buyers can see it.`
+          : `Update saved as draft${data.persisted ? ' to Supabase' : ''}.`,
+      )
+    } catch {
+      toast.error('Could not save update. Try again.')
+    } finally {
+      setSaving(false)
     }
-    setUpdates(prev => [newUpdate, ...prev])
-    setTitle(''); setBody(''); setLinkUrl(''); setLinkLabel('')
-    setStatus('draft')
-    setAdding(false)
-    toast.success(
-      status === 'published'
-        ? 'Update published — buyers who own this product can see it.'
-        : 'Update saved as draft.',
-    )
   }
 
-  function handleToggleStatus(id: string) {
-    setUpdates(prev =>
-      prev.map(u => u.id === id
-        ? { ...u, status: u.status === 'published' ? 'draft' : 'published' }
-        : u,
-      ),
-    )
+  async function handleToggleStatus(id: string) {
+    const update = updates.find(u => u.id === id)
+    if (!update) return
+    const newStatus = update.status === 'published' ? 'draft' : 'published'
+    setUpdates(prev => prev.map(u => u.id === id ? { ...u, status: newStatus } : u))
+    try {
+      await fetch(`/api/v5/product-updates/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      })
+    } catch {
+      // Best-effort — local state already updated
+    }
   }
 
-  function handleRemove(id: string) {
+  async function handleRemove(id: string) {
     setUpdates(prev => prev.filter(u => u.id !== id))
+    try {
+      await fetch(`/api/v5/product-updates/${id}`, { method: 'DELETE' })
+      toast.success('Update deleted.')
+    } catch {
+      toast.error('Could not delete from Supabase.')
+    }
   }
 
   return (
@@ -548,12 +667,19 @@ function UpdatesTab(_: { productId: string }) {
             Post updates only buyers of this product can see.
           </p>
         </div>
-        {!adding && (
+        {!adding && !loading && (
           <Button size="sm" onClick={() => setAdding(true)}>
             <Plus size={13} /> New Update
           </Button>
         )}
       </div>
+
+      {loading && (
+        <div className="flex items-center gap-2 py-6 text-sm text-neutral-400">
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-black border-t-transparent" />
+          Loading updates…
+        </div>
+      )}
 
       {adding && (
         <Card>
@@ -575,7 +701,7 @@ function UpdatesTab(_: { productId: string }) {
                 </span>
               </div>
               <div className="flex gap-2">
-                <Button size="sm" onClick={handleAdd}>Save</Button>
+                <Button size="sm" onClick={handleAdd} loading={saving}>Save</Button>
                 <Button size="sm" variant="ghost" onClick={() => setAdding(false)}>Cancel</Button>
               </div>
             </div>
@@ -583,7 +709,7 @@ function UpdatesTab(_: { productId: string }) {
         </Card>
       )}
 
-      {updates.length === 0 && !adding ? (
+      {updates.length === 0 && !adding && !loading ? (
         <div className="rounded-2xl border border-dashed border-neutral-200 bg-neutral-50 p-8 text-center">
           <Rss size={28} className="mx-auto mb-2 text-neutral-300" />
           <p className="text-sm font-medium text-neutral-500">No updates yet</p>
@@ -713,42 +839,110 @@ function CouponsTab() {
 
 // ── Reviews Tab ───────────────────────────────────────────────────────────────
 
-function ReviewsTab(_: { productId: string }) {
+function ReviewsTab({ productSlug }: { productSlug: string }) {
   const [reviews, setReviews] = useState<ProductReview[]>([])
+  const [loading, setLoading] = useState(true)
   const [adding, setAdding] = useState(false)
+  const [saving, setSaving] = useState(false)
   const [customerName, setCustomerName] = useState('')
   const [customerEmail, setCustomerEmail] = useState('')
   const [rating, setRating] = useState(5)
   const [message, setMessage] = useState('')
 
-  function handleAdd() {
+  useEffect(() => {
+    let active = true
+    async function load() {
+      setLoading(true)
+      try {
+        const res = await fetch(`/api/v5/product-reviews?slug=${encodeURIComponent(productSlug)}`)
+        const data = (await res.json()) as { reviews?: Array<{
+          id: string; customer_name: string; customer_email: string | null; rating: number; message: string; approved: boolean; created_at: string
+        }> }
+        if (!active) return
+        setReviews((data.reviews ?? []).map(r => ({
+          id: r.id,
+          customerName: r.customer_name,
+          customerEmail: r.customer_email ?? '',
+          rating: r.rating,
+          message: r.message,
+          approved: r.approved,
+          createdAt: r.created_at,
+        })))
+      } catch {
+        // Supabase not available
+      } finally {
+        if (active) setLoading(false)
+      }
+    }
+    void load()
+    return () => { active = false }
+  }, [productSlug])
+
+  async function handleAdd() {
     if (!customerName.trim() || !message.trim()) {
       toast.error('Name and message are required.')
       return
     }
-    const newReview: ProductReview = {
-      id: crypto.randomUUID(),
-      customerName: customerName.trim(),
-      customerEmail: customerEmail.trim(),
-      rating,
-      message: message.trim(),
-      approved: false,
-      createdAt: new Date().toISOString(),
+    setSaving(true)
+    try {
+      const res = await fetch('/api/v5/product-reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          slug: productSlug,
+          customerName: customerName.trim(),
+          customerEmail: customerEmail.trim() || undefined,
+          rating,
+          message: message.trim(),
+        }),
+      })
+      const data = (await res.json()) as { review?: { id: string; customer_name?: string; customerName?: string; customer_email?: string | null; customerEmail?: string | null; rating: number; message: string; approved: boolean; created_at?: string; createdAt?: string }; persisted?: boolean }
+      const raw = data.review
+      if (raw) {
+        setReviews(prev => [{
+          id: raw.id,
+          customerName: raw.customer_name ?? raw.customerName ?? customerName.trim(),
+          customerEmail: raw.customer_email ?? raw.customerEmail ?? customerEmail.trim(),
+          rating: raw.rating,
+          message: raw.message,
+          approved: raw.approved,
+          createdAt: raw.created_at ?? raw.createdAt ?? new Date().toISOString(),
+        }, ...prev])
+      }
+      setCustomerName(''); setCustomerEmail(''); setRating(5); setMessage('')
+      setAdding(false)
+      toast.success(data.persisted ? 'Review saved to Supabase. Approve it to show on the product page.' : 'Review added. Approve it to show on the product page.')
+    } catch {
+      toast.error('Could not save review. Try again.')
+    } finally {
+      setSaving(false)
     }
-    setReviews(prev => [newReview, ...prev])
-    setCustomerName(''); setCustomerEmail(''); setRating(5); setMessage('')
-    setAdding(false)
-    toast.success('Review added. Approve it to show on the product page.')
   }
 
-  function handleToggleApproval(id: string) {
-    setReviews(prev =>
-      prev.map(r => r.id === id ? { ...r, approved: !r.approved } : r),
-    )
+  async function handleToggleApproval(id: string) {
+    const review = reviews.find(r => r.id === id)
+    if (!review) return
+    const newApproved = !review.approved
+    setReviews(prev => prev.map(r => r.id === id ? { ...r, approved: newApproved } : r))
+    try {
+      await fetch(`/api/v5/product-reviews/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ approved: newApproved }),
+      })
+    } catch {
+      // Best-effort
+    }
   }
 
-  function handleRemove(id: string) {
+  async function handleRemove(id: string) {
     setReviews(prev => prev.filter(r => r.id !== id))
+    try {
+      await fetch(`/api/v5/product-reviews/${id}`, { method: 'DELETE' })
+      toast.success('Review deleted.')
+    } catch {
+      toast.error('Could not delete from Supabase.')
+    }
   }
 
   const approvedCount = reviews.filter(r => r.approved).length
@@ -759,15 +953,22 @@ function ReviewsTab(_: { productId: string }) {
         <div>
           <p className="font-semibold text-black">Reviews & Testimonials</p>
           <p className="text-xs text-neutral-500 mt-0.5">
-            {approvedCount} approved · {reviews.length} total. Approved reviews show on the product page.
+            {loading ? 'Loading…' : `${approvedCount} approved · ${reviews.length} total. Approved reviews show on the product page.`}
           </p>
         </div>
-        {!adding && (
+        {!adding && !loading && (
           <Button size="sm" onClick={() => setAdding(true)}>
             <Plus size={13} /> Add Review
           </Button>
         )}
       </div>
+
+      {loading && (
+        <div className="flex items-center gap-2 py-6 text-sm text-neutral-400">
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-black border-t-transparent" />
+          Loading reviews…
+        </div>
+      )}
 
       {adding && (
         <Card>
@@ -796,14 +997,14 @@ function ReviewsTab(_: { productId: string }) {
             </div>
             <Textarea label="Message *" value={message} onChange={e => setMessage(e.target.value)} rows={3} placeholder="What did the customer say?" />
             <div className="flex gap-2">
-              <Button size="sm" onClick={handleAdd}>Add Review</Button>
+              <Button size="sm" onClick={handleAdd} loading={saving}>Add Review</Button>
               <Button size="sm" variant="ghost" onClick={() => setAdding(false)}>Cancel</Button>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {reviews.length === 0 && !adding ? (
+      {reviews.length === 0 && !adding && !loading ? (
         <div className="rounded-2xl border border-dashed border-neutral-200 bg-neutral-50 p-8 text-center">
           <Star size={28} className="mx-auto mb-2 text-neutral-300" />
           <p className="text-sm font-medium text-neutral-500">No reviews yet</p>
@@ -908,34 +1109,82 @@ function AnalyticsTab({ product }: { product: Product }) {
 
 function AffiliateSection({ product }: { product: Product }) {
   const [links, setLinks] = useState<AffiliateLink[]>([])
+  const [loading, setLoading] = useState(true)
   const [adding, setAdding] = useState(false)
+  const [saving, setSaving] = useState(false)
   const [affiliateName, setAffiliateName] = useState('')
+  const [affiliateEmail, setAffiliateEmail] = useState('')
   const [commissionPct, setCommissionPct] = useState('30')
 
-  function generateCode() {
-    const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
-    return Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
-  }
+  useEffect(() => {
+    let active = true
+    async function load() {
+      setLoading(true)
+      try {
+        const res = await fetch(`/api/v5/affiliate-links?slug=${encodeURIComponent(product.slug)}`)
+        const data = (await res.json()) as { links?: Array<{
+          id: string; affiliate_code: string; affiliate_name: string | null; commission_pct: number; enabled: boolean; total_clicks: number; total_orders: number; total_revenue: number
+        }> }
+        if (!active) return
+        setLinks((data.links ?? []).map(l => ({
+          id: l.id,
+          affiliateCode: l.affiliate_code,
+          affiliateName: l.affiliate_name ?? '',
+          commissionPct: l.commission_pct,
+          enabled: l.enabled,
+          totalClicks: l.total_clicks,
+          totalOrders: l.total_orders,
+          totalRevenue: l.total_revenue,
+        })))
+      } catch {
+        // Supabase not available
+      } finally {
+        if (active) setLoading(false)
+      }
+    }
+    void load()
+    return () => { active = false }
+  }, [product.slug])
 
-  function handleAdd() {
+  async function handleAdd() {
     if (!affiliateName.trim()) {
       toast.error('Affiliate name is required.')
       return
     }
-    const newLink: AffiliateLink = {
-      id: crypto.randomUUID(),
-      affiliateCode: generateCode(),
-      affiliateName: affiliateName.trim(),
-      commissionPct: parseFloat(commissionPct) || 0,
-      enabled: true,
-      totalClicks: 0,
-      totalOrders: 0,
-      totalRevenue: 0,
+    setSaving(true)
+    try {
+      const res = await fetch('/api/v5/affiliate-links', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          slug: product.slug,
+          affiliateName: affiliateName.trim(),
+          affiliateEmail: affiliateEmail.trim() || undefined,
+          commissionPct: parseFloat(commissionPct) || 0,
+        }),
+      })
+      const data = (await res.json()) as { link?: { id: string; affiliate_code?: string; affiliateCode?: string; affiliate_name?: string | null; affiliateName?: string; commission_pct?: number; commissionPct?: number; enabled?: boolean; total_clicks?: number; totalClicks?: number; total_orders?: number; totalOrders?: number; total_revenue?: number; totalRevenue?: number }; persisted?: boolean }
+      const raw = data.link
+      if (raw) {
+        setLinks(prev => [...prev, {
+          id: raw.id,
+          affiliateCode: raw.affiliate_code ?? raw.affiliateCode ?? '',
+          affiliateName: raw.affiliate_name ?? raw.affiliateName ?? affiliateName.trim(),
+          commissionPct: raw.commission_pct ?? raw.commissionPct ?? 0,
+          enabled: raw.enabled ?? true,
+          totalClicks: raw.total_clicks ?? raw.totalClicks ?? 0,
+          totalOrders: raw.total_orders ?? raw.totalOrders ?? 0,
+          totalRevenue: raw.total_revenue ?? raw.totalRevenue ?? 0,
+        }])
+      }
+      setAffiliateName(''); setAffiliateEmail(''); setCommissionPct('30')
+      setAdding(false)
+      toast.success(data.persisted ? 'Affiliate link saved to Supabase!' : 'Affiliate link created!')
+    } catch {
+      toast.error('Could not create affiliate link. Try again.')
+    } finally {
+      setSaving(false)
     }
-    setLinks(prev => [...prev, newLink])
-    setAffiliateName(''); setCommissionPct('30')
-    setAdding(false)
-    toast.success('Affiliate link created!')
   }
 
   function getAffUrl(code: string) {
@@ -956,29 +1205,39 @@ function AffiliateSection({ product }: { product: Product }) {
             Generate referral codes. Track clicks and orders.
           </p>
         </div>
-        {!adding && (
+        {!adding && !loading && (
           <Button size="sm" variant="secondary" onClick={() => setAdding(true)}>
             <Plus size={13} /> New Affiliate
           </Button>
         )}
       </div>
 
+      {loading && (
+        <div className="flex items-center gap-2 py-4 text-sm text-neutral-400">
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-black border-t-transparent" />
+          Loading affiliate links…
+        </div>
+      )}
+
       {adding && (
         <Card>
           <CardContent className="pt-5 space-y-4">
-            <Input label="Affiliate Name *" value={affiliateName} onChange={e => setAffiliateName(e.target.value)} placeholder="e.g. John Smith" />
+            <div className="grid grid-cols-2 gap-4">
+              <Input label="Affiliate Name *" value={affiliateName} onChange={e => setAffiliateName(e.target.value)} placeholder="e.g. John Smith" />
+              <Input label="Affiliate Email" value={affiliateEmail} onChange={e => setAffiliateEmail(e.target.value)} placeholder="john@example.com" type="email" />
+            </div>
             <Input label="Commission %" type="number" value={commissionPct} onChange={e => setCommissionPct(e.target.value)} hint="% of sale price (payouts handled manually)" />
             <div className="flex gap-2">
-              <Button size="sm" onClick={handleAdd}>Create Link</Button>
+              <Button size="sm" onClick={handleAdd} loading={saving}>Create Link</Button>
               <Button size="sm" variant="ghost" onClick={() => setAdding(false)}>Cancel</Button>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {links.length === 0 && !adding ? (
+      {links.length === 0 && !adding && !loading ? (
         <div className="rounded-xl border border-dashed border-neutral-200 bg-neutral-50 px-4 py-6 text-center">
-          <p className="text-sm text-neutral-500">No affiliate links yet.</p>
+          <p className="text-sm text-neutral-500">No affiliate links yet. Create one to start tracking referrals.</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -1091,13 +1350,13 @@ function ProductHubForm({ params }: { params: Promise<{ id: string }> }) {
             onDeleted={() => {}}
           />
         )}
-        {tab === 'files' && <FilesTab productId={product.id} />}
-        {tab === 'updates' && <UpdatesTab productId={product.id} />}
+        {tab === 'files' && <FilesTab productSlug={product.slug} />}
+        {tab === 'updates' && <UpdatesTab productSlug={product.slug} />}
         {tab === 'customers' && <CustomersTab product={product} />}
         {tab === 'coupons' && <CouponsTab />}
         {tab === 'reviews' && (
           <div className="space-y-8">
-            <ReviewsTab productId={product.id} />
+            <ReviewsTab productSlug={product.slug} />
             <AffiliateSection product={product} />
           </div>
         )}

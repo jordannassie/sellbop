@@ -55,12 +55,23 @@ export function ClientStorefront({ sellerSlug }: { sellerSlug: string }) {
       demoStorefrontRepo.findBySellerId(DEMO_SELLER_PROFILE.id),
       demoProductRepo.findAll(DEMO_SELLER_PROFILE.id),
     ]).then(([s, products]) => {
-      // Merge with DEMO_STOREFRONT defaults so new fields always have a value
-      if (s) setStorefront({ ...DEMO_STOREFRONT, ...(s as Storefront) })
+      const base = s ? { ...DEMO_STOREFRONT, ...(s as Storefront) } : DEMO_STOREFRONT
       if (products.length > 0) setAllProducts(products)
-      setReady(true)
+
+      // Also try fetching banner from Supabase (best-effort enhancement)
+      fetch(`/api/v5/store-banner?slug=${encodeURIComponent(sellerSlug)}`)
+        .then(r => r.json())
+        .then((data: { banner?: { bannerUrl: string | null; layoutMode: string } | null }) => {
+          if (data.banner?.bannerUrl) {
+            setStorefront({ ...base, bannerUrl: data.banner.bannerUrl })
+          } else {
+            setStorefront(base)
+          }
+        })
+        .catch(() => setStorefront(base))
+        .finally(() => setReady(true))
     })
-  }, [])
+  }, [sellerSlug])
 
   const orderMap = new Map(storefront.productOrder.map((id, i) => [id, i]))
   const digitalProducts = allProducts
@@ -172,12 +183,12 @@ export function ClientStorefront({ sellerSlug }: { sellerSlug: string }) {
           <p className="text-xs text-neutral-400 flex items-center gap-1.5">
             Powered by <SellBopLogo size="sm" />
           </p>
-          <a
+          <Link
             href="/"
             className="text-xs font-semibold text-neutral-400 hover:text-black transition-colors flex items-center gap-1"
           >
             Sell your own products <ArrowRight size={11} />
-          </a>
+          </Link>
         </div>
       </footer>
     </div>
