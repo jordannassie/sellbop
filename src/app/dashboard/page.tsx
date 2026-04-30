@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { demoOrderRepo, demoProductRepo, demoCustomerRepo } from '@/lib/adapters/demo/repositories'
 import { DEMO_SELLER_PROFILE } from '@/lib/demo-data/seed'
 import { formatCurrency, timeAgo } from '@/lib/utils'
@@ -8,21 +9,98 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
+  ArrowRight,
   BarChart3,
   DollarSign,
   Package,
+  ShoppingBag,
   Sparkles,
   Store,
   Users,
-  ShoppingBag,
-  ArrowRight,
+  Wand2,
 } from 'lucide-react'
 import { useAuth } from '@/context/auth-context'
+import { cn } from '@/lib/utils'
 import type { Order, Product } from '@/lib/domain/entities'
 
 function statusVariant(status: string) {
   return status === 'completed' ? 'success' : status === 'refunded' ? 'warning' : status === 'failed' ? 'danger' : 'neutral'
 }
+
+// ── Quick actions for the AI assistant bar ────────────────────────────────────
+
+const QUICK_ACTIONS = [
+  { label: 'Create my first product', prompt: 'I want to create my first digital product' },
+  { label: 'Improve my store', prompt: 'Help me improve my store and make it look more professional' },
+  { label: 'Write product copy', prompt: 'Help me write compelling copy for my product' },
+  { label: 'Create a subscription', prompt: 'I want to create a membership or subscription product' },
+  { label: 'Get more sales', prompt: 'Help me get more sales and grow my revenue' },
+]
+
+// ── AI Launch Assistant section ───────────────────────────────────────────────
+
+function AILaunchAssistant() {
+  const router = useRouter()
+  const [prompt, setPrompt] = useState('')
+
+  function launch(text?: string) {
+    const q = (text ?? prompt).trim()
+    if (!q) {
+      router.push('/dashboard/ai-launch')
+      return
+    }
+    router.push(`/dashboard/ai-launch?prompt=${encodeURIComponent(q)}`)
+  }
+
+  return (
+    <div className="mb-8 rounded-2xl border border-neutral-200 bg-gradient-to-br from-white to-neutral-50 p-5 sm:p-6">
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-4">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-black">
+          <Wand2 size={16} className="text-white" />
+        </div>
+        <div>
+          <p className="font-bold text-black text-sm">AI Launch Assistant</p>
+          <p className="text-xs text-neutral-500">
+            Tell SellBop what you want to sell — we&apos;ll build your store, product page, pricing, FAQ, and launch copy.
+          </p>
+        </div>
+      </div>
+
+      {/* Prompt box */}
+      <div className="flex gap-2 mb-3">
+        <input
+          type="text"
+          value={prompt}
+          onChange={e => setPrompt(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && launch()}
+          placeholder="What would you like to sell?"
+          className="flex-1 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm placeholder:text-neutral-400 focus:border-black focus:outline-none focus:ring-0 transition-colors"
+        />
+        <Button onClick={() => launch()} size="sm">
+          <Sparkles size={13} /> Generate
+        </Button>
+      </div>
+
+      {/* Quick action chips */}
+      <div className="flex flex-wrap gap-1.5">
+        {QUICK_ACTIONS.map(action => (
+          <button
+            key={action.label}
+            onClick={() => launch(action.prompt)}
+            className={cn(
+              'rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs font-medium text-neutral-600 transition-colors hover:border-black hover:text-black',
+            )}
+          >
+            {action.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ── Dashboard overview ────────────────────────────────────────────────────────
 
 export default function DashboardOverview() {
   const { session } = useAuth()
@@ -54,10 +132,13 @@ export default function DashboardOverview() {
   return (
     <div>
       {/* ── Welcome header ──────────────────────────────────────── */}
-      <div className="mb-8">
+      <div className="mb-6">
         <h1 className="text-2xl font-bold text-black">Welcome back, {firstName}.</h1>
         <p className="mt-1 text-sm text-neutral-500">What do you want to do today?</p>
       </div>
+
+      {/* ── AI Launch Assistant ──────────────────────────────────── */}
+      <AILaunchAssistant />
 
       {/* ── Action cards ─────────────────────────────────────────── */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-8">
@@ -130,8 +211,18 @@ export default function DashboardOverview() {
           </CardHeader>
           <CardContent className="p-0">
             {recentOrders.length === 0 ? (
-              <div className="px-6 py-8 text-center text-sm text-neutral-400">
-                No orders yet — share your store to get started.
+              <div className="px-6 py-8 text-center">
+                <p className="text-sm text-neutral-400 mb-3">No orders yet.</p>
+                <button
+                  onClick={() => {
+                    const el = document.querySelector('input[placeholder="What would you like to sell?"]') as HTMLInputElement | null
+                    el?.focus()
+                    el?.scrollIntoView({ behavior: 'smooth' })
+                  }}
+                  className="inline-flex items-center gap-1.5 text-sm font-medium text-black underline underline-offset-2 hover:no-underline"
+                >
+                  <Sparkles size={13} /> Create your first product with AI
+                </button>
               </div>
             ) : (
               <div className="divide-y divide-neutral-50">
@@ -163,8 +254,10 @@ export default function DashboardOverview() {
             {topProducts.length === 0 ? (
               <div className="px-6 py-8 text-center">
                 <p className="text-sm text-neutral-400 mb-3">No products yet.</p>
-                <Link href="/dashboard/products/new">
-                  <Button size="sm" variant="secondary">Create Product</Button>
+                <Link href="/dashboard/ai-launch">
+                  <Button size="sm" variant="secondary">
+                    <Wand2 size={13} /> Create with AI
+                  </Button>
                 </Link>
               </div>
             ) : (
@@ -186,22 +279,6 @@ export default function DashboardOverview() {
             )}
           </CardContent>
         </Card>
-      </div>
-
-      {/* ── AI product builder nudge ─────────────────────────────── */}
-      <div className="rounded-2xl border border-neutral-100 bg-gradient-to-r from-neutral-50 to-white p-5 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-neutral-100">
-            <Sparkles size={17} className="text-neutral-600" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-black">Create with AI</p>
-            <p className="text-xs text-neutral-500">Generate a complete product page with one prompt.</p>
-          </div>
-        </div>
-        <Link href="/dashboard/products/ai-builder">
-          <Button size="sm" variant="secondary">Try AI Builder</Button>
-        </Link>
       </div>
     </div>
   )
