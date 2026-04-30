@@ -251,8 +251,8 @@ function DownloadsTab({ orders }: { orders: LibraryOrder[] }) {
       <div className="rounded-2xl border border-neutral-200 bg-white p-8 text-center">
         <EmptyState
           icon={<Download size={32} />}
-          title="No downloads yet"
-          description="Digital products and bundles you purchase will appear here."
+          title="Your purchases will appear here"
+          description="After you buy from a SellBop creator, your products, files, and access links show up here."
           action={
             <Link href="/marketplace">
               <Button size="sm">Browse Marketplace</Button>

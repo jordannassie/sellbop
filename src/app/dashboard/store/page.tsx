@@ -5,6 +5,9 @@ import { demoStorefrontRepo } from '@/lib/adapters/demo/repositories'
 import { DEMO_SELLER_PROFILE } from '@/lib/demo-data/seed'
 import {
   ArrowUpRight,
+  Check,
+  Copy,
+  EyeOff,
   Globe,
   ImageIcon,
   Layers,
@@ -13,6 +16,9 @@ import {
   User,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { toast } from 'sonner'
+import type { Storefront } from '@/lib/domain/entities'
 
 interface SectionCard {
   title: string
@@ -64,28 +70,117 @@ const CARDS: SectionCard[] = [
 
 export default function StoreSectionPage() {
   const [storeSlug, setStoreSlug] = useState(DEMO_SELLER_PROFILE.slug)
+  const [storefront, setStorefront] = useState<Storefront | null>(null)
+  const [publishing, setPublishing] = useState(false)
+  const [copied, setCopied] = useState(false)
+
+  async function loadStorefront() {
+    const s = await demoStorefrontRepo.findBySellerId(DEMO_SELLER_PROFILE.id)
+    if (s) {
+      setStorefront(s as Storefront)
+      setStoreSlug(s.slug)
+    }
+  }
 
   useEffect(() => {
-    demoStorefrontRepo.findBySellerId(DEMO_SELLER_PROFILE.id).then(s => {
-      if (s?.slug) setStoreSlug(s.slug)
-    })
+    void loadStorefront()
   }, [])
+
+  async function handlePublish() {
+    setPublishing(true)
+    try {
+      if (!storefront) { toast.error('Complete your store profile first.'); return }
+      await demoStorefrontRepo.upsert({ ...storefront, published: true })
+      await loadStorefront()
+      toast.success('Store published! Your store is now live.')
+    } catch {
+      toast.error('Failed to publish store.')
+    } finally {
+      setPublishing(false)
+    }
+  }
+
+  async function handleUnpublish() {
+    try {
+      if (!storefront) return
+      await demoStorefrontRepo.upsert({ ...storefront, published: false })
+      await loadStorefront()
+      toast.success('Store unpublished.')
+    } catch {
+      toast.error('Failed.')
+    }
+  }
+
+  function handleCopyLink() {
+    const link = typeof window !== 'undefined'
+      ? `${window.location.origin}/store/${storeSlug}`
+      : `/store/${storeSlug}`
+    void navigator.clipboard.writeText(link)
+    setCopied(true)
+    toast.success('Store link copied!')
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  const isPublished = storefront?.published ?? false
 
   return (
     <div className="max-w-3xl">
       {/* Header */}
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-black">Store</h1>
-          <p className="mt-1 text-sm text-neutral-500">
-            Your public storefront and design settings.
+          <div className="flex items-center gap-2 mb-1">
+            <h1 className="text-2xl font-bold text-black">Store</h1>
+            <Badge variant={isPublished ? 'success' : 'neutral'}>
+              {isPublished ? 'Published' : 'Draft'}
+            </Badge>
+          </div>
+          <p className="text-sm text-neutral-500">
+            {isPublished
+              ? 'Your store is live and discoverable.'
+              : 'Your store is in draft — not yet public.'}
           </p>
         </div>
         <Link href={`/store/${storeSlug}`} target="_blank">
           <Button variant="secondary" size="sm">
-            <Globe size={13} /> Open Store <ArrowUpRight size={12} />
+            <Globe size={13} /> Preview <ArrowUpRight size={12} />
           </Button>
         </Link>
+      </div>
+
+      {/* Publish controls */}
+      <div className="mb-6 rounded-2xl border border-neutral-200 bg-white p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className={`h-2.5 w-2.5 rounded-full ${isPublished ? 'bg-emerald-500' : 'bg-neutral-300'}`} />
+            <div>
+              <p className="text-sm font-semibold text-black">
+                {isPublished ? 'Store is live' : 'Store is in draft'}
+              </p>
+              <p className="text-xs text-neutral-500">
+                {isPublished
+                  ? `Public at /store/${storeSlug}`
+                  : 'Publish to make your store visible and shareable'}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            {!isPublished ? (
+              <Button onClick={handlePublish} loading={publishing} size="sm">
+                <Globe size={13} /> Publish Store
+              </Button>
+            ) : (
+              <>
+                <Button variant="secondary" size="sm" onClick={handleCopyLink}>
+                  {copied ? <Check size={13} /> : <Copy size={13} />}
+                  {copied ? 'Copied!' : 'Copy Link'}
+                </Button>
+                <Button variant="ghost" size="sm" onClick={handleUnpublish}>
+                  <EyeOff size={13} /> Unpublish
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Store URL */}

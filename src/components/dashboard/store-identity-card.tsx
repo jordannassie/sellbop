@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { ExternalLink, Layers } from 'lucide-react'
 import { demoStorefrontRepo } from '@/lib/adapters/demo/repositories'
 import { DEMO_SELLER_PROFILE, DEMO_STOREFRONT } from '@/lib/demo-data/seed'
+import { useAuth } from '@/context/auth-context'
 import { cn } from '@/lib/utils'
 import type { Storefront } from '@/lib/domain/entities'
 
@@ -29,6 +30,7 @@ export function StoreIdentityCard({
   showEditorLink = true,
   className,
 }: StoreIdentityCardProps) {
+  const { session } = useAuth()
   const [storefront, setStorefront] = useState<Storefront>(DEMO_STOREFRONT)
 
   useEffect(() => {
@@ -37,7 +39,12 @@ export function StoreIdentityCard({
     })
   }, [])
 
-  const storeUrl = `/store/${DEMO_SELLER_PROFILE.slug}`
+  const storeUrl = `/store/${storefront.slug ?? DEMO_SELLER_PROFILE.slug}`
+
+  // Use real auth session name when available; fall back to storefront title
+  const displayName = storefront.title !== DEMO_STOREFRONT.title
+    ? storefront.title
+    : (session?.name ?? storefront.title)
   const showActions = showViewStore || showEditorLink
 
   return (
@@ -68,10 +75,10 @@ export function StoreIdentityCard({
         {/* Name + headline */}
         <div className="flex-1 min-w-0">
           <p className="text-[15px] font-bold text-black leading-tight truncate group-hover:text-neutral-700 transition-colors">
-            {storefront.title}
+            {displayName}
           </p>
           <p className="text-xs text-neutral-400 mt-0.5 leading-tight truncate">
-            {storefront.headline ?? `/store/${DEMO_SELLER_PROFILE.slug}`}
+            {storefront.headline ?? storeUrl}
           </p>
         </div>
       </Link>

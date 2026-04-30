@@ -531,12 +531,12 @@ function FilesTab({ productSlug }: { productSlug: string }) {
       {files.length === 0 && !adding && !loading ? (
         <div className="rounded-2xl border border-dashed border-neutral-200 bg-neutral-50 p-8 text-center">
           <FileText size={28} className="mx-auto mb-2 text-neutral-300" />
-          <p className="text-sm font-medium text-neutral-500">No files attached yet</p>
+          <p className="text-sm font-medium text-neutral-700">Add product access</p>
           <p className="mt-1 text-xs text-neutral-400">
-            Add file links so buyers can access them after purchase.
+            Add files, links, or access instructions to deliver your product to buyers.
           </p>
           <Button size="sm" className="mt-4" onClick={() => setAdding(true)}>
-            <Plus size={13} /> Add First File
+            <Plus size={13} /> Add file or link
           </Button>
         </div>
       ) : (

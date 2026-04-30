@@ -189,7 +189,23 @@ export default function ProductsPage() {
                 }
               />
             ) : (
-              <EmptyState icon={<Package size={32} />} title="No products yet" description="Create your first product page." action={<Link href="/dashboard/products/new"><Button size="sm">Create Product</Button></Link>} />
+              <EmptyState
+                icon={<Package size={32} />}
+                title="Create your first product"
+                description="Add a digital download, service, course, or subscription to your store."
+                action={
+                  <div className="flex items-center gap-2 flex-wrap justify-center">
+                    <Link href="/dashboard/ai-launch">
+                      <Button size="sm">
+                        <Sparkles size={13} /> Create with AI
+                      </Button>
+                    </Link>
+                    <Link href="/dashboard/products/new">
+                      <Button size="sm" variant="secondary">Create manually</Button>
+                    </Link>
+                  </div>
+                }
+              />
             )
           ) : (
             <div className="divide-y divide-neutral-50">
