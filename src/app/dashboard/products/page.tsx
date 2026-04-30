@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
-import { Package, ExternalLink, Pencil, Shirt, RefreshCw, Zap } from 'lucide-react'
+import { Package, ExternalLink, Pencil, Shirt, RefreshCw, Sparkles, Zap } from 'lucide-react'
 import { ProductImage } from '@/components/ui/product-image'
 import { StoreIdentityCard } from '@/components/dashboard/store-identity-card'
 import { cn } from '@/lib/utils'
@@ -125,9 +125,12 @@ export default function ProductsPage() {
             {products.length} products · {products.filter(p => p.status === 'published').length} live
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Link href="/dashboard/printify">
             <Button variant="secondary" size="sm"><Shirt size={14} />Clothing</Button>
+          </Link>
+          <Link href="/dashboard/products/ai-builder">
+            <Button variant="secondary" size="sm"><Sparkles size={14} />Create with AI</Button>
           </Link>
           <Link href="/dashboard/products/new"><Button>+ New Product</Button></Link>
         </div>

@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { ExternalLink, Copy, Check, Camera } from 'lucide-react'
+import { ExternalLink, Copy, Check, Camera, Image as ImageIcon, LayoutTemplate } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Storefront } from '@/lib/domain/entities'
 import { StoreIdentityCard } from '@/components/dashboard/store-identity-card'
@@ -21,6 +21,8 @@ export default function StoreProfilePage() {
   const [instagram, setInstagram] = useState('')
   const [youtube, setYoutube]     = useState('')
   const [website, setWebsite]     = useState('')
+  const [bannerUrl, setBannerUrl] = useState('')
+  const [layoutMode, setLayoutMode] = useState<'clean' | 'banner'>('clean')
   const [saving, setSaving]       = useState(false)
   const [copied, setCopied]       = useState(false)
 
@@ -36,6 +38,8 @@ export default function StoreProfilePage() {
         setTitle(s.title)
         setHeadline(s.headline ?? '')
         setBio(s.bio ?? '')
+        setBannerUrl(s.bannerUrl ?? '')
+        setLayoutMode((s.bannerUrl ? 'banner' : 'clean') as 'clean' | 'banner')
         setTwitter(s.socialLinks.twitter ?? '')
         setInstagram(s.socialLinks.instagram ?? '')
         setYoutube(s.socialLinks.youtube ?? '')
@@ -62,7 +66,7 @@ export default function StoreProfilePage() {
       headline: headline || null,
       bio: bio || null,
       avatarUrl: null,
-      bannerUrl: null,
+      bannerUrl: layoutMode === 'banner' && bannerUrl ? bannerUrl : null,
       featuredProductIds: storefront?.featuredProductIds ?? [],
       productOrder: storefront?.productOrder ?? [],
       hiddenProductIds: storefront?.hiddenProductIds ?? [],
@@ -152,6 +156,61 @@ export default function StoreProfilePage() {
                 </p>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* ── Store Banner / Layout ──────────────────────────── */}
+        <Card>
+          <CardHeader><CardTitle className="flex items-center gap-2"><LayoutTemplate size={15} /> Store Layout</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <p className="text-xs font-medium text-neutral-700 mb-2">Layout style</p>
+              <div className="grid grid-cols-2 gap-3">
+                {(['clean', 'banner'] as const).map(mode => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => setLayoutMode(mode)}
+                    className={`rounded-xl border-2 p-3 text-left transition-colors ${
+                      layoutMode === mode
+                        ? 'border-black bg-black/5'
+                        : 'border-neutral-200 hover:border-neutral-400'
+                    }`}
+                  >
+                    <p className="text-xs font-semibold text-black capitalize">{mode}</p>
+                    <p className="text-[10px] text-neutral-500 mt-0.5">
+                      {mode === 'clean'
+                        ? 'Simple header with avatar and name'
+                        : 'Full-width banner image above content'}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            </div>
+            {layoutMode === 'banner' && (
+              <Input
+                label="Banner Image URL"
+                value={bannerUrl}
+                onChange={e => setBannerUrl(e.target.value)}
+                placeholder="https://..."
+                type="url"
+                hint="Use a 1200×400px or wider image for best results"
+              />
+            )}
+            {layoutMode === 'banner' && bannerUrl && (
+              <div className="rounded-xl overflow-hidden border border-neutral-200 aspect-[3/1] bg-neutral-100 relative">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={bannerUrl}
+                  alt="Store banner preview"
+                  className="w-full h-full object-cover"
+                  onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+                />
+                <div className="absolute inset-0 flex items-center justify-center text-neutral-300">
+                  <ImageIcon size={24} />
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 

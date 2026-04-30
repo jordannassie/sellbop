@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   BarChart3,
+  BookOpen,
   CreditCard,
   DollarSign,
   FileDown,
@@ -18,6 +19,7 @@ import {
   Settings,
   Shirt,
   ShoppingBag,
+  Sparkles,
   Users,
   X,
 } from 'lucide-react'
@@ -74,10 +76,11 @@ export function DashboardSidebar() {
 
   const nav: NavItem[] = [
     { href: '/dashboard', label: 'Overview', icon: LayoutDashboard, exact: true },
-    { href: '/dashboard/purchases', label: 'Purchases', icon: ShoppingBag },
+    { href: '/dashboard/library', label: 'Library', icon: BookOpen },
     { href: '/dashboard/storefront', label: 'Store Profile', icon: Globe },
     { href: '/dashboard/store-editor', label: 'Store Editor', icon: Layers },
     { href: '/dashboard/products', label: 'Products', icon: Package },
+    { href: '/dashboard/products/ai-builder', label: 'AI Builder', icon: Sparkles },
     { href: '/dashboard/printify', label: 'Clothing', icon: Shirt },
     { href: '/dashboard/orders', label: 'Orders', icon: ShoppingBag },
     { href: '/dashboard/subscriptions', label: 'Subscriptions', icon: Repeat2 },

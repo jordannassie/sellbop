@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
-import { Search, TrendingUp, Star, ArrowRight, SlidersHorizontal, X } from 'lucide-react'
+import { Search, TrendingUp, Star, ArrowRight, SlidersHorizontal, X, Sparkles, Award, Zap, Users, Crown } from 'lucide-react'
 import { GradientImageFallback } from '@/components/ui/gradient-image-fallback'
 import type { ProductType } from '@/lib/domain/entities'
 
@@ -10,6 +10,8 @@ import type { ProductType } from '@/lib/domain/entities'
 // Each product links directly to its dedicated product page (/p/[slug]).
 // The creator name links to the creator's storefront (/store/[handle]).
 // This preserves the 3-surface architecture: Marketplace → Product Page → Checkout.
+
+type MarketplaceBadge = 'new' | 'trending' | 'top_seller' | 'featured' | 'membership' | 'digital' | 'coaching'
 
 interface MarketProduct {
   id: string
@@ -25,27 +27,29 @@ interface MarketProduct {
   trending: boolean
   featured: boolean
   tags: string[]
+  badge?: MarketplaceBadge
+  createdDaysAgo?: number
 }
 
 const PRODUCTS: MarketProduct[] = [
   // Alex Johnson's real products link to live demo pages (/p/[slug])
-  { id: 'mp-1',  slug: 'notion-template-pack',       title: 'Notion Template Pack — 50+ Systems',           creator: 'Alex Johnson',     creatorHandle: 'alexjohnson',   category: 'Templates',     productType: 'digital_download',  price: 2900,  rating: 4.9, sales: 1842, trending: true,  featured: true,  tags: ['notion', 'productivity', 'templates'] },
-  { id: 'mp-5',  slug: 'systems-membership',         title: 'Systems Lab — Monthly Membership',             creator: 'Alex Johnson',     creatorHandle: 'alexjohnson',   category: 'Memberships',   productType: 'subscription',      price: 1900,  rating: 4.6, sales: 320,  trending: false, featured: true,  tags: ['productivity', 'community', 'monthly'] },
-  { id: 'mp-12', slug: 'creator-bundle',             title: 'Creator Bundle — Everything You Need',         creator: 'Alex Johnson',     creatorHandle: 'alexjohnson',   category: 'Bundles',       productType: 'bundle',            price: 7900,  rating: 4.7, sales: 502,  trending: true,  featured: true,  tags: ['bundle', 'creator', 'starter'] },
-  { id: 'mp-3',  slug: 'coaching-call',              title: '1-on-1 Coaching Call — 60 Minutes',            creator: 'Alex Johnson',     creatorHandle: 'alexjohnson',   category: 'Coaching',      productType: 'service_offer',     price: 14900, rating: 5.0, sales: 74,   trending: false, featured: false, tags: ['coaching', 'strategy', 'systems'] },
+  { id: 'mp-1',  slug: 'notion-template-pack',       title: 'Notion Template Pack — 50+ Systems',           creator: 'Alex Johnson',     creatorHandle: 'alexjohnson',   category: 'Templates',     productType: 'digital_download',  price: 2900,  rating: 4.9, sales: 1842, trending: true,  featured: true,  tags: ['notion', 'productivity', 'templates'], badge: 'top_seller', createdDaysAgo: 60 },
+  { id: 'mp-5',  slug: 'systems-membership',         title: 'Systems Lab — Monthly Membership',             creator: 'Alex Johnson',     creatorHandle: 'alexjohnson',   category: 'Memberships',   productType: 'subscription',      price: 1900,  rating: 4.6, sales: 320,  trending: false, featured: true,  tags: ['productivity', 'community', 'monthly'], badge: 'membership', createdDaysAgo: 45 },
+  { id: 'mp-12', slug: 'creator-bundle',             title: 'Creator Bundle — Everything You Need',         creator: 'Alex Johnson',     creatorHandle: 'alexjohnson',   category: 'Bundles',       productType: 'bundle',            price: 7900,  rating: 4.7, sales: 502,  trending: true,  featured: true,  tags: ['bundle', 'creator', 'starter'], badge: 'featured', createdDaysAgo: 30 },
+  { id: 'mp-3',  slug: 'coaching-call',              title: '1-on-1 Coaching Call — 60 Minutes',            creator: 'Alex Johnson',     creatorHandle: 'alexjohnson',   category: 'Coaching',      productType: 'service_offer',     price: 14900, rating: 5.0, sales: 74,   trending: false, featured: false, tags: ['coaching', 'strategy', 'systems'], badge: 'coaching', createdDaysAgo: 90 },
   // Other creators (demo slugs — product pages not available in demo mode)
-  { id: 'mp-2',  slug: '30-day-content-calendar',   title: '30-Day Content Calendar for Creators',         creator: 'Maya Chen',        creatorHandle: 'mayachen',      category: 'Templates',     productType: 'digital_download',  price: 1200,  rating: 4.7, sales: 987,  trending: false, featured: false, tags: ['content', 'social media', 'planning'] },
-  { id: 'mp-6',  slug: 'figma-ui-kit-saas',         title: 'Figma UI Kit — SaaS Dashboard Components',    creator: 'Priya Kapoor',     creatorHandle: 'priyakapoor',   category: 'Templates',     productType: 'digital_download',  price: 4900,  rating: 4.9, sales: 1204, trending: true,  featured: false, tags: ['figma', 'ui', 'design'] },
-  { id: 'mp-4',  slug: 'youtube-growth-masterclass', title: 'YouTube Growth Masterclass',                  creator: 'Jordan Rivera',    creatorHandle: 'jordanrivera',  category: 'Courses',       productType: 'digital_download',  price: 9700,  rating: 4.8, sales: 512,  trending: true,  featured: false, tags: ['youtube', 'video', 'growth'] },
-  { id: 'mp-7',  slug: 'freelance-pricing-templates', title: 'Freelance Pricing & Proposal Templates',     creator: 'Ryan Brooks',      creatorHandle: 'ryanbrooks',    category: 'Templates',     productType: 'digital_download',  price: 1700,  rating: 4.5, sales: 763,  trending: false, featured: false, tags: ['freelance', 'proposals', 'business'] },
-  { id: 'mp-8',  slug: 'build-saas-30-days',        title: 'Build a SaaS in 30 Days — Full Course',       creator: 'David Park',       creatorHandle: 'davidpark',     category: 'Courses',       productType: 'digital_download',  price: 14900, rating: 4.8, sales: 398,  trending: true,  featured: false, tags: ['saas', 'coding', 'startup'] },
-  { id: 'mp-9',  slug: 'email-copywriting-secrets', title: 'Email Copywriting Secrets',                    creator: 'Lisa Wang',        creatorHandle: 'lisawang',      category: 'Courses',       productType: 'digital_download',  price: 3700,  rating: 4.7, sales: 891,  trending: false, featured: false, tags: ['email', 'copywriting', 'marketing'] },
-  { id: 'mp-10', slug: 'weekly-marketing-playbook', title: 'Weekly Marketing Playbook — Subscription',    creator: 'Brandon Torres',   creatorHandle: 'brandontorres', category: 'Subscriptions', productType: 'subscription',      price: 2900,  rating: 4.4, sales: 215,  trending: false, featured: false, tags: ['marketing', 'weekly', 'newsletter'] },
-  { id: 'mp-11', slug: 'sermon-series-media-kit',   title: 'Church Sermon Series Media Kit Vol. 2',       creator: 'David Reyes',      creatorHandle: 'davidreyes',    category: 'Templates',     productType: 'bundle',            price: 7900,  rating: 4.9, sales: 143,  trending: false, featured: false, tags: ['church', 'media', 'design'] },
-  { id: 'mp-13', slug: 'instagram-reels-scripts',   title: 'Instagram Reels Script Templates',             creator: 'Maya Chen',        creatorHandle: 'mayachen',      category: 'Templates',     productType: 'digital_download',  price: 900,   rating: 4.6, sales: 2341, trending: true,  featured: false, tags: ['instagram', 'reels', 'scripts'] },
-  { id: 'mp-14', slug: 'solopreneur-finance-tracker', title: 'Solopreneur Financial Tracker — Notion',    creator: 'Priya Kapoor',     creatorHandle: 'priyakapoor',   category: 'Templates',     productType: 'digital_download',  price: 1400,  rating: 4.8, sales: 634,  trending: false, featured: false, tags: ['finance', 'notion', 'tracking'] },
-  { id: 'mp-15', slug: 'launch-checklist-guide',    title: 'Launch Checklist & Strategy Guide',            creator: 'Jordan Rivera',    creatorHandle: 'jordanrivera',  category: 'Courses',       productType: 'digital_download',  price: 2200,  rating: 4.5, sales: 417,  trending: false, featured: false, tags: ['launch', 'strategy', 'guide'] },
-  { id: 'mp-16', slug: 'brand-strategy-session',    title: '1-on-1 Brand Strategy Session',                creator: 'Sarah Mitchell',   creatorHandle: 'sarahmitchell', category: 'Coaching',      productType: 'service_offer',     price: 29900, rating: 4.9, sales: 88,   trending: false, featured: false, tags: ['branding', 'strategy', 'coaching'] },
+  { id: 'mp-2',  slug: '30-day-content-calendar',   title: '30-Day Content Calendar for Creators',         creator: 'Maya Chen',        creatorHandle: 'mayachen',      category: 'Templates',     productType: 'digital_download',  price: 1200,  rating: 4.7, sales: 987,  trending: false, featured: false, tags: ['content', 'social media', 'planning'], badge: 'digital', createdDaysAgo: 120 },
+  { id: 'mp-6',  slug: 'figma-ui-kit-saas',         title: 'Figma UI Kit — SaaS Dashboard Components',    creator: 'Priya Kapoor',     creatorHandle: 'priyakapoor',   category: 'Templates',     productType: 'digital_download',  price: 4900,  rating: 4.9, sales: 1204, trending: true,  featured: false, tags: ['figma', 'ui', 'design'], badge: 'trending', createdDaysAgo: 15 },
+  { id: 'mp-4',  slug: 'youtube-growth-masterclass', title: 'YouTube Growth Masterclass',                  creator: 'Jordan Rivera',    creatorHandle: 'jordanrivera',  category: 'Courses',       productType: 'digital_download',  price: 9700,  rating: 4.8, sales: 512,  trending: true,  featured: false, tags: ['youtube', 'video', 'growth'], badge: 'trending', createdDaysAgo: 25 },
+  { id: 'mp-7',  slug: 'freelance-pricing-templates', title: 'Freelance Pricing & Proposal Templates',     creator: 'Ryan Brooks',      creatorHandle: 'ryanbrooks',    category: 'Templates',     productType: 'digital_download',  price: 1700,  rating: 4.5, sales: 763,  trending: false, featured: false, tags: ['freelance', 'proposals', 'business'], badge: 'digital', createdDaysAgo: 80 },
+  { id: 'mp-8',  slug: 'build-saas-30-days',        title: 'Build a SaaS in 30 Days — Full Course',       creator: 'David Park',       creatorHandle: 'davidpark',     category: 'Courses',       productType: 'digital_download',  price: 14900, rating: 4.8, sales: 398,  trending: true,  featured: false, tags: ['saas', 'coding', 'startup'], badge: 'new', createdDaysAgo: 7 },
+  { id: 'mp-9',  slug: 'email-copywriting-secrets', title: 'Email Copywriting Secrets',                    creator: 'Lisa Wang',        creatorHandle: 'lisawang',      category: 'Courses',       productType: 'digital_download',  price: 3700,  rating: 4.7, sales: 891,  trending: false, featured: false, tags: ['email', 'copywriting', 'marketing'], badge: 'top_seller', createdDaysAgo: 200 },
+  { id: 'mp-10', slug: 'weekly-marketing-playbook', title: 'Weekly Marketing Playbook — Subscription',    creator: 'Brandon Torres',   creatorHandle: 'brandontorres', category: 'Subscriptions', productType: 'subscription',      price: 2900,  rating: 4.4, sales: 215,  trending: false, featured: false, tags: ['marketing', 'weekly', 'newsletter'], badge: 'membership', createdDaysAgo: 55 },
+  { id: 'mp-11', slug: 'sermon-series-media-kit',   title: 'Church Sermon Series Media Kit Vol. 2',       creator: 'David Reyes',      creatorHandle: 'davidreyes',    category: 'Templates',     productType: 'bundle',            price: 7900,  rating: 4.9, sales: 143,  trending: false, featured: false, tags: ['church', 'media', 'design'], badge: 'new', createdDaysAgo: 5 },
+  { id: 'mp-13', slug: 'instagram-reels-scripts',   title: 'Instagram Reels Script Templates',             creator: 'Maya Chen',        creatorHandle: 'mayachen',      category: 'Templates',     productType: 'digital_download',  price: 900,   rating: 4.6, sales: 2341, trending: true,  featured: false, tags: ['instagram', 'reels', 'scripts'], badge: 'top_seller', createdDaysAgo: 180 },
+  { id: 'mp-14', slug: 'solopreneur-finance-tracker', title: 'Solopreneur Financial Tracker — Notion',    creator: 'Priya Kapoor',     creatorHandle: 'priyakapoor',   category: 'Templates',     productType: 'digital_download',  price: 1400,  rating: 4.8, sales: 634,  trending: false, featured: false, tags: ['finance', 'notion', 'tracking'], badge: 'digital', createdDaysAgo: 70 },
+  { id: 'mp-15', slug: 'launch-checklist-guide',    title: 'Launch Checklist & Strategy Guide',            creator: 'Jordan Rivera',    creatorHandle: 'jordanrivera',  category: 'Courses',       productType: 'digital_download',  price: 2200,  rating: 4.5, sales: 417,  trending: false, featured: false, tags: ['launch', 'strategy', 'guide'], badge: 'digital', createdDaysAgo: 100 },
+  { id: 'mp-16', slug: 'brand-strategy-session',    title: '1-on-1 Brand Strategy Session',                creator: 'Sarah Mitchell',   creatorHandle: 'sarahmitchell', category: 'Coaching',      productType: 'service_offer',     price: 29900, rating: 4.9, sales: 88,   trending: false, featured: false, tags: ['branding', 'strategy', 'coaching'], badge: 'coaching', createdDaysAgo: 40 },
 ]
 
 const CATEGORIES = ['All', 'Templates', 'Courses', 'Coaching', 'Subscriptions', 'Memberships', 'Bundles']
@@ -67,6 +71,31 @@ function Stars({ rating }: { rating: number }) {
     <span className="flex items-center gap-0.5">
       <Star size={10} className="fill-amber-400 text-amber-400" />
       <span className="text-[11px] font-semibold text-neutral-600">{rating.toFixed(1)}</span>
+    </span>
+  )
+}
+
+// ─── Marketplace Badge ────────────────────────────────────────────────────────
+
+const BADGE_CONFIG: Record<
+  MarketplaceBadge,
+  { label: string; className: string; icon?: React.ReactNode }
+> = {
+  new:       { label: 'New',          className: 'bg-blue-50 text-blue-700 border-blue-200', icon: <Sparkles size={8} /> },
+  trending:  { label: 'Trending',     className: 'bg-black text-white border-black',         icon: <TrendingUp size={8} /> },
+  top_seller:{ label: 'Top Seller',   className: 'bg-amber-50 text-amber-700 border-amber-200', icon: <Award size={8} /> },
+  featured:  { label: 'Featured',     className: 'bg-violet-50 text-violet-700 border-violet-200', icon: <Crown size={8} /> },
+  membership:{ label: 'Membership',   className: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: <Users size={8} /> },
+  digital:   { label: 'Download',     className: 'bg-neutral-100 text-neutral-600 border-neutral-200', icon: <Zap size={8} /> },
+  coaching:  { label: 'Coaching',     className: 'bg-rose-50 text-rose-700 border-rose-200', icon: <Star size={8} /> },
+}
+
+function MarketBadge({ badge }: { badge: MarketplaceBadge }) {
+  const config = BADGE_CONFIG[badge]
+  return (
+    <span className={`flex items-center gap-0.5 text-[9px] font-bold uppercase tracking-wide border px-1.5 py-0.5 rounded-full ${config.className}`}>
+      {config.icon}
+      {config.label}
     </span>
   )
 }
@@ -99,13 +128,13 @@ function ProductCard({ product }: { product: MarketProduct }) {
       <Link href={`/p/${product.slug}`} className="block">
         <div className="aspect-[4/3] relative overflow-hidden bg-neutral-100">
           <GradientImageFallback productType={product.productType} />
-          {product.trending && (
+          {/* Badge: top-left */}
+          {product.badge && (
             <div className="absolute top-2.5 left-2.5">
-              <span className="flex items-center gap-1 text-[10px] font-bold bg-black text-white px-2 py-1 rounded-full">
-                <TrendingUp size={9} /> Trending
-              </span>
+              <MarketBadge badge={product.badge} />
             </div>
           )}
+          {/* Category: top-right */}
           <div className="absolute top-2.5 right-2.5">
             <span className="text-[10px] font-semibold bg-white/90 text-neutral-600 border border-neutral-200 px-2 py-0.5 rounded-full">
               {product.category}
@@ -157,11 +186,9 @@ function FeaturedCard({ product }: { product: MarketProduct }) {
       <Link href={`/p/${product.slug}`} className="block">
         <div className="aspect-video relative overflow-hidden bg-neutral-100">
           <GradientImageFallback productType={product.productType} iconSize="lg" />
-          {product.trending && (
+          {product.badge && (
             <div className="absolute top-3 left-3">
-              <span className="flex items-center gap-1 text-[10px] font-bold bg-black text-white px-2.5 py-1 rounded-full">
-                <TrendingUp size={9} /> Trending
-              </span>
+              <MarketBadge badge={product.badge} />
             </div>
           )}
         </div>
@@ -203,13 +230,20 @@ export default function MarketplacePage() {
 
   const featured = PRODUCTS.filter(p => p.featured)
 
-  const filtered = useMemo(() => {
-    let list = PRODUCTS.filter(p => !p.featured || category !== 'All' || search)
+  function getFiltered() {
+    let list: MarketProduct[]
+    if (category !== 'All') {
+      list = PRODUCTS.filter(p => p.category === category)
+    } else if (search) {
+      list = PRODUCTS
+    } else {
+      list = PRODUCTS.filter(p => !p.featured)
+    }
 
-    if (category !== 'All') list = PRODUCTS.filter(p => p.category === category)
     if (search) {
       const q = search.toLowerCase()
-      list = (category !== 'All' ? list : PRODUCTS).filter(
+      const base = category !== 'All' ? list : PRODUCTS
+      list = base.filter(
         p => p.title.toLowerCase().includes(q) || p.creator.toLowerCase().includes(q) || p.tags.some(t => t.includes(q))
       )
     }
@@ -221,7 +255,9 @@ export default function MarketplacePage() {
       case 'price_desc': return [...list].sort((a, b) => b.price - a.price)
       default:           return [...list].sort((a, b) => (b.trending ? 1 : 0) - (a.trending ? 1 : 0))
     }
-  }, [search, category, sort])
+  }
+
+  const filtered = getFiltered()
 
   const showFeatured = !search && category === 'All'
 

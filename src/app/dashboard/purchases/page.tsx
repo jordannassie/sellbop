@@ -1,7 +1,5 @@
-'use client'
-
-import { DashboardPurchasesView } from '@/components/dashboard/purchases-view'
+import { redirect } from 'next/navigation'
 
 export default function DashboardPurchasesPage() {
-  return <DashboardPurchasesView />
+  redirect('/dashboard/library')
 }
