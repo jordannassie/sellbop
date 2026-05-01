@@ -21,6 +21,7 @@ import {
 import { useAuth } from '@/context/auth-context'
 import { cn } from '@/lib/utils'
 import { LaunchDashboard } from '@/components/dashboard/launch-dashboard'
+import { AIStoreAgentPanel } from '@/components/dashboard/ai-store-agent-panel'
 import { useLaunchChecklist } from '@/hooks/use-launch-checklist'
 import { useDemoMode } from '@/hooks/use-demo-mode'
 import { AiComposer } from '@/components/ai/ai-composer'
@@ -176,9 +177,9 @@ export default function DashboardOverview() {
         />
       )}
 
-      {/* ── AI assistant section (shown after launch checklist mostly complete) */}
+      {/* ── AI Store Agent panel (shown after launch checklist mostly complete) */}
       {!showLaunchDashboard && (
-        <AIAssistantSection />
+        <AIStoreAgentPanel />
       )}
 
       {/* ── Action cards ─────────────────────────────────────────── */}
