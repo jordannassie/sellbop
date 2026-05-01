@@ -12,6 +12,7 @@ import { Select } from '@/components/ui/select'
 import { Toggle } from '@/components/ui/toggle'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ImageUpload } from '@/components/dashboard/image-upload'
+import { LinkField } from '@/components/dashboard/link-field'
 import { toast } from 'sonner'
 import { slugify } from '@/lib/utils'
 import type { ProductType } from '@/lib/domain/entities'
@@ -105,7 +106,14 @@ function NewProductForm() {
           <CardHeader><CardTitle>Basics</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <Input label="Product Name *" value={name} onChange={e => handleNameChange(e.target.value)} placeholder="Notion Template Pack" required />
-            <Input label="Slug *" value={slug} onChange={e => setSlug(slugify(e.target.value))} placeholder="notion-template-pack" hint={`Public URL: /p/${slug || 'your-slug'}`} required />
+            <LinkField
+              label="Product link *"
+              value={slug}
+              onChange={setSlug}
+              prefix="sellbop.com/p/"
+              checkUrl="/api/availability/product-link"
+              required
+            />
             <div className="grid grid-cols-2 gap-4">
               <Select label="Product Type" value={productType} onChange={e => setProductType(e.target.value as ProductType)} options={TYPES} />
               <Select label="CTA Button" value={ctaText} onChange={e => setCtaText(e.target.value)} options={CTA_OPTIONS} />

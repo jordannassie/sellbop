@@ -354,6 +354,8 @@ export interface PayoutRecord {
   paidAt: string | null
 }
 
+export type BrandingMode = 'minimal' | 'powered_by' | 'full_header'
+
 export interface Storefront {
   id: string
   sellerId: string
@@ -383,4 +385,5 @@ export interface Storefront {
   headerPhotoUrl: string | null
   headerVideoUrl: string | null
   published: boolean
+  brandingMode?: BrandingMode
 }

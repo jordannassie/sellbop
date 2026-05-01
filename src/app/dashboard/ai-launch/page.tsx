@@ -397,10 +397,10 @@ function Step5({
               onChange={e => update('storeName', e.target.value)}
             />
             <Input
-              label="Store URL Slug"
+              label="Store link"
               value={result.storeSlug}
               onChange={e => update('storeSlug', slugify(e.target.value))}
-              hint={`/store/${result.storeSlug}`}
+              hint={`sellbop.com/store/${result.storeSlug}`}
             />
           </div>
           <Input
@@ -434,10 +434,10 @@ function Step5({
             }}
           />
           <Input
-            label="URL Slug"
+            label="Product link"
             value={result.productSlug}
             onChange={e => update('productSlug', slugify(e.target.value))}
-            hint={`/p/${result.productSlug}`}
+            hint={`sellbop.com/p/${result.productSlug} — this is the public link buyers will use`}
           />
           <Input
             label="Short Description"

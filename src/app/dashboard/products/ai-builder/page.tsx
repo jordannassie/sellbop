@@ -268,10 +268,10 @@ function BuilderPreview({
             }}
           />
           <Input
-            label="URL Slug"
+            label="Product link"
             value={result.slugSuggestion}
             onChange={e => update('slugSuggestion', slugify(e.target.value))}
-            hint={`/p/${result.slugSuggestion}`}
+            hint={`sellbop.com/p/${result.slugSuggestion} — the public link buyers will use`}
           />
           <Input
             label="Short Description"

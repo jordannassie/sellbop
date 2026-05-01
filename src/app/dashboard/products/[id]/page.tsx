@@ -31,6 +31,8 @@ import {
 import type { Product, ProductType } from '@/lib/domain/entities'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
+import { FileUpload } from '@/components/dashboard/file-upload'
+import { LinkField } from '@/components/dashboard/link-field'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -243,7 +245,7 @@ function OverviewTab({ product, onTabChange }: { product: Product; onTabChange: 
       </Card>
 
       <div className="rounded-xl border border-neutral-100 bg-neutral-50 px-4 py-3 text-xs text-neutral-500 space-y-1">
-        <p><span className="font-medium text-neutral-700">Product URL:</span>{' '}
+        <p><span className="font-medium text-neutral-700">Product link:</span>{' '}
           <a href={`/p/${product.slug}`} target="_blank" className="underline underline-offset-2 hover:text-black">
             /p/{product.slug}
           </a>
@@ -325,7 +327,15 @@ function EditTab({
         <CardHeader><CardTitle>Basics</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <Input label="Product Name *" value={name} onChange={e => setName(e.target.value)} required />
-          <Input label="Slug *" value={slug} onChange={e => setSlug(slugify(e.target.value))} hint={`/p/${slug}`} required />
+          <LinkField
+            label="Product link *"
+            value={slug}
+            onChange={setSlug}
+            prefix="sellbop.com/p/"
+            checkUrl="/api/availability/product-link"
+            ownerParam={{ key: 'productId', value: product.id }}
+            required
+          />
           <div className="grid grid-cols-2 gap-4">
             <Select label="Product Type" value={productType} onChange={e => setProductType(e.target.value as ProductType)} options={TYPES} />
             <Select label="CTA Button" value={ctaText} onChange={e => setCtaText(e.target.value)} options={CTA_OPTIONS} />
@@ -338,7 +348,12 @@ function EditTab({
       <Card>
         <CardHeader><CardTitle>Media</CardTitle></CardHeader>
         <CardContent>
-          <ImageUpload value={thumbnailUrl} onChange={setThumbnailUrl} />
+          <ImageUpload
+            value={thumbnailUrl}
+            onChange={setThumbnailUrl}
+            bucket="product-images"
+            hint="Recommended: 1200×630px, JPG or PNG. Shown on your product page."
+          />
         </CardContent>
       </Card>
 
@@ -515,11 +530,30 @@ function FilesTab({ productSlug }: { productSlug: string }) {
       {adding && (
         <Card>
           <CardContent className="pt-5 space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            {/* Upload file directly */}
+            <div>
+              <p className="text-xs font-medium text-neutral-700 mb-2">Upload a file</p>
+              <FileUpload
+                onUploaded={(uploaded) => {
+                  setFileName(uploaded.fileName)
+                  setFileUrl(uploaded.fileUrl ?? uploaded.storagePath ?? '')
+                  // Auto-detect type from mime
+                  const mime = uploaded.fileType
+                  if (mime.includes('pdf')) setFileType('pdf')
+                  else if (mime.includes('zip') || mime.includes('archive')) setFileType('zip')
+                  else if (mime.startsWith('video')) setFileType('video')
+                  else if (mime.startsWith('audio')) setFileType('audio')
+                  else if (mime.startsWith('image')) setFileType('image')
+                  else setFileType('other')
+                }}
+              />
+            </div>
+            <p className="text-xs text-neutral-400 text-center">— or paste a link —</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input label="File Name *" value={fileName} onChange={e => setFileName(e.target.value)} placeholder="e.g. Starter Kit.zip" />
               <Select label="File Type" value={fileType} onChange={e => setFileType(e.target.value)} options={FILE_TYPES} />
             </div>
-            <Input label="File URL *" value={fileUrl} onChange={e => setFileUrl(e.target.value)} placeholder="https://..." type="url" hint="Paste a direct link or Supabase storage URL" />
+            <Input label="File URL" value={fileUrl} onChange={e => setFileUrl(e.target.value)} placeholder="https://..." type="url" hint="Paste a direct download link or leave blank if using upload above" />
             <div className="flex gap-2">
               <Button size="sm" onClick={handleAdd} loading={saving}>Save File</Button>
               <Button size="sm" variant="ghost" onClick={() => setAdding(false)}>Cancel</Button>
@@ -1451,7 +1485,7 @@ function ProductHubForm({ params }: { params: Promise<{ id: string }> }) {
                   </Link>
                 </div>
                 <p className="text-xs text-neutral-500">
-                  Change the slug in the <button onClick={() => { setTab('content'); setContentSub('edit') }} className="underline hover:text-black">Edit tab</button>.
+                  Change the product link in the <button onClick={() => { setTab('content'); setContentSub('edit') }} className="underline hover:text-black">Edit tab</button>.
                 </p>
               </CardContent>
             </Card>

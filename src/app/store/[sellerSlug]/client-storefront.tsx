@@ -108,20 +108,25 @@ export function ClientStorefront({ sellerSlug }: { sellerSlug: string }) {
     )
   }
 
+  const brandingMode = storefront.brandingMode ?? 'minimal'
+  const showFullHeader = brandingMode === 'full_header'
+
   return (
     <div className="min-h-screen bg-[#fafafa]">
-      {/* ── Sticky top nav ──────────────────────────────────────── */}
-      <nav className="sticky top-0 z-20 bg-white/85 backdrop-blur-xl shadow-[0_1px_0_0_rgba(0,0,0,0.06)]">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 flex items-center justify-between" style={{ height: 60 }}>
-          <SellBopLogo size="lg" />
-          <a
-            href={`/store/${sellerSlug}#products`}
-            className="text-xs font-semibold text-neutral-400 hover:text-black transition-colors hidden sm:flex items-center gap-1"
-          >
-            Browse Products <ArrowUpRight size={11} />
-          </a>
-        </div>
-      </nav>
+      {/* ── Sticky top nav — only shown in full_header branding mode ── */}
+      {showFullHeader && (
+        <nav className="sticky top-0 z-20 bg-white/85 backdrop-blur-xl shadow-[0_1px_0_0_rgba(0,0,0,0.06)]">
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 flex items-center justify-between" style={{ height: 60 }}>
+            <SellBopLogo size="lg" />
+            <a
+              href={`/store/${sellerSlug}#products`}
+              className="text-xs font-semibold text-neutral-400 hover:text-black transition-colors hidden sm:flex items-center gap-1"
+            >
+              Browse Products <ArrowUpRight size={11} />
+            </a>
+          </div>
+        </nav>
+      )}
 
       {/* ── Store header ───────────────────────────────────────── */}
       <StoreHeader storefront={storefront} />
@@ -180,9 +185,14 @@ export function ClientStorefront({ sellerSlug }: { sellerSlug: string }) {
       {/* ── Footer ─────────────────────────────────────────────── */}
       <footer className="py-14">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-neutral-400 flex items-center gap-1.5">
-            Powered by <SellBopLogo size="sm" />
-          </p>
+          {/* Show "Powered by" badge in powered_by/full_header modes; hidden in minimal */}
+          {brandingMode !== 'minimal' ? (
+            <p className="text-xs text-neutral-400 flex items-center gap-1.5">
+              Powered by <SellBopLogo size="sm" />
+            </p>
+          ) : (
+            <span />
+          )}
           <Link
             href="/"
             className="text-xs font-semibold text-neutral-400 hover:text-black transition-colors flex items-center gap-1"

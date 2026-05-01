@@ -82,14 +82,13 @@ export default function StartSellingPage() {
           />
 
           <Input
-            label="Store Slug"
+            label="Store link"
             value={storeSlug}
             onChange={(e) => setStoreSlug(slugify(e.target.value))}
             placeholder="alex-creates"
+            hint={`Your public store: sellbop.com/store/${storeSlug || 'your-link'}`}
             required
           />
-
-          <p className="text-xs text-neutral-400">Your public store URL will be `/store/{storeSlug || 'your-slug'}`.</p>
 
           {error && (
             <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">

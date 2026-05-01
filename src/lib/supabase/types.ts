@@ -42,6 +42,7 @@ export interface Database {
           header_layout: string | null
           banner_url: string | null
           layout_mode: string | null
+          branding_mode: string | null
           created_at: string
           updated_at: string
         }
@@ -56,6 +57,7 @@ export interface Database {
           header_layout?: string | null
           banner_url?: string | null
           layout_mode?: string | null
+          branding_mode?: string | null
           created_at?: string
           updated_at?: string
         }

@@ -7,7 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { ExternalLink, Copy, Check, Camera, Image as ImageIcon, LayoutTemplate } from 'lucide-react'
+import { ExternalLink, Copy, Check, Camera, Globe2, Image as ImageIcon, LayoutTemplate } from 'lucide-react'
+import type { BrandingMode } from '@/lib/domain/entities'
 import { toast } from 'sonner'
 import type { Storefront } from '@/lib/domain/entities'
 import { StoreIdentityCard } from '@/components/dashboard/store-identity-card'
@@ -23,6 +24,7 @@ export default function StoreProfilePage() {
   const [website, setWebsite]     = useState('')
   const [bannerUrl, setBannerUrl] = useState('')
   const [layoutMode, setLayoutMode] = useState<'clean' | 'banner'>('clean')
+  const [brandingMode, setBrandingMode] = useState<BrandingMode>('minimal')
   const [saving, setSaving]       = useState(false)
   const [copied, setCopied]       = useState(false)
 
@@ -40,6 +42,7 @@ export default function StoreProfilePage() {
         setBio(s.bio ?? '')
         setBannerUrl(s.bannerUrl ?? '')
         setLayoutMode((s.bannerUrl ? 'banner' : 'clean') as 'clean' | 'banner')
+        setBrandingMode(s.brandingMode ?? 'minimal')
         setTwitter(s.socialLinks.twitter ?? '')
         setInstagram(s.socialLinks.instagram ?? '')
         setYoutube(s.socialLinks.youtube ?? '')
@@ -89,6 +92,7 @@ export default function StoreProfilePage() {
       headerPhotoUrl: storefront?.headerPhotoUrl ?? null,
       headerVideoUrl: storefront?.headerVideoUrl ?? null,
       published: true,
+      brandingMode,
     })
 
     // Also persist banner to Supabase if configured
@@ -221,6 +225,37 @@ export default function StoreProfilePage() {
                 </div>
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* ── Store Branding ────────────────────────────────── */}
+        <Card>
+          <CardHeader><CardTitle className="flex items-center gap-2"><Globe2 size={15} /> Store Branding</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-xs text-neutral-500 leading-relaxed">
+              Control how SellBop branding appears on your public store page.
+            </p>
+            <div className="grid grid-cols-1 gap-2">
+              {([
+                { value: 'minimal',     label: 'Minimal',              desc: 'Make your store feel like your own site — no SellBop header or badge.' },
+                { value: 'powered_by',  label: 'Powered by SellBop',   desc: 'Show a small "Powered by SellBop" badge in the footer only.' },
+                { value: 'full_header', label: 'Full SellBop header',  desc: 'Show the SellBop navigation bar at the top of your store.' },
+              ] as const).map(opt => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setBrandingMode(opt.value)}
+                  className={`rounded-xl border-2 p-3 text-left transition-colors ${
+                    brandingMode === opt.value
+                      ? 'border-black bg-black/5'
+                      : 'border-neutral-200 hover:border-neutral-400'
+                  }`}
+                >
+                  <p className="text-xs font-semibold text-black">{opt.label}</p>
+                  <p className="text-[10px] text-neutral-500 mt-0.5">{opt.desc}</p>
+                </button>
+              ))}
+            </div>
           </CardContent>
         </Card>
 
