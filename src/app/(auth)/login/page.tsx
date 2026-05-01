@@ -3,7 +3,7 @@
 import { Suspense, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Sparkles } from 'lucide-react'
+import { Loader2, RefreshCw, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '@/context/auth-context'
 import { Button } from '@/components/ui/button'
@@ -53,28 +53,36 @@ function AuthForm() {
   const idea = ideaFromParam || getLaunchIdea() || ''
   const intent = params.get('intent') ?? ''
 
+  // Detect OAuth error conditions
+  const oauthError    = params.get('oauth_error')
+  const errorCodeParam = params.get('error_code')
+  const isOAuthExpired =
+    oauthError === 'session_expired' ||
+    errorCodeParam === 'flow_state_already_used'
+  const routeError    = isOAuthExpired ? '' : (params.get('error') ?? '')
+
   const [mode, setMode] = useState<'login' | 'signup'>(
     params.get('mode') === 'signup' ? 'signup' : 'login',
   )
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
+  const [name, setName]         = useState('')
+  const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [loading, setLoading]   = useState(false)
+  const [error, setError]       = useState('')
   const [pwdReadOnly, setPwdReadOnly] = useState(true)
-  const routeError = params.get('error') ?? ''
+
+  // Prevent double-click on Google button (the OAuth redirect takes a moment)
+  const [googleLoading, setGoogleLoading] = useState(false)
 
   /**
    * After successful email/password auth, route to AI Launch if
    * there is a stored idea; otherwise fall through to /auth/complete.
    */
   function resolveRedirect() {
-    const currentIdea = idea
-    if (currentIdea || intent === 'store_launch') {
-      const dest = currentIdea
-        ? `/auth/complete?idea=${encodeURIComponent(currentIdea)}&intent=store_launch`
+    if (idea || intent === 'store_launch') {
+      return idea
+        ? `/auth/complete?idea=${encodeURIComponent(idea)}&intent=store_launch`
         : '/auth/complete?intent=store_launch'
-      return dest
     }
     return '/auth/complete'
   }
@@ -100,13 +108,19 @@ function AuthForm() {
   }
 
   async function handleGoogle() {
-    // Ensure idea stays in localStorage so the dashboard can pick it up
-    // after the OAuth redirect comes back (which bypasses this page).
+    if (googleLoading) return
+    setGoogleLoading(true)
+
+    // Persist idea to localStorage so it survives the OAuth redirect
     if (idea) saveLaunchIdea(idea)
 
     try {
       await signInWithGoogle()
+      // signInWithGoogle redirects to Google — this line is normally never
+      // reached.  Keep loading=true intentionally while the redirect happens.
     } catch (err) {
+      // Only reset loading if there was an error (no redirect occurred)
+      setGoogleLoading(false)
       toast.error(err instanceof Error ? err.message : 'Google login failed.')
     }
   }
@@ -115,6 +129,32 @@ function AuthForm() {
     <div className="w-full max-w-sm">
       {/* Store-idea motivational banner */}
       {idea && <IdeaBanner idea={idea} />}
+
+      {/* OAuth session-expired / flow-state error */}
+      {isOAuthExpired && (
+        <div className="mb-5 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4">
+          <p className="text-sm font-semibold text-amber-800 mb-1">
+            Google sign-in expired or was already used.
+          </p>
+          <p className="text-xs text-amber-700 mb-3">
+            This can happen if you clicked the button twice or used the browser back button.
+            Please try again.
+          </p>
+          <button
+            type="button"
+            onClick={handleGoogle}
+            disabled={googleLoading}
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-800 hover:text-amber-900 underline underline-offset-2 disabled:opacity-60"
+          >
+            {googleLoading ? (
+              <Loader2 size={11} className="animate-spin" />
+            ) : (
+              <RefreshCw size={11} />
+            )}
+            Try Google again
+          </button>
+        </div>
+      )}
 
       <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
         <div className="border-b border-neutral-100 bg-neutral-50 p-2">
@@ -155,13 +195,28 @@ function AuthForm() {
             </p>
           </div>
 
+          {/* Google button — disabled + loading state prevents double-click */}
           <button
             type="button"
             onClick={handleGoogle}
-            className="flex w-full items-center justify-center gap-3 rounded-xl border border-neutral-200 py-2.5 text-sm font-medium text-neutral-700 transition-colors hover:border-neutral-300 hover:bg-neutral-50"
+            disabled={googleLoading}
+            className={`flex w-full items-center justify-center gap-3 rounded-xl border py-2.5 text-sm font-medium transition-colors ${
+              googleLoading
+                ? 'border-neutral-200 bg-neutral-50 text-neutral-400 cursor-not-allowed'
+                : 'border-neutral-200 text-neutral-700 hover:border-neutral-300 hover:bg-neutral-50'
+            }`}
           >
-            <GoogleIcon />
-            Continue with Google
+            {googleLoading ? (
+              <>
+                <Loader2 size={16} className="animate-spin text-neutral-400" />
+                Connecting to Google…
+              </>
+            ) : (
+              <>
+                <GoogleIcon />
+                Continue with Google
+              </>
+            )}
           </button>
 
           <div className="my-5 flex items-center gap-3">
