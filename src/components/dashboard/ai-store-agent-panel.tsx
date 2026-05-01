@@ -1,6 +1,5 @@
 'use client'
 import { useState } from 'react'
-import Link from 'next/link'
 import { toast } from 'sonner'
 import {
   Wand2,
@@ -22,10 +21,6 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { AgentRecommendation, AgentActivity, AgentRunResponse } from '@/lib/agent/types'
-
-// ── Credits config (Phase 1: static) ─────────────────────────────────────────
-const CREDITS_REMAINING = 18
-const CREDITS_TOTAL = 50
 
 // ── Prompt suggestion chips ───────────────────────────────────────────────────
 const CHIPS = [
@@ -255,20 +250,16 @@ export function AIStoreAgentPanel() {
     }
   }
 
-  const creditsPercent = Math.round((CREDITS_REMAINING / CREDITS_TOTAL) * 100)
-  const lowCredits = CREDITS_REMAINING < 25
-
   return (
     <div className="mb-8 space-y-5">
 
       {/* ── Main card ───────────────────────────────────────────────── */}
       <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
 
-        {/* Header row */}
+        {/* Header row: title/subtitle left, toggle right */}
         <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-          {/* Left: identity + toggle */}
           <div>
-            <div className="flex items-center gap-2.5 mb-1">
+            <div className="flex items-center gap-2.5 mb-0.5">
               <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-black">
                 <Wand2 size={13} className="text-white" />
               </div>
@@ -280,9 +271,13 @@ export function AIStoreAgentPanel() {
                 {agenticMode ? 'Working now' : 'Ready'}
               </span>
             </div>
-            <p className="text-xs text-neutral-500 mb-2">
+            <p className="text-xs text-neutral-500">
               Your agent helps you build, launch, and grow your digital business.
             </p>
+          </div>
+
+          {/* Agentic Mode toggle */}
+          <div className="flex flex-col items-end gap-1">
             <div className="flex items-center gap-2">
               <span className="text-xs text-neutral-500">Agentic Mode</span>
               <AgentToggle on={agenticMode} onToggle={() => setAgenticMode(v => !v)} />
@@ -290,53 +285,11 @@ export function AIStoreAgentPanel() {
                 {agenticMode ? 'ON' : 'OFF'}
               </span>
             </div>
-            {agenticMode && (
-              <p className="mt-1 text-[11px] text-neutral-400">
-                When ON, SellBop recommends what to do next. You approve before anything important changes.
-              </p>
-            )}
-            {!agenticMode && (
-              <p className="mt-1 text-[11px] text-amber-600">
-                Agentic Mode is off. SellBop will only run when you ask.
-              </p>
-            )}
-          </div>
-
-          {/* Right: credits widget */}
-          <div className={cn(
-            'rounded-xl border p-3 min-w-[200px]',
-            lowCredits ? 'border-amber-200 bg-amber-50' : 'border-neutral-200 bg-neutral-50',
-          )}>
-            <div className="flex items-center justify-between mb-1.5">
-              <span className={cn('text-xs font-semibold', lowCredits ? 'text-amber-700' : 'text-neutral-700')}>
-                AI Credits
-              </span>
-              <span className={cn('text-sm font-bold', lowCredits ? 'text-amber-600' : 'text-neutral-900')}>
-                {CREDITS_REMAINING}
-              </span>
-            </div>
-            {/* Progress bar */}
-            <div className="mb-2 h-1.5 w-full overflow-hidden rounded-full bg-neutral-200">
-              <div
-                className={cn('h-full rounded-full transition-all', lowCredits ? 'bg-amber-400' : 'bg-emerald-500')}
-                style={{ width: `${creditsPercent}%` }}
-              />
-            </div>
-            <p className="mb-2 text-[10px] text-neutral-400 leading-relaxed">
-              Credits are only used when your agent creates work for you.
+            <p className={cn('text-[11px] text-right', agenticMode ? 'text-neutral-400' : 'text-amber-600')}>
+              {agenticMode
+                ? 'You approve before anything important changes.'
+                : 'Agentic Mode is off. SellBop will only run when you ask.'}
             </p>
-            <button
-              type="button"
-              onClick={() => toast.info('Credit packs are coming soon.')}
-              className={cn(
-                'w-full rounded-lg py-1.5 text-[11px] font-semibold transition-colors',
-                lowCredits
-                  ? 'bg-amber-500 text-white hover:bg-amber-600'
-                  : 'bg-neutral-900 text-white hover:bg-neutral-700',
-              )}
-            >
-              Buy Credits
-            </button>
           </div>
         </div>
 
@@ -394,19 +347,22 @@ export function AIStoreAgentPanel() {
           </div>
         </div>
 
-        {/* Chips */}
-        <div className="mt-3 flex flex-wrap gap-2">
-          {CHIPS.map(chip => (
-            <button
-              key={chip.label}
-              type="button"
-              onClick={() => setPrompt(chip.prompt)}
-              disabled={running}
-              className="rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1.5 text-[11px] font-medium text-neutral-600 transition-colors hover:border-neutral-800 hover:bg-white hover:text-black disabled:opacity-50"
-            >
-              {chip.label}
-            </button>
-          ))}
+        {/* "What can I ask?" chips */}
+        <div className="mt-3">
+          <p className="mb-2 text-[11px] font-medium text-neutral-400">What can I ask?</p>
+          <div className="flex flex-wrap gap-2">
+            {CHIPS.map(chip => (
+              <button
+                key={chip.label}
+                type="button"
+                onClick={() => setPrompt(chip.prompt)}
+                disabled={running}
+                className="rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1.5 text-[11px] font-medium text-neutral-600 transition-colors hover:border-neutral-800 hover:bg-white hover:text-black disabled:opacity-50"
+              >
+                {chip.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

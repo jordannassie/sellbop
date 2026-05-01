@@ -23,6 +23,7 @@ import { useAuth } from '@/context/auth-context'
 import { cn } from '@/lib/utils'
 import { LaunchDashboard } from '@/components/dashboard/launch-dashboard'
 import { AIStoreAgentPanel } from '@/components/dashboard/ai-store-agent-panel'
+import { AICreditsPill } from '@/components/dashboard/ai-credits-pill'
 import { useLaunchChecklist } from '@/hooks/use-launch-checklist'
 import { useDemoMode } from '@/hooks/use-demo-mode'
 import { getLaunchIdea, clearLaunchIdea } from '@/lib/launch-idea'
@@ -111,7 +112,7 @@ export default function DashboardOverview() {
   return (
     <div>
       {/* ── Welcome header ──────────────────────────────────────── */}
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-black">Welcome back, {firstName}.</h1>
           <p className="mt-1 text-sm text-neutral-500">
@@ -120,9 +121,12 @@ export default function DashboardOverview() {
               : 'Your store is almost ready. Complete the steps below to launch.'}
           </p>
         </div>
-        {isLaunched && (
-          <Badge variant="success" className="hidden sm:flex">Live</Badge>
-        )}
+        <div className="flex flex-shrink-0 items-center gap-2">
+          {!showLaunchDashboard && <AICreditsPill />}
+          {isLaunched && (
+            <Badge variant="success" className="hidden sm:flex">Live</Badge>
+          )}
+        </div>
       </div>
 
       {/* ── Launch Dashboard (for new / incomplete users) ─────── */}
