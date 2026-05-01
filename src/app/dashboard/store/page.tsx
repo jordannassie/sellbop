@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { demoStorefrontRepo } from '@/lib/adapters/demo/repositories'
 import { DEMO_SELLER_PROFILE } from '@/lib/demo-data/seed'
+import { useUserStore } from '@/hooks/use-user-store'
 import {
   ArrowUpRight,
   Check,
@@ -69,17 +70,19 @@ const CARDS: SectionCard[] = [
 ]
 
 export default function StoreSectionPage() {
-  const [storeSlug, setStoreSlug] = useState(DEMO_SELLER_PROFILE.slug)
+  // Real store slug from Supabase (or demo fallback)
+  const { store: userStore } = useUserStore()
+
   const [storefront, setStorefront] = useState<Storefront | null>(null)
   const [publishing, setPublishing] = useState(false)
   const [copied, setCopied] = useState(false)
 
+  // storeSlug: prefer real Supabase store slug, fall back to demo
+  const storeSlug = userStore?.slug ?? DEMO_SELLER_PROFILE.slug
+
   async function loadStorefront() {
     const s = await demoStorefrontRepo.findBySellerId(DEMO_SELLER_PROFILE.id)
-    if (s) {
-      setStorefront(s as Storefront)
-      setStoreSlug(s.slug)
-    }
+    if (s) setStorefront(s as Storefront)
   }
 
   useEffect(() => {

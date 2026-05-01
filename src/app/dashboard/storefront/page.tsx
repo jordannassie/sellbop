@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { demoStorefrontRepo } from '@/lib/adapters/demo/repositories'
 import { DEMO_SELLER_PROFILE } from '@/lib/demo-data/seed'
@@ -8,52 +8,100 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { ImageUpload } from '@/components/dashboard/image-upload'
-import { ExternalLink, Copy, Check, Globe2, LayoutTemplate } from 'lucide-react'
-import type { BrandingMode } from '@/lib/domain/entities'
+import { LinkField } from '@/components/dashboard/link-field'
+import { ExternalLink, Copy, Check, Globe2, LayoutTemplate, Loader2 } from 'lucide-react'
+import type { BrandingMode, Storefront } from '@/lib/domain/entities'
 import { toast } from 'sonner'
-import type { Storefront } from '@/lib/domain/entities'
 import { StoreIdentityCard } from '@/components/dashboard/store-identity-card'
+import { useAuth } from '@/context/auth-context'
+import { useUserStore } from '@/hooks/use-user-store'
 
 export default function StoreProfilePage() {
+  const { session } = useAuth()
+  const { store, loading: storeLoading, isDemo, saveStore } = useUserStore()
+
+  // ── Form state ──────────────────────────────────────────────
   const [storefront, setStorefront] = useState<Storefront | null>(null)
-  const [title, setTitle]         = useState('')
-  const [headline, setHeadline]   = useState('')
-  const [bio, setBio]             = useState('')
-  const [twitter, setTwitter]     = useState('')
-  const [instagram, setInstagram] = useState('')
-  const [youtube, setYoutube]     = useState('')
-  const [website, setWebsite]     = useState('')
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
-  const [bannerUrl, setBannerUrl] = useState<string | null>(null)
+  const [title, setTitle]           = useState('')
+  const [headline, setHeadline]     = useState('')
+  const [bio, setBio]               = useState('')
+  const [storeLink, setStoreLink]   = useState('')   // editable slug / URL link
+  const [twitter, setTwitter]       = useState('')
+  const [instagram, setInstagram]   = useState('')
+  const [youtube, setYoutube]       = useState('')
+  const [website, setWebsite]       = useState('')
+  const [avatarUrl, setAvatarUrl]   = useState<string | null>(null)
+  const [bannerUrl, setBannerUrl]   = useState<string | null>(null)
   const [layoutMode, setLayoutMode] = useState<'clean' | 'banner'>('clean')
   const [brandingMode, setBrandingMode] = useState<BrandingMode>('minimal')
-  const [saving, setSaving]       = useState(false)
-  const [copied, setCopied]       = useState(false)
+  const [saving, setSaving]         = useState(false)
+  const [copied, setCopied]         = useState(false)
 
-  const storeUrl  = `/store/${DEMO_SELLER_PROFILE.slug}`
+  // Gate: only initialise form state once (avoids re-init on Supabase refetch)
+  const initialised = useRef(false)
+
+  // Upload paths use the real auth user ID so files land in the correct folder
+  const uploadOwnerId = session?.userId ?? DEMO_SELLER_PROFILE.id
+
+  // ── Derived URLs (live-update as storeLink changes) ─────────
+  const effectiveSlug = storeLink || store?.slug || DEMO_SELLER_PROFILE.slug
+  const storeUrl  = `/store/${effectiveSlug}`
   const publicUrl = typeof window !== 'undefined'
-    ? window.location.origin + storeUrl
+    ? `${window.location.origin}${storeUrl}`
     : storeUrl
 
+  // ── Owner param for store-link availability check ───────────
+  // The availability API checks `owner_user_id === ownerId`, so we pass
+  // the real Supabase user UUID (session.userId) or fall back to the demo
+  // seller ID so the "current owner keeps their link" logic still works.
+  const storeLinkOwnerParam = {
+    key: 'ownerId',
+    value: session?.userId ?? DEMO_SELLER_PROFILE.userId,
+  }
+
+  // ── Initialise form from store + localStorage ───────────────
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
+    if (storeLoading || initialised.current) return
+    initialised.current = true
+
+    // Basic fields: Supabase store row (or demo fallback StoreRow)
+    if (store) {
+      setTitle(store.name)
+      setHeadline(store.headline ?? '')
+      setBio(store.bio ?? '')
+      setStoreLink(store.slug)
+      setAvatarUrl(store.avatar_url ?? null)
+      setBannerUrl(store.banner_url ?? null)
+      setLayoutMode(store.banner_url ? 'banner' : 'clean')
+    }
+
+    // Extended fields stored only in localStorage (social links, theme, branding)
     demoStorefrontRepo.findBySellerId(DEMO_SELLER_PROFILE.id).then(s => {
       setStorefront(s)
       if (s) {
-        setTitle(s.title)
-        setHeadline(s.headline ?? '')
-        setBio(s.bio ?? '')
-        setAvatarUrl(s.avatarUrl ?? null)
-        setBannerUrl(s.bannerUrl ?? null)
-        setLayoutMode((s.bannerUrl ? 'banner' : 'clean') as 'clean' | 'banner')
         setBrandingMode(s.brandingMode ?? 'minimal')
-        setTwitter(s.socialLinks.twitter ?? '')
-        setInstagram(s.socialLinks.instagram ?? '')
-        setYoutube(s.socialLinks.youtube ?? '')
-        setWebsite(s.socialLinks.website ?? '')
+        setTwitter(s.socialLinks?.twitter ?? '')
+        setInstagram(s.socialLinks?.instagram ?? '')
+        setYoutube(s.socialLinks?.youtube ?? '')
+        setWebsite(s.socialLinks?.website ?? '')
+
+        // In pure-demo mode (no Supabase), also use localStorage for basic fields
+        if (isDemo) {
+          setTitle(s.title)
+          setHeadline(s.headline ?? '')
+          setBio(s.bio ?? '')
+          setStoreLink(s.slug)
+          setAvatarUrl(s.avatarUrl ?? null)
+          setBannerUrl(s.bannerUrl ?? null)
+          setLayoutMode(s.bannerUrl ? 'banner' : 'clean')
+        }
       }
     })
-  }, [])
+  }, [storeLoading, store, isDemo])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
+  // ── Clipboard helper ────────────────────────────────────────
   function copyLink() {
     navigator.clipboard.writeText(publicUrl).then(() => {
       setCopied(true)
@@ -62,27 +110,49 @@ export default function StoreProfilePage() {
     })
   }
 
+  // ── Save ────────────────────────────────────────────────────
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
+
     const effectiveBannerUrl = layoutMode === 'banner' && bannerUrl ? bannerUrl : null
 
+    // 1. Persist to Supabase (if authenticated)
+    if (!isDemo) {
+      const err = await saveStore({
+        name:        title,
+        headline:    headline || null,
+        bio:         bio || null,
+        slug:        storeLink,
+        avatar_url:  avatarUrl,
+        banner_url:  effectiveBannerUrl,
+        layout_mode: layoutMode,
+        branding_mode: brandingMode,
+      })
+      if (err) {
+        toast.error(`Save failed: ${err}`)
+        setSaving(false)
+        return
+      }
+    }
+
+    // 2. Persist to localStorage (covers UI-only fields + demo fallback)
     await demoStorefrontRepo.upsert({
-      sellerId: DEMO_SELLER_PROFILE.id,
-      slug: DEMO_SELLER_PROFILE.slug,
+      sellerId:    DEMO_SELLER_PROFILE.id,
+      slug:        storeLink,
       title,
-      headline: headline || null,
-      bio: bio || null,
-      avatarUrl: avatarUrl ?? null,
-      bannerUrl: effectiveBannerUrl,
+      headline:    headline || null,
+      bio:         bio || null,
+      avatarUrl:   avatarUrl ?? null,
+      bannerUrl:   effectiveBannerUrl,
       featuredProductIds: storefront?.featuredProductIds ?? [],
-      productOrder: storefront?.productOrder ?? [],
-      hiddenProductIds: storefront?.hiddenProductIds ?? [],
-      themeColor: storefront?.themeColor ?? '#000000',
-      buttonStyle: storefront?.buttonStyle ?? 'rounded',
-      cardStyle: storefront?.cardStyle ?? 'soft_shadow',
+      productOrder:       storefront?.productOrder ?? [],
+      hiddenProductIds:   storefront?.hiddenProductIds ?? [],
+      themeColor:   storefront?.themeColor ?? '#000000',
+      buttonStyle:  storefront?.buttonStyle ?? 'rounded',
+      cardStyle:    storefront?.cardStyle ?? 'soft_shadow',
       headerLayout: storefront?.headerLayout ?? 'left_avatar',
-      cardDensity: storefront?.cardDensity ?? 'comfortable',
+      cardDensity:  storefront?.cardDensity ?? 'comfortable',
       sectionOrder: storefront?.sectionOrder ?? [],
       sectionVisibility: storefront?.sectionVisibility ?? {},
       socialLinks: {
@@ -91,22 +161,31 @@ export default function StoreProfilePage() {
         youtube:   youtube   || undefined,
         website:   website   || undefined,
       },
-      headerMedia: storefront?.headerMedia ?? 'none',
+      headerMedia:    storefront?.headerMedia ?? 'none',
       headerPhotoUrl: storefront?.headerPhotoUrl ?? null,
       headerVideoUrl: storefront?.headerVideoUrl ?? null,
-      published: true,
+      published:    true,
       brandingMode,
     })
 
-    // Also persist banner to Supabase if configured
+    // 3. Best-effort Supabase banner sync via legacy API route
     fetch('/api/v5/store-banner', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ bannerUrl: effectiveBannerUrl, layoutMode }),
-    }).catch(() => { /* best-effort — localStorage is the primary store */ })
+    }).catch(() => { /* best-effort */ })
 
     toast.success('Store profile saved.')
     setSaving(false)
+  }
+
+  // ── Loading skeleton ────────────────────────────────────────
+  if (storeLoading) {
+    return (
+      <div className="max-w-2xl flex items-center justify-center py-20">
+        <Loader2 size={20} className="animate-spin text-neutral-400" />
+      </div>
+    )
   }
 
   return (
@@ -115,16 +194,21 @@ export default function StoreProfilePage() {
       <div className="mb-5">
         <h1 className="text-xl sm:text-2xl font-bold text-black">Store Profile</h1>
         <p className="text-neutral-500 text-sm mt-1">Manage your public store identity.</p>
+        {isDemo && (
+          <p className="text-xs text-amber-600 mt-1.5 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+            Demo mode — connect Supabase to save your real store.
+          </p>
+        )}
       </div>
 
-      {/* Store identity preview — shows saved state; left side links to this page (self), actions kept */}
+      {/* Store identity preview */}
       <StoreIdentityCard className="mb-5" showEditorLink={false} />
 
-      {/* Public URL row */}
+      {/* Public URL + copy/open */}
       <div className="mb-6 bg-white border border-neutral-200 rounded-xl px-4 py-3 flex items-center gap-3">
         <div className="flex-1 min-w-0">
           <p className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wide mb-0.5">Public URL</p>
-          <p className="text-sm text-neutral-800 font-mono truncate">/store/{DEMO_SELLER_PROFILE.slug}</p>
+          <p className="text-sm text-neutral-800 font-mono truncate">/store/{effectiveSlug}</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <button
@@ -169,14 +253,12 @@ export default function StoreProfilePage() {
                   (title || 'S').charAt(0).toUpperCase()
                 )}
               </div>
-
-              {/* Upload widget */}
               <div className="flex-1 min-w-0">
                 <ImageUpload
                   value={avatarUrl}
                   onChange={setAvatarUrl}
                   bucket="store-images"
-                  ownerId={DEMO_SELLER_PROFILE.id}
+                  ownerId={uploadOwnerId}
                   label=""
                   aspectClass="aspect-square"
                   hint="Square image recommended, 400×400px or larger."
@@ -186,7 +268,7 @@ export default function StoreProfilePage() {
           </CardContent>
         </Card>
 
-        {/* ── Store Banner / Layout ──────────────────────────── */}
+        {/* ── Store Layout / Banner ──────────────────────────── */}
         <Card>
           <CardHeader><CardTitle className="flex items-center gap-2"><LayoutTemplate size={15} /> Store Layout</CardTitle></CardHeader>
           <CardContent className="space-y-4">
@@ -219,7 +301,7 @@ export default function StoreProfilePage() {
                 value={bannerUrl}
                 onChange={setBannerUrl}
                 bucket="store-banners"
-                ownerId={DEMO_SELLER_PROFILE.id}
+                ownerId={uploadOwnerId}
                 label="Banner Image"
                 aspectClass="aspect-[3/1]"
                 hint="Use a wide image, 1200×400px or larger. JPG or PNG."
@@ -237,9 +319,9 @@ export default function StoreProfilePage() {
             </p>
             <div className="grid grid-cols-1 gap-2">
               {([
-                { value: 'minimal',     label: 'Minimal',              desc: 'Make your store feel like your own site — no SellBop header or badge.' },
-                { value: 'powered_by',  label: 'Powered by SellBop',   desc: 'Show a small "Powered by SellBop" badge in the footer only.' },
-                { value: 'full_header', label: 'Full SellBop header',  desc: 'Show the SellBop navigation bar at the top of your store.' },
+                { value: 'minimal',     label: 'Minimal',             desc: 'Make your store feel like your own site — no SellBop header or badge.' },
+                { value: 'powered_by',  label: 'Powered by SellBop',  desc: 'Show a small "Powered by SellBop" badge in the footer only.' },
+                { value: 'full_header', label: 'Full SellBop header', desc: 'Show the SellBop navigation bar at the top of your store.' },
               ] as const).map(opt => (
                 <button
                   key={opt.value}
@@ -267,8 +349,16 @@ export default function StoreProfilePage() {
               label="Store Name"
               value={title}
               onChange={e => setTitle(e.target.value)}
-              placeholder="Alex Creates"
+              placeholder="Your Store Name"
               hint="Shown as your public store name."
+            />
+            <LinkField
+              label="Store link"
+              value={storeLink}
+              onChange={setStoreLink}
+              prefix="sellbop.com/store/"
+              checkUrl="/api/availability/store-link"
+              ownerParam={storeLinkOwnerParam}
             />
             <Input
               label="Headline"
