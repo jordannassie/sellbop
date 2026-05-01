@@ -1,8 +1,10 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
-import { Loader2, Pencil, Sparkles, Upload, X } from 'lucide-react'
+import { Info, Loader2, Pencil, Sparkles, Upload, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+
+const AI_NOT_CONFIGURED_MSG = 'AI image generation is not configured yet.'
 import { uploadFile, buildStoragePath } from '@/lib/supabase/storage'
 import type { UploadBucket } from '@/lib/supabase/storage'
 import { DEMO_SELLER_PROFILE } from '@/lib/demo-data/seed'
@@ -110,6 +112,7 @@ export function AiImagePicker({
 
   // Shared
   const [error, setError]           = useState<string | null>(null)
+  const [aiUnavailable, setAiUnavailable] = useState(false)
   const [uploading, setUploading]   = useState(false)
   const [broken, setBroken]         = useState(false)
 
@@ -118,6 +121,7 @@ export function AiImagePicker({
     setStatus('form')
     setPreview(null)
     setError(null)
+    setAiUnavailable(false)
   }
 
   function closePanel() {
@@ -125,6 +129,7 @@ export function AiImagePicker({
     setStatus('form')
     setPreview(null)
     setError(null)
+    setAiUnavailable(false)
   }
 
   // ── Upload ──────────────────────────────────────────────────────────────────
@@ -163,6 +168,7 @@ export function AiImagePicker({
       return
     }
     setError(null)
+    setAiUnavailable(false)
     setStatus('loading')
 
     try {
@@ -173,7 +179,11 @@ export function AiImagePicker({
       })
       const data = await res.json() as { success?: boolean; imageUrl?: string; error?: string }
       if (!res.ok || !data.imageUrl) {
-        setError(data.error ?? 'Generation failed. Please try again.')
+        if (data.error === AI_NOT_CONFIGURED_MSG) {
+          setAiUnavailable(true)
+        } else {
+          setError(data.error ?? 'Generation failed. Please try again.')
+        }
         setStatus('form')
         return
       }
@@ -193,6 +203,7 @@ export function AiImagePicker({
       return
     }
     setError(null)
+    setAiUnavailable(false)
     setStatus('loading')
 
     try {
@@ -208,7 +219,11 @@ export function AiImagePicker({
       })
       const data = await res.json() as { success?: boolean; imageUrl?: string; error?: string }
       if (!res.ok || !data.imageUrl) {
-        setError(data.error ?? 'Edit failed. Please try again.')
+        if (data.error === AI_NOT_CONFIGURED_MSG) {
+          setAiUnavailable(true)
+        } else {
+          setError(data.error ?? 'Edit failed. Please try again.')
+        }
         setStatus('form')
         return
       }
@@ -398,108 +413,132 @@ export function AiImagePicker({
             {/* ── Generate form ── */}
             {status === 'form' && mode === 'generate' && (
               <div className="space-y-3">
-                <div>
-                  <label className="text-xs font-medium text-neutral-700 block mb-1.5">
-                    Describe the image you want
-                  </label>
-                  <textarea
-                    value={genPrompt}
-                    onChange={e => setGenPrompt(e.target.value)}
-                    placeholder={PLACEHOLDER_BY_TYPE[imageType]}
-                    rows={3}
-                    className="w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-neutral-400 resize-none"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-neutral-700 block mb-1.5">Style</label>
-                  <div className="flex gap-1.5 flex-wrap">
-                    {STYLE_CHIPS.map(chip => (
-                      <button
-                        key={chip}
-                        type="button"
-                        onClick={() => setStyle(chip)}
-                        className={cn(
-                          'h-7 px-3 rounded-full text-[11px] font-medium border transition-colors',
-                          style === chip
-                            ? 'bg-black border-black text-white'
-                            : 'border-neutral-200 text-neutral-600 hover:border-neutral-400',
-                        )}
-                      >
-                        {chip}
-                      </button>
-                    ))}
+                {aiUnavailable ? (
+                  <div className="flex items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-3">
+                    <Info size={14} className="mt-0.5 flex-shrink-0 text-amber-500" />
+                    <div>
+                      <p className="text-xs font-semibold text-amber-800">AI image generation is not enabled yet.</p>
+                      <p className="mt-0.5 text-xs text-amber-700">Upload an image for now — AI generation will be available soon.</p>
+                    </div>
                   </div>
-                </div>
-                {error && <p className="text-xs text-red-500">{error}</p>}
-                <button
-                  type="button"
-                  onClick={handleGenerate}
-                  className="w-full h-9 rounded-lg bg-black text-white text-xs font-semibold hover:bg-neutral-800 transition-colors flex items-center justify-center gap-1.5"
-                >
-                  <Sparkles size={12} />
-                  Generate image
-                </button>
+                ) : (
+                  <>
+                    <div>
+                      <label className="text-xs font-medium text-neutral-700 block mb-1.5">
+                        Describe the image you want
+                      </label>
+                      <textarea
+                        value={genPrompt}
+                        onChange={e => setGenPrompt(e.target.value)}
+                        placeholder={PLACEHOLDER_BY_TYPE[imageType]}
+                        rows={3}
+                        className="w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-neutral-400 resize-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-neutral-700 block mb-1.5">Style</label>
+                      <div className="flex gap-1.5 flex-wrap">
+                        {STYLE_CHIPS.map(chip => (
+                          <button
+                            key={chip}
+                            type="button"
+                            onClick={() => setStyle(chip)}
+                            className={cn(
+                              'h-7 px-3 rounded-full text-[11px] font-medium border transition-colors',
+                              style === chip
+                                ? 'bg-black border-black text-white'
+                                : 'border-neutral-200 text-neutral-600 hover:border-neutral-400',
+                            )}
+                          >
+                            {chip}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    {error && <p className="text-xs text-red-500">{error}</p>}
+                    <button
+                      type="button"
+                      onClick={handleGenerate}
+                      className="w-full h-9 rounded-lg bg-black text-white text-xs font-semibold hover:bg-neutral-800 transition-colors flex items-center justify-center gap-1.5"
+                    >
+                      <Sparkles size={12} />
+                      Generate image
+                    </button>
+                  </>
+                )}
               </div>
             )}
 
             {/* ── Edit form ── */}
             {status === 'form' && mode === 'edit' && (
               <div className="space-y-3">
-                {value && (
-                  <div>
-                    <p className="text-xs font-medium text-neutral-700 mb-1.5">Reference image</p>
-                    <div className="relative w-24 h-16 rounded-lg overflow-hidden border border-neutral-200">
-                      <Image
-                        src={value}
-                        alt="Current image"
-                        fill
-                        className="object-cover"
-                        unoptimized
-                      />
+                {aiUnavailable ? (
+                  <div className="flex items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-3">
+                    <Info size={14} className="mt-0.5 flex-shrink-0 text-amber-500" />
+                    <div>
+                      <p className="text-xs font-semibold text-amber-800">AI image generation is not enabled yet.</p>
+                      <p className="mt-0.5 text-xs text-amber-700">Upload an image for now — AI generation will be available soon.</p>
                     </div>
                   </div>
+                ) : (
+                  <>
+                    {value && (
+                      <div>
+                        <p className="text-xs font-medium text-neutral-700 mb-1.5">Reference image</p>
+                        <div className="relative w-24 h-16 rounded-lg overflow-hidden border border-neutral-200">
+                          <Image
+                            src={value}
+                            alt="Current image"
+                            fill
+                            className="object-cover"
+                            unoptimized
+                          />
+                        </div>
+                      </div>
+                    )}
+                    <div>
+                      <label className="text-xs font-medium text-neutral-700 block mb-1.5">
+                        What do you want AI to change?
+                      </label>
+                      <textarea
+                        value={editPrompt}
+                        onChange={e => setEditPrompt(e.target.value)}
+                        placeholder="Make this look like a clean studio product shot with white background."
+                        rows={3}
+                        className="w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-neutral-400 resize-none"
+                      />
+                    </div>
+                    <div className="rounded-lg bg-neutral-50 border border-neutral-100 p-3">
+                      <p className="text-[11px] font-semibold text-neutral-500 mb-1.5">Examples</p>
+                      <ul className="space-y-1">
+                        {[
+                          'Make the background white and premium.',
+                          'Turn this into a wide store banner.',
+                          'Make this feel more modern and high-converting.',
+                        ].map(ex => (
+                          <li key={ex}>
+                            <button
+                              type="button"
+                              onClick={() => setEditPrompt(ex)}
+                              className="text-[11px] text-neutral-500 hover:text-black transition-colors text-left"
+                            >
+                              &ldquo;{ex}&rdquo;
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    {error && <p className="text-xs text-red-500">{error}</p>}
+                    <button
+                      type="button"
+                      onClick={handleEdit}
+                      className="w-full h-9 rounded-lg bg-black text-white text-xs font-semibold hover:bg-neutral-800 transition-colors flex items-center justify-center gap-1.5"
+                    >
+                      <Sparkles size={12} />
+                      Create new version
+                    </button>
+                  </>
                 )}
-                <div>
-                  <label className="text-xs font-medium text-neutral-700 block mb-1.5">
-                    What do you want AI to change?
-                  </label>
-                  <textarea
-                    value={editPrompt}
-                    onChange={e => setEditPrompt(e.target.value)}
-                    placeholder="Make this look like a clean studio product shot with white background."
-                    rows={3}
-                    className="w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-neutral-400 resize-none"
-                  />
-                </div>
-                <div className="rounded-lg bg-neutral-50 border border-neutral-100 p-3">
-                  <p className="text-[11px] font-semibold text-neutral-500 mb-1.5">Examples</p>
-                  <ul className="space-y-1">
-                    {[
-                      'Make the background white and premium.',
-                      'Turn this into a wide store banner.',
-                      'Make this feel more modern and high-converting.',
-                    ].map(ex => (
-                      <li key={ex}>
-                        <button
-                          type="button"
-                          onClick={() => setEditPrompt(ex)}
-                          className="text-[11px] text-neutral-500 hover:text-black transition-colors text-left"
-                        >
-                          &ldquo;{ex}&rdquo;
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                {error && <p className="text-xs text-red-500">{error}</p>}
-                <button
-                  type="button"
-                  onClick={handleEdit}
-                  className="w-full h-9 rounded-lg bg-black text-white text-xs font-semibold hover:bg-neutral-800 transition-colors flex items-center justify-center gap-1.5"
-                >
-                  <Sparkles size={12} />
-                  Create new version
-                </button>
               </div>
             )}
           </div>

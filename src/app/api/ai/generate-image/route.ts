@@ -84,12 +84,10 @@ export async function POST(req: NextRequest) {
 
   const apiKey = process.env.OPENAI_API_KEY
   if (!apiKey) {
-    // Demo mode — return a deterministic placeholder so the UI still works
-    return NextResponse.json({
-      success: true,
-      imageUrl: `https://placehold.co/${size === '1792x1024' ? '1792x1024' : '1024x1024'}/f5f5f5/999999?text=AI+Image+(no+key)`,
-      demo: true,
-    })
+    return NextResponse.json(
+      { success: false, error: 'AI image generation is not configured yet.' },
+      { status: 503 },
+    )
   }
 
   try {
