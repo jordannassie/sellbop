@@ -352,6 +352,7 @@ function EditTab({
             value={thumbnailUrl}
             onChange={setThumbnailUrl}
             bucket="product-images"
+            ownerId={product.sellerId}
             hint="Recommended: 1200×630px, JPG or PNG. Shown on your product page."
           />
         </CardContent>

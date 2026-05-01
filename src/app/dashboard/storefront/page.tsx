@@ -7,7 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { ExternalLink, Copy, Check, Camera, Globe2, Image as ImageIcon, LayoutTemplate } from 'lucide-react'
+import { ImageUpload } from '@/components/dashboard/image-upload'
+import { ExternalLink, Copy, Check, Globe2, LayoutTemplate } from 'lucide-react'
 import type { BrandingMode } from '@/lib/domain/entities'
 import { toast } from 'sonner'
 import type { Storefront } from '@/lib/domain/entities'
@@ -22,7 +23,8 @@ export default function StoreProfilePage() {
   const [instagram, setInstagram] = useState('')
   const [youtube, setYoutube]     = useState('')
   const [website, setWebsite]     = useState('')
-  const [bannerUrl, setBannerUrl] = useState('')
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const [bannerUrl, setBannerUrl] = useState<string | null>(null)
   const [layoutMode, setLayoutMode] = useState<'clean' | 'banner'>('clean')
   const [brandingMode, setBrandingMode] = useState<BrandingMode>('minimal')
   const [saving, setSaving]       = useState(false)
@@ -40,7 +42,8 @@ export default function StoreProfilePage() {
         setTitle(s.title)
         setHeadline(s.headline ?? '')
         setBio(s.bio ?? '')
-        setBannerUrl(s.bannerUrl ?? '')
+        setAvatarUrl(s.avatarUrl ?? null)
+        setBannerUrl(s.bannerUrl ?? null)
         setLayoutMode((s.bannerUrl ? 'banner' : 'clean') as 'clean' | 'banner')
         setBrandingMode(s.brandingMode ?? 'minimal')
         setTwitter(s.socialLinks.twitter ?? '')
@@ -70,7 +73,7 @@ export default function StoreProfilePage() {
       title,
       headline: headline || null,
       bio: bio || null,
-      avatarUrl: null,
+      avatarUrl: avatarUrl ?? null,
       bannerUrl: effectiveBannerUrl,
       featuredProductIds: storefront?.featuredProductIds ?? [],
       productOrder: storefront?.productOrder ?? [],
@@ -145,29 +148,39 @@ export default function StoreProfilePage() {
 
         {/* ── Store Image ────────────────────────────────────── */}
         <Card>
-          <CardHeader><CardTitle>Store Image</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Store Photo</CardTitle></CardHeader>
           <CardContent>
-            <div className="flex items-center gap-4">
-              {/* Live preview of the rounded-square avatar */}
+            <div className="flex items-start gap-4">
+              {/* Avatar preview — shows uploaded photo or initials fallback */}
               <div
-                className="w-16 h-16 rounded-xl flex-shrink-0 flex items-center justify-center text-white text-2xl font-black shadow-sm"
+                className="w-16 h-16 rounded-xl flex-shrink-0 overflow-hidden flex items-center justify-center text-white text-2xl font-black shadow-sm"
                 style={{ backgroundColor: storefront?.themeColor ?? '#000000' }}
                 aria-hidden="true"
               >
-                {(title || 'S').charAt(0).toUpperCase()}
+                {avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={avatarUrl}
+                    alt="Store photo"
+                    className="w-full h-full object-cover"
+                    onError={() => setAvatarUrl(null)}
+                  />
+                ) : (
+                  (title || 'S').charAt(0).toUpperCase()
+                )}
               </div>
-              {/* Upload CTA */}
+
+              {/* Upload widget */}
               <div className="flex-1 min-w-0">
-                <button
-                  type="button"
-                  disabled
-                  className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium text-neutral-500 border border-neutral-200 bg-neutral-50 cursor-not-allowed opacity-60"
-                >
-                  <Camera size={12} /> Upload Photo
-                </button>
-                <p className="text-xs text-neutral-400 mt-2 leading-relaxed">
-                  Photo upload coming soon. Your store initial and accent colour are used until then.
-                </p>
+                <ImageUpload
+                  value={avatarUrl}
+                  onChange={setAvatarUrl}
+                  bucket="store-images"
+                  ownerId={DEMO_SELLER_PROFILE.id}
+                  label=""
+                  aspectClass="aspect-square"
+                  hint="Square image recommended, 400×400px or larger."
+                />
               </div>
             </div>
           </CardContent>
@@ -202,28 +215,15 @@ export default function StoreProfilePage() {
               </div>
             </div>
             {layoutMode === 'banner' && (
-              <Input
-                label="Banner Image URL"
+              <ImageUpload
                 value={bannerUrl}
-                onChange={e => setBannerUrl(e.target.value)}
-                placeholder="https://..."
-                type="url"
-                hint="Use a 1200×400px or wider image for best results"
+                onChange={setBannerUrl}
+                bucket="store-banners"
+                ownerId={DEMO_SELLER_PROFILE.id}
+                label="Banner Image"
+                aspectClass="aspect-[3/1]"
+                hint="Use a wide image, 1200×400px or larger. JPG or PNG."
               />
-            )}
-            {layoutMode === 'banner' && bannerUrl && (
-              <div className="rounded-xl overflow-hidden border border-neutral-200 aspect-[3/1] bg-neutral-100 relative">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={bannerUrl}
-                  alt="Store banner preview"
-                  className="w-full h-full object-cover"
-                  onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
-                />
-                <div className="absolute inset-0 flex items-center justify-center text-neutral-300">
-                  <ImageIcon size={24} />
-                </div>
-              </div>
             )}
           </CardContent>
         </Card>

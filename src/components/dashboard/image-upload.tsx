@@ -18,6 +18,8 @@ interface ImageUploadProps {
   bucket?: UploadBucket
   /** Storage path prefix (e.g. seller ID). Defaults to demo seller id. */
   ownerId?: string
+  /** Tailwind aspect-ratio class for the image well. Defaults to 'aspect-video'. */
+  aspectClass?: string
 }
 
 export function ImageUpload({
@@ -28,6 +30,7 @@ export function ImageUpload({
   productType,
   bucket,
   ownerId = DEMO_SELLER_PROFILE.id,
+  aspectClass = 'aspect-video',
 }: ImageUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [dragging, setDragging] = useState(false)
@@ -87,7 +90,7 @@ export function ImageUpload({
 
       {value ? (
         <div className="relative group rounded-xl overflow-hidden border border-neutral-200 bg-neutral-50">
-          <div className="aspect-video relative w-full">
+          <div className={cn('relative w-full', aspectClass)}>
             {broken ? (
               <GradientImageFallback productType={productType} />
             ) : (
@@ -129,7 +132,7 @@ export function ImageUpload({
           onDrop={handleDrop}
           disabled={uploading}
           className={cn(
-            'w-full aspect-video flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed transition-colors cursor-pointer disabled:cursor-not-allowed',
+            `w-full ${aspectClass} flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed transition-colors cursor-pointer disabled:cursor-not-allowed`,
             dragging
               ? 'border-black bg-neutral-50'
               : 'border-neutral-200 bg-neutral-50 hover:border-neutral-400 hover:bg-white'
