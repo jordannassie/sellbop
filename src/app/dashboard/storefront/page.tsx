@@ -25,7 +25,10 @@ export default function StoreProfilePage() {
   const [title, setTitle]           = useState('')
   const [headline, setHeadline]     = useState('')
   const [bio, setBio]               = useState('')
-  const [storeLink, setStoreLink]   = useState('')   // editable slug / URL link
+  // draftSlug — what the user is editing; only used for public URL after save
+  const [draftSlug, setDraftSlug]   = useState('')
+  // savedSlug — last persisted value; Copy/Open always use this
+  const [savedSlug, setSavedSlug]   = useState('')
   const [twitter, setTwitter]       = useState('')
   const [instagram, setInstagram]   = useState('')
   const [youtube, setYoutube]       = useState('')
@@ -43,12 +46,13 @@ export default function StoreProfilePage() {
   // Upload paths use the real auth user ID so files land in the correct folder
   const uploadOwnerId = session?.userId ?? DEMO_SELLER_PROFILE.id
 
-  // ── Derived URLs (live-update as storeLink changes) ─────────
-  const effectiveSlug = storeLink || store?.slug || DEMO_SELLER_PROFILE.slug
-  const storeUrl  = `/store/${effectiveSlug}`
+  // ── Derived URLs — always use savedSlug for public-facing links ─────────
+  const effectiveSavedSlug = savedSlug || store?.slug || DEMO_SELLER_PROFILE.slug
+  const storeUrl  = `/store/${effectiveSavedSlug}`
   const publicUrl = typeof window !== 'undefined'
     ? `${window.location.origin}${storeUrl}`
     : storeUrl
+  const hasUnsavedLink = draftSlug !== '' && draftSlug !== savedSlug
 
   // ── Owner param for store-link availability check ───────────
   // The availability API checks `owner_user_id === ownerId`, so we pass
@@ -70,7 +74,8 @@ export default function StoreProfilePage() {
       setTitle(store.name)
       setHeadline(store.headline ?? '')
       setBio(store.bio ?? '')
-      setStoreLink(store.slug)
+      setDraftSlug(store.slug)
+      setSavedSlug(store.slug)
       setAvatarUrl(store.avatar_url ?? null)
       setBannerUrl(store.banner_url ?? null)
       setLayoutMode(store.banner_url ? 'banner' : 'clean')
@@ -91,7 +96,8 @@ export default function StoreProfilePage() {
           setTitle(s.title)
           setHeadline(s.headline ?? '')
           setBio(s.bio ?? '')
-          setStoreLink(s.slug)
+          setDraftSlug(s.slug)
+          setSavedSlug(s.slug)
           setAvatarUrl(s.avatarUrl ?? null)
           setBannerUrl(s.bannerUrl ?? null)
           setLayoutMode(s.bannerUrl ? 'banner' : 'clean')
@@ -123,7 +129,7 @@ export default function StoreProfilePage() {
         name:        title,
         headline:    headline || null,
         bio:         bio || null,
-        slug:        storeLink,
+        slug:        draftSlug,
         avatar_url:  avatarUrl,
         banner_url:  effectiveBannerUrl,
         layout_mode: layoutMode,
@@ -136,10 +142,13 @@ export default function StoreProfilePage() {
       }
     }
 
+    // Slug is now live — update savedSlug so public URLs reflect the new value
+    setSavedSlug(draftSlug)
+
     // 2. Persist to localStorage (covers UI-only fields + demo fallback)
     await demoStorefrontRepo.upsert({
       sellerId:    DEMO_SELLER_PROFILE.id,
-      slug:        storeLink,
+      slug:        draftSlug,
       title,
       headline:    headline || null,
       bio:         bio || null,
@@ -204,27 +213,34 @@ export default function StoreProfilePage() {
       {/* Store identity preview */}
       <StoreIdentityCard className="mb-5" showEditorLink={false} />
 
-      {/* Public URL + copy/open */}
-      <div className="mb-6 bg-white border border-neutral-200 rounded-xl px-4 py-3 flex items-center gap-3">
-        <div className="flex-1 min-w-0">
-          <p className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wide mb-0.5">Public URL</p>
-          <p className="text-sm text-neutral-800 font-mono truncate">/store/{effectiveSlug}</p>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <button
-            onClick={copyLink}
-            title="Copy link"
-            className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium text-neutral-600 border border-neutral-200 hover:bg-neutral-50 transition-colors"
-          >
-            {copied ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
-            <span>{copied ? 'Copied' : 'Copy'}</span>
-          </button>
-          <Link href={storeUrl} target="_blank">
-            <button className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium text-neutral-600 border border-neutral-200 hover:bg-neutral-50 transition-colors">
-              <ExternalLink size={12} /> Open
+      {/* Public URL + copy/open — always shows savedSlug */}
+      <div className="mb-6 bg-white border border-neutral-200 rounded-xl px-4 py-3 space-y-2">
+        <div className="flex items-center gap-3">
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wide mb-0.5">Public URL</p>
+            <p className="text-sm text-neutral-800 font-mono truncate">/store/{effectiveSavedSlug}</p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={copyLink}
+              title="Copy link"
+              className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium text-neutral-600 border border-neutral-200 hover:bg-neutral-50 transition-colors"
+            >
+              {copied ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
+              <span>{copied ? 'Copied' : 'Copy'}</span>
             </button>
-          </Link>
+            <Link href={storeUrl} target="_blank">
+              <button className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium text-neutral-600 border border-neutral-200 hover:bg-neutral-50 transition-colors">
+                <ExternalLink size={12} /> Open
+              </button>
+            </Link>
+          </div>
         </div>
+        {hasUnsavedLink && (
+          <p className="text-xs text-amber-600">
+            Unsaved store link changes — save profile to make this URL live.
+          </p>
+        )}
       </div>
 
       {/* Form */}
@@ -355,8 +371,8 @@ export default function StoreProfilePage() {
             />
             <LinkField
               label="Store link"
-              value={storeLink}
-              onChange={setStoreLink}
+              value={draftSlug}
+              onChange={setDraftSlug}
               prefix="sellbop.com/store/"
               checkUrl="/api/availability/store-link"
               ownerParam={storeLinkOwnerParam}

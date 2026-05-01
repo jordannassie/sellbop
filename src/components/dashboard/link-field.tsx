@@ -9,7 +9,7 @@ import { Check, Loader2, X, AlertCircle } from 'lucide-react'
 import { slugify } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 
-type AvailabilityStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid'
+export type AvailabilityStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid'
 
 interface LinkFieldProps {
   /** Current slug value */
@@ -24,6 +24,8 @@ interface LinkFieldProps {
   ownerParam?: { key: string; value: string }
   label?: string
   required?: boolean
+  /** Optional callback fired whenever the availability status changes */
+  onStatusChange?: (status: AvailabilityStatus) => void
 }
 
 export function LinkField({
@@ -34,42 +36,50 @@ export function LinkField({
   ownerParam,
   label,
   required,
+  onStatusChange,
 }: LinkFieldProps) {
   const [draft, setDraft] = useState(value)
   const [status, setStatus] = useState<AvailabilityStatus>('idle')
   const [message, setMessage] = useState('')
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  function applyStatus(s: AvailabilityStatus) {
+    setStatus(s)
+    onStatusChange?.(s)
+  }
+
   // If the parent value changes externally (e.g. AI prefill), sync draft
   useEffect(() => {
     setDraft(value)
-    setStatus('idle')
+    applyStatus('idle')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value])
 
   const check = useCallback(
     async (slug: string) => {
-      if (!slug || slug === value) { setStatus('idle'); return }
-      setStatus('checking')
+      if (!slug || slug === value) { applyStatus('idle'); return }
+      applyStatus('checking')
       setMessage('')
       try {
         const params = new URLSearchParams({ value: slug })
         if (ownerParam) params.set(ownerParam.key, ownerParam.value)
         const res = await fetch(`${checkUrl}?${params.toString()}`)
         const data = (await res.json()) as { status: string; message?: string }
-        setStatus(data.status as AvailabilityStatus)
+        applyStatus(data.status as AvailabilityStatus)
         setMessage(data.message ?? '')
         if (data.status === 'available') onChange(slug)
       } catch {
-        setStatus('idle')
+        applyStatus('idle')
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [checkUrl, ownerParam, value, onChange],
   )
 
   function handleChange(raw: string) {
     const slug = slugify(raw)
     setDraft(slug)
-    setStatus('idle')
+    applyStatus('idle')
 
     if (debounceRef.current) clearTimeout(debounceRef.current)
     if (slug.length >= 3) {

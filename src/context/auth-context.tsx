@@ -22,6 +22,8 @@ interface AuthContextValue {
   signInWithGoogle: () => Promise<void>
   signOut: () => Promise<void>
   refreshAccount: () => Promise<void>
+  /** Imperatively update avatarUrl in the current session (e.g. after uploading a profile photo). */
+  updateAvatarUrl: (url: string) => void
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -72,6 +74,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAccount(data.account)
   }
 
+  /** Non-blocking: fetch profiles.avatar_url and merge into session if present. */
+  async function mergeProfileAvatar(userId: string) {
+    if (!supabase) return
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('avatar_url')
+        .eq('user_id', userId)
+        .single()
+      if (data?.avatar_url) {
+        setSession(prev => (prev ? { ...prev, avatarUrl: data.avatar_url } : prev))
+      }
+    } catch { /* best-effort */ }
+  }
+
+  function updateAvatarUrl(url: string) {
+    setSession(prev => (prev ? { ...prev, avatarUrl: url } : prev))
+  }
+
   useEffect(() => {
     let active = true
 
@@ -94,6 +115,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(nextSession)
 
       if (nextSession) {
+        // Non-blocking: prefer profiles.avatar_url over auth metadata
+        void mergeProfileAvatar(nextSession.userId)
         await refreshAccount()
       } else {
         setAccount(null)
@@ -113,6 +136,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(nextSession)
 
       if (nextSession) {
+        void mergeProfileAvatar(nextSession.userId)
         void refreshAccount()
       } else {
         setAccount(null)
@@ -183,6 +207,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signInWithGoogle,
         signOut,
         refreshAccount,
+        updateAvatarUrl,
       }}
     >
       {children}

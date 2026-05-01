@@ -78,19 +78,25 @@ export default function StoreSectionPage() {
   const [storefront, setStorefront] = useState<Storefront | null>(null)
   const [publishing, setPublishing]     = useState(false)
   const [copied, setCopied]             = useState(false)
-  const [storeLink, setStoreLink]       = useState('')   // confirmed-available slug draft
+  // draftSlug — what the user is typing / what LinkField reports as available
+  const [draftSlug, setDraftSlug]       = useState('')
+  // savedSlug — the last slug that was actually persisted (used for Copy/Open/Preview)
+  const [savedSlug, setSavedSlug]       = useState('')
   const [savingLink, setSavingLink]     = useState(false)
+  const [linkStatus, setLinkStatus]     = useState<'idle'|'checking'|'available'|'taken'|'invalid'>('idle')
   const initialized = useRef(false)
 
-  // Seed storeLink once when the store first loads (avoids reset on refetch)
+  // Seed slugs once when the store first loads (avoids reset on refetch)
   useEffect(() => {
     if (!userStore || initialized.current) return
     initialized.current = true
-    setStoreLink(userStore.slug)
+    setDraftSlug(userStore.slug)
+    setSavedSlug(userStore.slug)
   }, [userStore])
 
-  // Active slug — what the Copy/Open/Preview buttons should use
-  const activeSlug = storeLink || userStore?.slug || DEMO_SELLER_PROFILE.slug
+  // Slug for Copy/Open/Preview — always the last persisted value
+  const activeSlug = savedSlug || userStore?.slug || DEMO_SELLER_PROFILE.slug
+  const hasUnsavedLink = draftSlug !== '' && draftSlug !== savedSlug
 
   // ownerParam for availability API: current user can keep their own link
   const storeLinkOwnerParam = {
@@ -109,21 +115,23 @@ export default function StoreSectionPage() {
   }, [])
 
   async function handleSaveLink() {
-    if (!storeLink || storeLink === userStore?.slug) return
+    if (!draftSlug || draftSlug === savedSlug) return
     setSavingLink(true)
     try {
       // Persist to Supabase (when authenticated)
       if (!isDemo) {
-        const err = await saveStore({ slug: storeLink })
+        const err = await saveStore({ slug: draftSlug })
         if (err) { toast.error(`Could not save: ${err}`); return }
       }
 
       // Keep localStorage in sync for the demo / UI layer
       if (storefront) {
-        await demoStorefrontRepo.upsert({ ...storefront, slug: storeLink })
+        await demoStorefrontRepo.upsert({ ...storefront, slug: draftSlug })
         await loadStorefront()
       }
 
+      // Mark this slug as the live saved slug
+      setSavedSlug(draftSlug)
       toast.success('Store link updated!')
     } catch {
       toast.error('Failed to save store link.')
@@ -204,7 +212,7 @@ export default function StoreSectionPage() {
               </p>
               <p className="text-xs text-neutral-500">
                 {isPublished
-                  ? `Public at /store/${activeSlug}`
+                  ? `Public at /store/${savedSlug || activeSlug}`
                   : 'Publish to make your store visible and shareable'}
               </p>
             </div>
@@ -255,23 +263,33 @@ export default function StoreSectionPage() {
         </div>
 
         <LinkField
-          value={storeLink}
-          onChange={setStoreLink}
+          value={draftSlug}
+          onChange={setDraftSlug}
+          onStatusChange={setLinkStatus}
           prefix="sellbop.com/store/"
           checkUrl="/api/availability/store-link"
           ownerParam={storeLinkOwnerParam}
           label=""
         />
 
-        <p className="text-xs text-neutral-400">
-          Choose a short link people can remember. Letters, numbers, and dashes only.
-        </p>
+        {/* Contextual helper text */}
+        {hasUnsavedLink && linkStatus === 'available' && (
+          <p className="text-xs text-emerald-600">Available — save to make this your live link.</p>
+        )}
+        {!hasUnsavedLink && (
+          <p className="text-xs text-neutral-400">
+            Choose a short link people can remember. Letters, numbers, and dashes only.
+          </p>
+        )}
+        {hasUnsavedLink && linkStatus === 'idle' && (
+          <p className="text-xs text-amber-600">Save to make this link live.</p>
+        )}
 
         <Button
           type="button"
           size="sm"
           loading={savingLink}
-          disabled={!storeLink || storeLink === (userStore?.slug ?? DEMO_SELLER_PROFILE.slug)}
+          disabled={!draftSlug || draftSlug === savedSlug || linkStatus === 'taken' || linkStatus === 'invalid' || linkStatus === 'checking'}
           onClick={handleSaveLink}
         >
           Save store link

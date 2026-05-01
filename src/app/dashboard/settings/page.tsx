@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -7,14 +7,19 @@ import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
 import { useAuth } from '@/context/auth-context'
 import { useDemoMode } from '@/hooks/use-demo-mode'
+import { getSupabaseBrowserClient } from '@/lib/supabase/client'
+import { uploadFile, buildStoragePath } from '@/lib/supabase/storage'
+import { DEMO_SELLER_PROFILE } from '@/lib/demo-data/seed'
 import {
   ArrowUpRight,
   CreditCard,
   FlaskConical,
   HelpCircle,
+  Loader2,
   Plug,
   Settings,
   Store,
+  Upload,
   User,
 } from 'lucide-react'
 
@@ -53,7 +58,7 @@ const SETTING_CARDS = [
 ]
 
 export default function SettingsPage() {
-  const { session } = useAuth()
+  const { session, updateAvatarUrl } = useAuth()
   const { demoMode, ready, toggle } = useDemoMode()
 
   // Pre-fill Account form from the real auth session
@@ -61,12 +66,56 @@ export default function SettingsPage() {
   const [supportEmail, setSupportEmail] = useState('')
   const [saving, setSaving] = useState(false)
 
+  // Account photo state
+  const [profileAvatar, setProfileAvatar] = useState<string | null>(null)
+  const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  const photoInputRef = useRef<HTMLInputElement>(null)
+
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     setDisplayName(session?.name ?? '')
     setSupportEmail(session?.email ?? '')
+    // Sync avatar from session (includes profile avatar once loaded)
+    if (session?.avatarUrl) setProfileAvatar(session.avatarUrl)
   }, [session])
   /* eslint-enable react-hooks/set-state-in-effect */
+
+  async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadingPhoto(true)
+    try {
+      const ownerId = session?.userId ?? DEMO_SELLER_PROFILE.id
+      const path = buildStoragePath(ownerId, file.name)
+      const result = await uploadFile('store-images', path, file)
+      if (result.error) { toast.error(result.error); return }
+      const url = result.url!
+
+      const supabase = getSupabaseBrowserClient()
+      if (supabase && session) {
+        // Save to profiles table (preferred source of truth)
+        await supabase
+          .from('profiles')
+          .update({ avatar_url: url, updated_at: new Date().toISOString() })
+          .eq('user_id', session.userId)
+        // Also sync auth metadata so it persists across sign-ins
+        await supabase.auth.updateUser({ data: { avatar_url: url } })
+      } else {
+        // Demo / offline: persist locally
+        try { localStorage.setItem('profile_avatar_url', url) } catch { /* ignore */ }
+      }
+
+      setProfileAvatar(url)
+      updateAvatarUrl(url)
+      toast.success('Account photo updated.')
+    } catch {
+      toast.error('Upload failed. Please try again.')
+    } finally {
+      setUploadingPhoto(false)
+      // Reset input so the same file can be re-selected
+      if (photoInputRef.current) photoInputRef.current.value = ''
+    }
+  }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
@@ -75,6 +124,8 @@ export default function SettingsPage() {
     toast.success('Settings saved.')
     setSaving(false)
   }
+
+  const isDemo = !getSupabaseBrowserClient() || !session
 
   return (
     <div className="max-w-2xl">
@@ -110,8 +161,69 @@ export default function SettingsPage() {
         })}
       </div>
 
+      {/* Account Photo card */}
+      <Card className="mb-5" id="account">
+        <CardHeader><CardTitle>Account Photo</CardTitle></CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-5">
+            {/* Avatar preview */}
+            <div className="relative flex-shrink-0">
+              {profileAvatar ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={profileAvatar}
+                  alt="Profile"
+                  className="h-16 w-16 rounded-full object-cover border border-neutral-200"
+                />
+              ) : (
+                <div className="h-16 w-16 rounded-full bg-neutral-900 flex items-center justify-center text-white text-xl font-bold">
+                  {((session?.name?.charAt(0) ?? session?.email?.charAt(0)) || 'U').toUpperCase()}
+                </div>
+              )}
+              {uploadingPhoto && (
+                <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40">
+                  <Loader2 size={16} className="animate-spin text-white" />
+                </div>
+              )}
+            </div>
+
+            {/* Upload controls */}
+            <div className="min-w-0">
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handlePhotoUpload}
+              />
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                disabled={uploadingPhoto}
+                onClick={() => photoInputRef.current?.click()}
+              >
+                <Upload size={13} />
+                {uploadingPhoto ? 'Uploading…' : 'Upload photo'}
+              </Button>
+              <p className="mt-1.5 text-xs text-neutral-400 leading-relaxed">
+                Used inside your SellBop dashboard. Your public store photo can be changed in{' '}
+                <Link href="/dashboard/storefront" className="underline hover:text-black transition-colors">
+                  Store Profile
+                </Link>.
+              </p>
+              {isDemo && (
+                <p className="mt-1 text-[11px] text-amber-600">
+                  Demo mode — image preview only.
+                </p>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Account form */}
-      <form id="account" onSubmit={handleSave} className="space-y-5">
+      <form id="account-form" onSubmit={handleSave} className="space-y-5">
         <Card>
           <CardHeader><CardTitle>Account</CardTitle></CardHeader>
           <CardContent className="space-y-4">

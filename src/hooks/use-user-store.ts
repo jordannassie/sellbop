@@ -92,15 +92,29 @@ export function useUserStore(): UseUserStoreResult {
     async (patch: Database['public']['Tables']['stores']['Update']): Promise<string | null> => {
       if (!supabase || !session) return null // demo mode — no-op
 
-      const { error } = await supabase
-        .from('stores')
-        .update({ ...patch, updated_at: new Date().toISOString() })
-        .eq('owner_user_id', session.userId)
+      const doUpdate = async () =>
+        supabase
+          .from('stores')
+          .update({ ...patch, updated_at: new Date().toISOString() })
+          .eq('owner_user_id', session.userId)
+          .select('*')
+          .single()
+
+      let { data, error } = await doUpdate()
+
+      // PGRST116 = no rows matched → store may not exist yet; create it and retry
+      if (error?.code === 'PGRST116' || (!data && !error)) {
+        await ensureUserStore(supabase, session.userId, session.name, session.email)
+        const retry = await doUpdate()
+        data = retry.data
+        error = retry.error
+      }
 
       if (error) return error.message
+      if (!data) return 'No store was updated. Please refresh and try again.'
 
-      // Optimistic local update
-      setStore(prev => (prev ? { ...prev, ...patch } : prev))
+      // Update local state from the verified returned row
+      setStore(data as StoreRow)
       return null
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps

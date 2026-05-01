@@ -18,6 +18,7 @@ import {
   ChevronDown,
 } from 'lucide-react'
 import { useAuth } from '@/context/auth-context'
+import { useUserStore } from '@/hooks/use-user-store'
 import { cn } from '@/lib/utils'
 import { SellBopLogo } from '@/components/ui/sellbop-logo'
 
@@ -111,12 +112,56 @@ function CreateMenu({ onNavigate }: { onNavigate?: () => void }) {
   )
 }
 
+// ── User avatar ──────────────────────────────────────────────────────────────
+
+function UserAvatar({
+  avatarUrl,
+  name,
+  email,
+  sizeClass,
+  textClass,
+}: {
+  avatarUrl?: string | null
+  name?: string | null
+  email: string
+  sizeClass: string
+  textClass: string
+}) {
+  const [imgError, setImgError] = useState(false)
+  const initial = ((name?.charAt(0) ?? email.charAt(0)) || 'U').toUpperCase()
+
+  if (avatarUrl && !imgError) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={avatarUrl}
+        alt={name ?? email}
+        className={cn(sizeClass, 'rounded-full object-cover flex-shrink-0')}
+        onError={() => setImgError(true)}
+      />
+    )
+  }
+
+  return (
+    <div
+      className={cn(
+        sizeClass,
+        'rounded-full bg-neutral-900 flex items-center justify-center text-white font-bold flex-shrink-0',
+        textClass,
+      )}
+    >
+      {initial}
+    </div>
+  )
+}
+
 // ── Main sidebar ─────────────────────────────────────────────────────────────
 
 export function DashboardSidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const { signOut, session } = useAuth()
+  const { store } = useUserStore()
   const [mobileOpen, setMobileOpen] = useState(false)
 
   const nav: NavItem[] = [
@@ -173,13 +218,27 @@ export function DashboardSidebar() {
     router.push('/')
   }
 
+  const avatarUrl = session?.avatarUrl ?? store?.avatar_url ?? null
+
   const userBlock = session && (
-    <div className="border-b border-neutral-100 px-5 py-4">
-      <p className="truncate text-xs font-semibold text-neutral-800">
-        {session.name ?? session.email.split('@')[0]}
-      </p>
-      <p className="mt-0.5 truncate text-xs text-neutral-400">{session.email}</p>
-    </div>
+    <Link
+      href="/dashboard/settings"
+      className="flex items-center gap-3 border-b border-neutral-100 px-4 py-3 hover:bg-neutral-50 transition-colors"
+    >
+      <UserAvatar
+        avatarUrl={avatarUrl}
+        name={session.name}
+        email={session.email}
+        sizeClass="h-9 w-9"
+        textClass="text-xs"
+      />
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-xs font-semibold text-neutral-800">
+          {session.name ?? session.email.split('@')[0]}
+        </p>
+        <p className="mt-0.5 truncate text-[11px] text-neutral-400">{session.email}</p>
+      </div>
+    </Link>
   )
 
   const logoutBtn = (
@@ -208,11 +267,14 @@ export function DashboardSidebar() {
         <SellBopLogo size="lg" />
         <div className="flex items-center gap-2">
           {session && (
-            <Link
-              href="/dashboard"
-              className="flex h-8 w-8 items-center justify-center rounded-lg bg-neutral-900 text-xs font-bold text-white"
-            >
-              {(session.name?.charAt(0) ?? session.email.charAt(0)).toUpperCase()}
+            <Link href="/dashboard/settings">
+              <UserAvatar
+                avatarUrl={avatarUrl}
+                name={session.name}
+                email={session.email}
+                sizeClass="h-8 w-8"
+                textClass="text-xs"
+              />
             </Link>
           )}
           <button
