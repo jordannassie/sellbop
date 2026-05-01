@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { CreditCard, Headphones, LayoutDashboard, Package, Repeat, Settings, ShoppingBag, Store, Users } from 'lucide-react'
+import { BookOpen, CreditCard, Headphones, LayoutDashboard, Package, Repeat, Settings, ShoppingBag, Store, Users } from 'lucide-react'
 import { SellBopLogoStatic } from '@/components/ui/sellbop-logo'
 
 export type AdminSection =
@@ -54,6 +54,17 @@ export function AdminSidebar({ active }: AdminSidebarProps) {
           </Link>
         ))}
       </nav>
+
+      {/* ── Agent Knowledge link ─────────────────────────── */}
+      <div className="border-t border-neutral-100 px-2 py-2">
+        <Link
+          href="/internal/admin/agent-docs"
+          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-neutral-500 transition-colors hover:bg-neutral-50 hover:text-black"
+        >
+          <span className="flex-shrink-0"><BookOpen size={15} /></span>
+          Agent Knowledge
+        </Link>
+      </div>
 
       <div className="flex items-center gap-2 border-t border-neutral-100 px-4 py-3">
         <Settings size={12} className="flex-shrink-0 text-neutral-300" />

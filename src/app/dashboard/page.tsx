@@ -18,62 +18,18 @@ import {
   Users,
   Wand2,
 } from 'lucide-react'
+
 import { useAuth } from '@/context/auth-context'
 import { cn } from '@/lib/utils'
 import { LaunchDashboard } from '@/components/dashboard/launch-dashboard'
 import { AIStoreAgentPanel } from '@/components/dashboard/ai-store-agent-panel'
 import { useLaunchChecklist } from '@/hooks/use-launch-checklist'
 import { useDemoMode } from '@/hooks/use-demo-mode'
-import { AiComposer } from '@/components/ai/ai-composer'
 import { getLaunchIdea, clearLaunchIdea } from '@/lib/launch-idea'
 import type { Order, Product } from '@/lib/domain/entities'
 
 function statusVariant(status: string) {
   return status === 'completed' ? 'success' : status === 'refunded' ? 'warning' : status === 'failed' ? 'danger' : 'neutral'
-}
-
-// ── AI assistant section (shown once launch checklist is mostly complete) ─────
-
-function AIAssistantSection() {
-  const router = useRouter()
-  const [prompt, setPrompt] = useState('')
-  const [launching, setLaunching] = useState(false)
-
-  function launch(text: string) {
-    const q = text.trim()
-    setLaunching(true)
-    router.push(q ? `/dashboard/ai-launch?prompt=${encodeURIComponent(q)}` : '/dashboard/ai-launch')
-  }
-
-  return (
-    <div className="mb-8">
-      <div className="mb-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-black">
-            <Wand2 size={11} className="text-white" />
-          </div>
-          <p className="text-sm font-semibold text-black">AI Launch Assistant</p>
-        </div>
-        <Link
-          href="/dashboard/ai-launch"
-          className={cn(
-            'flex items-center gap-1 text-xs font-medium text-neutral-400 transition-colors hover:text-black',
-          )}
-        >
-          Full setup wizard <ArrowRight size={11} />
-        </Link>
-      </div>
-      <AiComposer
-        value={prompt}
-        onChange={setPrompt}
-        onSubmit={launch}
-        loading={launching}
-        rows={2}
-        submitLabel="Build My Store"
-        placeholder="Describe what you want to sell and SellBop will build your store."
-      />
-    </div>
-  )
 }
 
 // ── Dashboard overview ────────────────────────────────────────────────────────
