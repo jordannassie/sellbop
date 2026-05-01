@@ -9,8 +9,9 @@ import { GradientImageFallback } from '@/components/ui/gradient-image-fallback'
 import { DEMO_SELLER_PROFILE, DEMO_STOREFRONT, DEMO_PRODUCTS } from '@/lib/demo-data/seed'
 import { demoStorefrontRepo, demoProductRepo } from '@/lib/adapters/demo/repositories'
 import { formatCurrency, cn } from '@/lib/utils'
+import type { Storefront, Product } from '@/lib/domain/entities'
 import { printifyMinPrice, printifyHasPriceRange } from '@/lib/printify/normalize'
-import type { Product, Storefront, HeaderMediaType } from '@/lib/domain/entities'
+import type { HeaderMediaType } from '@/lib/domain/entities'
 
 // ── Social Icons ──────────────────────────────────────────────
 function TwitterIcon({ size = 14 }: { size?: number }) {
@@ -45,13 +46,25 @@ const TYPE_SHORT: Record<string, string> = {
 }
 
 // ── Main Client Component ─────────────────────────────────────
-export function ClientStorefront({ sellerSlug }: { sellerSlug: string }) {
-  const [storefront, setStorefront] = useState<Storefront>(DEMO_STOREFRONT)
-  const [allProducts, setAllProducts] = useState<Product[]>(DEMO_PRODUCTS)
-  const [ready, setReady] = useState(false)
+interface ClientStorefrontProps {
+  sellerSlug: string
+  /** Real store data loaded server-side from Supabase. When provided, demo fallback is skipped. */
+  initialStorefront?: Storefront
+  /** Live products loaded server-side from Supabase for a real store. */
+  initialProducts?: Product[]
+}
 
-  // Hydrate from localStorage on mount — picks up any saves from the Store Editor + Printify syncs
+export function ClientStorefront({ sellerSlug, initialStorefront, initialProducts }: ClientStorefrontProps) {
+  // When real data is passed from the server, start immediately ready with it.
+  // When not provided, start with demo seed data and hydrate from localStorage.
+  const [storefront, setStorefront] = useState<Storefront>(initialStorefront ?? DEMO_STOREFRONT)
+  const [allProducts, setAllProducts] = useState<Product[]>(initialProducts ?? DEMO_PRODUCTS)
+  const [ready, setReady] = useState(!!initialStorefront)
+
+  // Only do localStorage/demo hydration when no server data was provided (demo slug path).
   useEffect(() => {
+    if (initialStorefront) return // Real store — already ready, skip demo hydration
+
     Promise.all([
       demoStorefrontRepo.findBySellerId(DEMO_SELLER_PROFILE.id),
       demoProductRepo.findAll(DEMO_SELLER_PROFILE.id),
@@ -59,7 +72,7 @@ export function ClientStorefront({ sellerSlug }: { sellerSlug: string }) {
       const base = s ? { ...DEMO_STOREFRONT, ...(s as Storefront) } : DEMO_STOREFRONT
       if (products.length > 0) setAllProducts(products)
 
-      // Also try fetching banner from Supabase (best-effort enhancement)
+      // Also try fetching banner from Supabase (best-effort enhancement for demo slug)
       fetch(`/api/v5/store-banner?slug=${encodeURIComponent(sellerSlug)}`)
         .then(r => r.json())
         .then((data: { banner?: { bannerUrl: string | null; layoutMode: string } | null }) => {
@@ -72,7 +85,7 @@ export function ClientStorefront({ sellerSlug }: { sellerSlug: string }) {
         .catch(() => setStorefront(base))
         .finally(() => setReady(true))
     })
-  }, [sellerSlug])
+  }, [sellerSlug, initialStorefront])
 
   const orderMap = new Map(storefront.productOrder.map((id, i) => [id, i]))
   const digitalProducts = allProducts
@@ -179,7 +192,9 @@ export function ClientStorefront({ sellerSlug }: { sellerSlug: string }) {
         {digitalProducts.length === 0 && clothingProducts.length === 0 && (
           <div className="py-36 text-center">
             <div className="text-5xl mb-5">✦</div>
-            <p className="text-neutral-400 text-sm font-medium">Products coming soon.</p>
+            <p className="text-neutral-400 text-sm font-medium">
+              {initialStorefront ? 'No products yet.' : 'Products coming soon.'}
+            </p>
           </div>
         )}
       </div>
