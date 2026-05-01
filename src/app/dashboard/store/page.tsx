@@ -1,9 +1,11 @@
 'use client'
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { demoStorefrontRepo } from '@/lib/adapters/demo/repositories'
 import { DEMO_SELLER_PROFILE } from '@/lib/demo-data/seed'
+import { useAuth } from '@/context/auth-context'
 import { useUserStore } from '@/hooks/use-user-store'
+import { LinkField } from '@/components/dashboard/link-field'
 import {
   ArrowUpRight,
   Check,
@@ -70,15 +72,31 @@ const CARDS: SectionCard[] = [
 ]
 
 export default function StoreSectionPage() {
-  // Real store slug from Supabase (or demo fallback)
-  const { store: userStore } = useUserStore()
+  const { session } = useAuth()
+  const { store: userStore, isDemo, saveStore } = useUserStore()
 
   const [storefront, setStorefront] = useState<Storefront | null>(null)
-  const [publishing, setPublishing] = useState(false)
-  const [copied, setCopied] = useState(false)
+  const [publishing, setPublishing]     = useState(false)
+  const [copied, setCopied]             = useState(false)
+  const [storeLink, setStoreLink]       = useState('')   // confirmed-available slug draft
+  const [savingLink, setSavingLink]     = useState(false)
+  const initialized = useRef(false)
 
-  // storeSlug: prefer real Supabase store slug, fall back to demo
-  const storeSlug = userStore?.slug ?? DEMO_SELLER_PROFILE.slug
+  // Seed storeLink once when the store first loads (avoids reset on refetch)
+  useEffect(() => {
+    if (!userStore || initialized.current) return
+    initialized.current = true
+    setStoreLink(userStore.slug)
+  }, [userStore])
+
+  // Active slug — what the Copy/Open/Preview buttons should use
+  const activeSlug = storeLink || userStore?.slug || DEMO_SELLER_PROFILE.slug
+
+  // ownerParam for availability API: current user can keep their own link
+  const storeLinkOwnerParam = {
+    key: 'ownerId',
+    value: session?.userId ?? DEMO_SELLER_PROFILE.userId,
+  }
 
   async function loadStorefront() {
     const s = await demoStorefrontRepo.findBySellerId(DEMO_SELLER_PROFILE.id)
@@ -86,8 +104,33 @@ export default function StoreSectionPage() {
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadStorefront()
   }, [])
+
+  async function handleSaveLink() {
+    if (!storeLink || storeLink === userStore?.slug) return
+    setSavingLink(true)
+    try {
+      // Persist to Supabase (when authenticated)
+      if (!isDemo) {
+        const err = await saveStore({ slug: storeLink })
+        if (err) { toast.error(`Could not save: ${err}`); return }
+      }
+
+      // Keep localStorage in sync for the demo / UI layer
+      if (storefront) {
+        await demoStorefrontRepo.upsert({ ...storefront, slug: storeLink })
+        await loadStorefront()
+      }
+
+      toast.success('Store link updated!')
+    } catch {
+      toast.error('Failed to save store link.')
+    } finally {
+      setSavingLink(false)
+    }
+  }
 
   async function handlePublish() {
     setPublishing(true)
@@ -116,8 +159,8 @@ export default function StoreSectionPage() {
 
   function handleCopyLink() {
     const link = typeof window !== 'undefined'
-      ? `${window.location.origin}/store/${storeSlug}`
-      : `/store/${storeSlug}`
+      ? `${window.location.origin}/store/${activeSlug}`
+      : `/store/${activeSlug}`
     void navigator.clipboard.writeText(link)
     setCopied(true)
     toast.success('Store link copied!')
@@ -143,7 +186,7 @@ export default function StoreSectionPage() {
               : 'Your store is in draft — not yet public.'}
           </p>
         </div>
-        <Link href={`/store/${storeSlug}`} target="_blank">
+        <Link href={`/store/${activeSlug}`} target="_blank">
           <Button variant="secondary" size="sm">
             <Globe size={13} /> Preview <ArrowUpRight size={12} />
           </Button>
@@ -161,7 +204,7 @@ export default function StoreSectionPage() {
               </p>
               <p className="text-xs text-neutral-500">
                 {isPublished
-                  ? `Public at /store/${storeSlug}`
+                  ? `Public at /store/${activeSlug}`
                   : 'Publish to make your store visible and shareable'}
               </p>
             </div>
@@ -186,19 +229,53 @@ export default function StoreSectionPage() {
         </div>
       </div>
 
-      {/* Store URL */}
-      <div className="mb-6 flex items-center gap-3 rounded-xl border border-neutral-200 bg-white px-4 py-3">
-        <Globe size={14} className="shrink-0 text-neutral-400" />
-        <a
-          href={`/store/${storeSlug}`}
-          target="_blank"
-          className="flex-1 truncate text-sm text-neutral-600 hover:text-black transition-colors"
+      {/* ── Editable store link ──────────────────────────────── */}
+      <div className="mb-6 rounded-2xl border border-neutral-200 bg-white p-4 space-y-3">
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-sm font-semibold text-black">Store link</p>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleCopyLink}
+              title="Copy link"
+              className="flex items-center gap-1.5 h-7 px-2.5 rounded-lg text-xs font-medium text-neutral-600 border border-neutral-200 hover:bg-neutral-50 transition-colors"
+            >
+              {copied ? <Check size={11} className="text-emerald-500" /> : <Copy size={11} />}
+              {copied ? 'Copied' : 'Copy'}
+            </button>
+            <Link href={`/store/${activeSlug}`} target="_blank">
+              <button
+                type="button"
+                className="flex items-center gap-1.5 h-7 px-2.5 rounded-lg text-xs font-medium text-neutral-600 border border-neutral-200 hover:bg-neutral-50 transition-colors"
+              >
+                <ArrowUpRight size={11} /> Open
+              </button>
+            </Link>
+          </div>
+        </div>
+
+        <LinkField
+          value={storeLink}
+          onChange={setStoreLink}
+          prefix="sellbop.com/store/"
+          checkUrl="/api/availability/store-link"
+          ownerParam={storeLinkOwnerParam}
+          label=""
+        />
+
+        <p className="text-xs text-neutral-400">
+          Choose a short link people can remember. Letters, numbers, and dashes only.
+        </p>
+
+        <Button
+          type="button"
+          size="sm"
+          loading={savingLink}
+          disabled={!storeLink || storeLink === (userStore?.slug ?? DEMO_SELLER_PROFILE.slug)}
+          onClick={handleSaveLink}
         >
-          sellbop.com/store/{storeSlug}
-        </a>
-        <Link href={`/store/${storeSlug}`} target="_blank">
-          <ArrowUpRight size={14} className="text-neutral-400 hover:text-black transition-colors" />
-        </Link>
+          Save store link
+        </Button>
       </div>
 
       {/* Cards grid */}
