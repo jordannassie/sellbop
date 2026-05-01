@@ -89,6 +89,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 })
   }
 
+  // TODO: Use referenceImages with OpenAI image editing/multimodal image generation when enabled.
   const { prompt, style = 'Clean studio', imageType = 'product', ownerId = 'anon' } = body
 
   if (!prompt || typeof prompt !== 'string' || prompt.trim().length < 5) {

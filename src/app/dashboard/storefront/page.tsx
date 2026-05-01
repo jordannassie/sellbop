@@ -305,10 +305,13 @@ export default function StoreProfilePage() {
         <Card>
           <CardHeader><CardTitle>Store Photo</CardTitle></CardHeader>
           <CardContent>
+            <p className="mb-3 text-xs text-neutral-500">
+              Used as your public store photo and dashboard brand image.
+            </p>
             <div className="flex items-start gap-4">
-              {/* Avatar preview — shows uploaded photo or initials fallback */}
+              {/* Avatar preview — compact rounded-2xl, larger than before */}
               <div
-                className="w-16 h-16 rounded-xl flex-shrink-0 overflow-hidden flex items-center justify-center text-white text-2xl font-black shadow-sm"
+                className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl flex-shrink-0 overflow-hidden flex items-center justify-center text-white text-3xl sm:text-4xl font-black shadow-sm"
                 style={{ backgroundColor: storefront?.themeColor ?? '#000000' }}
                 aria-hidden="true"
               >
@@ -324,6 +327,7 @@ export default function StoreProfilePage() {
                   (title || 'S').charAt(0).toUpperCase()
                 )}
               </div>
+              {/* compact=true: picker skips its own image-well canvas */}
               <div className="flex-1 min-w-0">
                 <AiImagePicker
                   value={avatarUrl}
@@ -331,8 +335,7 @@ export default function StoreProfilePage() {
                   imageType="store_avatar"
                   bucket="store-images"
                   ownerId={uploadOwnerId}
-                  aspectClass="aspect-square"
-                  hint="Square image recommended, 400×400px or larger."
+                  compact
                 />
               </div>
             </div>
