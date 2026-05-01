@@ -183,11 +183,12 @@ function BuilderForm({
         </CardContent>
       </Card>
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         <Button
           onClick={handleGenerate}
           loading={generating}
           disabled={!whatAreYouSelling.trim() || !whoIsItFor.trim()}
+          className="w-full sm:w-auto"
         >
           <Sparkles size={14} />
           {generating ? 'Generating…' : 'Generate Product Copy'}
@@ -289,7 +290,7 @@ function BuilderPreview({
       <Card>
         <CardHeader><CardTitle>Pricing & CTA</CardTitle></CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <Input
               label="Price (USD)"
               type="number"
@@ -425,8 +426,8 @@ function BuilderPreview({
         </CardContent>
       </Card>
 
-      <div className="flex items-center gap-3 pt-2 border-t border-neutral-100">
-        <Button onClick={handleCreate} loading={creating}>
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-2 border-t border-neutral-100">
+        <Button onClick={handleCreate} loading={creating} className="w-full sm:w-auto">
           <ArrowRight size={14} /> Create Product
         </Button>
         <p className="text-xs text-neutral-400">
@@ -493,7 +494,7 @@ export default function AIBuilderPage() {
   }
 
   return (
-    <div className="max-w-2xl">
+    <div className="w-full max-w-2xl">
       {/* Header */}
       <div className="mb-6">
         <Link
@@ -503,12 +504,12 @@ export default function AIBuilderPage() {
           <ArrowLeft size={14} /> Back to Products
         </Link>
 
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-black">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-black">
             <Wand2 size={18} className="text-white" />
           </div>
-          <div>
-            <h1 className="text-2xl font-bold text-black">AI Product Builder</h1>
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold text-black">AI Product Builder</h1>
             <p className="text-sm text-neutral-500">
               Describe your product — AI writes the copy, pricing, FAQ, and more.
             </p>
@@ -519,17 +520,17 @@ export default function AIBuilderPage() {
       {/* Step indicator */}
       <div className="mb-6 flex items-center gap-2">
         <div className={`flex items-center gap-1.5 text-xs font-semibold ${step === 'form' ? 'text-black' : 'text-neutral-400'}`}>
-          <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${step === 'form' ? 'bg-black text-white' : 'bg-neutral-200 text-neutral-500'}`}>
+          <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${step === 'form' ? 'bg-black text-white' : 'bg-neutral-200 text-neutral-500'}`}>
             1
           </span>
-          Describe Product
+          <span className="whitespace-nowrap">Describe Product</span>
         </div>
-        <div className="h-px w-8 bg-neutral-200" />
+        <div className="h-px flex-1 max-w-[32px] bg-neutral-200" />
         <div className={`flex items-center gap-1.5 text-xs font-semibold ${step === 'preview' ? 'text-black' : 'text-neutral-400'}`}>
-          <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${step === 'preview' ? 'bg-black text-white' : 'bg-neutral-200 text-neutral-500'}`}>
+          <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${step === 'preview' ? 'bg-black text-white' : 'bg-neutral-200 text-neutral-500'}`}>
             2
           </span>
-          Review & Create
+          <span className="whitespace-nowrap">Review &amp; Create</span>
         </div>
       </div>
 

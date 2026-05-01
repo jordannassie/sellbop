@@ -109,7 +109,7 @@ interface AffiliateLink {
 
 function TabBar({ tab, onChange }: { tab: HubTab; onChange: (t: HubTab) => void }) {
   return (
-    <div className="flex gap-0 border-b border-neutral-100 overflow-x-auto">
+    <div className="flex gap-0 border-b border-neutral-100 overflow-x-auto scrollbar-none pr-4">
       {HUB_TABS.map(({ key, label, icon: Icon }) => (
         <button
           key={key}
@@ -139,13 +139,13 @@ function SubTabBar<T extends string>({
   onChange: (t: T) => void
 }) {
   return (
-    <div className="flex items-center gap-1 mb-5 border-b border-neutral-100 pb-0">
+    <div className="flex items-center gap-1 mb-5 border-b border-neutral-100 pb-0 overflow-x-auto scrollbar-none pr-2">
       {items.map(({ key, label }) => (
         <button
           key={key}
           onClick={() => onChange(key)}
           className={cn(
-            'px-3 py-2 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap',
+            'px-3 py-2 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap shrink-0',
             active === key
               ? 'border-neutral-900 text-black'
               : 'border-transparent text-neutral-400 hover:text-black',

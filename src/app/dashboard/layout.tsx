@@ -45,7 +45,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             'min-h-0 flex-1',
             isStoreEditor && account.hasStore
               ? 'flex flex-col overflow-hidden p-0'
-              : 'max-w-6xl p-4 pb-24 sm:p-6 sm:pb-6 lg:p-8 lg:pb-8',
+              : 'w-full max-w-6xl p-4 pb-28 sm:p-6 sm:pb-8 lg:p-8 lg:pb-10',
           )}
         >
           {children}

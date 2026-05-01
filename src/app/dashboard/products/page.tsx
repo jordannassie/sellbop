@@ -28,40 +28,41 @@ type Tab = 'all' | 'clothing'
 function ProductRow({ p }: { p: Product }) {
   const isClothing = p.source === 'printify'
   return (
-    <div className="px-6 py-4 flex items-center gap-4">
-      <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 relative bg-neutral-100">
+    <div className="px-4 sm:px-6 py-4 flex items-center gap-3 sm:gap-4">
+      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg overflow-hidden flex-shrink-0 relative bg-neutral-100">
         <ProductImage src={p.thumbnailUrl} alt={p.name} productType={p.productType} fill iconSize="sm" />
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-          <p className="text-sm font-semibold text-black truncate">{p.name}</p>
+          <p className="text-sm font-semibold text-black truncate max-w-[140px] sm:max-w-none">{p.name}</p>
           <Badge variant={statusVariant(p.status)}>
             {p.status === 'published' ? 'Live' : p.status}
           </Badge>
           {isClothing && (
-            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-violet-50 text-violet-600 border border-violet-100">
+            <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-violet-50 text-violet-600 border border-violet-100">
               <Zap size={9} /> Printify
             </span>
           )}
         </div>
-        <p className="text-xs text-neutral-500">
+        <p className="text-xs text-neutral-500 truncate">
           {isClothing ? 'Clothing · Printify' : TYPE_LABELS[p.productType]}
-          {' · '}{formatCurrency(p.price, p.currency)} · {p.salesCount} sales
+          {' · '}{formatCurrency(p.price, p.currency)}
+          <span className="hidden sm:inline"> · {p.salesCount} sales</span>
         </p>
       </div>
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
         {p.status === 'published' && (
-          <Link href={`/p/${p.slug}`} target="_blank">
+          <Link href={`/p/${p.slug}`} target="_blank" className="hidden sm:block">
             <Button size="sm" variant="ghost"><ExternalLink size={13} />View</Button>
           </Link>
         )}
         {!isClothing && (
           <Link href={`/dashboard/products/${p.id}`}>
-            <Button size="sm" variant="secondary"><Pencil size={13} />Edit</Button>
+            <Button size="sm" variant="secondary"><Pencil size={13} /><span className="hidden sm:inline">Edit</span></Button>
           </Link>
         )}
         {isClothing && (
-          <span className="text-xs text-neutral-400 px-2">Managed in Printify</span>
+          <span className="hidden sm:block text-xs text-neutral-400 px-2">Managed in Printify</span>
         )}
       </div>
     </div>
@@ -118,7 +119,7 @@ export default function ProductsPage() {
 
   return (
     <div>
-      <div className="mb-5 flex items-center justify-between">
+      <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-black">Products</h1>
           <p className="text-neutral-500 text-sm mt-1">
@@ -126,13 +127,13 @@ export default function ProductsPage() {
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <Link href="/dashboard/printify">
+          <Link href="/dashboard/printify" className="hidden sm:block">
             <Button variant="secondary" size="sm"><Shirt size={14} />Clothing</Button>
           </Link>
           <Link href="/dashboard/products/ai-builder">
-            <Button variant="secondary" size="sm"><Sparkles size={14} />Create with AI</Button>
+            <Button variant="secondary" size="sm"><Sparkles size={14} /><span className="hidden sm:inline">Create with AI</span><span className="sm:hidden">AI</span></Button>
           </Link>
-          <Link href="/dashboard/products/new"><Button>+ New Product</Button></Link>
+          <Link href="/dashboard/products/new"><Button size="sm">+ New</Button></Link>
         </div>
       </div>
 
