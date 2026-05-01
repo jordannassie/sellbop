@@ -30,31 +30,25 @@ export default function HomePage() {
       {/* ── Hero ─────────────────────────────────────────────────── */}
       <section className="max-w-4xl mx-auto px-4 sm:px-6 pt-16 pb-20 text-center">
 
-        {/* 1. Badge */}
-        <div className="inline-flex items-center gap-2 bg-neutral-100 text-neutral-600 text-xs font-medium px-3 py-1.5 rounded-full mb-6">
-          <Sparkles size={11} className="text-neutral-500" />
-          AI-first creator platform
-        </div>
+        {/* 1. Rotating teaser — leads into the headline */}
+        <p className="text-base sm:text-xl font-bold text-black mb-3">
+          Launch <RotatingWord />
+        </p>
 
         {/* 2. Main headline */}
         <h1 className="text-4xl sm:text-6xl font-black text-black tracking-tight leading-[1.1] mb-5">
-          Start your store with AI.
+          Launch your store in 5 minutes.
         </h1>
 
         {/* 3. Subheadline */}
         <p className="text-base sm:text-lg text-neutral-500 max-w-xl mx-auto mb-8 leading-relaxed">
-          Go from idea to a 5-minute store launch. Tell SellBop what you want to sell, and we&apos;ll help build your store, product page, pricing, FAQ, checkout copy, and launch plan.
+          Tell SellBop what you want to sell. We&apos;ll build your store, product page, pricing, FAQ, checkout copy, and launch plan.
         </p>
 
         {/* 4. Hero AI prompt — the primary conversion action */}
         <AIPromptBar />
 
-        {/* 5. Animated gradient text — supporting visual */}
-        <p className="mt-7 text-base sm:text-lg font-medium text-neutral-400">
-          Launch <RotatingWord />.
-        </p>
-
-        {/* 6. Social proof */}
+        {/* 5. Social proof */}
         <div className="flex flex-col items-center gap-3 mt-8">
           <div className="flex items-center -space-x-2.5">
             {HERO_FACEPILE_PHOTOS.map((url, i) => (
