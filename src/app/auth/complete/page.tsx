@@ -23,7 +23,11 @@ function toSession(user: { id: string; email?: string; user_metadata?: Record<st
   }
 }
 
-export default async function AuthCompletePage() {
+export default async function AuthCompletePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ idea?: string; intent?: string }>
+}) {
   if (!isSupabaseConfigured()) {
     redirect('/login?error=supabase-not-configured')
   }
@@ -39,6 +43,7 @@ export default async function AuthCompletePage() {
     redirect('/login')
   }
 
+  const { idea } = await searchParams
   const account = await bootstrapAuthenticatedUser(session)
-  redirect(resolvePostLoginDestination(session, account))
+  redirect(resolvePostLoginDestination(session, account, idea))
 }

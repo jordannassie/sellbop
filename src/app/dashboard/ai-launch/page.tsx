@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { AIGenerating } from '@/components/dashboard/ai-generating'
 import { AiComposer } from '@/components/ai/ai-composer'
 import { AiSkeleton } from '@/components/ai/ai-skeleton'
+import { clearLaunchIdea } from '@/lib/launch-idea'
 import { toast } from 'sonner'
 import { slugify } from '@/lib/utils'
 import {
@@ -641,7 +642,9 @@ function Step5({
 function AILaunchWizardInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const initialPrompt = searchParams.get('prompt') ?? ''
+  // Support both ?idea= (new flow from homepage) and legacy ?prompt=
+  const initialIdea   = searchParams.get('idea') ?? ''
+  const initialPrompt = initialIdea || (searchParams.get('prompt') ?? '')
 
   const [step, setStep] = useState<WizardStep>(1)
   const [data, setData] = useState<WizardData>({
@@ -655,15 +658,18 @@ function AILaunchWizardInner() {
   const [savingStore, setSavingStore] = useState(false)
   const [savingProduct, setSavingProduct] = useState(false)
 
-  // Suppress unused effect warning — initialPrompt pre-fills the input but we
-  // don't auto-advance so the user can confirm their prompt.
-  useEffect(() => { /* intentionally no-op */ }, [initialPrompt])
+  // Suppress unused effect warning — initialIdea/initialPrompt pre-fills
+  // the input but we don't auto-advance so the user can confirm.
+  useEffect(() => { /* intentionally no-op */ }, [initialIdea, initialPrompt])
 
   function merge(partial: Partial<WizardData>) {
     setData(prev => ({ ...prev, ...partial }))
   }
 
   async function handleGenerate() {
+    // Clear the stored idea from localStorage — the user is now committed
+    // to building, so we don't need it for future redirects.
+    clearLaunchIdea()
     setGenerating(true)
     try {
       const res = await fetch('/api/ai/store-launch', {
@@ -799,6 +805,16 @@ function AILaunchWizardInner() {
 
       {/* ── Step indicator (hidden while generating) ───────── */}
       {!generating && <StepIndicator step={step} />}
+
+      {/* ── Pre-filled idea confirmation (shown when coming from homepage) ─ */}
+      {!generating && step === 1 && initialIdea && data.whatYouSell && (
+        <div className="flex items-center gap-2 rounded-xl bg-emerald-50 border border-emerald-100 px-4 py-3 mb-4">
+          <Sparkles size={13} className="text-emerald-600 flex-shrink-0" />
+          <p className="text-sm font-medium text-emerald-700">
+            Your store idea is ready. Let&apos;s build it.
+          </p>
+        </div>
+      )}
 
       {/* ── Step content ────────────────────────────────────── */}
       {!generating && step === 1 && (

@@ -3,10 +3,12 @@
 import { Suspense, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '@/context/auth-context'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { getLaunchIdea, saveLaunchIdea } from '@/lib/launch-idea'
 
 function GoogleIcon() {
   return (
@@ -19,10 +21,37 @@ function GoogleIcon() {
   )
 }
 
+function IdeaBanner({ idea }: { idea: string }) {
+  const display = idea.length > 90 ? idea.slice(0, 87) + '…' : idea
+
+  return (
+    <div className="mb-5 rounded-2xl bg-black px-6 py-5 text-center">
+      <div className="flex items-center justify-center gap-2 mb-3">
+        <Sparkles size={13} className="text-white/50" />
+        <p className="text-[11px] font-bold text-white/50 uppercase tracking-[0.15em]">
+          Let&apos;s build your store for
+        </p>
+      </div>
+      <p className="text-xl sm:text-2xl font-bold text-white leading-snug mb-3">
+        &ldquo;{display}&rdquo;
+      </p>
+      <p className="text-sm text-white/50 leading-relaxed">
+        Create your account and SellBop will draft your store, product page, pricing,
+        FAQ, checkout copy, and launch plan.
+      </p>
+    </div>
+  )
+}
+
 function AuthForm() {
   const router = useRouter()
   const params = useSearchParams()
   const { signIn, signUp, signInWithGoogle } = useAuth()
+
+  // Read idea from URL or fall back to localStorage
+  const ideaFromParam = params.get('idea') ?? ''
+  const idea = ideaFromParam || getLaunchIdea() || ''
+  const intent = params.get('intent') ?? ''
 
   const [mode, setMode] = useState<'login' | 'signup'>(
     params.get('mode') === 'signup' ? 'signup' : 'login',
@@ -34,6 +63,21 @@ function AuthForm() {
   const [error, setError] = useState('')
   const [pwdReadOnly, setPwdReadOnly] = useState(true)
   const routeError = params.get('error') ?? ''
+
+  /**
+   * After successful email/password auth, route to AI Launch if
+   * there is a stored idea; otherwise fall through to /auth/complete.
+   */
+  function resolveRedirect() {
+    const currentIdea = idea
+    if (currentIdea || intent === 'store_launch') {
+      const dest = currentIdea
+        ? `/auth/complete?idea=${encodeURIComponent(currentIdea)}&intent=store_launch`
+        : '/auth/complete?intent=store_launch'
+      return dest
+    }
+    return '/auth/complete'
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -47,7 +91,7 @@ function AuthForm() {
         await signUp(email, password, name)
       }
 
-      router.push('/auth/complete')
+      router.push(resolveRedirect())
     } catch (err) {
       setError(err instanceof Error ? err.message : mode === 'login' ? 'Login failed.' : 'Signup failed.')
     } finally {
@@ -56,6 +100,10 @@ function AuthForm() {
   }
 
   async function handleGoogle() {
+    // Ensure idea stays in localStorage so the dashboard can pick it up
+    // after the OAuth redirect comes back (which bypasses this page).
+    if (idea) saveLaunchIdea(idea)
+
     try {
       await signInWithGoogle()
     } catch (err) {
@@ -65,6 +113,9 @@ function AuthForm() {
 
   return (
     <div className="w-full max-w-sm">
+      {/* Store-idea motivational banner */}
+      {idea && <IdeaBanner idea={idea} />}
+
       <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
         <div className="border-b border-neutral-100 bg-neutral-50 p-2">
           <div className="flex gap-1 rounded-xl bg-neutral-100 p-1">

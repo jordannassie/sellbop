@@ -83,8 +83,15 @@ export async function bootstrapAuthenticatedUser(session: AuthSession) {
   return getAccountSummaryByUserId(session.userId)
 }
 
-export function resolvePostLoginDestination(session: AuthSession, account: AccountSummary) {
+export function resolvePostLoginDestination(
+  session: AuthSession,
+  account: AccountSummary,
+  launchIdea?: string,
+) {
   if (isAllowedAdminEmail(session.email)) return '/internal/admin'
   void account
+  if (launchIdea) {
+    return `/dashboard/ai-launch?idea=${encodeURIComponent(launchIdea)}`
+  }
   return '/dashboard'
 }

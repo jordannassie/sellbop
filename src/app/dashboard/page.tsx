@@ -24,6 +24,7 @@ import { LaunchDashboard } from '@/components/dashboard/launch-dashboard'
 import { useLaunchChecklist } from '@/hooks/use-launch-checklist'
 import { useDemoMode } from '@/hooks/use-demo-mode'
 import { AiComposer } from '@/components/ai/ai-composer'
+import { getLaunchIdea, clearLaunchIdea } from '@/lib/launch-idea'
 import type { Order, Product } from '@/lib/domain/entities'
 
 function statusVariant(status: string) {
@@ -77,6 +78,7 @@ function AIAssistantSection() {
 // ── Dashboard overview ────────────────────────────────────────────────────────
 
 export default function DashboardOverview() {
+  const router = useRouter()
   const { session, loading: authLoading } = useAuth()
   const { demoMode, ready } = useDemoMode()
   const [orders, setOrders] = useState<Order[]>([])
@@ -85,6 +87,18 @@ export default function DashboardOverview() {
   const [dismissed, setDismissed] = useState(false)
 
   const { checklist, isLaunched, percentComplete } = useLaunchChecklist()
+
+  // Google OAuth fallback: if user arrives at the dashboard with a stored
+  // launch idea (set before the OAuth redirect), send them straight to the
+  // AI Launch Assistant.  The idea is cleared immediately to avoid a redirect
+  // loop on subsequent dashboard visits.
+  useEffect(() => {
+    if (authLoading || !session) return
+    const idea = getLaunchIdea()
+    if (!idea) return
+    clearLaunchIdea()
+    router.push(`/dashboard/ai-launch?idea=${encodeURIComponent(idea)}`)
+  }, [authLoading, session, router])
 
   // Load demo stats only when demo mode is ON or user is not authenticated.
   /* eslint-disable react-hooks/set-state-in-effect */
