@@ -9,7 +9,7 @@ import { Select } from '@/components/ui/select'
 import { Toggle } from '@/components/ui/toggle'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { ImageUpload } from '@/components/dashboard/image-upload'
+import { AiImagePicker } from '@/components/ai/ai-image-picker'
 import { toast } from 'sonner'
 import { slugify, formatCurrency, formatDate } from '@/lib/utils'
 import {
@@ -348,9 +348,10 @@ function EditTab({
       <Card>
         <CardHeader><CardTitle>Media</CardTitle></CardHeader>
         <CardContent>
-          <ImageUpload
+          <AiImagePicker
             value={thumbnailUrl}
-            onChange={setThumbnailUrl}
+            onChange={url => setThumbnailUrl(url)}
+            imageType="product"
             bucket="product-images"
             ownerId={product.sellerId}
             hint="Recommended: 1200×630px, JPG or PNG. Shown on your product page."

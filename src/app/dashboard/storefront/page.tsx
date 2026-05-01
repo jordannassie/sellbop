@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { ImageUpload } from '@/components/dashboard/image-upload'
+import { AiImagePicker } from '@/components/ai/ai-image-picker'
 import { LinkField } from '@/components/dashboard/link-field'
 import { ExternalLink, Copy, Check, Globe2, LayoutTemplate, Loader2 } from 'lucide-react'
 import type { BrandingMode, Storefront } from '@/lib/domain/entities'
@@ -254,12 +254,12 @@ export default function StoreProfilePage() {
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <ImageUpload
+                <AiImagePicker
                   value={avatarUrl}
-                  onChange={setAvatarUrl}
+                  onChange={url => setAvatarUrl(url)}
+                  imageType="store_avatar"
                   bucket="store-images"
                   ownerId={uploadOwnerId}
-                  label=""
                   aspectClass="aspect-square"
                   hint="Square image recommended, 400×400px or larger."
                 />
@@ -297,9 +297,10 @@ export default function StoreProfilePage() {
               </div>
             </div>
             {layoutMode === 'banner' && (
-              <ImageUpload
+              <AiImagePicker
                 value={bannerUrl}
-                onChange={setBannerUrl}
+                onChange={url => setBannerUrl(url)}
+                imageType="store_banner"
                 bucket="store-banners"
                 ownerId={uploadOwnerId}
                 label="Banner Image"
