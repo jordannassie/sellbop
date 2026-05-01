@@ -11,6 +11,8 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { AIGenerating } from '@/components/dashboard/ai-generating'
+import { AiComposer } from '@/components/ai/ai-composer'
+import { AiSkeleton } from '@/components/ai/ai-skeleton'
 import { toast } from 'sonner'
 import { slugify } from '@/lib/utils'
 import {
@@ -54,14 +56,15 @@ const PRICE_OPTIONS = [
 
 // ── Quick-start suggestions ───────────────────────────────────────────────────
 
-const SELL_SUGGESTIONS = [
+// Used by AiComposer on Step 1
+const WHAT_YOU_SELL_PROMPTS = [
   'A Notion template for freelancers',
   'A coaching program for early-career designers',
   'A subscription for fitness plans',
   'An e-book on personal finance',
   'A course on building with AI',
   'A service for social media strategy',
-]
+] as const
 
 const FOR_SUGGESTIONS = [
   'Freelancers and solopreneurs',
@@ -122,40 +125,21 @@ function Step1({ data, onChange, onNext }: {
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-xl font-bold text-black mb-1">What do you want to sell?</h2>
-        <p className="text-sm text-neutral-500">Describe your product, service, or idea in a sentence or two.</p>
+        <h2 className="text-xl font-bold text-black mb-1">What would you like to sell?</h2>
+        <p className="text-sm text-neutral-500">
+          Describe your product, service, or idea — SellBop will handle the rest.
+        </p>
       </div>
-      <Textarea
-        label=""
+      <AiComposer
         value={data.whatYouSell}
-        onChange={e => onChange({ whatYouSell: e.target.value })}
+        onChange={v => onChange({ whatYouSell: v })}
+        onSubmit={() => { if (data.whatYouSell.trim()) onNext() }}
+        submitLabel="Continue →"
         rows={3}
         placeholder="e.g. A Notion template system for freelancers to track clients, projects, and invoices in one place"
+        typeChips={[]}
+        quickPrompts={WHAT_YOU_SELL_PROMPTS}
       />
-      <div>
-        <p className="text-xs font-medium text-neutral-500 mb-2">Quick start ideas</p>
-        <div className="flex flex-wrap gap-2">
-          {SELL_SUGGESTIONS.map(s => (
-            <button
-              key={s}
-              onClick={() => onChange({ whatYouSell: s })}
-              className={cn(
-                'rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
-                data.whatYouSell === s
-                  ? 'border-black bg-black text-white'
-                  : 'border-neutral-200 text-neutral-600 hover:border-neutral-400 hover:text-black',
-              )}
-            >
-              {s}
-            </button>
-          ))}
-        </div>
-      </div>
-      <div className="flex justify-end">
-        <Button onClick={onNext} disabled={!data.whatYouSell.trim()}>
-          Next <ArrowRight size={14} />
-        </Button>
-      </div>
     </div>
   )
 }
@@ -565,7 +549,11 @@ function Step5({
         <CardHeader><CardTitle>Image Prompts</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <div className="rounded-xl border border-neutral-100 bg-neutral-50 px-4 py-3 text-xs text-neutral-500">
-            Image generation coming soon. Copy these prompts to use with DALL-E, Midjourney, or Canva.
+            Copy these prompts to generate images. You can also use{' '}
+            <Link href="/dashboard/storefront" className="font-medium text-black underline underline-offset-2">
+              AI image tools
+            </Link>{' '}
+            in Store Profile to generate and set your store visuals directly.
           </div>
           {[
             { label: 'Product Image Prompt', key: 'productImagePrompt' as const },
@@ -584,9 +572,11 @@ function Step5({
                 >
                   Copy Prompt
                 </Button>
-                <Button size="xs" variant="ghost" disabled>
-                  <ImageIcon size={11} /> Generate Image — Coming soon
-                </Button>
+                <Link href="/dashboard/storefront">
+                  <Button size="xs" variant="ghost">
+                    <ImageIcon size={11} /> Open AI Image Tools
+                  </Button>
+                </Link>
               </div>
             </div>
           ))}
@@ -781,28 +771,31 @@ function AILaunchWizardInner() {
   return (
     <div className="max-w-2xl">
       {/* ── Header ─────────────────────────────────────────── */}
-      <div className="mb-6">
+      <div className="mb-8">
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-neutral-500 hover:text-black transition-colors mb-4"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-neutral-500 hover:text-black transition-colors mb-5"
         >
           <ArrowLeft size={14} /> Back to Overview
         </Link>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 mb-2">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-black">
             <Wand2 size={18} className="text-white" />
           </div>
-          <div>
-            <h1 className="text-2xl font-bold text-black">AI Launch Assistant</h1>
-            <p className="text-sm text-neutral-500">
-              Answer 4 quick questions — AI builds your store and product page.
-            </p>
-          </div>
+          <h1 className="text-2xl font-bold text-black">AI Launch Assistant</h1>
         </div>
+        <p className="text-sm text-neutral-500 max-w-lg ml-[52px]">
+          Answer a few quick questions and SellBop will draft your store, product page, pricing, FAQ, and launch copy.
+        </p>
       </div>
 
       {/* ── Generating screen (replaces step content) ──────── */}
-      {generating && <AIGenerating />}
+      {generating && (
+        <>
+          <AIGenerating />
+          <AiSkeleton />
+        </>
+      )}
 
       {/* ── Step indicator (hidden while generating) ───────── */}
       {!generating && <StepIndicator step={step} />}
