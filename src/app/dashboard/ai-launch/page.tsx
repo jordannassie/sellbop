@@ -10,19 +10,21 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { AIGenerating } from '@/components/dashboard/ai-generating'
 import { toast } from 'sonner'
 import { slugify } from '@/lib/utils'
 import {
   ArrowLeft,
   ArrowRight,
   CheckCircle2,
+  ClipboardList,
+  ExternalLink,
   Image as ImageIcon,
   Layers,
-  Sparkles,
-  Wand2,
-  Store,
   Package,
-  ClipboardList,
+  Sparkles,
+  Store,
+  Wand2,
 } from 'lucide-react'
 import type { StoreLaunchOutput } from '@/app/api/ai/store-launch/route'
 import type { ProductType } from '@/lib/domain/entities'
@@ -110,13 +112,9 @@ function StepIndicator({ step }: { step: WizardStep }) {
   )
 }
 
-// ── Step 1: What to sell ──────────────────────────────────────────────────────
+// ── Step 1 ────────────────────────────────────────────────────────────────────
 
-function Step1({
-  data,
-  onChange,
-  onNext,
-}: {
+function Step1({ data, onChange, onNext }: {
   data: WizardData
   onChange: (d: Partial<WizardData>) => void
   onNext: () => void
@@ -127,7 +125,6 @@ function Step1({
         <h2 className="text-xl font-bold text-black mb-1">What do you want to sell?</h2>
         <p className="text-sm text-neutral-500">Describe your product, service, or idea in a sentence or two.</p>
       </div>
-
       <Textarea
         label=""
         value={data.whatYouSell}
@@ -135,7 +132,6 @@ function Step1({
         rows={3}
         placeholder="e.g. A Notion template system for freelancers to track clients, projects, and invoices in one place"
       />
-
       <div>
         <p className="text-xs font-medium text-neutral-500 mb-2">Quick start ideas</p>
         <div className="flex flex-wrap gap-2">
@@ -155,7 +151,6 @@ function Step1({
           ))}
         </div>
       </div>
-
       <div className="flex justify-end">
         <Button onClick={onNext} disabled={!data.whatYouSell.trim()}>
           Next <ArrowRight size={14} />
@@ -165,14 +160,9 @@ function Step1({
   )
 }
 
-// ── Step 2: Who is it for ─────────────────────────────────────────────────────
+// ── Step 2 ────────────────────────────────────────────────────────────────────
 
-function Step2({
-  data,
-  onChange,
-  onBack,
-  onNext,
-}: {
+function Step2({ data, onChange, onBack, onNext }: {
   data: WizardData
   onChange: (d: Partial<WizardData>) => void
   onBack: () => void
@@ -184,7 +174,6 @@ function Step2({
         <h2 className="text-xl font-bold text-black mb-1">Who is it for?</h2>
         <p className="text-sm text-neutral-500">Describe your ideal buyer or customer.</p>
       </div>
-
       <Textarea
         label=""
         value={data.whoIsItFor}
@@ -192,7 +181,6 @@ function Step2({
         rows={3}
         placeholder="e.g. Freelance designers and developers who want to stay organized without complex project management tools"
       />
-
       <div>
         <p className="text-xs font-medium text-neutral-500 mb-2">Quick picks</p>
         <div className="flex flex-wrap gap-2">
@@ -212,7 +200,6 @@ function Step2({
           ))}
         </div>
       </div>
-
       <div className="flex justify-between">
         <Button variant="ghost" onClick={onBack}><ArrowLeft size={14} /> Back</Button>
         <Button onClick={onNext} disabled={!data.whoIsItFor.trim()}>
@@ -223,14 +210,9 @@ function Step2({
   )
 }
 
-// ── Step 3: What's included ───────────────────────────────────────────────────
+// ── Step 3 ────────────────────────────────────────────────────────────────────
 
-function Step3({
-  data,
-  onChange,
-  onBack,
-  onNext,
-}: {
+function Step3({ data, onChange, onBack, onNext }: {
   data: WizardData
   onChange: (d: Partial<WizardData>) => void
   onBack: () => void
@@ -242,7 +224,6 @@ function Step3({
         <h2 className="text-xl font-bold text-black mb-1">What is included?</h2>
         <p className="text-sm text-neutral-500">Optional — list what buyers get. AI will fill this in if left blank.</p>
       </div>
-
       <Textarea
         label=""
         value={data.whatsIncluded}
@@ -250,31 +231,21 @@ function Step3({
         rows={4}
         placeholder="e.g. 15 Notion templates, video walkthrough, client onboarding checklist, invoice tracker, lifetime updates"
       />
-
       <div className="flex justify-between">
         <Button variant="ghost" onClick={onBack}><ArrowLeft size={14} /> Back</Button>
-        <Button onClick={onNext}>
-          Next <ArrowRight size={14} />
-        </Button>
+        <Button onClick={onNext}>Next <ArrowRight size={14} /></Button>
       </div>
     </div>
   )
 }
 
-// ── Step 4: Price range ───────────────────────────────────────────────────────
+// ── Step 4 ────────────────────────────────────────────────────────────────────
 
-function Step4({
-  data,
-  onChange,
-  onBack,
-  onGenerate,
-  generating,
-}: {
+function Step4({ data, onChange, onBack, onGenerate }: {
   data: WizardData
   onChange: (d: Partial<WizardData>) => void
   onBack: () => void
   onGenerate: () => void
-  generating: boolean
 }) {
   return (
     <div className="space-y-5">
@@ -282,7 +253,6 @@ function Step4({
         <h2 className="text-xl font-bold text-black mb-1">What price range?</h2>
         <p className="text-sm text-neutral-500">AI will suggest a specific price within this range.</p>
       </div>
-
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         {PRICE_OPTIONS.map(opt => (
           <button
@@ -304,31 +274,17 @@ function Step4({
           </button>
         ))}
       </div>
-
       <div className="flex justify-between items-center">
         <Button variant="ghost" onClick={onBack}><ArrowLeft size={14} /> Back</Button>
-        <Button
-          onClick={onGenerate}
-          loading={generating}
-          disabled={!data.priceRange}
-        >
-          <Sparkles size={14} />
-          {generating ? 'Generating your plan…' : 'Generate My Store Plan'}
+        <Button onClick={onGenerate} disabled={!data.priceRange}>
+          <Sparkles size={14} /> Generate My Store Plan
         </Button>
       </div>
-
-      {generating && (
-        <div className="rounded-xl border border-neutral-100 bg-neutral-50 px-4 py-3 text-sm text-neutral-500 text-center">
-          AI is writing your store name, bio, product copy, FAQ, and launch checklist…
-          <br />
-          <span className="text-xs">This takes 5–20 seconds.</span>
-        </div>
-      )}
     </div>
   )
 }
 
-// ── Step 5: Review draft ──────────────────────────────────────────────────────
+// ── Step 5: Review & Apply ────────────────────────────────────────────────────
 
 function Step5({
   result: initialResult,
@@ -349,40 +305,105 @@ function Step5({
   function update<K extends keyof StoreLaunchOutput>(key: K, val: StoreLaunchOutput[K]) {
     setResult(prev => ({ ...prev, [key]: val }))
   }
-
   function updateFaq(idx: number, field: 'question' | 'answer', val: string) {
-    setResult(prev => ({
-      ...prev,
-      faq: prev.faq.map((f, i) => i === idx ? { ...f, [field]: val } : f),
-    }))
+    setResult(prev => ({ ...prev, faq: prev.faq.map((f, i) => i === idx ? { ...f, [field]: val } : f) }))
   }
-
   function updateIncluded(idx: number, val: string) {
-    setResult(prev => ({
-      ...prev,
-      whatIsIncluded: prev.whatIsIncluded.map((item, i) => i === idx ? val : item),
-    }))
+    setResult(prev => ({ ...prev, whatIsIncluded: prev.whatIsIncluded.map((item, i) => i === idx ? val : item) }))
   }
 
-  const priceDollars = (result.priceSuggestion / 100).toFixed(2)
+  const priceDollars  = (result.priceSuggestion / 100).toFixed(2)
   const compareDollars = result.compareAtPriceSuggestion
     ? (result.compareAtPriceSuggestion / 100).toFixed(2)
     : ''
 
   return (
     <div className="space-y-6">
-      {/* Success banner */}
-      <div className="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3.5">
-        <CheckCircle2 size={17} className="shrink-0 text-emerald-600 mt-0.5" />
-        <div>
-          <p className="text-sm font-semibold text-emerald-800">Your store plan is ready!</p>
-          <p className="text-xs text-emerald-700 mt-0.5">
-            Review and edit below. Save your store draft first, then create your product when ready.
-          </p>
+
+      {/* ── AI Result Summary Card ──────────────────────────── */}
+      <div className="rounded-2xl border border-neutral-200 bg-gradient-to-br from-neutral-50 to-white p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <Sparkles size={13} className="text-neutral-400" />
+          <span className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">AI Generated</span>
+        </div>
+        <div className="flex items-start gap-4 mb-4">
+          <div
+            className="h-14 w-14 rounded-xl bg-black flex items-center justify-center text-white font-black text-2xl flex-shrink-0"
+            aria-hidden
+          >
+            {result.storeName.charAt(0).toUpperCase()}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="font-bold text-black text-lg leading-tight">{result.storeName}</p>
+            <p className="text-sm text-neutral-500 mt-0.5">{result.storeHeadline}</p>
+            <p className="text-xs text-neutral-400 mt-1 font-mono">sellbop.com/store/{result.storeSlug}</p>
+          </div>
+        </div>
+        <div className="border-t border-neutral-100 pt-4 grid grid-cols-3 gap-3">
+          <div>
+            <p className="text-[10px] text-neutral-400 mb-0.5">Product</p>
+            <p className="text-xs font-semibold text-black truncate">{result.productName}</p>
+          </div>
+          <div>
+            <p className="text-[10px] text-neutral-400 mb-0.5">Price</p>
+            <p className="text-xs font-semibold text-black">${(result.priceSuggestion / 100).toFixed(0)}</p>
+          </div>
+          <div>
+            <p className="text-[10px] text-neutral-400 mb-0.5">Type</p>
+            <p className="text-xs font-semibold text-black capitalize">
+              {result.productType?.replace(/_/g, ' ') ?? 'Digital'}
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* Store section */}
+      {/* ── Action CTA ─────────────────────────────────────── */}
+      <div className="rounded-2xl border-2 border-black bg-black p-5 space-y-4">
+        <div>
+          <p className="text-white font-semibold text-sm">Ready to launch?</p>
+          <p className="text-white/60 text-xs mt-0.5">
+            Apply your store draft first, then create your product. Both start as drafts — you choose when to publish.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <Button
+            onClick={() => onSaveStore(result)}
+            loading={savingStore}
+            variant="secondary"
+            className="bg-white text-black hover:bg-neutral-100 w-full justify-center"
+          >
+            <Store size={14} /> Apply to Store
+          </Button>
+          <Button
+            onClick={() => onCreateProduct(result)}
+            loading={savingProduct}
+            variant="secondary"
+            className="bg-white text-black hover:bg-neutral-100 w-full justify-center"
+          >
+            <Package size={14} /> Create Product
+          </Button>
+        </div>
+        <div className="flex flex-wrap gap-2 pt-1 border-t border-white/10">
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-white/60 hover:text-white hover:bg-white/10"
+            onClick={() => router.push('/dashboard/store')}
+          >
+            Publish Later
+          </Button>
+          <Link href="/dashboard/store-editor">
+            <Button size="sm" variant="ghost" className="text-white/60 hover:text-white hover:bg-white/10">
+              <Layers size={13} /> Open Store Editor
+            </Button>
+          </Link>
+        </div>
+      </div>
+
+      {/* ── Editable fields ────────────────────────────────── */}
+      <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Edit before saving</p>
+
+      {/* Store */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -417,7 +438,7 @@ function Step5({
         </CardContent>
       </Card>
 
-      {/* Product section */}
+      {/* Product */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -428,16 +449,13 @@ function Step5({
           <Input
             label="Product Name"
             value={result.productName}
-            onChange={e => {
-              update('productName', e.target.value)
-              update('productSlug', slugify(e.target.value))
-            }}
+            onChange={e => { update('productName', e.target.value); update('productSlug', slugify(e.target.value)) }}
           />
           <Input
             label="Product link"
             value={result.productSlug}
             onChange={e => update('productSlug', slugify(e.target.value))}
-            hint={`sellbop.com/p/${result.productSlug} — this is the public link buyers will use`}
+            hint={`sellbop.com/p/${result.productSlug}`}
           />
           <Input
             label="Short Description"
@@ -466,7 +484,7 @@ function Step5({
               step="0.01"
             />
             <Input
-              label="Compare-at Price"
+              label="Compare-at"
               type="number"
               value={compareDollars}
               onChange={e =>
@@ -489,12 +507,7 @@ function Step5({
         <CardHeader><CardTitle>What&apos;s Included</CardTitle></CardHeader>
         <CardContent className="space-y-2">
           {result.whatIsIncluded.map((item, i) => (
-            <Input
-              key={i}
-              label={`Item ${i + 1}`}
-              value={item}
-              onChange={e => updateIncluded(i, e.target.value)}
-            />
+            <Input key={i} label={`Item ${i + 1}`} value={item} onChange={e => updateIncluded(i, e.target.value)} />
           ))}
         </CardContent>
       </Card>
@@ -567,10 +580,7 @@ function Step5({
                 <Button
                   size="xs"
                   variant="ghost"
-                  onClick={() => {
-                    void navigator.clipboard.writeText(result[key] as string)
-                    toast.success('Copied!')
-                  }}
+                  onClick={() => { void navigator.clipboard.writeText(result[key] as string); toast.success('Copied!') }}
                 >
                   Copy Prompt
                 </Button>
@@ -604,44 +614,32 @@ function Step5({
         </CardContent>
       </Card>
 
-      {/* Action buttons */}
+      {/* Bottom repeat CTA */}
       <div className="rounded-2xl border-2 border-black bg-black p-5 space-y-3">
-        <p className="text-white font-semibold text-sm">Ready to launch?</p>
-        <p className="text-white/60 text-xs">
-          Save your store draft first, then create your product page. Both start as drafts — you choose when to publish.
-        </p>
-        <div className="flex flex-wrap gap-3 pt-1">
+        <p className="text-white font-semibold text-sm">Apply your plan</p>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <Button
-            variant="secondary"
             onClick={() => onSaveStore(result)}
             loading={savingStore}
-            className="bg-white text-black hover:bg-neutral-100"
+            variant="secondary"
+            className="bg-white text-black hover:bg-neutral-100 w-full justify-center"
           >
-            <Store size={14} /> Save Store Draft
+            <Store size={14} /> Apply to Store
           </Button>
           <Button
-            variant="secondary"
             onClick={() => onCreateProduct(result)}
             loading={savingProduct}
-            className="bg-white text-black hover:bg-neutral-100"
+            variant="secondary"
+            className="bg-white text-black hover:bg-neutral-100 w-full justify-center"
           >
-            <Package size={14} /> Create Product Draft
+            <Package size={14} /> Create Product
           </Button>
         </div>
-        <div className="flex flex-wrap gap-2 pt-1 border-t border-white/10">
-          <Button
-            size="sm"
-            variant="ghost"
-            className="text-white/70 hover:text-white hover:bg-white/10"
-            onClick={() => router.push('/dashboard/store')}
-          >
-            Publish Later
-          </Button>
-          <Link href="/dashboard/store-editor">
-            <Button size="sm" variant="ghost" className="text-white/70 hover:text-white hover:bg-white/10">
-              <Layers size={13} /> Open Store Editor
-            </Button>
-          </Link>
+        <div className="flex flex-wrap gap-2 border-t border-white/10 pt-2">
+          <p className="text-xs text-white/40 self-center">
+            <ExternalLink size={10} className="inline mr-1" />
+            Store: sellbop.com/store/{result.storeSlug} · Product: sellbop.com/p/{result.productSlug}
+          </p>
         </div>
       </div>
     </div>
@@ -667,12 +665,9 @@ function AILaunchWizardInner() {
   const [savingStore, setSavingStore] = useState(false)
   const [savingProduct, setSavingProduct] = useState(false)
 
-  // Auto-advance to step 2 if a prompt was passed in
-  useEffect(() => {
-    if (initialPrompt && step === 1) {
-      // Don't auto-advance — let user confirm the prompt first
-    }
-  }, [initialPrompt, step])
+  // Suppress unused effect warning — initialPrompt pre-fills the input but we
+  // don't auto-advance so the user can confirm their prompt.
+  useEffect(() => { /* intentionally no-op */ }, [initialPrompt])
 
   function merge(partial: Partial<WizardData>) {
     setData(prev => ({ ...prev, ...partial }))
@@ -686,12 +681,10 @@ function AILaunchWizardInner() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       })
-
       if (!res.ok) {
         const err = (await res.json()) as { error?: string }
         throw new Error(err.error ?? 'Generation failed')
       }
-
       const output = (await res.json()) as StoreLaunchOutput
       setResult(output)
       setStep(5)
@@ -787,7 +780,7 @@ function AILaunchWizardInner() {
 
   return (
     <div className="max-w-2xl">
-      {/* Header */}
+      {/* ── Header ─────────────────────────────────────────── */}
       <div className="mb-6">
         <Link
           href="/dashboard"
@@ -795,7 +788,6 @@ function AILaunchWizardInner() {
         >
           <ArrowLeft size={14} /> Back to Overview
         </Link>
-
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-black">
             <Wand2 size={18} className="text-white" />
@@ -809,43 +801,26 @@ function AILaunchWizardInner() {
         </div>
       </div>
 
-      {/* Step indicator */}
-      <StepIndicator step={step} />
+      {/* ── Generating screen (replaces step content) ──────── */}
+      {generating && <AIGenerating />}
 
-      {/* Steps */}
-      {step === 1 && (
-        <Step1
-          data={data}
-          onChange={merge}
-          onNext={() => setStep(2)}
-        />
+      {/* ── Step indicator (hidden while generating) ───────── */}
+      {!generating && <StepIndicator step={step} />}
+
+      {/* ── Step content ────────────────────────────────────── */}
+      {!generating && step === 1 && (
+        <Step1 data={data} onChange={merge} onNext={() => setStep(2)} />
       )}
-      {step === 2 && (
-        <Step2
-          data={data}
-          onChange={merge}
-          onBack={() => setStep(1)}
-          onNext={() => setStep(3)}
-        />
+      {!generating && step === 2 && (
+        <Step2 data={data} onChange={merge} onBack={() => setStep(1)} onNext={() => setStep(3)} />
       )}
-      {step === 3 && (
-        <Step3
-          data={data}
-          onChange={merge}
-          onBack={() => setStep(2)}
-          onNext={() => setStep(4)}
-        />
+      {!generating && step === 3 && (
+        <Step3 data={data} onChange={merge} onBack={() => setStep(2)} onNext={() => setStep(4)} />
       )}
-      {step === 4 && (
-        <Step4
-          data={data}
-          onChange={merge}
-          onBack={() => setStep(3)}
-          onGenerate={handleGenerate}
-          generating={generating}
-        />
+      {!generating && step === 4 && (
+        <Step4 data={data} onChange={merge} onBack={() => setStep(3)} onGenerate={handleGenerate} />
       )}
-      {step === 5 && result && (
+      {!generating && step === 5 && result && (
         <Step5
           result={result}
           onSaveStore={handleSaveStore}
