@@ -107,6 +107,61 @@ export default function StoreProfilePage() {
   }, [storeLoading, store, isDemo])
   /* eslint-enable react-hooks/set-state-in-effect */
 
+  // ── Auto-save store photo (avatar) ──────────────────────────
+  // Called immediately when the user picks or generates a new store photo so
+  // it persists before they click "Save Store Profile".
+  async function handleStoreAvatarChange(url: string) {
+    setAvatarUrl(url)
+
+    if (!isDemo) {
+      const err = await saveStore({ avatar_url: url })
+      if (err) {
+        toast.error('Store photo could not be saved. Click Save Profile to try again.')
+      } else {
+        toast.success('Store photo updated.')
+      }
+      return
+    }
+
+    // Demo mode: patch localStorage so the image persists across refresh
+    try {
+      const effectiveBannerUrl = layoutMode === 'banner' && bannerUrl ? bannerUrl : null
+      await demoStorefrontRepo.upsert({
+        sellerId:    DEMO_SELLER_PROFILE.id,
+        slug:        draftSlug || DEMO_SELLER_PROFILE.slug,
+        title:       title || DEMO_SELLER_PROFILE.displayName,
+        headline:    headline || null,
+        bio:         bio || null,
+        avatarUrl:   url,
+        bannerUrl:   effectiveBannerUrl,
+        featuredProductIds: storefront?.featuredProductIds ?? [],
+        productOrder:       storefront?.productOrder ?? [],
+        hiddenProductIds:   storefront?.hiddenProductIds ?? [],
+        themeColor:   storefront?.themeColor ?? '#000000',
+        buttonStyle:  storefront?.buttonStyle ?? 'rounded',
+        cardStyle:    storefront?.cardStyle ?? 'soft_shadow',
+        headerLayout: storefront?.headerLayout ?? 'left_avatar',
+        cardDensity:  storefront?.cardDensity ?? 'comfortable',
+        sectionOrder: storefront?.sectionOrder ?? [],
+        sectionVisibility: storefront?.sectionVisibility ?? {},
+        socialLinks: {
+          twitter:   twitter   || undefined,
+          instagram: instagram || undefined,
+          youtube:   youtube   || undefined,
+          website:   website   || undefined,
+        },
+        headerMedia:    storefront?.headerMedia ?? 'none',
+        headerPhotoUrl: storefront?.headerPhotoUrl ?? null,
+        headerVideoUrl: storefront?.headerVideoUrl ?? null,
+        published:    true,
+        brandingMode,
+      })
+      toast.success('Store photo updated.')
+    } catch {
+      toast.error('Store photo could not be saved. Click Save Profile to try again.')
+    }
+  }
+
   // ── Clipboard helper ────────────────────────────────────────
   function copyLink() {
     navigator.clipboard.writeText(publicUrl).then(() => {
@@ -272,7 +327,7 @@ export default function StoreProfilePage() {
               <div className="flex-1 min-w-0">
                 <AiImagePicker
                   value={avatarUrl}
-                  onChange={url => setAvatarUrl(url)}
+                  onChange={url => void handleStoreAvatarChange(url)}
                   imageType="store_avatar"
                   bucket="store-images"
                   ownerId={uploadOwnerId}
