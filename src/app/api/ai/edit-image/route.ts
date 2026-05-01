@@ -2,18 +2,22 @@ import { NextRequest, NextResponse } from 'next/server'
 
 // NOTE: OPENAI_API_KEY is accessed server-side only via process.env.
 // It is never passed to the client or exposed in any client bundle.
-//
-// Strategy: use DALL-E 3 to generate a contextual "edit" since DALL-E 2 edit
-// requires RGBA PNG with specific dimensions that are hard to guarantee from
-// arbitrary uploaded images. Results are high quality and reliable.
 
 type ImageType = 'product' | 'store_banner' | 'store_avatar'
 
+// Configurable via Netlify env var; defaults to gpt-image-1.
+const OPENAI_IMAGE_MODEL = process.env.OPENAI_IMAGE_MODEL ?? 'gpt-image-1'
+const IS_DALLE3 = OPENAI_IMAGE_MODEL === 'dall-e-3'
+
+// gpt-image-1/gpt-image-2: supported sizes are 1024x1024, 1536x1024, 1024x1536.
+// dall-e-3: supports 1024x1024, 1792x1024, 1024x1792.
 const SIZE_BY_TYPE: Record<ImageType, string> = {
   product:      '1024x1024',
-  store_banner: '1792x1024',
+  store_banner: IS_DALLE3 ? '1792x1024' : '1536x1024',
   store_avatar: '1024x1024',
 }
+
+const DEFAULT_QUALITY = IS_DALLE3 ? 'standard' : 'medium'
 
 function buildEditPrompt(userInstructions: string, imageType: ImageType): string {
   const typeContext =
@@ -30,8 +34,10 @@ function buildEditPrompt(userInstructions: string, imageType: ImageType): string
   )
 }
 
+type ImageSource = { url: string } | { b64: string }
+
 async function persistToStorage(
-  imageUrl: string,
+  source: ImageSource,
   ownerId: string,
   imageType: ImageType,
 ): Promise<string | null> {
@@ -39,9 +45,14 @@ async function persistToStorage(
     const { getSupabaseAdminClient } = await import('@/lib/supabase/admin')
     const adminClient = getSupabaseAdminClient()
 
-    const res = await fetch(imageUrl)
-    if (!res.ok) return null
-    const buffer = Buffer.from(await res.arrayBuffer())
+    let buffer: Buffer
+    if ('url' in source) {
+      const res = await fetch(source.url)
+      if (!res.ok) return null
+      buffer = Buffer.from(await res.arrayBuffer())
+    } else {
+      buffer = Buffer.from(source.b64, 'base64')
+    }
 
     const path = `${ownerId}/${imageType}/${Date.now()}-ai-edited.png`
     const { data, error } = await adminClient.storage
@@ -82,10 +93,6 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const type = (imageType as ImageType) in SIZE_BY_TYPE ? (imageType as ImageType) : 'product'
-  const size = SIZE_BY_TYPE[type]
-  const fullPrompt = buildEditPrompt(prompt.trim(), type)
-
   const apiKey = process.env.OPENAI_API_KEY
   if (!apiKey) {
     return NextResponse.json(
@@ -94,6 +101,19 @@ export async function POST(req: NextRequest) {
     )
   }
 
+  const type      = (imageType as ImageType) in SIZE_BY_TYPE ? (imageType as ImageType) : 'product'
+  const size      = SIZE_BY_TYPE[type]
+  const fullPrompt = buildEditPrompt(prompt.trim(), type)
+
+  const requestBody: Record<string, unknown> = {
+    model:   OPENAI_IMAGE_MODEL,
+    prompt:  fullPrompt,
+    n:       1,
+    size,
+    quality: DEFAULT_QUALITY,
+  }
+  if (IS_DALLE3) requestBody.response_format = 'url'
+
   try {
     const genRes = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
@@ -101,14 +121,7 @@ export async function POST(req: NextRequest) {
         'Content-Type': 'application/json',
         Authorization:  `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({
-        model:           'dall-e-3',
-        prompt:          fullPrompt,
-        n:               1,
-        size,
-        quality:         'standard',
-        response_format: 'url',
-      }),
+      body: JSON.stringify(requestBody),
     })
 
     if (!genRes.ok) {
@@ -120,18 +133,36 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const genData = (await genRes.json()) as { data: { url: string }[] }
-    const openaiUrl = genData.data?.[0]?.url
+    type OpenAIImageItem = { url?: string; b64_json?: string }
+    const genData = (await genRes.json()) as { data: OpenAIImageItem[] }
+    const item    = genData.data?.[0]
 
-    if (!openaiUrl) {
+    if (!item) {
       return NextResponse.json({ error: 'No image returned from AI.' }, { status: 502 })
     }
 
-    const persistedUrl = await persistToStorage(openaiUrl, ownerId, type)
+    let source: ImageSource | null = null
+    if (item.url)           source = { url: item.url }
+    else if (item.b64_json) source = { b64: item.b64_json }
+
+    if (!source) {
+      return NextResponse.json({ error: 'No image data returned from AI.' }, { status: 502 })
+    }
+
+    const persistedUrl = await persistToStorage(source, ownerId, type)
+
+    let imageUrl: string
+    if (persistedUrl) {
+      imageUrl = persistedUrl
+    } else if (item.url) {
+      imageUrl = item.url
+    } else {
+      imageUrl = `data:image/png;base64,${item.b64_json}`
+    }
 
     return NextResponse.json({
       success:   true,
-      imageUrl:  persistedUrl ?? openaiUrl,
+      imageUrl,
       persisted: !!persistedUrl,
     })
   } catch (err) {

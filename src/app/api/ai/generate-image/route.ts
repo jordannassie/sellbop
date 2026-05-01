@@ -5,17 +5,28 @@ import { NextRequest, NextResponse } from 'next/server'
 
 type ImageType = 'product' | 'store_banner' | 'store_avatar'
 
+// Configurable via Netlify env var; defaults to gpt-image-1.
+const OPENAI_IMAGE_MODEL = process.env.OPENAI_IMAGE_MODEL ?? 'gpt-image-1'
+const IS_DALLE3 = OPENAI_IMAGE_MODEL === 'dall-e-3'
+
+// gpt-image-1/gpt-image-2: supported sizes are 1024x1024, 1536x1024, 1024x1536.
+// dall-e-3: supports 1024x1024, 1792x1024, 1024x1792.
 const SIZE_BY_TYPE: Record<ImageType, string> = {
   product:      '1024x1024',
-  store_banner: '1792x1024',
+  store_banner: IS_DALLE3 ? '1792x1024' : '1536x1024',
   store_avatar: '1024x1024',
 }
+
+// Quality tokens differ by model family.
+// gpt-image-1: low | medium | high | auto
+// dall-e-3:    standard | hd
+const DEFAULT_QUALITY = IS_DALLE3 ? 'standard' : 'medium'
 
 const CONTEXT_BY_TYPE: Record<ImageType, string> = {
   product:
     'Product cover image for a digital creator. Professional, clean, high-converting. Suitable for e-commerce product page.',
   store_banner:
-    'Wide store banner for a creator commerce store. Modern, professional, clean background. Aspect ratio 16:9.',
+    'Wide store banner for a creator commerce store. Modern, professional, clean background. Aspect ratio 3:2.',
   store_avatar:
     'Square brand avatar or logo for a creator store. Simple, clean, memorable. Solid or minimal background.',
 }
@@ -33,19 +44,25 @@ function buildPrompt(userPrompt: string, style: string, imageType: ImageType): s
   return `${userPrompt}. ${styleNote} ${context} Do not include text overlays or watermarks.`.trim()
 }
 
+type ImageSource = { url: string } | { b64: string }
+
 async function persistToStorage(
-  imageUrl: string,
+  source: ImageSource,
   ownerId: string,
   imageType: ImageType,
 ): Promise<string | null> {
   try {
-    // Dynamic import keeps 'server-only' guard in admin.ts
     const { getSupabaseAdminClient } = await import('@/lib/supabase/admin')
     const adminClient = getSupabaseAdminClient()
 
-    const res = await fetch(imageUrl)
-    if (!res.ok) return null
-    const buffer = Buffer.from(await res.arrayBuffer())
+    let buffer: Buffer
+    if ('url' in source) {
+      const res = await fetch(source.url)
+      if (!res.ok) return null
+      buffer = Buffer.from(await res.arrayBuffer())
+    } else {
+      buffer = Buffer.from(source.b64, 'base64')
+    }
 
     const path = `${ownerId}/${imageType}/${Date.now()}-ai-generated.png`
     const { data, error } = await adminClient.storage
@@ -78,10 +95,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'A prompt of at least 5 characters is required.' }, { status: 400 })
   }
 
-  const type = (imageType as ImageType) in SIZE_BY_TYPE ? (imageType as ImageType) : 'product'
-  const size  = SIZE_BY_TYPE[type]
-  const fullPrompt = buildPrompt(prompt.trim(), style, type)
-
   const apiKey = process.env.OPENAI_API_KEY
   if (!apiKey) {
     return NextResponse.json(
@@ -90,21 +103,28 @@ export async function POST(req: NextRequest) {
     )
   }
 
+  const type      = (imageType as ImageType) in SIZE_BY_TYPE ? (imageType as ImageType) : 'product'
+  const size      = SIZE_BY_TYPE[type]
+  const fullPrompt = buildPrompt(prompt.trim(), style, type)
+
+  // Build request body — gpt-image-1 does not accept response_format (always b64_json).
+  const requestBody: Record<string, unknown> = {
+    model:   OPENAI_IMAGE_MODEL,
+    prompt:  fullPrompt,
+    n:       1,
+    size,
+    quality: DEFAULT_QUALITY,
+  }
+  if (IS_DALLE3) requestBody.response_format = 'url'
+
   try {
     const genRes = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
+        Authorization:  `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({
-        model:           'dall-e-3',
-        prompt:          fullPrompt,
-        n:               1,
-        size,
-        quality:         'standard',
-        response_format: 'url',
-      }),
+      body: JSON.stringify(requestBody),
     })
 
     if (!genRes.ok) {
@@ -116,19 +136,39 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const genData = (await genRes.json()) as { data: { url: string }[] }
-    const openaiUrl = genData.data?.[0]?.url
+    type OpenAIImageItem = { url?: string; b64_json?: string }
+    const genData = (await genRes.json()) as { data: OpenAIImageItem[] }
+    const item    = genData.data?.[0]
 
-    if (!openaiUrl) {
+    if (!item) {
       return NextResponse.json({ error: 'No image returned from AI.' }, { status: 502 })
     }
 
-    // Attempt to persist to Supabase Storage so the URL is permanent
-    const persistedUrl = await persistToStorage(openaiUrl, ownerId, type)
+    let source: ImageSource | null = null
+    if (item.url)      source = { url: item.url }
+    else if (item.b64_json) source = { b64: item.b64_json }
+
+    if (!source) {
+      return NextResponse.json({ error: 'No image data returned from AI.' }, { status: 502 })
+    }
+
+    const persistedUrl = await persistToStorage(source, ownerId, type)
+
+    // If we have a persisted URL, use it. Otherwise fall back to the OpenAI URL
+    // (only available for dall-e-3). For gpt-image-1 b64_json without persistence,
+    // return a data URL so the client can still preview.
+    let imageUrl: string
+    if (persistedUrl) {
+      imageUrl = persistedUrl
+    } else if (item.url) {
+      imageUrl = item.url
+    } else {
+      imageUrl = `data:image/png;base64,${item.b64_json}`
+    }
 
     return NextResponse.json({
-      success:  true,
-      imageUrl: persistedUrl ?? openaiUrl,
+      success:   true,
+      imageUrl,
       persisted: !!persistedUrl,
     })
   } catch (err) {
