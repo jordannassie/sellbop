@@ -7,6 +7,7 @@ import { formatCurrency } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Check, Download, ExternalLink } from 'lucide-react'
 import { SellBopLogo } from '@/components/ui/sellbop-logo'
+import { MarketingFooter } from '@/components/marketing/footer'
 import type { Order, Product, DownloadGrant } from '@/lib/domain/entities'
 import { useAuth } from '@/context/auth-context'
 
@@ -184,6 +185,7 @@ export default function SuccessPage() {
       <Suspense fallback={<div className="text-center py-20 text-neutral-500 text-sm">Loading…</div>}>
         <SuccessContent />
       </Suspense>
+      <MarketingFooter />
     </div>
   )
 }

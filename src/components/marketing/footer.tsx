@@ -80,8 +80,19 @@ export function MarketingFooter() {
         </div>
 
         {/* Bottom nav links */}
-        <div className="border-t border-neutral-100 pt-6 flex items-center justify-center flex-wrap gap-5">
-          {[['Pricing', '/pricing'], ['Demo', '/demo'], ['Our Mission', '/mission'], ['Login', '/login'], ['Sign Up', '/signup'], ['Privacy', '/privacy'], ['Terms', '/terms']].map(([label, href]) => (
+        <div className="border-t border-neutral-100 pt-6 flex items-center justify-center flex-wrap gap-x-5 gap-y-2">
+          {[
+            ['Marketplace', '/marketplace'],
+            ['Pricing',     '/pricing'],
+            ['Demo',        '/demo'],
+            ['Our Mission', '/mission'],
+            ['Login',       '/login'],
+            ['Dashboard',   '/dashboard'],
+            ['Privacy',     '/privacy'],
+            ['Terms',       '/terms'],
+            ['Refund Policy', '/refund-policy'],
+            ['Support',     '/support'],
+          ].map(([label, href]) => (
             <Link key={href} href={href} className="text-xs text-neutral-500 hover:text-black transition-colors">{label}</Link>
           ))}
         </div>

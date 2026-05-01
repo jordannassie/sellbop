@@ -9,6 +9,7 @@ import { Shield, ArrowLeft, Tag } from 'lucide-react'
 import Link from 'next/link'
 import { SellBopLogo } from '@/components/ui/sellbop-logo'
 import { GradientImageFallback } from '@/components/ui/gradient-image-fallback'
+import { MarketingFooter } from '@/components/marketing/footer'
 import type { CheckoutSession } from '@/lib/domain/entities'
 
 export default function CheckoutPage({ params }: { params: Promise<{ productId: string }> }) {
@@ -176,6 +177,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ productId: 
           </div>
         </div>
       </div>
+      <MarketingFooter />
     </div>
   )
 }

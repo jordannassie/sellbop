@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Globe, ArrowRight, ArrowUpRight, Shirt, Zap } from 'lucide-react'
+import { MarketingFooter } from '@/components/marketing/footer'
 import { ProductImage } from '@/components/ui/product-image'
 import { SellBopLogo } from '@/components/ui/sellbop-logo'
 import { GradientImageFallback } from '@/components/ui/gradient-image-fallback'
@@ -92,6 +93,12 @@ export function ClientStorefront({ sellerSlug }: { sellerSlug: string }) {
       <nav className="sticky top-0 z-20 bg-white/85 backdrop-blur-xl shadow-[0_1px_0_0_rgba(0,0,0,0.06)]">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 flex items-center justify-between" style={{ height: 60 }}>
           <SellBopLogo size="lg" />
+          <a
+            href={`/store/${sellerSlug}#products`}
+            className="text-xs font-semibold text-neutral-400 hover:text-black transition-colors hidden sm:flex items-center gap-1"
+          >
+            Browse Products <ArrowUpRight size={11} />
+          </a>
         </div>
       </nav>
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-24 flex flex-col gap-4 animate-pulse">
@@ -108,25 +115,20 @@ export function ClientStorefront({ sellerSlug }: { sellerSlug: string }) {
     )
   }
 
-  const brandingMode = storefront.brandingMode ?? 'minimal'
-  const showFullHeader = brandingMode === 'full_header'
-
   return (
     <div className="min-h-screen bg-[#fafafa]">
-      {/* ── Sticky top nav — only shown in full_header branding mode ── */}
-      {showFullHeader && (
-        <nav className="sticky top-0 z-20 bg-white/85 backdrop-blur-xl shadow-[0_1px_0_0_rgba(0,0,0,0.06)]">
-          <div className="max-w-3xl mx-auto px-4 sm:px-6 flex items-center justify-between" style={{ height: 60 }}>
-            <SellBopLogo size="lg" />
-            <a
-              href={`/store/${sellerSlug}#products`}
-              className="text-xs font-semibold text-neutral-400 hover:text-black transition-colors hidden sm:flex items-center gap-1"
-            >
-              Browse Products <ArrowUpRight size={11} />
-            </a>
-          </div>
-        </nav>
-      )}
+      {/* ── Sticky top nav ──────────────────────────────────────── */}
+      <nav className="sticky top-0 z-20 bg-white/85 backdrop-blur-xl shadow-[0_1px_0_0_rgba(0,0,0,0.06)]">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 flex items-center justify-between" style={{ height: 60 }}>
+          <SellBopLogo size="lg" />
+          <a
+            href={`/store/${sellerSlug}#products`}
+            className="text-xs font-semibold text-neutral-400 hover:text-black transition-colors hidden sm:flex items-center gap-1"
+          >
+            Browse Products <ArrowUpRight size={11} />
+          </a>
+        </div>
+      </nav>
 
       {/* ── Store header ───────────────────────────────────────── */}
       <StoreHeader storefront={storefront} />
@@ -183,24 +185,7 @@ export function ClientStorefront({ sellerSlug }: { sellerSlug: string }) {
       </div>
 
       {/* ── Footer ─────────────────────────────────────────────── */}
-      <footer className="py-14">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          {/* Show "Powered by" badge in powered_by/full_header modes; hidden in minimal */}
-          {brandingMode !== 'minimal' ? (
-            <p className="text-xs text-neutral-400 flex items-center gap-1.5">
-              Powered by <SellBopLogo size="sm" />
-            </p>
-          ) : (
-            <span />
-          )}
-          <Link
-            href="/"
-            className="text-xs font-semibold text-neutral-400 hover:text-black transition-colors flex items-center gap-1"
-          >
-            Sell your own products <ArrowRight size={11} />
-          </Link>
-        </div>
-      </footer>
+      <MarketingFooter />
     </div>
   )
 }
