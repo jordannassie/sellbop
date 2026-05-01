@@ -28,35 +28,34 @@ export default function HomePage() {
   return (
     <>
       {/* ── Hero ─────────────────────────────────────────────────── */}
-      <section className="max-w-4xl mx-auto px-4 sm:px-6 pt-20 pb-20 text-center">
-        {/* Badge */}
-        <div className="inline-flex items-center gap-2 bg-neutral-100 text-neutral-600 text-xs font-medium px-3 py-1.5 rounded-full mb-8">
+      <section className="max-w-4xl mx-auto px-4 sm:px-6 pt-16 pb-20 text-center">
+
+        {/* 1. Badge */}
+        <div className="inline-flex items-center gap-2 bg-neutral-100 text-neutral-600 text-xs font-medium px-3 py-1.5 rounded-full mb-6">
           <Sparkles size={11} className="text-neutral-500" />
           AI-first creator platform
         </div>
 
-        {/* Headline */}
-        <h1 className="text-5xl sm:text-7xl font-bold text-black tracking-tight leading-[1.15] mb-5">
-          <RotatingWord />.<br />
+        {/* 2. Main headline */}
+        <h1 className="text-4xl sm:text-6xl font-black text-black tracking-tight leading-[1.1] mb-5">
           Start your store with AI.
         </h1>
-        <p className="text-lg sm:text-xl text-neutral-500 max-w-lg mx-auto mb-10 leading-relaxed">
-          Tell SellBop what you want to sell. We&apos;ll help build your store, product page, pricing, FAQ, checkout copy, and launch plan.
+
+        {/* 3. Subheadline */}
+        <p className="text-base sm:text-lg text-neutral-500 max-w-xl mx-auto mb-8 leading-relaxed">
+          Go from idea to a 5-minute store launch. Tell SellBop what you want to sell, and we&apos;ll help build your store, product page, pricing, FAQ, checkout copy, and launch plan.
         </p>
 
-        {/* CTA buttons */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-10">
-          <Link href="/signup"><Button size="lg">Start Free</Button></Link>
-          <Link href="/store/alexjohnson" target="_blank">
-            <Button size="lg" variant="secondary">View Demo Store</Button>
-          </Link>
-        </div>
-
-        {/* AI prompt box */}
+        {/* 4. Hero AI prompt — the primary conversion action */}
         <AIPromptBar />
 
-        {/* Social proof */}
-        <div className="flex flex-col items-center gap-3 mt-10">
+        {/* 5. Animated gradient text — supporting visual */}
+        <p className="mt-7 text-base sm:text-lg font-medium text-neutral-400">
+          Launch <RotatingWord />.
+        </p>
+
+        {/* 6. Social proof */}
+        <div className="flex flex-col items-center gap-3 mt-8">
           <div className="flex items-center -space-x-2.5">
             {HERO_FACEPILE_PHOTOS.map((url, i) => (
               // eslint-disable-next-line @next/next/no-img-element
@@ -77,7 +76,16 @@ export default function HomePage() {
             <span className="font-semibold text-black">142 creators</span> active this week
           </p>
         </div>
+
+        {/* 7. Secondary CTAs */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-6">
+          <Link href="/signup"><Button size="lg">Start Free</Button></Link>
+          <Link href="/store/alexjohnson" target="_blank">
+            <Button size="lg" variant="secondary">View Demo Store</Button>
+          </Link>
+        </div>
         <p className="text-xs text-neutral-400 mt-4">No credit card required · Demo accounts available</p>
+
       </section>
 
       {/* ── Mission / Founder ────────────────────────────────────── */}

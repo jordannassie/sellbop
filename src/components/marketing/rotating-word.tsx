@@ -2,12 +2,12 @@
 import { useState, useEffect, useRef } from 'react'
 
 const WORDS = [
-  { text: 'Digital downloads',       gradient: 'from-blue-500 via-indigo-500 to-purple-600' },
-  { text: 'Subscriptions',           gradient: 'from-violet-500 via-blue-500 to-indigo-600' },
-  { text: 'Coaching calls',          gradient: 'from-orange-400 via-pink-500 to-rose-500' },
-  { text: 'Memberships',             gradient: 'from-amber-400 via-orange-500 to-pink-500' },
-  { text: 'Bundles',                 gradient: 'from-emerald-400 via-cyan-500 to-teal-500' },
-  { text: 'A 5-minute store launch', gradient: 'from-cyan-400 via-blue-500 to-violet-600' },
+  { text: 'memberships',           gradient: 'from-violet-500 via-blue-500 to-indigo-600' },
+  { text: 'digital downloads',     gradient: 'from-blue-500 via-indigo-500 to-purple-600' },
+  { text: 'coaching offers',       gradient: 'from-orange-400 via-pink-500 to-rose-500' },
+  { text: 'clothing and merch',    gradient: 'from-amber-400 via-orange-500 to-pink-500' },
+  { text: 'bundles',               gradient: 'from-emerald-400 via-cyan-500 to-teal-500' },
+  { text: 'your store in 5 min',   gradient: 'from-cyan-400 via-blue-500 to-violet-600' },
 ]
 
 const DISPLAY_MS = 2500
