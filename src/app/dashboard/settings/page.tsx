@@ -1,14 +1,16 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { DEMO_SELLER_PROFILE } from '@/lib/demo-data/seed'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
+import { useAuth } from '@/context/auth-context'
+import { useDemoMode } from '@/hooks/use-demo-mode'
 import {
   ArrowUpRight,
   CreditCard,
+  FlaskConical,
   HelpCircle,
   Plug,
   Settings,
@@ -51,9 +53,20 @@ const SETTING_CARDS = [
 ]
 
 export default function SettingsPage() {
-  const [displayName, setDisplayName] = useState(DEMO_SELLER_PROFILE.displayName)
-  const [supportEmail, setSupportEmail] = useState(DEMO_SELLER_PROFILE.supportEmail)
+  const { session } = useAuth()
+  const { demoMode, ready, toggle } = useDemoMode()
+
+  // Pre-fill Account form from the real auth session
+  const [displayName, setDisplayName] = useState('')
+  const [supportEmail, setSupportEmail] = useState('')
   const [saving, setSaving] = useState(false)
+
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    setDisplayName(session?.name ?? '')
+    setSupportEmail(session?.email ?? '')
+  }, [session])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
@@ -90,25 +103,10 @@ export default function SettingsPage() {
             </div>
           )
 
-          if (card.external) {
-            return (
-              <a key={card.title} href={card.href}>
-                {inner}
-              </a>
-            )
+          if (card.external || card.href.startsWith('#')) {
+            return <a key={card.title} href={card.href}>{inner}</a>
           }
-          if (card.href.startsWith('#')) {
-            return (
-              <a key={card.title} href={card.href}>
-                {inner}
-              </a>
-            )
-          }
-          return (
-            <Link key={card.title} href={card.href}>
-              {inner}
-            </Link>
-          )
+          return <Link key={card.title} href={card.href}>{inner}</Link>
         })}
       </div>
 
@@ -122,6 +120,7 @@ export default function SettingsPage() {
               value={displayName}
               onChange={e => setDisplayName(e.target.value)}
               hint="Your personal account name — not shown publicly."
+              placeholder={session?.name ?? 'Your name'}
             />
             <Input
               label="Support Email"
@@ -129,6 +128,7 @@ export default function SettingsPage() {
               value={supportEmail}
               onChange={e => setSupportEmail(e.target.value)}
               hint="Shown on product pages and receipts sent to buyers."
+              placeholder={session?.email ?? 'you@example.com'}
             />
           </CardContent>
         </Card>
@@ -157,6 +157,51 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
+        {/* ── Developer / Demo Mode ──────────────────────────── */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FlaskConical size={15} className="text-neutral-500" />
+              Developer
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex-1 min-w-0 pr-4">
+                <p className="text-sm font-medium text-neutral-900">Use demo data</p>
+                <p className="text-xs text-neutral-500 leading-relaxed mt-0.5">
+                  Turns on sample products, orders, customers, and store data for testing.
+                  Turn off to see your real store with clean empty states.
+                </p>
+              </div>
+              {/* Toggle button — only interactive once localStorage is read */}
+              <button
+                type="button"
+                disabled={!ready}
+                onClick={() => toggle(!demoMode)}
+                aria-label="Toggle demo data"
+                className={`relative flex-shrink-0 w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none ${
+                  demoMode ? 'bg-black' : 'bg-neutral-200'
+                } ${!ready ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
+              >
+                <span
+                  className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${
+                    demoMode ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+            </div>
+
+            <p className="text-[11px] text-neutral-400 leading-relaxed">
+              You can also toggle via URL:{' '}
+              <code className="font-mono bg-neutral-100 px-1 py-0.5 rounded">?demo=1</code>
+              {' '}to enable,{' '}
+              <code className="font-mono bg-neutral-100 px-1 py-0.5 rounded">?demo=0</code>
+              {' '}to disable.
+            </p>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader><CardTitle>Danger Zone</CardTitle></CardHeader>
           <CardContent>
@@ -169,7 +214,7 @@ export default function SettingsPage() {
                 type="button"
                 variant="danger"
                 size="sm"
-                onClick={() => alert('Demo: Account deletion would require confirmation.')}
+                onClick={() => toast.error('Account deletion is not available in beta.')}
               >
                 Delete Account
               </Button>

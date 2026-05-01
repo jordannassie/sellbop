@@ -23,6 +23,7 @@ import { useAuth } from '@/context/auth-context'
 import { cn } from '@/lib/utils'
 import { LaunchDashboard } from '@/components/dashboard/launch-dashboard'
 import { useLaunchChecklist } from '@/hooks/use-launch-checklist'
+import { useDemoMode } from '@/hooks/use-demo-mode'
 import type { Order, Product } from '@/lib/domain/entities'
 
 function statusVariant(status: string) {
@@ -87,7 +88,8 @@ function AIAssistantBar() {
 // ── Dashboard overview ────────────────────────────────────────────────────────
 
 export default function DashboardOverview() {
-  const { session } = useAuth()
+  const { session, loading: authLoading } = useAuth()
+  const { demoMode, ready } = useDemoMode()
   const [orders, setOrders] = useState<Order[]>([])
   const [products, setProducts] = useState<Product[]>([])
   const [customerCount, setCustomerCount] = useState(0)
@@ -95,23 +97,34 @@ export default function DashboardOverview() {
 
   const { checklist, isLaunched, percentComplete } = useLaunchChecklist()
 
+  // Load demo stats only when demo mode is ON or user is not authenticated.
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    const sid = DEMO_SELLER_PROFILE.id
-    Promise.all([
-      demoOrderRepo.findAll(sid),
-      demoProductRepo.findAll(sid),
-      demoCustomerRepo.findAll(sid),
-    ]).then(([o, p, c]) => {
-      setOrders(o)
-      setProducts(p)
-      setCustomerCount(c.length)
-    })
-  }, [])
+    if (authLoading || !ready) return
+    if (demoMode || !session) {
+      const sid = DEMO_SELLER_PROFILE.id
+      Promise.all([
+        demoOrderRepo.findAll(sid),
+        demoProductRepo.findAll(sid),
+        demoCustomerRepo.findAll(sid),
+      ]).then(([o, p, c]) => {
+        setOrders(o)
+        setProducts(p)
+        setCustomerCount(c.length)
+      })
+    } else {
+      setOrders([])       // Real user, demo OFF → show real zeros
+      setProducts([])
+      setCustomerCount(0)
+    }
+  }, [authLoading, demoMode, ready, session])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Read dismiss from session storage so it persists per session but resets on new session
   useEffect(() => {
     try {
       const d = sessionStorage.getItem('launch_dashboard_dismissed')
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (d === 'true') setDismissed(true)
     } catch { /* storage unavailable */ }
   }, [])

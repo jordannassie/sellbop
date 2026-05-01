@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { demoProductRepo } from '@/lib/adapters/demo/repositories'
 import { DEMO_SELLER_PROFILE } from '@/lib/demo-data/seed'
+import { useAuth } from '@/context/auth-context'
+import { useDemoMode } from '@/hooks/use-demo-mode'
 import { formatCurrency } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -70,14 +72,25 @@ function ProductRow({ p }: { p: Product }) {
 }
 
 export default function ProductsPage() {
+  const { session, loading: authLoading } = useAuth()
+  const { demoMode, ready } = useDemoMode()
   const [products, setProducts] = useState<Product[]>([])
   const [tab, setTab] = useState<Tab>('all')
   const [syncing, setSyncing] = useState(false)
   const [syncMsg, setSyncMsg] = useState('')
 
+  // Load demo products only when demo mode is ON or user is not authenticated.
+  // Real authenticated users with demo mode OFF start with empty products.
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    demoProductRepo.findAll(DEMO_SELLER_PROFILE.id).then(setProducts)
-  }, [])
+    if (authLoading || !ready) return
+    if (demoMode || !session) {
+      demoProductRepo.findAll(DEMO_SELLER_PROFILE.id).then(setProducts)
+    } else {
+      setProducts([]) // Real user, demo OFF → clean slate (Supabase wiring future step)
+    }
+  }, [authLoading, demoMode, ready, session])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const digital = products.filter(p => !p.source)
   const clothing = products.filter(p => p.source === 'printify')

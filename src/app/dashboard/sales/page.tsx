@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { demoOrderRepo, demoCustomerRepo } from '@/lib/adapters/demo/repositories'
 import { DEMO_SELLER_PROFILE } from '@/lib/demo-data/seed'
+import { useAuth } from '@/context/auth-context'
+import { useDemoMode } from '@/hooks/use-demo-mode'
 import { formatCurrency, timeAgo } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -32,19 +34,30 @@ function statusVariant(status: string) {
 }
 
 export default function SalesSectionPage() {
+  const { session, loading: authLoading } = useAuth()
+  const { demoMode, ready } = useDemoMode()
   const [orders, setOrders] = useState<Order[]>([])
   const [customerCount, setCustomerCount] = useState(0)
 
+  // Load demo orders/customers only when demo mode is ON or user is not authenticated.
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    const sid = DEMO_SELLER_PROFILE.id
-    Promise.all([
-      demoOrderRepo.findAll(sid),
-      demoCustomerRepo.findAll(sid),
-    ]).then(([o, c]) => {
-      setOrders(o)
-      setCustomerCount(c.length)
-    })
-  }, [])
+    if (authLoading || !ready) return
+    if (demoMode || !session) {
+      const sid = DEMO_SELLER_PROFILE.id
+      Promise.all([
+        demoOrderRepo.findAll(sid),
+        demoCustomerRepo.findAll(sid),
+      ]).then(([o, c]) => {
+        setOrders(o)
+        setCustomerCount(c.length)
+      })
+    } else {
+      setOrders([])       // Real user, demo OFF → zero state
+      setCustomerCount(0)
+    }
+  }, [authLoading, demoMode, ready, session])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const paidOrders = orders.filter(o => o.paymentStatus === 'paid')
   const totalRevenue = paidOrders.reduce((s, o) => s + o.amount, 0)
