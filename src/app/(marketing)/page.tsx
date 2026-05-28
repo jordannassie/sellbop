@@ -4,6 +4,7 @@ import { ProductImage } from '@/components/ui/product-image'
 import { MissionSection } from '@/components/marketing/mission-section'
 import { AIPromptBar } from '@/components/marketing/ai-prompt-bar'
 import { RotatingWord } from '@/components/marketing/rotating-word'
+import { AuthRedirect } from '@/components/marketing/auth-redirect'
 import {
   ArrowRight,
   Check,
@@ -25,6 +26,7 @@ export default function HomePage() {
 
   return (
     <>
+      <AuthRedirect />
       {/* ── Hero ─────────────────────────────────────────────────── */}
       <section className="max-w-4xl mx-auto px-4 sm:px-6 pt-16 pb-20 text-center">
 
