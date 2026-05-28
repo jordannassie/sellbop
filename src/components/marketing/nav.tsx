@@ -56,9 +56,18 @@ export function MarketingNav() {
                   href={profileHref}
                   className="group hidden h-8 items-center gap-2 rounded-xl border border-neutral-200 pl-1.5 pr-3 transition-all hover:border-neutral-300 hover:bg-neutral-50 sm:flex"
                 >
-                  <div className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-lg bg-neutral-900 text-[9px] font-black text-white">
-                    {(session.name?.charAt(0) ?? session.email.charAt(0)).toUpperCase()}
-                  </div>
+                  {session.avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={session.avatarUrl}
+                      alt={session.name ?? session.email}
+                      className="h-5 w-5 flex-shrink-0 rounded-lg object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-lg bg-neutral-900 text-[9px] font-black text-white">
+                      {(session.name?.charAt(0) ?? session.email.charAt(0)).toUpperCase()}
+                    </div>
+                  )}
                   <span className="max-w-[72px] truncate text-xs font-medium leading-none text-neutral-700 transition-colors group-hover:text-black">
                     {session.name?.split(' ')[0] ?? session.email.split('@')[0]}
                   </span>
@@ -121,9 +130,18 @@ export function MarketingNav() {
                 {session ? (
                   <>
                     <Link href={profileHref} onClick={() => setOpen(false)} className="flex h-11 items-center gap-3 rounded-xl px-3 transition-colors hover:bg-neutral-50">
-                      <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-neutral-900 text-[11px] font-black text-white">
-                        {(session.name?.charAt(0) ?? session.email.charAt(0)).toUpperCase()}
-                      </div>
+                      {session.avatarUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={session.avatarUrl}
+                          alt={session.name ?? session.email}
+                          className="h-7 w-7 flex-shrink-0 rounded-lg object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-neutral-900 text-[11px] font-black text-white">
+                          {(session.name?.charAt(0) ?? session.email.charAt(0)).toUpperCase()}
+                        </div>
+                      )}
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-black">
                           {session.name?.split(' ')[0] ?? session.email.split('@')[0]}
