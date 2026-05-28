@@ -104,8 +104,9 @@ export default function StoreSectionPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDemo])
 
-  // Active slug: use the last saved value, then the store row, then demo fallback
-  const activeSlug = savedSlug || userStore?.slug || (isDemo ? DEMO_SELLER_PROFILE.slug : '')
+  // Active slug: saved value → store row → demo fallback (ONLY for demo users)
+  // Never fall back to DEMO_SELLER_PROFILE.slug for real logged-in users.
+  const activeSlug = savedSlug || userStore?.slug || (isDemo && !session ? DEMO_SELLER_PROFILE.slug : '')
   const hasUnsavedLink = draftSlug !== '' && draftSlug !== savedSlug
 
   const storeLinkOwnerParam = {
@@ -120,7 +121,15 @@ export default function StoreSectionPage() {
       if (!isDemo) {
         // Real user: persist to Supabase
         const err = await saveStore({ slug: draftSlug })
-        if (err) { toast.error(`Could not save: ${err}`); return }
+        if (err) {
+          // Show a friendly message — don't expose raw Supabase/PostgREST errors
+          if (err.toLowerCase().includes('unique') || err.toLowerCase().includes('duplicate') || err.toLowerCase().includes('already exists')) {
+            toast.error('That store link is already taken. Try another one.')
+          } else {
+            toast.error('Could not save your store link. Please try again.')
+          }
+          return
+        }
       } else {
         // Demo mode: keep localStorage in sync
         if (demoStorefront) {

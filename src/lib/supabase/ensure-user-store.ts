@@ -31,6 +31,9 @@ export function slugFromText(text: string): string {
  * Find the store owned by `userId`, or create one if none exists.
  * Returns the store row on success, or `null` if the operation fails
  * (e.g. RLS violation, network error, Supabase not configured).
+ *
+ * Handles the case where a user may have multiple store rows: picks the
+ * most-recently-updated one instead of failing on .maybeSingle().
  */
 export async function ensureUserStore(
   supabase: SupabaseClient<Database>,
@@ -38,14 +41,22 @@ export async function ensureUserStore(
   name: string | null,
   email: string,
 ): Promise<StoreRow | null> {
-  // ── 1. Look for an existing store ───────────────────────────
-  const { data: existing, error: findErr } = await supabase
+  // ── 1. Look for existing stores (user may have duplicates) ───
+  const { data: rows, error: findErr } = await supabase
     .from('stores')
     .select('*')
     .eq('owner_user_id', userId)
-    .maybeSingle()
+    .order('updated_at', { ascending: false })
+    .limit(1)
 
   if (findErr) return null
+
+  const existing = rows?.[0] ?? null
+
+  if (process.env.NODE_ENV === 'development' && (rows?.length ?? 0) > 1) {
+    console.warn(`[SellBop] User ${userId} has multiple store rows. Using most recently updated.`)
+  }
+
   if (existing) return existing
 
   // ── 2. Generate a unique slug ────────────────────────────────
