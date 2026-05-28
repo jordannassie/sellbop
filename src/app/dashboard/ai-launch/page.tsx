@@ -23,7 +23,6 @@ import {
   ClipboardList,
   ExternalLink,
   Image as ImageIcon,
-  Layers,
   Package,
   Sparkles,
   Store,
@@ -47,24 +46,23 @@ interface WizardData {
 // ── Price options ─────────────────────────────────────────────────────────────
 
 const PRICE_OPTIONS = [
-  { value: '$5-$20', label: '$5–$20', sub: 'Low ticket' },
+  { value: '$5-$20', label: 'Under $20', sub: 'Low ticket' },
   { value: '$20-$50', label: '$20–$50', sub: 'Entry level' },
   { value: '$50-$100', label: '$50–$100', sub: 'Mid tier' },
-  { value: '$100-$300', label: '$100–$300', sub: 'Premium' },
-  { value: '$300-$1000', label: '$300–$1k', sub: 'High ticket' },
-  { value: '$1000+', label: '$1,000+', sub: 'VIP / enterprise' },
+  { value: '$100+', label: '$100+', sub: 'Premium' },
+  { value: 'not_sure', label: 'Not sure', sub: 'Recommend for me' },
 ]
 
 // ── Quick-start suggestions ───────────────────────────────────────────────────
 
 // Used by AiComposer on Step 1
 const WHAT_YOU_SELL_PROMPTS = [
+  'A budgeting guide for beginners',
   'A Notion template for freelancers',
-  'A coaching program for early-career designers',
-  'A subscription for fitness plans',
-  'An e-book on personal finance',
-  'A course on building with AI',
-  'A service for social media strategy',
+  'A 30-day fitness plan',
+  'A Bible study guide',
+  'A coaching offer for designers',
+  'A course on using AI for small business',
 ] as const
 
 const FOR_SUGGESTIONS = [
@@ -80,9 +78,9 @@ const FOR_SUGGESTIONS = [
 
 function StepIndicator({ step }: { step: WizardStep }) {
   const steps = [
-    { n: 1, label: 'What' },
-    { n: 2, label: 'Who' },
-    { n: 3, label: 'Includes' },
+    { n: 1, label: 'Idea' },
+    { n: 2, label: 'Buyer' },
+    { n: 3, label: 'Offer' },
     { n: 4, label: 'Price' },
     { n: 5, label: 'Review' },
   ]
@@ -126,9 +124,9 @@ function Step1({ data, onChange, onNext }: {
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-xl font-bold text-black mb-1">What would you like to sell?</h2>
+        <h2 className="text-xl font-bold text-black mb-1">What do you know, teach, or want to sell?</h2>
         <p className="text-sm text-neutral-500">
-          Describe your product, service, or idea — SellBop will handle the rest.
+          Describe your skill, idea, template, guide, coaching offer, course, or digital product.
         </p>
       </div>
       <AiComposer
@@ -137,7 +135,7 @@ function Step1({ data, onChange, onNext }: {
         onSubmit={() => { if (data.whatYouSell.trim()) onNext() }}
         submitLabel="Continue →"
         rows={3}
-        placeholder="e.g. A Notion template system for freelancers to track clients, projects, and invoices in one place"
+        placeholder='Example: "I help new moms meal prep healthy dinners" or "I have a Notion template for freelancers."'
         typeChips={[]}
         quickPrompts={WHAT_YOU_SELL_PROMPTS}
       />
@@ -156,15 +154,15 @@ function Step2({ data, onChange, onBack, onNext }: {
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-xl font-bold text-black mb-1">Who is it for?</h2>
-        <p className="text-sm text-neutral-500">Describe your ideal buyer or customer.</p>
+        <h2 className="text-xl font-bold text-black mb-1">Who would buy this?</h2>
+        <p className="text-sm text-neutral-500">Tell us who this product is for so your AI Launch Coach can position it clearly.</p>
       </div>
       <Textarea
         label=""
         value={data.whoIsItFor}
         onChange={e => onChange({ whoIsItFor: e.target.value })}
         rows={3}
-        placeholder="e.g. Freelance designers and developers who want to stay organized without complex project management tools"
+        placeholder='Example: "Busy moms who want simple healthy meals" or "Freelancers who need a better client system."'
       />
       <div>
         <p className="text-xs font-medium text-neutral-500 mb-2">Quick picks</p>
@@ -206,15 +204,15 @@ function Step3({ data, onChange, onBack, onNext }: {
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-xl font-bold text-black mb-1">What is included?</h2>
-        <p className="text-sm text-neutral-500">Optional — list what buyers get. AI will fill this in if left blank.</p>
+        <h2 className="text-xl font-bold text-black mb-1">What should be included?</h2>
+        <p className="text-sm text-neutral-500">List what buyers receive, or leave it simple and SellBop will suggest the offer.</p>
       </div>
       <Textarea
         label=""
         value={data.whatsIncluded}
         onChange={e => onChange({ whatsIncluded: e.target.value })}
         rows={4}
-        placeholder="e.g. 15 Notion templates, video walkthrough, client onboarding checklist, invoice tracker, lifetime updates"
+        placeholder="Example: PDF guide, checklist, templates, bonus video, email support."
       />
       <div className="flex justify-between">
         <Button variant="ghost" onClick={onBack}><ArrowLeft size={14} /> Back</Button>
@@ -235,8 +233,8 @@ function Step4({ data, onChange, onBack, onGenerate }: {
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-xl font-bold text-black mb-1">What price range?</h2>
-        <p className="text-sm text-neutral-500">AI will suggest a specific price within this range.</p>
+        <h2 className="text-xl font-bold text-black mb-1">What price feels right?</h2>
+        <p className="text-sm text-neutral-500">Choose a range or describe your goal. SellBop will suggest a specific price and explain why.</p>
       </div>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         {PRICE_OPTIONS.map(opt => (
@@ -262,7 +260,7 @@ function Step4({ data, onChange, onBack, onGenerate }: {
       <div className="flex justify-between items-center">
         <Button variant="ghost" onClick={onBack}><ArrowLeft size={14} /> Back</Button>
         <Button onClick={onGenerate} disabled={!data.priceRange}>
-          <Sparkles size={14} /> Generate My Store Plan
+          <Sparkles size={14} /> Build My Product Launch
         </Button>
       </div>
     </div>
@@ -345,27 +343,27 @@ function Step5({
       {/* ── Action CTA ─────────────────────────────────────── */}
       <div className="rounded-2xl border-2 border-black bg-black p-5 space-y-4">
         <div>
-          <p className="text-white font-semibold text-sm">Ready to launch?</p>
+          <p className="text-white font-semibold text-sm">Review your product launch</p>
           <p className="text-white/60 text-xs mt-0.5">
-            Apply your store draft first, then create your product. Both start as drafts — you choose when to publish.
+            Your AI Launch Coach drafted the foundation for your product. Review the name, offer, price, page copy, FAQ, and launch plan before creating your product draft.
           </p>
         </div>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <Button
-            onClick={() => onSaveStore(result)}
-            loading={savingStore}
-            variant="secondary"
-            className="bg-white text-black hover:bg-neutral-100 w-full justify-center"
-          >
-            <Store size={14} /> Apply to Store
-          </Button>
           <Button
             onClick={() => onCreateProduct(result)}
             loading={savingProduct}
             variant="secondary"
             className="bg-white text-black hover:bg-neutral-100 w-full justify-center"
           >
-            <Package size={14} /> Create Product
+            <Package size={14} /> Create Product Draft
+          </Button>
+          <Button
+            onClick={() => onSaveStore(result)}
+            loading={savingStore}
+            variant="secondary"
+            className="bg-white/10 text-white hover:bg-white/20 w-full justify-center"
+          >
+            <Store size={14} /> Save Launch Plan
           </Button>
         </div>
         <div className="flex flex-wrap gap-2 pt-1 border-t border-white/10">
@@ -373,20 +371,15 @@ function Step5({
             size="sm"
             variant="ghost"
             className="text-white/60 hover:text-white hover:bg-white/10"
-            onClick={() => router.push('/dashboard/store')}
+            onClick={() => router.push('/dashboard/ai-launch')}
           >
-            Publish Later
+            Edit Answers
           </Button>
-          <Link href="/dashboard/store-editor">
-            <Button size="sm" variant="ghost" className="text-white/60 hover:text-white hover:bg-white/10">
-              <Layers size={13} /> Open Store Editor
-            </Button>
-          </Link>
         </div>
       </div>
 
       {/* ── Editable fields ────────────────────────────────── */}
-      <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Edit before saving</p>
+      <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Review and edit before creating</p>
 
       {/* Store */}
       <Card>
@@ -458,7 +451,7 @@ function Step5({
 
       {/* Pricing */}
       <Card>
-        <CardHeader><CardTitle>Pricing</CardTitle></CardHeader>
+        <CardHeader><CardTitle>Price</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-3 gap-4">
             <Input
@@ -547,7 +540,7 @@ function Step5({
 
       {/* Image prompts */}
       <Card>
-        <CardHeader><CardTitle>Image Prompts</CardTitle></CardHeader>
+        <CardHeader><CardTitle>Product Image Ideas</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <div className="rounded-xl border border-neutral-100 bg-neutral-50 px-4 py-3 text-xs text-neutral-500">
             Copy these prompts to generate images. You can also use{' '}
@@ -607,29 +600,29 @@ function Step5({
 
       {/* Bottom repeat CTA */}
       <div className="rounded-2xl border-2 border-black bg-black p-5 space-y-3">
-        <p className="text-white font-semibold text-sm">Apply your plan</p>
+        <p className="text-white font-semibold text-sm">Ready to create your product?</p>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <Button
-            onClick={() => onSaveStore(result)}
-            loading={savingStore}
-            variant="secondary"
-            className="bg-white text-black hover:bg-neutral-100 w-full justify-center"
-          >
-            <Store size={14} /> Apply to Store
-          </Button>
           <Button
             onClick={() => onCreateProduct(result)}
             loading={savingProduct}
             variant="secondary"
             className="bg-white text-black hover:bg-neutral-100 w-full justify-center"
           >
-            <Package size={14} /> Create Product
+            <Package size={14} /> Create Product Draft
+          </Button>
+          <Button
+            onClick={() => onSaveStore(result)}
+            loading={savingStore}
+            variant="secondary"
+            className="bg-white/10 text-white hover:bg-white/20 w-full justify-center"
+          >
+            <Store size={14} /> Save Launch Plan
           </Button>
         </div>
         <div className="flex flex-wrap gap-2 border-t border-white/10 pt-2">
           <p className="text-xs text-white/40 self-center">
             <ExternalLink size={10} className="inline mr-1" />
-            Store: sellbop.com/store/{result.storeSlug} · Product: sellbop.com/p/{result.productSlug}
+            Product: sellbop.com/p/{result.productSlug}
           </p>
         </div>
       </div>
@@ -684,7 +677,7 @@ function AILaunchWizardInner() {
       const output = (await res.json()) as StoreLaunchOutput
       setResult(output)
       setStep(5)
-      toast.success('Store plan generated!')
+      toast.success('Product launch built!')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Generation failed. Please try again.')
     } finally {
@@ -720,7 +713,7 @@ function AILaunchWizardInner() {
         headerVideoUrl: existing?.headerVideoUrl ?? null,
         published: existing?.published ?? false,
       })
-      toast.success('Store draft saved! Visit Store Profile to review.')
+      toast.success('Launch plan saved! Visit Store Profile to review.')
     } catch (err) {
       console.error(err)
       toast.error('Failed to save store draft.')
@@ -788,10 +781,10 @@ function AILaunchWizardInner() {
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-black">
             <Wand2 size={18} className="text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-black">AI Launch Assistant</h1>
+          <h1 className="text-2xl font-bold text-black">AI Launch Coach</h1>
         </div>
         <p className="text-sm text-neutral-500 max-w-lg ml-[52px]">
-          Answer a few quick questions and SellBop will draft your store, product page, pricing, FAQ, and launch copy.
+          Answer a few quick questions and SellBop will build your product draft, price, page copy, FAQ, checkout copy, and launch plan.
         </p>
       </div>
 
@@ -811,7 +804,7 @@ function AILaunchWizardInner() {
         <div className="flex items-center gap-2 rounded-xl bg-emerald-50 border border-emerald-100 px-4 py-3 mb-4">
           <Sparkles size={13} className="text-emerald-600 flex-shrink-0" />
           <p className="text-sm font-medium text-emerald-700">
-            Your store idea is ready. Let&apos;s build it.
+            Your product idea is ready. Let&apos;s build it.
           </p>
         </div>
       )}
