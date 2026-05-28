@@ -6,10 +6,7 @@ import { AIPromptBar } from '@/components/marketing/ai-prompt-bar'
 import { RotatingWord } from '@/components/marketing/rotating-word'
 import {
   ArrowRight,
-  BookOpen,
   Check,
-  Download,
-  Headphones,
   Package,
   Sparkles,
   Tag,
@@ -17,6 +14,7 @@ import {
   Users2,
   Wand2,
   Bell,
+  Zap,
 } from 'lucide-react'
 import { DEMO_PRODUCTS, DEMO_STOREFRONT, DEMO_SELLER_PROFILE } from '@/lib/demo-data/seed'
 import { formatCurrency } from '@/lib/utils'
@@ -32,17 +30,17 @@ export default function HomePage() {
 
         {/* 1. Rotating teaser — leads into the headline */}
         <p className="text-base sm:text-xl font-bold text-black mb-3">
-          Launch <RotatingWord />
+          Turn what you know into <RotatingWord />
         </p>
 
         {/* 2. Main headline */}
         <h1 className="text-4xl sm:text-6xl font-black text-black tracking-tight leading-[1.1] mb-5">
-          Launch your store in 5 minutes.
+          The easiest way to start your first online business with AI.
         </h1>
 
         {/* 3. Subheadline */}
         <p className="text-base sm:text-lg text-neutral-500 max-w-xl mx-auto mb-8 leading-relaxed">
-          Tell SellBop what you want to sell. We&apos;ll build your store, product page, pricing, FAQ, checkout copy, and launch plan.
+          SellBop gives you an AI Launch Coach and the tools to turn your knowledge, skills, templates, guides, coaching, or ideas into a digital product you can sell.
         </p>
 
         {/* 4. Hero AI prompt — the primary conversion action */}
@@ -67,7 +65,7 @@ export default function HomePage() {
             </div>
           </div>
           <p className="text-sm text-neutral-500">
-            <span className="font-semibold text-black">142 creators</span> active this week
+            <span className="font-semibold text-black">142 creators</span> building their first online business this week
           </p>
         </div>
 
@@ -85,33 +83,32 @@ export default function HomePage() {
       {/* ── Mission / Founder ────────────────────────────────────── */}
       <MissionSection />
 
-      {/* ── Product type examples ─────────────────────────────────── */}
+      {/* ── Three pillars ─────────────────────────────────────────── */}
       <section className="border-t border-neutral-100 py-16 sm:py-20 bg-white">
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-10">
-            <p className="text-xs font-bold uppercase tracking-[0.25em] text-neutral-400 mb-3">What you can sell</p>
+            <p className="text-xs font-bold uppercase tracking-[0.25em] text-neutral-400 mb-3">The full picture</p>
             <h2 className="text-3xl sm:text-4xl font-bold text-black tracking-tight mb-3">
-              Every type of creator offer
+              Create, sell, and launch — all in one place.
             </h2>
             <p className="text-neutral-500 text-base max-w-md mx-auto">
-              Digital downloads, memberships, coaching, bundles — all from one simple store.
+              Everything you need to turn what you know into a digital product that sells.
             </p>
           </div>
 
-          {/* Product type icons */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-12">
+          {/* Three pillars */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-12">
             {[
-              { icon: Download, label: 'Digital Downloads', desc: 'PDFs, templates, courses', color: 'bg-blue-50 text-blue-600' },
-              { icon: BookOpen, label: 'Subscriptions', desc: 'Memberships & content access', color: 'bg-violet-50 text-violet-600' },
-              { icon: Headphones, label: 'Coaching', desc: 'Calls, sessions, services', color: 'bg-emerald-50 text-emerald-600' },
-              { icon: Package, label: 'Bundles', desc: 'Collections of any product', color: 'bg-amber-50 text-amber-600' },
+              { icon: Wand2,   label: 'Create your product',     desc: 'AI helps with product ideas, naming, offer building, pricing, product page copy, FAQ, checkout copy, and mockup ideas.',                                                                         color: 'bg-blue-50 text-blue-600' },
+              { icon: Package, label: 'Sell from your store',    desc: 'Use creator storefronts, Stripe checkout, digital delivery, orders, customers, coupons, analytics, and buyer library.',                                                                          color: 'bg-violet-50 text-violet-600' },
+              { icon: Zap,     label: 'Launch with confidence',  desc: 'Get Launch Kits, Instagram captions, TikTok/Reels ideas, DM scripts, email copy, a 7-day launch plan, and a first 10 sales strategy.',                                                         color: 'bg-emerald-50 text-emerald-600' },
             ].map(t => (
-              <div key={t.label} className="rounded-2xl border border-neutral-100 bg-white p-5 text-center hover:border-neutral-200 hover:shadow-sm transition-all">
+              <div key={t.label} className="rounded-2xl border border-neutral-100 bg-white p-5 hover:border-neutral-200 hover:shadow-sm transition-all">
                 <div className={`inline-flex h-10 w-10 items-center justify-center rounded-xl mb-3 ${t.color}`}>
                   <t.icon size={18} />
                 </div>
                 <p className="font-semibold text-sm text-black mb-1">{t.label}</p>
-                <p className="text-xs text-neutral-500">{t.desc}</p>
+                <p className="text-xs text-neutral-500 leading-relaxed">{t.desc}</p>
               </div>
             ))}
           </div>
@@ -159,10 +156,10 @@ export default function HomePage() {
           <div className="text-center mb-12">
             <p className="text-xs font-bold uppercase tracking-[0.25em] text-neutral-400 mb-3">Simple by design</p>
             <h2 className="text-3xl sm:text-4xl font-bold text-black tracking-tight mb-3">
-              How SellBop works
+              From idea to first product in minutes.
             </h2>
             <p className="text-neutral-500 text-base max-w-sm mx-auto">
-              From idea to published store in minutes.
+              Your AI Launch Coach handles the heavy lifting.
             </p>
           </div>
 
@@ -171,24 +168,24 @@ export default function HomePage() {
               {
                 step: '01',
                 icon: Wand2,
-                title: 'Tell AI what you sell',
-                desc: 'AI helps draft your store, product page, pricing, FAQ, and launch copy in seconds.',
+                title: 'Tell your AI Launch Coach what you know',
+                desc: 'Describe your skill, idea, process, guide, template, coaching offer, course, or digital product.',
                 color: 'bg-black text-white',
                 iconColor: 'text-white',
               },
               {
                 step: '02',
                 icon: Sparkles,
-                title: 'Review your store',
-                desc: 'Edit the AI draft, add your files or links, and preview how your store looks to buyers.',
+                title: 'SellBop builds your product launch',
+                desc: 'Get help with the name, price, product page, FAQ, checkout copy, and launch content.',
                 color: 'bg-white border border-neutral-200',
                 iconColor: 'text-neutral-600',
               },
               {
                 step: '03',
                 icon: ArrowRight,
-                title: 'Publish and share',
-                desc: 'Share your SellBop link on social, in your bio, or over email and start selling.',
+                title: 'Publish, share, and get paid',
+                desc: 'Publish your product, share your SellBop link, and start selling online.',
                 color: 'bg-white border border-neutral-200',
                 iconColor: 'text-neutral-600',
               },
@@ -216,7 +213,7 @@ export default function HomePage() {
           <div className="mt-10 text-center">
             <Link href="/signup">
               <Button size="lg">
-                <Wand2 size={16} /> Start building with AI
+                <Wand2 size={16} /> Start creating with AI
               </Button>
             </Link>
           </div>
@@ -280,10 +277,10 @@ export default function HomePage() {
           </div>
 
           <h2 className="text-4xl sm:text-6xl font-black text-black tracking-tight leading-tight mb-4">
-            Ready to start<br />your store?
+            Ready to start your<br />first online business?
           </h2>
           <p className="text-neutral-500 text-base sm:text-lg mb-8 max-w-sm mx-auto leading-relaxed">
-            Use AI to build your first product page in minutes.
+            Use AI to turn what you know into a product people can buy.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-10">
