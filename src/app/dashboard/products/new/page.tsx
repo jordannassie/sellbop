@@ -1,8 +1,8 @@
 'use client'
-import { useState, Suspense } from 'react'
+import { useState, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Sparkles } from 'lucide-react'
 import { demoProductRepo } from '@/lib/adapters/demo/repositories'
 import { DEMO_SELLER_PROFILE } from '@/lib/demo-data/seed'
 import { Button } from '@/components/ui/button'
@@ -37,6 +37,7 @@ function NewProductForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const fromEditor = searchParams.get('from') === 'store-editor'
+  const nameRef = useRef<HTMLInputElement>(null)
   const [name, setName] = useState('')
   const [slug, setSlug] = useState('')
   const [description, setDescription] = useState('')
@@ -97,15 +98,56 @@ function NewProductForm() {
           Back to Store Editor
         </Link>
       </div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-black">New Product</h1>
-        <p className="text-neutral-500 text-sm mt-1">Create your sell page.</p>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-black">Create a product</h1>
+        <p className="text-neutral-500 text-sm mt-1">
+          Build your product page manually or use your AI Launch Coach to help create the offer, price, page copy, and launch plan.
+        </p>
       </div>
+
+      {/* AI Coach assist card */}
+      <div className="mb-6 rounded-xl border border-neutral-200 bg-neutral-50 p-5">
+        <div className="flex items-start gap-3">
+          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-black">
+            <Sparkles size={15} className="text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-black">Need help creating this product?</p>
+            <p className="mt-0.5 text-xs text-neutral-500">
+              Your AI Launch Coach can help you name your product, write the description, suggest a price, create your FAQ, and build a launch plan.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Link href="/dashboard/ai-launch">
+                <Button type="button" size="sm">
+                  <Sparkles size={13} className="mr-1.5" />
+                  Build with AI Coach
+                </Button>
+              </Link>
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                onClick={() => nameRef.current?.focus()}
+              >
+                Continue manually
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <form onSubmit={handleSave} className="space-y-5">
         <Card>
           <CardHeader><CardTitle>Basics</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            <Input label="Product Name *" value={name} onChange={e => handleNameChange(e.target.value)} placeholder="Notion Template Pack" required />
+            <Input
+              ref={nameRef}
+              label="Product Name *"
+              value={name}
+              onChange={e => handleNameChange(e.target.value)}
+              placeholder="Example: 30-Day Meal Prep Guide"
+              required
+            />
             <LinkField
               label="Product link *"
               value={slug}
@@ -118,8 +160,19 @@ function NewProductForm() {
               <Select label="Product Type" value={productType} onChange={e => setProductType(e.target.value as ProductType)} options={TYPES} />
               <Select label="CTA Button" value={ctaText} onChange={e => setCtaText(e.target.value)} options={CTA_OPTIONS} />
             </div>
-            <Textarea label="Description" value={description} onChange={e => setDescription(e.target.value)} placeholder="Describe what buyers get..." rows={4} />
-            <Input label="Short Description" value={shortDescription} onChange={e => setShortDescription(e.target.value)} placeholder="One-line summary shown in listings" />
+            <Textarea
+              label="Description"
+              value={description}
+              onChange={e => setDescription(e.target.value)}
+              placeholder="Describe what buyers get, who it is for, and why it helps them."
+              rows={4}
+            />
+            <Input
+              label="Short Description"
+              value={shortDescription}
+              onChange={e => setShortDescription(e.target.value)}
+              placeholder="One clear sentence about what this product helps buyers do."
+            />
           </CardContent>
         </Card>
 
@@ -137,6 +190,12 @@ function NewProductForm() {
               <Input label="Price (USD) *" type="number" value={price} onChange={e => setPrice(e.target.value)} placeholder="29" min="0.50" step="0.01" required />
               <Input label="Compare-at Price" type="number" value={compareAtPrice} onChange={e => setCompareAtPrice(e.target.value)} placeholder="49" step="0.01" hint="Shows as strikethrough" />
             </div>
+            <p className="text-xs text-neutral-500">
+              Not sure what to charge?{' '}
+              <Link href="/dashboard/ai-launch" className="font-medium text-black underline underline-offset-2 hover:no-underline">
+                Use your AI Launch Coach to get a pricing recommendation.
+              </Link>
+            </p>
           </CardContent>
         </Card>
 
