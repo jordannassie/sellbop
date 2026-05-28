@@ -80,7 +80,7 @@ export function MarketingFooter() {
         </div>
 
         {/* Bottom nav links */}
-        <div className="border-t border-neutral-100 pt-6 flex items-center justify-center flex-wrap gap-x-5 gap-y-2">
+        <div className="border-t border-neutral-100 pt-6 flex items-center justify-center flex-wrap gap-x-5 gap-y-2 mb-6">
           {[
             ['Marketplace', '/marketplace'],
             ['Pricing',     '/pricing'],
@@ -95,6 +95,16 @@ export function MarketingFooter() {
           ].map(([label, href]) => (
             <Link key={href} href={href} className="text-xs text-neutral-500 hover:text-black transition-colors">{label}</Link>
           ))}
+        </div>
+
+        {/* Payment cards */}
+        <div className="flex items-center justify-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/payment-cards.png"
+            alt="Accepted payment methods: American Express, Apple Pay, Diners Club, Discover, Google Pay, Mastercard, PayPal, Shop Pay, Visa"
+            className="h-6 opacity-70"
+          />
         </div>
       </div>
     </footer>
