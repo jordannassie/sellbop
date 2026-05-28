@@ -8,7 +8,7 @@ import { toast } from 'sonner'
 import { useAuth } from '@/context/auth-context'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { getLaunchIdea, saveLaunchIdea } from '@/lib/launch-idea'
+import { getLaunchIdea, saveLaunchIdea, clearLaunchIdea } from '@/lib/launch-idea'
 
 function GoogleIcon() {
   return (
@@ -48,10 +48,19 @@ function AuthForm() {
   const params = useSearchParams()
   const { signIn, signUp, signInWithGoogle } = useAuth()
 
-  // Read idea from URL or fall back to localStorage
-  const ideaFromParam = params.get('idea') ?? ''
-  const idea = ideaFromParam || getLaunchIdea() || ''
   const intent = params.get('intent') ?? ''
+
+  // Read the idea once and immediately clear localStorage so a page refresh
+  // or direct navigation never shows a stale banner. The value is captured
+  // in state so it stays stable across re-renders (important for the Google
+  // OAuth closure that re-saves it before the redirect).
+  const [idea] = useState<string>(() => {
+    const fromParam = params.get('idea') ?? ''
+    if (fromParam) return fromParam
+    const stored = getLaunchIdea()
+    if (stored) clearLaunchIdea()   // consume once — won't survive refresh
+    return stored ?? ''
+  })
 
   // Detect OAuth error conditions
   const oauthError    = params.get('oauth_error')
@@ -223,12 +232,6 @@ function AuthForm() {
             <div className="h-px flex-1 bg-neutral-100" />
             <span className="text-xs font-medium text-neutral-400">or continue with email</span>
             <div className="h-px flex-1 bg-neutral-100" />
-          </div>
-
-          <div className="mb-4 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-xs text-neutral-600">
-            {mode === 'login'
-              ? 'Use Google or your SellBop email and password.'
-              : 'One SellBop account works for buyers, sellers, or both.'}
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-3" autoComplete="off">
