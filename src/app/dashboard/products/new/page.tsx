@@ -5,6 +5,9 @@ import Link from 'next/link'
 import { ArrowLeft, Sparkles } from 'lucide-react'
 import { demoProductRepo } from '@/lib/adapters/demo/repositories'
 import { DEMO_SELLER_PROFILE } from '@/lib/demo-data/seed'
+import { useAuth } from '@/context/auth-context'
+import { getSupabaseBrowserClient } from '@/lib/supabase/client'
+import { ensureUserStore } from '@/lib/supabase/ensure-user-store'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -37,6 +40,8 @@ function NewProductForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const fromEditor = searchParams.get('from') === 'store-editor'
+  const { session } = useAuth()
+  const supabase = getSupabaseBrowserClient()
   const nameRef = useRef<HTMLInputElement>(null)
   const [name, setName] = useState('')
   const [slug, setSlug] = useState('')
@@ -63,6 +68,42 @@ function NewProductForm() {
     if (isNaN(priceAmount) || priceAmount < 50) return toast.error('Price must be at least $0.50.')
     setSaving(true)
     try {
+      // ── Real user: save to Supabase ──────────────────────
+      if (session && supabase) {
+        const store = await ensureUserStore(supabase, session.userId, session.name, session.email)
+        if (!store) {
+          toast.error('Could not create your product. Please try again.')
+          return
+        }
+        const { data: newProduct, error } = await supabase
+          .from('products')
+          .insert({
+            store_id:          store.id,
+            title:             name,
+            slug,
+            product_type:      productType,
+            short_description: shortDescription || null,
+            description:       description || null,
+            price_cents:       priceAmount,
+            cover_image_url:   thumbnailUrl,
+            image_url:         thumbnailUrl,
+            is_live:           published,
+            marketplace_visible: true,
+          })
+          .select('id')
+          .single()
+
+        if (error || !newProduct) {
+          if (process.env.NODE_ENV === 'development') console.error('[NewProduct]', error)
+          toast.error('Could not create your product. Please try again.')
+          return
+        }
+        toast.success('Product created!')
+        router.push(fromEditor ? '/dashboard/store-editor' : `/dashboard/products/${newProduct.id}`)
+        return
+      }
+
+      // ── Demo fallback ────────────────────────────────────
       await demoProductRepo.create({
         sellerId: DEMO_SELLER_PROFILE.id,
         name, slug, description, shortDescription: shortDescription || null,
@@ -70,7 +111,7 @@ function NewProductForm() {
         price: priceAmount,
         compareAtPrice: compareAtPrice ? Math.round(parseFloat(compareAtPrice) * 100) : null,
         currency: 'usd',
-        thumbnailUrl: thumbnailUrl, coverImageUrl: thumbnailUrl, galleryImageUrls: [],
+        thumbnailUrl, coverImageUrl: thumbnailUrl, galleryImageUrls: [],
         category: null, tags: [], fileAssetIds: [],
         externalUrl: externalUrl || null,
         confirmationMessage: null, supportEmail: DEMO_SELLER_PROFILE.supportEmail,
@@ -82,8 +123,11 @@ function NewProductForm() {
       })
       toast.success('Product created!')
       router.push(fromEditor ? '/dashboard/store-editor' : '/dashboard/products')
-    } catch { toast.error('Failed to create product.') }
-    finally { setSaving(false) }
+    } catch {
+      toast.error('Could not create your product. Please try again.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (

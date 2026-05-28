@@ -5,6 +5,8 @@ import { demoProductRepo } from '@/lib/adapters/demo/repositories'
 import { DEMO_SELLER_PROFILE } from '@/lib/demo-data/seed'
 import { useAuth } from '@/context/auth-context'
 import { useDemoMode } from '@/hooks/use-demo-mode'
+import { getSupabaseBrowserClient } from '@/lib/supabase/client'
+import { fetchUserProducts } from '@/lib/supabase/products'
 import { formatCurrency } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -78,18 +80,23 @@ export default function ProductsPage() {
   const [tab, setTab] = useState<Tab>('all')
   const [syncing, setSyncing] = useState(false)
   const [syncMsg, setSyncMsg] = useState('')
+  const supabase = getSupabaseBrowserClient()
 
-  // Load demo products only when demo mode is ON or user is not authenticated.
-  // Real authenticated users with demo mode OFF start with empty products.
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (authLoading || !ready) return
     if (demoMode || !session) {
+      // Demo mode or unauthenticated: show demo products
       demoProductRepo.findAll(DEMO_SELLER_PROFILE.id).then(setProducts)
+    } else if (supabase) {
+      // Real authenticated user: load from Supabase
+      fetchUserProducts(supabase, session.userId)
+        .then(setProducts)
+        .catch(() => setProducts([]))
     } else {
-      setProducts([]) // Real user, demo OFF → clean slate (Supabase wiring future step)
+      setProducts([])
     }
-  }, [authLoading, demoMode, ready, session])
+  }, [authLoading, demoMode, ready, session, supabase])
   /* eslint-enable react-hooks/set-state-in-effect */
 
   const digital = products.filter(p => !p.source)

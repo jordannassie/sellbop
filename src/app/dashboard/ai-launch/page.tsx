@@ -6,6 +6,9 @@ import { Suspense } from 'react'
 import Link from 'next/link'
 import { demoProductRepo, demoStorefrontRepo } from '@/lib/adapters/demo/repositories'
 import { DEMO_SELLER_PROFILE } from '@/lib/demo-data/seed'
+import { useAuth } from '@/context/auth-context'
+import { getSupabaseBrowserClient } from '@/lib/supabase/client'
+import { ensureUserStore } from '@/lib/supabase/ensure-user-store'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -830,6 +833,9 @@ function Step5({
 function AILaunchWizardInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { session } = useAuth()
+  const supabase = getSupabaseBrowserClient()
+
   // Support both ?idea= (new flow from homepage) and legacy ?prompt=
   const initialIdea   = searchParams.get('idea') ?? ''
   const initialPrompt = initialIdea || (searchParams.get('prompt') ?? '')
@@ -920,6 +926,45 @@ function AILaunchWizardInner() {
   async function handleCreateProduct(r: StoreLaunchOutput) {
     setSavingProduct(true)
     try {
+      // ── Real user: save to Supabase ──────────────────────────
+      if (session && supabase) {
+        const store = await ensureUserStore(supabase, session.userId, session.name, session.email)
+        if (!store) {
+          toast.error('Could not create your product draft. Please try again.')
+          return
+        }
+
+        const { data: newProduct, error } = await supabase
+          .from('products')
+          .insert({
+            store_id:           store.id,
+            title:              r.productName,
+            slug:               r.productSlug || slugify(r.productName),
+            product_type:       r.productType || 'digital_download',
+            short_description:  r.shortDescription || null,
+            description:        r.fullDescription || null,
+            price_cents:        r.priceSuggestion || null,
+            checkout_copy:      r.checkoutCopy || null,
+            marketplace_excerpt: r.marketplaceExcerpt || null,
+            marketplace_visible: true,
+            is_live:            false, // draft — user publishes when ready
+          })
+          .select('id')
+          .single()
+
+        if (error || !newProduct) {
+          if (process.env.NODE_ENV === 'development') console.error('[CreateProduct]', error)
+          toast.error('Could not create your product draft. Please try again.')
+          return
+        }
+
+        // TODO: persist launchKit to product metadata once a metadata/jsonb column is added
+        toast.success('Product draft created!')
+        router.push(`/dashboard/products/${newProduct.id}`)
+        return
+      }
+
+      // ── Demo mode fallback ───────────────────────────────────
       const newProduct = await demoProductRepo.create({
         sellerId: DEMO_SELLER_PROFILE.id,
         name: r.productName,
@@ -931,32 +976,19 @@ function AILaunchWizardInner() {
         price: r.priceSuggestion,
         compareAtPrice: r.compareAtPriceSuggestion,
         currency: 'usd',
-        thumbnailUrl: null,
-        coverImageUrl: null,
-        galleryImageUrls: [],
-        category: null,
-        tags: [],
-        fileAssetIds: [],
-        externalUrl: null,
-        confirmationMessage: null,
-        supportEmail: null,
-        ctaText: r.ctaText,
-        seoTitle: r.productName,
-        seoDescription: r.shortDescription,
-        licenseKeyEnabled: false,
-        memberAccessEnabled: false,
-        downloadLimit: null,
-        accessExpirationDays: null,
-        variants: [],
-        publishedAt: null,
-        marketplaceVisible: true,
-        marketplaceExcerpt: r.marketplaceExcerpt,
+        thumbnailUrl: null, coverImageUrl: null, galleryImageUrls: [],
+        category: null, tags: [], fileAssetIds: [],
+        externalUrl: null, confirmationMessage: null, supportEmail: null,
+        ctaText: r.ctaText, seoTitle: r.productName, seoDescription: r.shortDescription,
+        licenseKeyEnabled: false, memberAccessEnabled: false,
+        downloadLimit: null, accessExpirationDays: null, variants: [],
+        publishedAt: null, marketplaceVisible: true, marketplaceExcerpt: r.marketplaceExcerpt,
       })
       toast.success('Product draft created! Redirecting to Product Hub…')
       router.push(`/dashboard/products/${newProduct.id}`)
     } catch (err) {
-      console.error(err)
-      toast.error('Failed to create product.')
+      if (process.env.NODE_ENV === 'development') console.error('[CreateProduct]', err)
+      toast.error('Could not create your product draft. Please try again.')
     } finally {
       setSavingProduct(false)
     }

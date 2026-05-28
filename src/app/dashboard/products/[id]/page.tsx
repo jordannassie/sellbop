@@ -2,6 +2,8 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { demoProductRepo } from '@/lib/adapters/demo/repositories'
+import { getSupabaseBrowserClient } from '@/lib/supabase/client'
+import { fetchProductById, saveSupabaseProduct } from '@/lib/supabase/products'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -263,11 +265,18 @@ function EditTab({
   onSaved,
   onDeleted,
   fromEditor,
+  onUpdate,
 }: {
   product: Product
   onSaved: () => void
   onDeleted: () => void
   fromEditor: boolean
+  /** Optional override for saving — used when product lives in Supabase, not demo localStorage */
+  onUpdate?: (patch: {
+    name: string; slug: string; description: string; shortDescription: string | null
+    productType: string; isLive: boolean; priceCents: number; thumbnailUrl: string | null
+    ctaText: string; externalUrl: string | null
+  }) => Promise<void>
 }) {
   const router = useRouter()
   const [name, setName] = useState(product.name)
@@ -290,19 +299,35 @@ function EditTab({
     e.preventDefault()
     setSaving(true)
     try {
-      await demoProductRepo.update(product.id, {
-        name, slug, description,
-        shortDescription: shortDescription || null,
-        productType,
-        status: published ? 'published' : 'draft',
-        price: Math.round(parseFloat(price) * 100),
-        compareAtPrice: compareAtPrice ? Math.round(parseFloat(compareAtPrice) * 100) : null,
-        ctaText,
-        externalUrl: externalUrl || null,
-        thumbnailUrl,
-        coverImageUrl: thumbnailUrl,
-        publishedAt: published ? (product.publishedAt || new Date().toISOString()) : null,
-      })
+      const priceCents = Math.round(parseFloat(price) * 100)
+      if (onUpdate) {
+        // Supabase-backed product
+        await onUpdate({
+          name, slug, description,
+          shortDescription: shortDescription || null,
+          productType,
+          isLive: published,
+          priceCents,
+          thumbnailUrl,
+          ctaText,
+          externalUrl: externalUrl || null,
+        })
+      } else {
+        // Demo localStorage product
+        await demoProductRepo.update(product.id, {
+          name, slug, description,
+          shortDescription: shortDescription || null,
+          productType,
+          status: published ? 'published' : 'draft',
+          price: priceCents,
+          compareAtPrice: compareAtPrice ? Math.round(parseFloat(compareAtPrice) * 100) : null,
+          ctaText,
+          externalUrl: externalUrl || null,
+          thumbnailUrl,
+          coverImageUrl: thumbnailUrl,
+          publishedAt: published ? (product.publishedAt || new Date().toISOString()) : null,
+        })
+      }
       toast.success('Product updated.')
       onSaved()
     } catch {
@@ -1345,19 +1370,32 @@ function ProductHubForm({ params }: { params: Promise<{ id: string }> }) {
   const searchParams = useSearchParams()
   const fromEditor = searchParams.get('from') === 'store-editor'
   const [product, setProduct] = useState<Product | null>(null)
+  const [isSupabaseProduct, setIsSupabaseProduct] = useState(false)
   const [tab, setTab] = useState<HubTab>('overview')
   const [contentSub, setContentSub] = useState<ContentSub>('edit')
   const [customersSub, setCustomersSub] = useState<CustomersSub>('customers')
   const [growthSub, setGrowthSub] = useState<GrowthSub>('coupons')
+  const supabase = getSupabaseBrowserClient()
 
   useEffect(() => {
-    params.then(({ id }) => {
-      demoProductRepo.findById(id).then(p => {
-        if (!p) return
-        setProduct(p)
-      })
+    params.then(async ({ id }) => {
+      // Try demo localStorage first
+      const demoProduct = await demoProductRepo.findById(id)
+      if (demoProduct) {
+        setProduct(demoProduct)
+        setIsSupabaseProduct(false)
+        return
+      }
+      // Fall back to Supabase (real user product)
+      if (supabase) {
+        const sbProduct = await fetchProductById(supabase, id)
+        if (sbProduct) {
+          setProduct(sbProduct)
+          setIsSupabaseProduct(true)
+        }
+      }
     })
-  }, [params])
+  }, [params, supabase])
 
   if (!product) {
     return (
@@ -1431,9 +1469,17 @@ function ProductHubForm({ params }: { params: Promise<{ id: string }> }) {
                 product={product}
                 fromEditor={fromEditor}
                 onSaved={() => {
-                  demoProductRepo.findById(product.id).then(p => { if (p) setProduct(p) })
+                  if (isSupabaseProduct && supabase) {
+                    fetchProductById(supabase, product.id).then(p => { if (p) setProduct(p) })
+                  } else {
+                    demoProductRepo.findById(product.id).then(p => { if (p) setProduct(p) })
+                  }
                 }}
                 onDeleted={() => {}}
+                onUpdate={isSupabaseProduct && supabase ? async (patch) => {
+                  const errMsg = await saveSupabaseProduct(supabase, product.id, patch)
+                  if (errMsg) throw new Error(errMsg)
+                } : undefined}
               />
             )}
             {contentSub === 'files' && <FilesTab productSlug={product.slug} />}
