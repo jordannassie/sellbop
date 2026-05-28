@@ -1,14 +1,20 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Check } from 'lucide-react'
 import { GradientImageFallback } from '@/components/ui/gradient-image-fallback'
 import { DEMO_PRODUCTS, DEMO_ORDERS, DEMO_SELLER_PROFILE } from '@/lib/demo-data/seed'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { DemoLoginButtons } from './demo-login-buttons'
+import { getDemoMode } from '@/lib/server/demo-mode'
 
 export const metadata = { title: 'Demo — SellBop' }
 
-export default function DemoPage() {
+export default async function DemoPage() {
+  const demoEnabled = await getDemoMode()
+  if (!demoEnabled) {
+    redirect('/')
+  }
   const topProducts = DEMO_PRODUCTS.slice(0, 3)
   const recentOrders = DEMO_ORDERS.slice(0, 4)
   const totalRevenue = DEMO_ORDERS.reduce((s, o) => s + o.amount, 0)

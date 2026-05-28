@@ -20,9 +20,13 @@ import {
 import { DEMO_PRODUCTS, DEMO_STOREFRONT, DEMO_SELLER_PROFILE } from '@/lib/demo-data/seed'
 import { formatCurrency } from '@/lib/utils'
 import { HERO_FACEPILE_PHOTOS } from '@/lib/demo-avatars'
+import { getDemoMode } from '@/lib/server/demo-mode'
 
-export default function HomePage() {
-  const featured = DEMO_PRODUCTS.filter(p => p.status === 'published').slice(0, 3)
+export default async function HomePage() {
+  const [featured, demoEnabled] = [
+    DEMO_PRODUCTS.filter(p => p.status === 'published').slice(0, 3),
+    await getDemoMode(),
+  ]
 
   return (
     <>
@@ -74,9 +78,11 @@ export default function HomePage() {
         {/* 7. Secondary CTAs */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-6">
           <Link href="/signup"><Button size="lg">Start Free</Button></Link>
-          <Link href="/store/alexjohnson" target="_blank">
-            <Button size="lg" variant="secondary">View Demo Store</Button>
-          </Link>
+          {demoEnabled && (
+            <Link href="/store/alexjohnson" target="_blank">
+              <Button size="lg" variant="secondary">View Demo Store</Button>
+            </Link>
+          )}
         </div>
         <p className="text-xs text-neutral-400 mt-4">No credit card required · No monthly fee</p>
 
@@ -144,11 +150,13 @@ export default function HomePage() {
               </Link>
             ))}
           </div>
-          <p className="text-center text-xs text-neutral-400 mt-4">
-            <Link href="/store/alexjohnson" className="hover:text-neutral-700 underline underline-offset-2">
-              View the full demo store →
-            </Link>
-          </p>
+          {demoEnabled && (
+            <p className="text-center text-xs text-neutral-400 mt-4">
+              <Link href="/store/alexjohnson" className="hover:text-neutral-700 underline underline-offset-2">
+                View the full demo store →
+              </Link>
+            </p>
+          )}
         </div>
       </section>
 

@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { DEMO_SELLER_PROFILE, DEMO_STOREFRONT } from '@/lib/demo-data/seed'
 import { isSupabaseConfigured } from '@/lib/env'
+import { getDemoMode } from '@/lib/server/demo-mode'
 import { ClientStorefront } from './client-storefront'
 import type { Metadata } from 'next'
 import type { Storefront, Product } from '@/lib/domain/entities'
@@ -138,7 +139,8 @@ export async function generateMetadata(
     }
   }
 
-  if (sellerSlug === DEMO_SELLER_PROFILE.slug) {
+  const demoEnabled = await getDemoMode()
+  if (demoEnabled && sellerSlug === DEMO_SELLER_PROFILE.slug) {
     return {
       title: `${DEMO_STOREFRONT.title} — SellBop`,
       description: DEMO_STOREFRONT.bio ?? undefined,
@@ -171,8 +173,9 @@ export default async function StorefrontPage(
     )
   }
 
-  // 2. Demo fallback for the known demo slug
-  if (sellerSlug === DEMO_SELLER_PROFILE.slug) {
+  // 2. Demo fallback — only when demo mode is ON and this is the known demo slug
+  const demoEnabled = await getDemoMode()
+  if (demoEnabled && sellerSlug === DEMO_SELLER_PROFILE.slug) {
     return <ClientStorefront sellerSlug={sellerSlug} />
   }
 
