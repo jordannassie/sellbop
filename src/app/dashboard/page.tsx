@@ -20,9 +20,7 @@ import {
 } from 'lucide-react'
 
 import { useAuth } from '@/context/auth-context'
-import { cn } from '@/lib/utils'
 import { LaunchDashboard } from '@/components/dashboard/launch-dashboard'
-import { AIStoreAgentPanel } from '@/components/dashboard/ai-store-agent-panel'
 import { AICreditsPill } from '@/components/dashboard/ai-credits-pill'
 import { useLaunchChecklist } from '@/hooks/use-launch-checklist'
 import { useDemoMode } from '@/hooks/use-demo-mode'
@@ -48,7 +46,7 @@ export default function DashboardOverview() {
 
   // Google OAuth fallback: if user arrives at the dashboard with a stored
   // launch idea (set before the OAuth redirect), send them straight to the
-  // AI Launch Assistant.  The idea is cleared immediately to avoid a redirect
+  // AI Launch Assistant. The idea is cleared immediately to avoid a redirect
   // loop on subsequent dashboard visits.
   useEffect(() => {
     if (authLoading || !session) return
@@ -58,7 +56,6 @@ export default function DashboardOverview() {
     router.push(`/dashboard/ai-launch?idea=${encodeURIComponent(idea)}`)
   }, [authLoading, session, router])
 
-  // Load demo stats only when demo mode is ON or user is not authenticated.
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (authLoading || !ready) return
@@ -74,14 +71,13 @@ export default function DashboardOverview() {
         setCustomerCount(c.length)
       })
     } else {
-      setOrders([])       // Real user, demo OFF → show real zeros
+      setOrders([])
       setProducts([])
       setCustomerCount(0)
     }
   }, [authLoading, demoMode, ready, session])
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  // Read dismiss from session storage so it persists per session but resets on new session
   useEffect(() => {
     try {
       const d = sessionStorage.getItem('launch_dashboard_dismissed')
@@ -103,56 +99,92 @@ export default function DashboardOverview() {
   const recentOrders = orders.slice(0, 6)
   const topProducts = [...products].sort((a, b) => b.salesCount - a.salesCount).slice(0, 4)
 
-  // Determine display name from real auth session, fall back to demo
-  const firstName = session?.name?.split(' ')[0] ?? session?.email?.split('@')[0] ?? 'there'
+  const firstName = session?.name?.split(' ')[0] ?? session?.email?.split('@')[0] ?? ''
+  const hasName = !!firstName
 
-  // Show launch dashboard when: not dismissed, not fully launched OR checklist is incomplete
-  const showLaunchDashboard = !dismissed && percentComplete < 80
+  // Show launch coach until dismissed (only dismissable after store published)
+  const showLaunchCoach = !dismissed
+
+  const allStatsZero = totalRevenue === 0 && totalSales === 0 && publishedProducts === 0 && customerCount === 0
 
   return (
     <div>
       {/* ── Welcome header ──────────────────────────────────────── */}
       <div className="mb-6 flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-black">Welcome back, {firstName}.</h1>
+          <h1 className="text-2xl font-bold text-black">
+            {hasName ? `Welcome back, ${firstName}.` : 'Welcome back.'}
+          </h1>
           <p className="mt-1 text-sm text-neutral-500">
-            {isLaunched
-              ? 'Your store is live. Keep creating and growing.'
-              : 'Your store is almost ready. Complete the steps below to launch.'}
+            {hasName
+              ? 'Ready to turn what you know into something you can sell?'
+              : 'Ready to create your first product with AI?'}
           </p>
         </div>
         <div className="flex flex-shrink-0 items-center gap-2">
-          {!showLaunchDashboard && <AICreditsPill />}
+          <AICreditsPill />
           {isLaunched && (
             <Badge variant="success" className="hidden sm:flex">Live</Badge>
           )}
         </div>
       </div>
 
-      {/* ── Launch Dashboard (for new / incomplete users) ─────── */}
-      {showLaunchDashboard && (
+      {/* ── AI Launch Coach ──────────────────────────────────────── */}
+      {showLaunchCoach && (
         <LaunchDashboard
-          userName={firstName !== 'there' ? firstName : undefined}
+          userName={hasName ? firstName : undefined}
           onDismiss={checklist.storePublished ? handleDismiss : undefined}
         />
       )}
 
-      {/* ── AI Store Agent panel (shown after launch checklist mostly complete) */}
-      {!showLaunchDashboard && (
-        <AIStoreAgentPanel />
-      )}
+      {/* ── Business Snapshot ────────────────────────────────────── */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
+            Business Snapshot
+          </h2>
+          {allStatsZero && (
+            <p className="text-xs text-neutral-400 hidden sm:block">
+              Your business is ready. Create your first product to start selling.
+            </p>
+          )}
+        </div>
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {[
+            { label: 'Revenue', value: formatCurrency(totalRevenue), icon: DollarSign, href: '/dashboard/sales' },
+            { label: 'Sales', value: totalSales.toString(), icon: ShoppingBag, href: '/dashboard/orders' },
+            { label: 'Products', value: publishedProducts.toString(), icon: Package, href: '/dashboard/products' },
+            { label: 'Customers', value: customerCount.toString(), icon: Users, href: '/dashboard/customers' },
+          ].map(stat => (
+            <Link key={stat.label} href={stat.href}>
+              <div className="rounded-xl border border-neutral-200 bg-white p-4 hover:border-neutral-300 transition-colors">
+                <div className="flex items-center gap-2 mb-2">
+                  <stat.icon size={13} className="text-neutral-400" />
+                  <p className="text-xs text-neutral-500">{stat.label}</p>
+                </div>
+                <p className="text-2xl font-bold text-black">{stat.value}</p>
+              </div>
+            </Link>
+          ))}
+        </div>
+        {allStatsZero && (
+          <p className="text-xs text-neutral-400 mt-2 sm:hidden text-center">
+            Your business is ready. Create your first product to start selling.
+          </p>
+        )}
+      </div>
 
       {/* ── Action cards ─────────────────────────────────────────── */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-8">
-        <Link href="/dashboard/products/new">
+        <Link href="/dashboard/ai-launch">
           <div className="group rounded-2xl border-2 border-black bg-black p-6 text-white hover:bg-neutral-800 transition-colors cursor-pointer">
             <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-white/10">
-              <Package size={20} className="text-white" />
+              <Wand2 size={20} className="text-white" />
             </div>
-            <p className="font-bold text-base mb-1">Create a product</p>
-            <p className="text-white/60 text-sm mb-4">Launch a new digital product, course, or service.</p>
+            <p className="font-bold text-base mb-1">Create your first product</p>
+            <p className="text-white/60 text-sm mb-4">Use your AI Launch Coach to build a product page, price, FAQ, and launch plan.</p>
             <span className="flex items-center gap-1 text-xs font-semibold text-white/80 group-hover:text-white transition-colors">
-              Get started <ArrowRight size={12} />
+              Create with AI <ArrowRight size={12} />
             </span>
           </div>
         </Link>
@@ -163,7 +195,7 @@ export default function DashboardOverview() {
               <Store size={20} className="text-neutral-600" />
             </div>
             <p className="font-bold text-base text-black mb-1">Customize your store</p>
-            <p className="text-neutral-500 text-sm mb-4">Update your brand, layout, and banner.</p>
+            <p className="text-neutral-500 text-sm mb-4">Update your profile, brand, and public storefront.</p>
             <span className="flex items-center gap-1 text-xs font-semibold text-neutral-600 group-hover:text-black transition-colors">
               Open Store <ArrowRight size={12} />
             </span>
@@ -176,32 +208,12 @@ export default function DashboardOverview() {
               <BarChart3 size={20} className="text-neutral-600" />
             </div>
             <p className="font-bold text-base text-black mb-1">View your sales</p>
-            <p className="text-neutral-500 text-sm mb-4">Orders, revenue, and customer insights.</p>
+            <p className="text-neutral-500 text-sm mb-4">Track orders, revenue, and customer activity.</p>
             <span className="flex items-center gap-1 text-xs font-semibold text-neutral-600 group-hover:text-black transition-colors">
-              See sales <ArrowRight size={12} />
+              See Sales <ArrowRight size={12} />
             </span>
           </div>
         </Link>
-      </div>
-
-      {/* ── Stats ────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 mb-8">
-        {[
-          { label: 'Total Revenue', value: formatCurrency(totalRevenue), icon: DollarSign, href: '/dashboard/sales' },
-          { label: 'Total Sales', value: totalSales.toString(), icon: ShoppingBag, href: '/dashboard/orders' },
-          { label: 'Products', value: publishedProducts.toString(), icon: Package, href: '/dashboard/products' },
-          { label: 'Customers', value: customerCount.toString(), icon: Users, href: '/dashboard/customers' },
-        ].map(stat => (
-          <Link key={stat.label} href={stat.href}>
-            <div className="rounded-xl border border-neutral-200 bg-white p-4 hover:border-neutral-300 transition-colors">
-              <div className="flex items-center gap-2 mb-2">
-                <stat.icon size={13} className="text-neutral-400" />
-                <p className="text-xs text-neutral-500">{stat.label}</p>
-              </div>
-              <p className="text-2xl font-bold text-black">{stat.value}</p>
-            </div>
-          </Link>
-        ))}
       </div>
 
       {/* ── Recent orders + Top products ─────────────────────────── */}
@@ -215,11 +227,11 @@ export default function DashboardOverview() {
             {recentOrders.length === 0 ? (
               <div className="px-6 py-10 text-center">
                 <ShoppingBag size={28} className="mx-auto mb-3 text-neutral-200" />
-                <p className="text-sm font-medium text-neutral-700 mb-1">No orders yet</p>
+                <p className="text-sm font-medium text-neutral-700 mb-1">No orders yet.</p>
                 <p className="text-xs text-neutral-400 mb-4">Orders will appear here after your first sale.</p>
-                <Link href="/dashboard/store">
-                  <Button size="sm" variant="secondary">
-                    <Store size={13} /> Share your store
+                <Link href="/dashboard/ai-launch">
+                  <Button size="sm">
+                    <Wand2 size={13} /> Create with AI
                   </Button>
                 </Link>
               </div>
@@ -253,7 +265,7 @@ export default function DashboardOverview() {
             {topProducts.length === 0 ? (
               <div className="px-6 py-10 text-center">
                 <Package size={28} className="mx-auto mb-3 text-neutral-200" />
-                <p className="text-sm font-medium text-neutral-700 mb-1">No products yet</p>
+                <p className="text-sm font-medium text-neutral-700 mb-1">No products yet.</p>
                 <p className="text-xs text-neutral-400 mb-4">Create your first product to start selling.</p>
                 <div className="flex items-center justify-center gap-2 flex-wrap">
                   <Link href="/dashboard/ai-launch">
