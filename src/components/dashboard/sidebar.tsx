@@ -13,6 +13,7 @@ import {
   Settings,
   Store,
   Globe,
+  Users,
   X,
   Plus,
   ChevronDown,
@@ -71,11 +72,9 @@ function NavLink({
 // ── Create menu ─────────────────────────────────────────────────────────────
 
 const CREATE_OPTIONS = [
-  { label: 'Digital Download', href: '/dashboard/products/new?type=digital_download' },
-  { label: 'Subscription / Membership', href: '/dashboard/products/new?type=subscription' },
-  { label: 'Coaching / Service', href: '/dashboard/products/new?type=service_offer' },
-  { label: 'Create with AI', href: '/dashboard/products/ai-builder' },
-  { label: 'Physical Product', href: '/dashboard/printify' },
+  { label: 'Create with AI', href: '/dashboard/ai-launch' },
+  { label: 'Create manually', href: '/dashboard/products/new' },
+  { label: 'View products', href: '/dashboard/products' },
 ]
 
 function CreateMenu({ onNavigate }: { onNavigate?: () => void }) {
@@ -197,13 +196,18 @@ export function DashboardSidebar() {
     },
     {
       href: '/dashboard/library',
-      label: 'Library',
+      label: 'My Library',
       icon: BookOpen,
     },
     {
       href: '/marketplace',
       label: 'Marketplace',
       icon: Globe,
+    },
+    {
+      href: '/community',
+      label: 'Community',
+      icon: Users,
     },
     {
       href: '/dashboard/settings',
