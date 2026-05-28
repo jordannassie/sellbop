@@ -78,7 +78,7 @@ export default function HomePage() {
             <Button size="lg" variant="secondary">View Demo Store</Button>
           </Link>
         </div>
-        <p className="text-xs text-neutral-400 mt-4">No credit card required · Demo accounts available</p>
+        <p className="text-xs text-neutral-400 mt-4">No credit card required · No monthly fee</p>
 
       </section>
 
@@ -222,27 +222,27 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Founder Creators Program ──────────────────────────────── */}
+      {/* ── Creator Program ────────────────────────────────────────── */}
       <section className="py-20 sm:py-28 bg-black">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
           <p className="text-xs font-bold uppercase tracking-[0.3em] text-neutral-500 mb-4">
-            Founder Creators Program
+            Creator Program
           </p>
           <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight leading-tight mb-4">
-            Join beta and pay{' '}
-            <span className="text-green-400">$0 SellBop platform fees</span>
+            Join the Creator Program.<br />
+            <span className="text-green-400">Only pay when you sell.</span>
           </h2>
           <p className="text-neutral-400 text-base leading-relaxed mb-8 max-w-md mx-auto">
-            Be one of the first creators on SellBop. $0 SellBop platform fees during beta. Standard Stripe/payment processing fees still apply.
+            Join the Creator Program and start building your first online business with AI. SellBop helps you turn what you know into a product you can sell — with no monthly fee and no SellBop platform fee until you make a sale.
           </p>
 
           {/* Benefit pills */}
           <div className="flex flex-wrap justify-center gap-2.5 mb-8">
             {[
-              { Icon: Tag, label: '$0 SellBop platform fees during beta' },
-              { Icon: Users2, label: 'Founder badge' },
-              { Icon: ThumbsUp, label: 'Vote on features' },
-              { Icon: Bell, label: 'Help shape SellBop' },
+              { Icon: Tag,     label: 'No monthly fee' },
+              { Icon: Users2,  label: 'Community access' },
+              { Icon: ThumbsUp,label: 'Vote on features' },
+              { Icon: Bell,    label: 'Only pay when you sell' },
             ].map(({ Icon, label }) => (
               <span
                 key={label}
@@ -256,10 +256,10 @@ export default function HomePage() {
 
           <Link href="/login?mode=signup">
             <button className="inline-flex items-center gap-2 bg-white text-black text-sm font-bold px-8 py-3.5 rounded-xl hover:bg-neutral-100 transition-colors">
-              Join the Beta <ArrowRight size={14} />
+              Join the Creator Program <ArrowRight size={14} />
             </button>
           </Link>
-          <p className="text-xs text-neutral-600 mt-4">No credit card · Cancel anytime</p>
+          <p className="text-xs text-neutral-600 mt-4">No credit card required · Free to start</p>
         </div>
       </section>
 
@@ -269,8 +269,8 @@ export default function HomePage() {
           <div className="flex items-center justify-center gap-1.5 mb-6">
             {[
               'No credit card required',
-              '$0 fees during beta',
-              'AI-assisted setup',
+              'Free to start',
+              'AI Launch Coach included',
             ].map(pill => (
               <span key={pill} className="hidden sm:inline-flex items-center gap-1 text-xs text-neutral-500 border border-neutral-200 rounded-full px-3 py-1">
                 <Check size={10} className="text-emerald-500" /> {pill}
@@ -289,28 +289,17 @@ export default function HomePage() {
             <Link href="/signup">
               <Button size="lg">Start Free</Button>
             </Link>
-            <Link href="/store/alexjohnson" target="_blank">
-              <Button size="lg" variant="secondary">View Demo Store</Button>
+            <Link href="/signup">
+              <Button size="lg" variant="secondary">Join the Creator Program</Button>
             </Link>
           </div>
 
-          {/* Demo credentials */}
-          <div className="inline-block bg-neutral-50 border border-neutral-200 rounded-2xl px-6 py-4 text-left">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-3">Try demo accounts</p>
-            <div className="space-y-1.5">
-              <p className="text-xs text-neutral-600">
-                Creator:{' '}
-                <code className="bg-white border border-neutral-200 px-1.5 py-0.5 rounded text-black font-mono">creator@sellbop.demo</code>
-                {' '}/{' '}
-                <code className="bg-white border border-neutral-200 px-1.5 py-0.5 rounded text-black font-mono">demo123</code>
-              </p>
-              <p className="text-xs text-neutral-600">
-                Buyer:{' '}
-                <code className="bg-white border border-neutral-200 px-1.5 py-0.5 rounded text-black font-mono">buyer@sellbop.demo</code>
-                {' '}/{' '}
-                <code className="bg-white border border-neutral-200 px-1.5 py-0.5 rounded text-black font-mono">demo123</code>
-              </p>
-            </div>
+          {/* Trust block */}
+          <div className="inline-block bg-neutral-50 border border-neutral-200 rounded-2xl px-6 py-5 text-center max-w-sm mx-auto">
+            <p className="text-sm font-bold text-black mb-1">Start free. Launch when you&apos;re ready.</p>
+            <p className="text-xs text-neutral-500 leading-relaxed">
+              Use your AI Launch Coach to create your first product, build your page, and get a launch plan. No monthly fee. Only pay when you sell.
+            </p>
           </div>
         </div>
       </section>

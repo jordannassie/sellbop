@@ -13,7 +13,6 @@ const LINKS = [
   { href: '/marketplace', label: 'Marketplace' },
   { href: '/community', label: 'Community' },
   { href: '/pricing', label: 'Pricing' },
-  { href: '/demo', label: 'Demo' },
 ]
 
 export function MarketingNav() {

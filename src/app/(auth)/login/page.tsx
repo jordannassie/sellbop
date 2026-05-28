@@ -29,14 +29,14 @@ function IdeaBanner({ idea }: { idea: string }) {
       <div className="flex items-center justify-center gap-2 mb-3">
         <Sparkles size={13} className="text-white/50" />
         <p className="text-[11px] font-bold text-white/50 uppercase tracking-[0.15em]">
-          Let&apos;s build your store for
+          Let&apos;s create your product for
         </p>
       </div>
       <p className="text-xl sm:text-2xl font-bold text-white leading-snug mb-3">
         &ldquo;{display}&rdquo;
       </p>
       <p className="text-sm text-white/50 leading-relaxed">
-        Create your account and SellBop will draft your store, product page, pricing,
+        Create your account and SellBop will help you build your product page, pricing,
         FAQ, checkout copy, and launch plan.
       </p>
     </div>

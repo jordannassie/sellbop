@@ -84,7 +84,7 @@ export function MarketingFooter() {
           {[
             ['Marketplace', '/marketplace'],
             ['Pricing',     '/pricing'],
-            ['Demo',        '/demo'],
+            ['Community',   '/community'],
             ['Our Mission', '/mission'],
             ['Login',       '/login'],
             ['Dashboard',   '/dashboard'],
