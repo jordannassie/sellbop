@@ -105,13 +105,24 @@ async function loadRealStore(
 
     if (storeErr || !store) return null
 
+    // Pull owner's profile avatar — more up-to-date than store.avatar_url
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('avatar_url, full_name')
+      .eq('user_id', store.owner_user_id)
+      .maybeSingle()
+
     const { data: productRows } = await supabase
       .from('products')
       .select('*')
       .eq('store_id', store.id)
       .eq('is_live', true)
 
-    const storefront = mapStorefront(store)
+    // Prefer profile avatar; fall back to store.avatar_url
+    const storefront = mapStorefront({
+      ...store,
+      avatar_url: profile?.avatar_url ?? store.avatar_url,
+    })
     const products   = (productRows ?? []).map(p => mapProduct(p, store.owner_user_id))
 
     return { storefront, products }

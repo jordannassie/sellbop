@@ -1,12 +1,10 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { ExternalLink, Layers } from 'lucide-react'
-import { demoStorefrontRepo } from '@/lib/adapters/demo/repositories'
-import { DEMO_SELLER_PROFILE, DEMO_STOREFRONT } from '@/lib/demo-data/seed'
 import { useAuth } from '@/context/auth-context'
+import { useUserStore } from '@/hooks/use-user-store'
 import { cn } from '@/lib/utils'
-import type { Storefront } from '@/lib/domain/entities'
 
 interface StoreIdentityCardProps {
   /** Show the "View Store" external link. Default true. */
@@ -31,20 +29,14 @@ export function StoreIdentityCard({
   className,
 }: StoreIdentityCardProps) {
   const { session } = useAuth()
-  const [storefront, setStorefront] = useState<Storefront>(DEMO_STOREFRONT)
+  const { store } = useUserStore()
+  const [imgError, setImgError] = useState(false)
 
-  useEffect(() => {
-    demoStorefrontRepo.findBySellerId(DEMO_SELLER_PROFILE.id).then(s => {
-      if (s) setStorefront(s as Storefront)
-    })
-  }, [])
-
-  const storeUrl = `/store/${storefront.slug ?? DEMO_SELLER_PROFILE.slug}`
-
-  // Use real auth session name when available; fall back to storefront title
-  const displayName = storefront.title !== DEMO_STOREFRONT.title
-    ? storefront.title
-    : (session?.name ?? storefront.title)
+  const displayName = store?.name ?? session?.name ?? 'My Store'
+  const storeSlug   = store?.slug ?? null
+  const storeUrl    = storeSlug ? `/store/${storeSlug}` : '/dashboard/store'
+  const avatarUrl   = session?.avatarUrl ?? null
+  const initial     = displayName.charAt(0).toUpperCase()
   const showActions = showViewStore || showEditorLink
 
   return (
@@ -63,22 +55,31 @@ export function StoreIdentityCard({
         )}
         title="Edit Store Profile"
       >
-        {/* Rounded-square avatar */}
-        <div
-          className="w-11 h-11 rounded-xl flex-shrink-0 flex items-center justify-center text-white text-base font-black select-none shadow-sm transition-transform group-hover:scale-[1.04]"
-          style={{ backgroundColor: storefront.themeColor }}
-          aria-hidden="true"
-        >
-          {storefront.title.charAt(0).toUpperCase()}
-        </div>
+        {/* Avatar: real photo when available, initial letter otherwise */}
+        {avatarUrl && !imgError ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={avatarUrl}
+            alt={displayName}
+            className="w-11 h-11 rounded-xl flex-shrink-0 object-cover shadow-sm transition-transform group-hover:scale-[1.04]"
+            onError={() => setImgError(true)}
+          />
+        ) : (
+          <div
+            className="w-11 h-11 rounded-xl flex-shrink-0 flex items-center justify-center text-white text-base font-black select-none shadow-sm transition-transform group-hover:scale-[1.04] bg-black"
+            aria-hidden="true"
+          >
+            {initial}
+          </div>
+        )}
 
-        {/* Name + headline */}
+        {/* Name + store URL */}
         <div className="flex-1 min-w-0">
           <p className="text-[15px] font-bold text-black leading-tight truncate group-hover:text-neutral-700 transition-colors">
             {displayName}
           </p>
           <p className="text-xs text-neutral-400 mt-0.5 leading-tight truncate">
-            {storefront.headline ?? storeUrl}
+            {store?.headline ?? storeUrl.replace('https://', '')}
           </p>
         </div>
       </Link>
