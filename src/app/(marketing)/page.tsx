@@ -35,7 +35,7 @@ export default function HomePage() {
 
         {/* 2. Main headline */}
         <h1 className="text-4xl sm:text-6xl font-black text-black tracking-tight leading-[1.1] mb-5">
-          The easiest way to start your first online business with AI.
+          Launch your store with AI in minutes.
         </h1>
 
         {/* 3. Subheadline */}
