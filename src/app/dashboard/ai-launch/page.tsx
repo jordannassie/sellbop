@@ -19,16 +19,22 @@ import { slugify } from '@/lib/utils'
 import {
   ArrowLeft,
   ArrowRight,
+  Calendar,
   CheckCircle2,
+  ChevronDown,
+  ChevronUp,
   ClipboardList,
   ExternalLink,
   Image as ImageIcon,
+  Mail,
+  MessageCircle,
   Package,
   Sparkles,
   Store,
+  Target,
   Wand2,
 } from 'lucide-react'
-import type { StoreLaunchOutput } from '@/app/api/ai/store-launch/route'
+import type { StoreLaunchOutput, LaunchKit } from '@/app/api/ai/store-launch/route'
 import type { ProductType } from '@/lib/domain/entities'
 import { cn } from '@/lib/utils'
 
@@ -264,6 +270,192 @@ function Step4({ data, onChange, onBack, onGenerate }: {
         </Button>
       </div>
     </div>
+  )
+}
+
+// ── Launch Kit Card ───────────────────────────────────────────────────────────
+
+function KitSection({
+  icon,
+  title,
+  children,
+  defaultOpen = false,
+}: {
+  icon: React.ReactNode
+  title: string
+  children: React.ReactNode
+  defaultOpen?: boolean
+}) {
+  const [open, setOpen] = useState(defaultOpen)
+  return (
+    <div className="border-b border-neutral-100 last:border-0">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className="flex w-full items-center justify-between px-0 py-3 text-left"
+      >
+        <span className="flex items-center gap-2 text-sm font-semibold text-black">
+          {icon}
+          {title}
+        </span>
+        {open ? <ChevronUp size={14} className="text-neutral-400 flex-shrink-0" /> : <ChevronDown size={14} className="text-neutral-400 flex-shrink-0" />}
+      </button>
+      {open && <div className="pb-4">{children}</div>}
+    </div>
+  )
+}
+
+function CopyableText({ text, mono = false }: { text: string; mono?: boolean }) {
+  return (
+    <div className="group relative">
+      <div className={cn(
+        'rounded-lg border border-neutral-100 bg-neutral-50 px-3 py-2.5 text-xs leading-relaxed text-neutral-700',
+        mono && 'font-mono',
+      )}>
+        {text}
+      </div>
+      <button
+        type="button"
+        onClick={() => { void navigator.clipboard.writeText(text); toast.success('Copied!') }}
+        className="absolute right-2 top-2 hidden rounded px-1.5 py-0.5 text-[10px] font-medium text-neutral-500 hover:text-black border border-neutral-200 bg-white group-hover:flex"
+      >
+        Copy
+      </button>
+    </div>
+  )
+}
+
+function LaunchKitCard({ kit }: { kit: LaunchKit }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Sparkles size={15} className="text-neutral-500" /> Launch Kit
+        </CardTitle>
+        <p className="text-xs text-neutral-400 mt-0.5">
+          Your complete launch toolkit — positioning, content, emails, and a 7-day plan.
+        </p>
+      </CardHeader>
+      <CardContent className="pt-0">
+
+        <KitSection icon={<Target size={13} />} title="Positioning" defaultOpen>
+          <div className="space-y-3">
+            <div>
+              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-neutral-400">Positioning Statement</p>
+              <CopyableText text={kit.positioningStatement} />
+            </div>
+            <div>
+              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-neutral-400">Offer Summary</p>
+              <CopyableText text={kit.offerSummary} />
+            </div>
+            <div>
+              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-neutral-400">Target Buyer</p>
+              <CopyableText text={kit.targetBuyer} />
+            </div>
+            <div>
+              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-neutral-400">Price Reasoning</p>
+              <CopyableText text={kit.priceReasoning} />
+            </div>
+          </div>
+        </KitSection>
+
+        <KitSection icon={<CheckCircle2 size={13} />} title="First 10 Sales Strategy" defaultOpen>
+          <ol className="space-y-2">
+            {kit.firstTenSalesStrategy.map((step, i) => (
+              <li key={i} className="flex items-start gap-2.5">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-black text-[9px] font-bold text-white mt-0.5">
+                  {i + 1}
+                </span>
+                <span className="text-xs text-neutral-700 leading-relaxed">{step}</span>
+              </li>
+            ))}
+          </ol>
+        </KitSection>
+
+        <KitSection icon={<Calendar size={13} />} title="7-Day Launch Plan">
+          <div className="space-y-2">
+            {kit.sevenDayLaunchPlan.map(day => (
+              <div key={day.day} className="rounded-lg border border-neutral-100 bg-neutral-50 px-3 py-2.5">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">Day {day.day}</span>
+                  <span className="text-xs font-semibold text-black">{day.title}</span>
+                </div>
+                <p className="text-xs text-neutral-600 leading-relaxed">{day.action}</p>
+              </div>
+            ))}
+          </div>
+        </KitSection>
+
+        <KitSection icon={<ImageIcon size={13} />} title="Instagram Captions">
+          <div className="space-y-3">
+            {kit.instagramCaptions.map((caption, i) => (
+              <div key={i}>
+                <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-neutral-400">Caption {i + 1}</p>
+                <CopyableText text={caption} />
+              </div>
+            ))}
+          </div>
+        </KitSection>
+
+        <KitSection icon={<Sparkles size={13} />} title="Reels / TikTok Ideas">
+          <div className="space-y-2">
+            {kit.reelsIdeas.map((idea, i) => (
+              <div key={i} className="rounded-lg border border-neutral-100 bg-neutral-50 px-3 py-2.5">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Idea {i + 1}</p>
+                <p className="text-xs text-neutral-700 leading-relaxed">{idea}</p>
+              </div>
+            ))}
+          </div>
+        </KitSection>
+
+        <KitSection icon={<MessageCircle size={13} />} title="DM Scripts">
+          <div className="space-y-3">
+            {kit.dmScripts.map((script, i) => (
+              <div key={i}>
+                <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-neutral-400">Script {i + 1}</p>
+                <CopyableText text={script} />
+              </div>
+            ))}
+          </div>
+        </KitSection>
+
+        <KitSection icon={<Mail size={13} />} title="Email Copy">
+          <div className="space-y-4">
+            {kit.emailCopy.map((email, i) => (
+              <div key={i} className="space-y-2">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">
+                  {i === 0 ? 'Launch Announcement' : 'Follow-Up'}
+                </p>
+                <div>
+                  <p className="mb-1 text-[10px] font-semibold text-neutral-500">Subject</p>
+                  <CopyableText text={email.subject} />
+                </div>
+                <div>
+                  <p className="mb-1 text-[10px] font-semibold text-neutral-500">Body</p>
+                  <CopyableText text={email.body} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </KitSection>
+
+        <KitSection icon={<ImageIcon size={13} />} title="Product Image Ideas">
+          <div className="space-y-3">
+            {kit.productImageIdeas.map((idea, i) => (
+              <div key={i}>
+                <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-neutral-400">Idea {i + 1}</p>
+                <CopyableText text={idea} />
+              </div>
+            ))}
+            <div>
+              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-neutral-400">Mockup Prompt (DALL-E / Midjourney)</p>
+              <CopyableText text={kit.mockupPrompt} mono />
+            </div>
+          </div>
+        </KitSection>
+
+      </CardContent>
+    </Card>
   )
 }
 
@@ -597,6 +789,9 @@ function Step5({
           </ul>
         </CardContent>
       </Card>
+
+      {/* Launch Kit */}
+      {result.launchKit && <LaunchKitCard kit={result.launchKit} />}
 
       {/* Bottom repeat CTA */}
       <div className="rounded-2xl border-2 border-black bg-black p-5 space-y-3">

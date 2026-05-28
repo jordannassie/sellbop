@@ -10,6 +10,21 @@ export interface StoreLaunchInput {
   priceRange: string
 }
 
+export interface LaunchKit {
+  positioningStatement: string
+  offerSummary: string
+  targetBuyer: string
+  priceReasoning: string
+  firstTenSalesStrategy: string[]
+  sevenDayLaunchPlan: { day: number; title: string; action: string }[]
+  instagramCaptions: string[]
+  reelsIdeas: string[]
+  dmScripts: string[]
+  emailCopy: { subject: string; body: string }[]
+  productImageIdeas: string[]
+  mockupPrompt: string
+}
+
 export interface StoreLaunchOutput {
   storeName: string
   storeHeadline: string
@@ -31,6 +46,7 @@ export interface StoreLaunchOutput {
   productImagePrompt: string
   storeBannerPrompt: string
   launchChecklist: string[]
+  launchKit: LaunchKit
 }
 
 function slugify(text: string): string {
@@ -42,42 +58,62 @@ function slugify(text: string): string {
     .slice(0, 60)
 }
 
-const SYSTEM_PROMPT = `You are an expert brand and product strategist for SellBop, a creator commerce platform.
-You help creators launch their store and first product with compelling copy and smart positioning.
-Always respond with valid JSON matching the exact schema provided.
-Be specific, benefit-focused, and compelling. Avoid generic filler phrases.
-Write in the creator's voice — confident, direct, and helpful.`
+const SYSTEM_PROMPT = `You are SellBop's AI Launch Coach. You help people start their first online business by turning what they know into a digital product they can sell. You are both a coach and a builder. Create practical, specific outputs that can be used directly on a product page, checkout page, and launch plan. Keep the language simple, encouraging, and action-oriented. Always respond with valid JSON matching the exact schema provided. Be specific and avoid generic filler phrases.`
 
 const USER_PROMPT = (input: StoreLaunchInput) => `
-Create a complete store and product launch plan for a creator who wants to sell:
+Create a complete product launch package for a creator who wants to sell:
 
 - What they sell: ${input.whatYouSell}
 - Who it is for: ${input.whoIsItFor}
-- What is included: ${input.whatsIncluded || 'not specified'}
+- What is included: ${input.whatsIncluded || 'not specified — suggest what to include'}
 - Price range: ${input.priceRange || '$20-$50'}
 
-Return JSON with this EXACT schema:
+Return JSON with this EXACT schema (no extra fields, no missing fields):
 {
   "storeName": "string — 2-4 word creator brand name",
   "storeHeadline": "string — punchy 6-10 word store tagline",
-  "storeBio": "string — 2-3 sentence store bio (about the creator and what they help people with)",
+  "storeBio": "string — 2-3 sentence store bio",
   "storeSlug": "string — URL-safe slug from storeName",
   "productName": "string — compelling 3-8 word product name",
   "productSlug": "string — URL-safe product slug",
   "productType": "digital_download | service_offer | subscription | bundle",
   "shortDescription": "string — 1-2 sentence hook, max 160 chars",
-  "fullDescription": "string — 3-4 paragraph description covering: what it is, who benefits, what's inside, outcome",
+  "fullDescription": "string — 3-4 paragraph description: what it is, who benefits, what's inside, outcome",
   "priceSuggestion": number (in cents, e.g. 2900 = $29),
   "compareAtPriceSuggestion": number | null (optional strikethrough price in cents),
-  "ctaText": "string — one of: Get Instant Access | Buy Now | Book and Pay | Join the Membership | Start Subscription | Download Now | Get the Bundle",
-  "whatIsIncluded": ["string", ...] (3-6 bullet points of what is included),
-  "faq": [{"question": "string", "answer": "string"}, ...] (3 FAQ items),
-  "checkoutCopy": "string — short persuasive text shown at checkout, 1 sentence max",
+  "ctaText": "Get Instant Access | Buy Now | Book and Pay | Join the Membership | Start Subscription | Download Now | Get the Bundle",
+  "whatIsIncluded": ["string"] (3-6 bullet points of what is included),
+  "faq": [{"question": "string", "answer": "string"}] (3 FAQ items),
+  "checkoutCopy": "string — short persuasive checkout text, 1 sentence max",
   "marketplaceExcerpt": "string — 1 sentence for marketplace card, max 120 chars",
   "socialPost": "string — ready-to-post launch caption, 240 chars max",
   "productImagePrompt": "string — DALL-E image prompt for the product thumbnail",
   "storeBannerPrompt": "string — DALL-E banner prompt for the store header",
-  "launchChecklist": ["string", ...] (5-7 short action items the creator should do to launch)
+  "launchChecklist": ["string"] (5-7 short action items the creator should do to launch),
+  "launchKit": {
+    "positioningStatement": "string — 1-2 sentence statement of what the product is, who it helps, and why it matters",
+    "offerSummary": "string — 2-3 sentence summary of the full offer including what buyers get",
+    "targetBuyer": "string — specific description of the ideal buyer, their pain, and their goal",
+    "priceReasoning": "string — 2-3 sentence explanation of why this price is right for this product and audience",
+    "firstTenSalesStrategy": ["string"] (5 specific actions to get the first 10 sales),
+    "sevenDayLaunchPlan": [
+      {"day": 1, "title": "string", "action": "string"},
+      {"day": 2, "title": "string", "action": "string"},
+      {"day": 3, "title": "string", "action": "string"},
+      {"day": 4, "title": "string", "action": "string"},
+      {"day": 5, "title": "string", "action": "string"},
+      {"day": 6, "title": "string", "action": "string"},
+      {"day": 7, "title": "string", "action": "string"}
+    ],
+    "instagramCaptions": ["string"] (3 ready-to-post Instagram captions for launch day, teaser, and follow-up),
+    "reelsIdeas": ["string"] (3 specific Reels/TikTok video ideas with hook and concept),
+    "dmScripts": ["string"] (2 short DM scripts to send to warm leads or past contacts),
+    "emailCopy": [
+      {"subject": "string", "body": "string"}
+    ] (2 launch emails: announcement and follow-up),
+    "productImageIdeas": ["string"] (3 specific ideas for product cover/thumbnail visuals),
+    "mockupPrompt": "string — detailed DALL-E prompt to create a product mockup image"
+  }
 }
 `
 
@@ -119,7 +155,7 @@ export async function POST(req: NextRequest) {
 
     if (!response.ok) {
       const err = await response.text()
-      console.error('[AI Store Launch] OpenAI error:', err)
+      console.error('[AI Launch Coach] OpenAI error:', err)
       return NextResponse.json(
         { error: 'AI generation failed. Check your OPENAI_API_KEY.' },
         { status: 500 },
@@ -142,7 +178,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(result)
   } catch (err) {
-    console.error('[AI Store Launch] Error:', err)
+    console.error('[AI Launch Coach] Error:', err)
     return NextResponse.json(
       { error: 'AI generation failed. Please try again.' },
       { status: 500 },
@@ -197,14 +233,66 @@ function generateMockResponse(input: StoreLaunchInput): StoreLaunchOutput {
     productImagePrompt: `Clean, minimal digital product mockup for "${shortSell}". White background, modern typography, professional design. Flat lay style.`,
     storeBannerPrompt: `Modern creator store banner for a brand helping ${whoIsItFor} with ${shortSell}. Clean, white, minimal, professional. Subtle gradient.`,
     launchChecklist: [
-      'Review and edit your store name and bio',
-      'Publish your first product page',
-      'Add a product image or cover',
-      'Share your store link on social media',
-      'Write a launch post using the generated social copy',
-      'Set up your Stripe account to collect payments',
+      'Review and edit your product name and description',
+      'Publish your product page',
+      'Add a product cover image',
+      'Share your product link on social media',
+      'Write a launch post using the generated captions',
+      'Send launch emails to your list',
       'Enable marketplace visibility to get discovered',
     ],
+    launchKit: {
+      positioningStatement: `The ${shortSell} Blueprint is the definitive resource for ${whoIsItFor} who want to stop guessing and start getting results. Built by someone who has been in their shoes.`,
+      offerSummary: `For just $${(priceNum / 100).toFixed(0)}, you get the complete ${shortSell} Blueprint — a step-by-step system, templates, checklists, and lifetime access to everything you need to move forward with confidence. No monthly fees. No fluff.`,
+      targetBuyer: `Your ideal buyer is a ${whoIsItFor} who has tried to figure out ${shortSell} on their own but feels stuck or overwhelmed. They want a clear path forward and are willing to invest in themselves to get real results.`,
+      priceReasoning: `At $${(priceNum / 100).toFixed(0)}, this product is priced to be an easy decision for ${whoIsItFor}. It's affordable enough to buy without hesitation, but high enough to signal that this is a serious, well-built resource — not a freebie. This sweet spot maximizes conversions while protecting your perceived value.`,
+      firstTenSalesStrategy: [
+        `Send a personal message to 10 people in your audience who would benefit most from this — be specific about why you thought of them`,
+        `Post your launch caption on Instagram and add the product link to your bio with a clear CTA`,
+        `Share a short Reel or TikTok showing the problem this solves and tease the solution`,
+        `Email your list with the announcement email and a limited-time launch offer`,
+        `Post in 2-3 relevant Facebook Groups or Reddit communities where your buyer hangs out, sharing value and mentioning your launch`,
+      ],
+      sevenDayLaunchPlan: [
+        { day: 1, title: 'Tease your launch', action: `Post a teaser on Instagram: "Something big is coming for ${whoIsItFor}… 👀 Stay tuned." Update bio link to a coming soon page or your store.` },
+        { day: 2, title: 'Show the problem', action: `Share a Reel/TikTok about the biggest struggle ${whoIsItFor} face with ${shortSell}. Don't sell yet — just be real and relatable.` },
+        { day: 3, title: 'Build anticipation', action: `Post 3 Instagram Stories showing a sneak peek inside the product. Ask your audience "Would this help you?" to create engagement.` },
+        { day: 4, title: 'Launch day', action: `Post your launch caption, send your announcement email, and DM your warm leads personally. Pin the launch post and update your bio link.` },
+        { day: 5, title: 'Share social proof', action: `Share any early feedback or screenshots. Post a "thank you" for early buyers and remind followers the product is live.` },
+        { day: 6, title: 'Answer objections', action: `Post a FAQ-style Instagram carousel or Story addressing the top 3 questions buyers have before purchasing.` },
+        { day: 7, title: 'Last call push', action: `Send a follow-up email, post a final Story reminder, and add a sense of urgency: "If you've been thinking about it, now is the time."` },
+      ],
+      instagramCaptions: [
+        `🚀 Launch day! The ${shortSell} Blueprint is finally here — built specifically for ${whoIsItFor} who are ready to stop guessing and start getting results.\n\nEverything you need in one place. Link in bio 👆\n\n#launch #${whoIsItFor.replace(/\s+/g, '')} #digitalproduct`,
+        `Here's what no one tells ${whoIsItFor} about ${shortSell}…\n\nYou don't need more motivation. You need a system.\n\nThat's exactly what The ${shortSell} Blueprint gives you. Tap the link in my bio to grab it.\n\n#${shortSell.replace(/\s+/g, '')} #creatoreconomy`,
+        `PSA for every ${whoIsItFor} who has been stuck on ${shortSell}:\n\nYou don't have to figure this out alone anymore. I put everything I know into one guide so you can move faster and stress less. 🙌\n\nLink in bio to get it now.`,
+      ],
+      reelsIdeas: [
+        `Hook: "If you're a ${whoIsItFor} struggling with ${shortSell}, watch this." Show 3 common mistakes in 30 seconds, then reveal your product as the solution in the last 5 seconds.`,
+        `Hook: "I made $X selling my first digital product — here's exactly how I did it." Walk through your product creation journey and show the finished product at the end.`,
+        `Hook: "POV: You just discovered the easiest way to [main outcome from ${shortSell}]." Screen-record or show a preview of your product, highlighting the most valuable section.`,
+      ],
+      dmScripts: [
+        `Hey [Name]! I just launched something I think you'd love — The ${shortSell} Blueprint. It's built for ${whoIsItFor} who want to get real results without the guesswork. Thought of you immediately. Want me to send you the link?`,
+        `Hi [Name], I know you've mentioned wanting to improve your ${shortSell} — I just put together a complete guide that covers exactly that. It's live now and I'd love for you to be one of the first to grab it. Here's the link: [link]. Let me know what you think!`,
+      ],
+      emailCopy: [
+        {
+          subject: `It's live: The ${shortSell} Blueprint for ${whoIsItFor}`,
+          body: `Hey [First Name],\n\nI've been working on something for the past few weeks and it's finally ready.\n\nIf you're a ${whoIsItFor} who has been struggling with ${shortSell} — I built this for you.\n\nThe ${shortSell} Blueprint is a step-by-step guide that gives you everything you need to get real results, without the guesswork.\n\nHere's what's inside:\n${['Step-by-step system', 'Templates and checklists', 'Actionable roadmap'].map(i => `• ${i}`).join('\n')}\n\n→ Grab it here: [link]\n\nIt's only $${(priceNum / 100).toFixed(0)} and you get instant access.\n\nHappy to answer any questions — just reply to this email.\n\n[Your name]`,
+        },
+        {
+          subject: `Still thinking about it? Here's what other ${whoIsItFor} said`,
+          body: `Hey [First Name],\n\nI sent you an email a couple days ago about The ${shortSell} Blueprint and wanted to follow up.\n\nI know life gets busy and it's easy for emails to get buried.\n\nHere's the short version: This is a practical, no-fluff guide for ${whoIsItFor} who are serious about getting results with ${shortSell}.\n\nIf that sounds like you, grab it here: [link]\n\nIf now isn't the right time, no worries at all — just hit reply and let me know.\n\n[Your name]`,
+        },
+      ],
+      productImageIdeas: [
+        `A clean, flat-lay mockup of a digital PDF or e-book with the product title on the cover, placed on a light desk with a coffee cup and notebook. Minimal, professional aesthetic.`,
+        `A device mockup showing the product open on an iPad or laptop screen, with a bright, inviting background. Include your brand colors and a subtle "Instant Access" badge.`,
+        `A styled graphic with the product title in bold typography, a simple icon representing ${shortSell}, and a clean gradient background. Works well as both a product thumbnail and social media share image.`,
+      ],
+      mockupPrompt: `Create a professional digital product mockup for "${shortSell} Blueprint". Show an open PDF/e-book on a clean white or light grey surface. Modern, minimal design. The cover should show a bold title, clean typography, and a subtle graphic element. High quality, flat-lay perspective, soft shadows. Style: modern digital creator product.`,
+    },
   }
 }
 
