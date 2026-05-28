@@ -233,7 +233,7 @@ export default function HomePage() {
             <span className="text-green-400">Only pay when you sell.</span>
           </h2>
           <p className="text-neutral-400 text-base leading-relaxed mb-8 max-w-md mx-auto">
-            Join the Creator Program and start building your first online business with AI. SellBop helps you turn what you know into a product you can sell — with no monthly fee and no SellBop platform fee until you make a sale.
+            Join the Creator Program and start building your first online business with AI. SellBop helps you turn what you know into a product you can sell — with no monthly fee and no credit card required to start.
           </p>
 
           {/* Benefit pills */}

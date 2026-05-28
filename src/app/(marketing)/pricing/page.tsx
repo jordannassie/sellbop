@@ -93,7 +93,7 @@ export default function PricingPage() {
             <span className="text-emerald-400">Start building for free.</span>
           </h2>
           <p className="text-neutral-400 text-sm sm:text-base leading-relaxed mb-8 max-w-lg">
-            Join the Creator Program and start building your first online business with AI. SellBop helps you turn what you know into a product you can sell — with no monthly fee and no SellBop platform fee until you make a sale.
+            Join the Creator Program and start building your first online business with AI. SellBop helps you turn what you know into a product you can sell — with no monthly fee and no credit card required to start.
           </p>
 
           <ul className="space-y-3 mb-10">
