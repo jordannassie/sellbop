@@ -75,12 +75,11 @@ export default function StoreSectionPage() {
   const { session } = useAuth()
   const { store: userStore, isDemo, saveStore } = useUserStore()
 
-  const [storefront, setStorefront] = useState<Storefront | null>(null)
+  // Demo mode: track published state via demoStorefrontRepo (localStorage)
+  const [demoStorefront, setDemoStorefront] = useState<Storefront | null>(null)
   const [publishing, setPublishing]     = useState(false)
   const [copied, setCopied]             = useState(false)
-  // draftSlug — what the user is typing / what LinkField reports as available
   const [draftSlug, setDraftSlug]       = useState('')
-  // savedSlug — the last slug that was actually persisted (used for Copy/Open/Preview)
   const [savedSlug, setSavedSlug]       = useState('')
   const [savingLink, setSavingLink]     = useState(false)
   const [linkStatus, setLinkStatus]     = useState<'idle'|'checking'|'available'|'taken'|'invalid'>('idle')
@@ -94,43 +93,41 @@ export default function StoreSectionPage() {
     setSavedSlug(userStore.slug)
   }, [userStore])
 
-  // Slug for Copy/Open/Preview — always the last persisted value
-  const activeSlug = savedSlug || userStore?.slug || DEMO_SELLER_PROFILE.slug
+  // Demo mode only: load published state from localStorage
+  async function loadDemoStorefront() {
+    const s = await demoStorefrontRepo.findBySellerId(DEMO_SELLER_PROFILE.id)
+    if (s) setDemoStorefront(s as Storefront)
+  }
+
+  useEffect(() => {
+    if (isDemo) void loadDemoStorefront()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDemo])
+
+  // Active slug: use the last saved value, then the store row, then demo fallback
+  const activeSlug = savedSlug || userStore?.slug || (isDemo ? DEMO_SELLER_PROFILE.slug : '')
   const hasUnsavedLink = draftSlug !== '' && draftSlug !== savedSlug
 
-  // ownerParam for availability API: current user can keep their own link
   const storeLinkOwnerParam = {
     key: 'ownerId',
     value: session?.userId ?? DEMO_SELLER_PROFILE.userId,
   }
 
-  async function loadStorefront() {
-    const s = await demoStorefrontRepo.findBySellerId(DEMO_SELLER_PROFILE.id)
-    if (s) setStorefront(s as Storefront)
-  }
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void loadStorefront()
-  }, [])
-
   async function handleSaveLink() {
     if (!draftSlug || draftSlug === savedSlug) return
     setSavingLink(true)
     try {
-      // Persist to Supabase (when authenticated)
       if (!isDemo) {
+        // Real user: persist to Supabase
         const err = await saveStore({ slug: draftSlug })
         if (err) { toast.error(`Could not save: ${err}`); return }
+      } else {
+        // Demo mode: keep localStorage in sync
+        if (demoStorefront) {
+          await demoStorefrontRepo.upsert({ ...demoStorefront, slug: draftSlug })
+          await loadDemoStorefront()
+        }
       }
-
-      // Keep localStorage in sync for the demo / UI layer
-      if (storefront) {
-        await demoStorefrontRepo.upsert({ ...storefront, slug: draftSlug })
-        await loadStorefront()
-      }
-
-      // Mark this slug as the live saved slug
       setSavedSlug(draftSlug)
       toast.success('Store link updated!')
     } catch {
@@ -140,12 +137,15 @@ export default function StoreSectionPage() {
     }
   }
 
+  // Publish / unpublish only meaningful in demo mode.
+  // Real stores are always accessible via Supabase once they have a slug.
   async function handlePublish() {
+    if (!isDemo) return
     setPublishing(true)
     try {
-      if (!storefront) { toast.error('Complete your store profile first.'); return }
-      await demoStorefrontRepo.upsert({ ...storefront, published: true })
-      await loadStorefront()
+      if (!demoStorefront) { toast.error('Complete your store profile first.'); return }
+      await demoStorefrontRepo.upsert({ ...demoStorefront, published: true })
+      await loadDemoStorefront()
       toast.success('Store published! Your store is now live.')
     } catch {
       toast.error('Failed to publish store.')
@@ -155,10 +155,11 @@ export default function StoreSectionPage() {
   }
 
   async function handleUnpublish() {
+    if (!isDemo) return
     try {
-      if (!storefront) return
-      await demoStorefrontRepo.upsert({ ...storefront, published: false })
-      await loadStorefront()
+      if (!demoStorefront) return
+      await demoStorefrontRepo.upsert({ ...demoStorefront, published: false })
+      await loadDemoStorefront()
       toast.success('Store unpublished.')
     } catch {
       toast.error('Failed.')
@@ -175,7 +176,9 @@ export default function StoreSectionPage() {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  const isPublished = storefront?.published ?? false
+  // Real users: store is always live (Supabase returns it publicly by slug).
+  // Demo users: track published flag via demoStorefrontRepo.
+  const isPublished = isDemo ? (demoStorefront?.published ?? false) : true
 
   return (
     <div className="max-w-3xl">
@@ -185,20 +188,22 @@ export default function StoreSectionPage() {
           <div className="flex items-center gap-2 mb-1">
             <h1 className="text-2xl font-bold text-black">Store</h1>
             <Badge variant={isPublished ? 'success' : 'neutral'}>
-              {isPublished ? 'Published' : 'Draft'}
+              {isPublished ? 'Live' : 'Draft'}
             </Badge>
           </div>
           <p className="text-sm text-neutral-500">
             {isPublished
-              ? 'Your store is live and discoverable.'
+              ? `Your store is live at sellbop.com/store/${activeSlug}`
               : 'Your store is in draft — not yet public.'}
           </p>
         </div>
-        <Link href={`/store/${activeSlug}`} target="_blank">
-          <Button variant="secondary" size="sm">
-            <Globe size={13} /> Preview <ArrowUpRight size={12} />
-          </Button>
-        </Link>
+        {activeSlug && (
+          <Link href={`/store/${activeSlug}`} target="_blank">
+            <Button variant="secondary" size="sm">
+              <Globe size={13} /> Preview <ArrowUpRight size={12} />
+            </Button>
+          </Link>
+        )}
       </div>
 
       {/* Publish controls */}
@@ -212,26 +217,29 @@ export default function StoreSectionPage() {
               </p>
               <p className="text-xs text-neutral-500">
                 {isPublished
-                  ? `Public at /store/${savedSlug || activeSlug}`
+                  ? `Accessible at sellbop.com/store/${savedSlug || activeSlug}`
                   : 'Publish to make your store visible and shareable'}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            {!isPublished ? (
-              <Button onClick={handlePublish} loading={publishing} size="sm">
-                <Globe size={13} /> Publish Store
-              </Button>
-            ) : (
+            {isPublished ? (
               <>
                 <Button variant="secondary" size="sm" onClick={handleCopyLink}>
                   {copied ? <Check size={13} /> : <Copy size={13} />}
                   {copied ? 'Copied!' : 'Copy Link'}
                 </Button>
-                <Button variant="ghost" size="sm" onClick={handleUnpublish}>
-                  <EyeOff size={13} /> Unpublish
-                </Button>
+                {/* Unpublish only available in demo mode */}
+                {isDemo && (
+                  <Button variant="ghost" size="sm" onClick={handleUnpublish}>
+                    <EyeOff size={13} /> Unpublish
+                  </Button>
+                )}
               </>
+            ) : (
+              <Button onClick={handlePublish} loading={publishing} size="sm">
+                <Globe size={13} /> Publish Store
+              </Button>
             )}
           </div>
         </div>
@@ -251,14 +259,16 @@ export default function StoreSectionPage() {
               {copied ? <Check size={11} className="text-emerald-500" /> : <Copy size={11} />}
               {copied ? 'Copied' : 'Copy'}
             </button>
-            <Link href={`/store/${activeSlug}`} target="_blank">
-              <button
-                type="button"
-                className="flex items-center gap-1.5 h-7 px-2.5 rounded-lg text-xs font-medium text-neutral-600 border border-neutral-200 hover:bg-neutral-50 transition-colors"
-              >
-                <ArrowUpRight size={11} /> Open
-              </button>
-            </Link>
+            {activeSlug && (
+              <Link href={`/store/${activeSlug}`} target="_blank">
+                <button
+                  type="button"
+                  className="flex items-center gap-1.5 h-7 px-2.5 rounded-lg text-xs font-medium text-neutral-600 border border-neutral-200 hover:bg-neutral-50 transition-colors"
+                >
+                  <ArrowUpRight size={11} /> Open
+                </button>
+              </Link>
+            )}
           </div>
         </div>
 
@@ -272,7 +282,6 @@ export default function StoreSectionPage() {
           label=""
         />
 
-        {/* Contextual helper text */}
         {hasUnsavedLink && linkStatus === 'available' && (
           <p className="text-xs text-emerald-600">Available — save to make this your live link.</p>
         )}

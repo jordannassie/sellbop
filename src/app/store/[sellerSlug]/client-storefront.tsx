@@ -190,11 +190,16 @@ export function ClientStorefront({ sellerSlug, initialStorefront, initialProduct
 
         {/* Empty */}
         {digitalProducts.length === 0 && clothingProducts.length === 0 && (
-          <div className="py-36 text-center">
+          <div className="py-36 text-center px-4">
             <div className="text-5xl mb-5">✦</div>
-            <p className="text-neutral-400 text-sm font-medium">
-              {initialStorefront ? 'No products yet.' : 'Products coming soon.'}
-            </p>
+            {initialStorefront ? (
+              <>
+                <p className="font-semibold text-black text-sm mb-1">No products yet.</p>
+                <p className="text-neutral-400 text-sm">This creator is still building their first product.</p>
+              </>
+            ) : (
+              <p className="text-neutral-400 text-sm font-medium">Products coming soon.</p>
+            )}
           </div>
         )}
       </div>
