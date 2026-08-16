@@ -17,6 +17,8 @@ import {
   Tag,
   X,
   Plus,
+  TrendingUp,
+  Grid3x3,
 } from 'lucide-react'
 import { useAuth } from '@/context/auth-context'
 import { useUserStore } from '@/hooks/use-user-store'
@@ -120,7 +122,8 @@ export function DashboardSidebar() {
     { href: '/dashboard/products', label: 'Products', icon: Package },
     { href: '/dashboard/sales', label: 'Sales', icon: ShoppingBag, activePaths: ['/dashboard/orders'] },
     { href: '/dashboard/customers', label: 'Customers', icon: Users },
-    { href: '/dashboard/discounts', label: 'Discounts', icon: Tag },
+    { href: '/marketplace', label: 'Marketplace', icon: Grid3x3 },
+    { href: '/dashboard/affiliates', label: 'Affiliates', icon: TrendingUp },
     { href: '/dashboard/library', label: 'Library', icon: BookOpen },
     { href: '/dashboard/payouts', label: 'Payouts', icon: DollarSign },
     { href: '/dashboard/settings', label: 'Settings', icon: Settings },
@@ -128,6 +131,8 @@ export function DashboardSidebar() {
 
   // Buyer-only nav (no store yet)
   const buyerNav: NavItem[] = [
+    { href: '/marketplace', label: 'Marketplace', icon: Grid3x3 },
+    { href: '/dashboard/affiliates', label: 'Affiliates', icon: TrendingUp },
     { href: '/dashboard/library', label: 'Library', icon: BookOpen },
     { href: '/dashboard/settings', label: 'Settings', icon: Settings },
   ]

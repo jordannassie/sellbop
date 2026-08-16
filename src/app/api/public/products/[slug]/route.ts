@@ -20,6 +20,7 @@ export async function GET(
     .select(`
       id, title, slug, product_type, description, short_description,
       cover_image_url, image_url, price_cents, is_live, access_message,
+      affiliate_enabled, affiliate_commission_percent,
       created_at, store_id
     `)
     .eq('slug', slug)

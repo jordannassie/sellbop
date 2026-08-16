@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { SellBopLogoStatic } from '@/components/ui/sellbop-logo'
 
 const LINKS = [
+  { href: '/marketplace', label: 'Marketplace' },
   { href: '/terms', label: 'Terms' },
   { href: '/privacy', label: 'Privacy' },
   { href: '/support', label: 'Support' },
@@ -26,6 +27,9 @@ export function MarketingNav() {
           </Link>
 
           <div className="flex items-center gap-2 sm:gap-3">
+            <Link href="/marketplace" className="hidden text-sm font-medium text-neutral-600 transition-colors hover:text-black sm:block">
+              Marketplace
+            </Link>
             {session ? (
               <Link href="/dashboard">
                 <Button size="sm">Dashboard</Button>

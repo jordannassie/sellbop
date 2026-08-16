@@ -11,7 +11,7 @@
 
 import { getSupabaseBrowserClient } from './client'
 
-export type UploadBucket = 'store-images' | 'store-banners' | 'product-images' | 'product-files' | 'ai-generated-images'
+export type UploadBucket = 'store-images' | 'store-banners' | 'product-images' | 'product-files'
 
 export interface UploadResult {
   url: string | null

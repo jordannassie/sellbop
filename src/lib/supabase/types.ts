@@ -98,6 +98,11 @@ export interface Database {
           cover_image_url: string | null
           checkout_copy: string | null
           access_message: string | null
+          category: string | null
+          marketplace_listing: boolean
+          affiliate_enabled: boolean
+          affiliate_commission_percent: number | null
+          affiliate_updated_at: string | null
           created_at: string
           updated_at: string
         }
@@ -123,10 +128,110 @@ export interface Database {
           cover_image_url?: string | null
           checkout_copy?: string | null
           access_message?: string | null
+          category?: string | null
+          marketplace_listing?: boolean
+          affiliate_enabled?: boolean
+          affiliate_commission_percent?: number | null
+          affiliate_updated_at?: string | null
           created_at?: string
           updated_at?: string
         }
         Update: Partial<Database['public']['Tables']['products']['Insert']>
+        Relationships: []
+      }
+
+      affiliate_relationships: {
+        Row: {
+          id: string
+          affiliate_user_id: string
+          product_id: string
+          seller_id: string
+          referral_code: string
+          source: string
+          status: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          affiliate_user_id: string
+          product_id: string
+          seller_id: string
+          referral_code: string
+          source?: string
+          status?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['affiliate_relationships']['Insert']>
+        Relationships: []
+      }
+
+      affiliate_clicks: {
+        Row: {
+          id: string
+          relationship_id: string
+          affiliate_user_id: string
+          product_id: string
+          seller_id: string
+          referral_code: string
+          landing_url: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          relationship_id: string
+          affiliate_user_id: string
+          product_id: string
+          seller_id: string
+          referral_code: string
+          landing_url?: string | null
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['affiliate_clicks']['Insert']>
+        Relationships: []
+      }
+
+      affiliate_commissions: {
+        Row: {
+          id: string
+          relationship_id: string
+          affiliate_user_id: string
+          seller_id: string
+          product_id: string
+          order_id: string
+          gross_sale_cents: number
+          commission_percent: number
+          commission_cents: number
+          currency: string
+          status: string
+          available_at: string | null
+          paid_at: string | null
+          reversed_at: string | null
+          reversal_reason: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          relationship_id: string
+          affiliate_user_id: string
+          seller_id: string
+          product_id: string
+          order_id: string
+          gross_sale_cents: number
+          commission_percent: number
+          commission_cents: number
+          currency?: string
+          status?: string
+          available_at?: string | null
+          paid_at?: string | null
+          reversed_at?: string | null
+          reversal_reason?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['affiliate_commissions']['Insert']>
         Relationships: []
       }
 

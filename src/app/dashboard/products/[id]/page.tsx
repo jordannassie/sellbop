@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, ExternalLink, Trash2, Upload, X, Copy } from 'lucide-react'
+import { ArrowLeft, ExternalLink, Trash2, Upload, X, Copy, Store, TrendingUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -13,6 +13,9 @@ import { slugify, formatCurrency } from '@/lib/utils'
 import { uploadFile, buildStoragePath } from '@/lib/supabase/storage'
 import { useAuth } from '@/context/auth-context'
 import { MAX_PRODUCT_FILE_SIZE_BYTES, MAX_COVER_IMAGE_SIZE_BYTES } from '@/lib/platform-config'
+
+const CATEGORIES = ['Business', 'Money', 'Templates', 'Education', 'Real Estate', 'Faith', 'Fitness', 'Design', 'Other']
+const COMMISSION_PRESETS = [10, 20, 30, 40, 50]
 
 interface ProductFile {
   id: string
@@ -34,6 +37,10 @@ interface Product {
   image_url: string | null
   is_live: boolean
   access_message: string | null
+  category: string | null
+  marketplace_listing: boolean
+  affiliate_enabled: boolean
+  affiliate_commission_percent: number | null
   created_at: string
   updated_at: string
 }
@@ -56,6 +63,11 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
   const [priceDollars, setPriceDollars] = useState('')
   const [isFree, setIsFree] = useState(false)
   const [isLive, setIsLive] = useState(false)
+  const [category, setCategory] = useState('')
+  const [marketplaceListing, setMarketplaceListing] = useState(false)
+  const [affiliateEnabled, setAffiliateEnabled] = useState(false)
+  const [affiliateCommission, setAffiliateCommission] = useState(30)
+  const [customCommission, setCustomCommission] = useState('')
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null)
   const [coverUploading, setCoverUploading] = useState(false)
   const [fileUploading, setFileUploading] = useState(false)
@@ -79,6 +91,16 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
           setPriceDollars(priceCents > 0 ? (priceCents / 100).toFixed(2) : '')
           setIsLive(p.is_live)
           setCoverImageUrl(p.cover_image_url ?? p.image_url ?? null)
+          setCategory(p.category ?? '')
+          setMarketplaceListing(p.marketplace_listing ?? false)
+          setAffiliateEnabled(p.affiliate_enabled ?? false)
+          const commPct = p.affiliate_commission_percent ?? 30
+          if ([10, 20, 30, 40, 50].includes(commPct)) {
+            setAffiliateCommission(commPct)
+            setCustomCommission('')
+          } else {
+            setCustomCommission(commPct.toString())
+          }
         })
         .catch(() => router.push('/dashboard/products'))
         .finally(() => setLoading(false))
@@ -158,6 +180,12 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
           price_cents: priceCents,
           cover_image_url: coverImageUrl,
           is_live: isLive,
+          category: category || null,
+          marketplace_listing: marketplaceListing,
+          affiliate_enabled: affiliateEnabled,
+          affiliate_commission_percent: affiliateEnabled
+            ? (customCommission ? parseInt(customCommission) || 0 : affiliateCommission)
+            : null,
         }),
       })
       const data = await res.json()
@@ -349,6 +377,131 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
             </div>
           </CardContent>
         </Card>
+
+        {/* Category */}
+        <Card>
+          <CardHeader><CardTitle>Category</CardTitle></CardHeader>
+          <CardContent>
+            <select
+              value={category}
+              onChange={e => setCategory(e.target.value)}
+              className="w-full rounded-xl border border-neutral-200 px-3 py-2.5 text-sm text-neutral-900 bg-white focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
+            >
+              <option value="">No category</option>
+              {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </CardContent>
+        </Card>
+
+        {/* Marketplace */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Store size={16} className="text-neutral-500" />
+              Marketplace
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <label className="flex items-center justify-between cursor-pointer select-none">
+              <div>
+                <p className="text-sm font-medium text-neutral-800">List in Sellbop Marketplace</p>
+                <p className="text-xs text-neutral-500 mt-0.5">Let people discover this product while browsing Sellbop.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMarketplaceListing(v => !v)}
+                className={`relative flex h-6 w-11 flex-shrink-0 rounded-full transition-colors duration-200 ${marketplaceListing ? 'bg-black' : 'bg-neutral-200'}`}
+              >
+                <span className={`inline-block h-5 w-5 translate-y-0.5 rounded-full bg-white shadow-sm transition-transform duration-200 ${marketplaceListing ? 'translate-x-5.5' : 'translate-x-0.5'}`} />
+              </button>
+            </label>
+          </CardContent>
+        </Card>
+
+        {/* Sellbop Share */}
+        {(() => {
+          const priceCentsPreview = isFree ? 0 : Math.round(parseFloat(priceDollars || '0') * 100)
+          const commPercent = affiliateEnabled ? (customCommission ? parseInt(customCommission) || 0 : affiliateCommission) : 0
+          const commCents = Math.floor(priceCentsPreview * (commPercent / 100))
+          return (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp size={16} className="text-emerald-600" />
+                  Sellbop Share
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <label className="flex items-center justify-between cursor-pointer select-none">
+                  <div>
+                    <p className="text-sm font-medium text-neutral-800">Affiliate Sharing</p>
+                    <p className="text-xs text-neutral-500 mt-0.5">Let other people sell this product for you. You only pay commission when they make a sale.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setAffiliateEnabled(v => !v)}
+                    className={`relative flex h-6 w-11 flex-shrink-0 rounded-full transition-colors duration-200 ${affiliateEnabled ? 'bg-emerald-500' : 'bg-neutral-200'}`}
+                  >
+                    <span className={`inline-block h-5 w-5 translate-y-0.5 rounded-full bg-white shadow-sm transition-transform duration-200 ${affiliateEnabled ? 'translate-x-5.5' : 'translate-x-0.5'}`} />
+                  </button>
+                </label>
+
+                {affiliateEnabled && (
+                  <div className="space-y-3 border-t border-neutral-100 pt-3">
+                    <p className="text-xs font-semibold text-neutral-600 uppercase tracking-wide">Affiliate Commission</p>
+                    <div className="flex gap-2 flex-wrap">
+                      {COMMISSION_PRESETS.map(p => (
+                        <button
+                          key={p}
+                          type="button"
+                          onClick={() => { setAffiliateCommission(p); setCustomCommission('') }}
+                          className={`rounded-xl px-3 py-1.5 text-sm font-semibold transition-all ${
+                            !customCommission && affiliateCommission === p
+                              ? 'bg-black text-white'
+                              : 'border border-neutral-200 text-neutral-700 hover:border-black hover:text-black'
+                          }`}
+                        >
+                          {p}%
+                        </button>
+                      ))}
+                      <input
+                        type="number"
+                        min="1"
+                        max="95"
+                        placeholder="Custom %"
+                        value={customCommission}
+                        onChange={e => setCustomCommission(e.target.value)}
+                        className="w-28 rounded-xl border border-neutral-200 px-3 py-1.5 text-sm focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
+                      />
+                    </div>
+                    {priceCentsPreview > 0 && commPercent > 0 && (
+                      <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-4">
+                        <div className="flex justify-between text-sm mb-1">
+                          <span className="text-neutral-600">Product price</span>
+                          <span className="font-medium">{formatCurrency(priceCentsPreview)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm mb-2">
+                          <span className="text-neutral-600">Commission ({commPercent}%)</span>
+                          <span className="font-medium text-emerald-700">−{formatCurrency(commCents)}</span>
+                        </div>
+                        <div className="border-t border-emerald-200 pt-2 flex justify-between">
+                          <span className="font-bold text-emerald-800">Affiliate earns per sale</span>
+                          <span className="text-xl font-black text-emerald-700">{formatCurrency(commCents)}</span>
+                        </div>
+                        <p className="mt-2 text-[11px] text-emerald-600">Platform fee and payment processing apply to your remainder.</p>
+                      </div>
+                    )}
+                    {priceCentsPreview === 0 && (
+                      <p className="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
+                        Affiliate commissions only apply to paid products.
+                      </p>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )
+        })()}
 
         {/* Visibility */}
         <Card>

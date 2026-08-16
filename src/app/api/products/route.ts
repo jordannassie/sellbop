@@ -74,7 +74,10 @@ export async function POST(request: Request) {
   if (!user) return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 })
 
   const body = await request.json()
-  const { title, description, short_description, price_cents, cover_image_url, slug: rawSlug, is_live } = body
+  const {
+    title, description, short_description, price_cents, cover_image_url, slug: rawSlug, is_live,
+    category, marketplace_listing, affiliate_enabled, affiliate_commission_percent,
+  } = body
 
   if (!title?.trim()) {
     return NextResponse.json({ error: 'Product title is required.' }, { status: 400 })
@@ -129,6 +132,11 @@ export async function POST(request: Request) {
       price_cents: price_cents ?? 0,
       cover_image_url: cover_image_url ?? null,
       is_live: is_live ?? false,
+      category: category ?? null,
+      marketplace_listing: marketplace_listing ?? false,
+      affiliate_enabled: affiliate_enabled ?? false,
+      affiliate_commission_percent: affiliate_enabled ? (affiliate_commission_percent ?? null) : null,
+      affiliate_updated_at: affiliate_enabled ? new Date().toISOString() : null,
     })
     .select('*')
     .single()

@@ -124,6 +124,15 @@ export async function PATCH(
   if ('is_live' in body) update.is_live = body.is_live as boolean
   if ('access_message' in body) update.access_message = body.access_message as string | null
   if ('checkout_copy' in body) update.checkout_copy = body.checkout_copy as string | null
+  if ('category' in body) update.category = body.category as string | null
+  if ('marketplace_listing' in body) update.marketplace_listing = body.marketplace_listing as boolean
+  if ('affiliate_enabled' in body) {
+    update.affiliate_enabled = body.affiliate_enabled as boolean
+    update.affiliate_updated_at = new Date().toISOString()
+  }
+  if ('affiliate_commission_percent' in body) {
+    update.affiliate_commission_percent = body.affiliate_commission_percent as number | null
+  }
 
   const { data: product, error } = await admin
     .from('products')

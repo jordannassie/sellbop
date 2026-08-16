@@ -44,7 +44,7 @@ export async function GET() {
   const productIds = [...new Set(purchases.map(p => p.product_id))]
   const { data: products } = await admin
     .from('products')
-    .select('id, title, slug, cover_image_url, image_url, price_cents')
+    .select('id, title, slug, cover_image_url, image_url, price_cents, affiliate_enabled, affiliate_commission_percent')
     .in('id', productIds)
 
   // Load store data for creator names
@@ -83,6 +83,8 @@ export async function GET() {
         creatorName: store?.name ?? null,
         creatorSlug: store?.slug ?? null,
         purchasedAt: p.created_at,
+        affiliateEnabled: (product as Record<string, unknown>)?.affiliate_enabled ?? false,
+        affiliateCommissionPercent: (product as Record<string, unknown>)?.affiliate_commission_percent ?? null,
       }
     })
 

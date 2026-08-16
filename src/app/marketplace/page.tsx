@@ -1,0 +1,255 @@
+'use client'
+
+import { useState, useEffect, useCallback } from 'react'
+import Link from 'next/link'
+import Image from 'next/image'
+import { Search, X, TrendingUp, ArrowRight } from 'lucide-react'
+import { formatCurrency } from '@/lib/utils'
+import { SellBopLogo } from '@/components/ui/sellbop-logo'
+
+const CATEGORIES = ['All', 'Business', 'Money', 'Templates', 'Education', 'Real Estate', 'Faith', 'Fitness', 'Design', 'Other']
+
+interface MarketplaceProduct {
+  id: string
+  title: string
+  slug: string
+  shortDescription: string | null
+  coverImage: string | null
+  priceCents: number
+  category: string | null
+  affiliateEnabled: boolean
+  affiliateCommissionPercent: number | null
+  storeName: string | null
+  storeSlug: string | null
+}
+
+function ProductCard({ product }: { product: MarketplaceProduct }) {
+  const commPercent = product.affiliateCommissionPercent ?? 0
+  const commCents = Math.floor(product.priceCents * (commPercent / 100))
+
+  return (
+    <div className="group relative overflow-hidden rounded-2xl border border-neutral-200 bg-white hover:border-neutral-300 hover:shadow-md transition-all duration-200">
+      {/* Cover image */}
+      <Link href={`/p/${product.slug}`}>
+        <div className="relative h-48 bg-gradient-to-br from-neutral-100 to-neutral-200 overflow-hidden">
+          {product.coverImage ? (
+            <Image
+              src={product.coverImage}
+              alt={product.title}
+              fill
+              className="object-cover group-hover:scale-105 transition-transform duration-300"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center">
+              <div className="text-5xl font-black text-neutral-300 select-none">
+                {product.title.charAt(0)}
+              </div>
+            </div>
+          )}
+          {product.category && (
+            <div className="absolute top-3 left-3">
+              <span className="inline-flex items-center rounded-full bg-white/90 backdrop-blur-sm px-2.5 py-1 text-[10px] font-bold text-neutral-700 shadow-sm">
+                {product.category}
+              </span>
+            </div>
+          )}
+        </div>
+      </Link>
+
+      <div className="p-4">
+        <Link href={`/p/${product.slug}`}>
+          <h3 className="font-semibold text-neutral-900 leading-snug line-clamp-2 hover:text-black transition-colors mb-1">
+            {product.title}
+          </h3>
+        </Link>
+
+        {product.shortDescription && (
+          <p className="text-xs text-neutral-500 line-clamp-2 mb-2">{product.shortDescription}</p>
+        )}
+
+        {product.storeName && (
+          <p className="text-xs text-neutral-400 mb-3">
+            by{' '}
+            {product.storeSlug ? (
+              <Link href={`/store/${product.storeSlug}`} className="hover:text-black hover:underline">
+                {product.storeName}
+              </Link>
+            ) : product.storeName}
+          </p>
+        )}
+
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div>
+            <span className="text-base font-bold text-black">
+              {product.priceCents === 0 ? 'Free' : formatCurrency(product.priceCents)}
+            </span>
+          </div>
+
+          {product.affiliateEnabled && commPercent > 0 && (
+            <Link href={`/p/${product.slug}`} className="flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-1 text-[10px] font-bold text-emerald-700 hover:bg-emerald-100 transition-colors">
+              <TrendingUp size={9} />
+              Earn {commPercent}% · {formatCurrency(commCents)}/sale
+            </Link>
+          )}
+        </div>
+
+        <Link
+          href={`/p/${product.slug}`}
+          className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl bg-black py-2 text-sm font-semibold text-white hover:bg-neutral-800 transition-colors"
+        >
+          View Product <ArrowRight size={13} />
+        </Link>
+      </div>
+    </div>
+  )
+}
+
+export default function MarketplacePage() {
+  const [query, setQuery] = useState('')
+  const [activeCategory, setActiveCategory] = useState('All')
+  const [products, setProducts] = useState<MarketplaceProduct[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  const fetchProducts = useCallback(async (q: string, cat: string) => {
+    setLoading(true)
+    try {
+      const params = new URLSearchParams()
+      if (q) params.set('q', q)
+      if (cat && cat !== 'All') params.set('category', cat)
+      const res = await fetch(`/api/marketplace?${params}`)
+      const data = await res.json()
+      setProducts(data.products ?? [])
+    } catch {
+      setError('Failed to load marketplace.')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    const timer = setTimeout(() => fetchProducts(query, activeCategory), query ? 350 : 0)
+    return () => clearTimeout(timer)
+  }, [query, activeCategory, fetchProducts])
+
+  return (
+    <div className="min-h-screen bg-neutral-50">
+      {/* Header */}
+      <header className="bg-white border-b border-neutral-100 sticky top-0 z-30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
+          <Link href="/">
+            <SellBopLogo size="lg" />
+          </Link>
+          <div className="flex items-center gap-3">
+            <Link href="/login" className="text-sm font-medium text-neutral-600 hover:text-black transition-colors">
+              Log in
+            </Link>
+            <Link
+              href="/signup"
+              className="rounded-xl bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-800 transition-colors"
+            >
+              Start Selling
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
+        {/* Hero */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl sm:text-4xl font-black text-black tracking-tight mb-2">
+            Discover what&apos;s selling.
+          </h1>
+          <p className="text-neutral-500 text-base max-w-md mx-auto">
+            Browse digital products from independent creators. Buy, download, or share and earn.
+          </p>
+        </div>
+
+        {/* Search */}
+        <div className="max-w-xl mx-auto mb-6">
+          <div className="relative">
+            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" />
+            <input
+              type="text"
+              placeholder="Search products, creators, categories..."
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              className="w-full rounded-xl border border-neutral-200 bg-white py-2.5 pl-10 pr-10 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-black focus:outline-none focus:ring-1 focus:ring-black shadow-sm"
+            />
+            {query && (
+              <button
+                onClick={() => setQuery('')}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Category pills */}
+        <div className="flex gap-2 overflow-x-auto pb-2 mb-6 scrollbar-hide">
+          {CATEGORIES.map(cat => (
+            <button
+              key={cat}
+              onClick={() => setActiveCategory(cat)}
+              className={`flex-shrink-0 rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
+                activeCategory === cat
+                  ? 'bg-black border-black text-white'
+                  : 'border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300 hover:text-black'
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+
+        {/* Error */}
+        {error && (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 mb-6">{error}</div>
+        )}
+
+        {/* Products grid */}
+        {loading ? (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="h-80 animate-pulse rounded-2xl bg-neutral-200" />
+            ))}
+          </div>
+        ) : products.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-24 text-center">
+            <div className="text-5xl mb-4">🛍️</div>
+            <h3 className="text-lg font-semibold text-neutral-800 mb-2">
+              {query || activeCategory !== 'All' ? 'No products found' : 'No products yet'}
+            </h3>
+            <p className="text-sm text-neutral-500 max-w-xs">
+              {query || activeCategory !== 'All'
+                ? 'Try a different search or category.'
+                : 'Be the first to publish a product on the Sellbop Marketplace.'}
+            </p>
+            {!query && activeCategory === 'All' && (
+              <Link
+                href="/signup"
+                className="mt-4 inline-flex items-center gap-2 rounded-xl bg-black px-5 py-2.5 text-sm font-semibold text-white hover:bg-neutral-800 transition-colors"
+              >
+                Start Selling <ArrowRight size={13} />
+              </Link>
+            )}
+          </div>
+        ) : (
+          <>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {products.map(p => (
+                <ProductCard key={p.id} product={p} />
+              ))}
+            </div>
+            <p className="mt-6 text-center text-xs text-neutral-400">
+              {products.length} product{products.length !== 1 ? 's' : ''} found
+            </p>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
