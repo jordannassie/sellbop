@@ -4,11 +4,13 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
+  BookOpen,
   LayoutDashboard,
   LogOut,
   Menu,
   Package,
   Settings,
+  Store,
   Users,
   DollarSign,
   ShoppingBag,
@@ -106,49 +108,31 @@ function UserAvatar({
 export function DashboardSidebar() {
   const pathname = usePathname()
   const router = useRouter()
-  const { signOut, session } = useAuth()
+  const { signOut, session, account } = useAuth()
   const { store } = useUserStore()
   const [mobileOpen, setMobileOpen] = useState(false)
 
-  const nav: NavItem[] = [
-    {
-      href: '/dashboard',
-      label: 'Dashboard',
-      icon: LayoutDashboard,
-      exact: true,
-    },
-    {
-      href: '/dashboard/products',
-      label: 'Products',
-      icon: Package,
-    },
-    {
-      href: '/dashboard/sales',
-      label: 'Sales',
-      icon: ShoppingBag,
-      activePaths: ['/dashboard/orders'],
-    },
-    {
-      href: '/dashboard/customers',
-      label: 'Customers',
-      icon: Users,
-    },
-    {
-      href: '/dashboard/discounts',
-      label: 'Discounts',
-      icon: Tag,
-    },
-    {
-      href: '/dashboard/payouts',
-      label: 'Payouts',
-      icon: DollarSign,
-    },
-    {
-      href: '/dashboard/settings',
-      label: 'Settings',
-      icon: Settings,
-    },
+  const hasStore = !!(account?.hasStore || store)
+
+  // Full seller nav
+  const sellerNav: NavItem[] = [
+    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, exact: true },
+    { href: '/dashboard/products', label: 'Products', icon: Package },
+    { href: '/dashboard/sales', label: 'Sales', icon: ShoppingBag, activePaths: ['/dashboard/orders'] },
+    { href: '/dashboard/customers', label: 'Customers', icon: Users },
+    { href: '/dashboard/discounts', label: 'Discounts', icon: Tag },
+    { href: '/dashboard/library', label: 'Library', icon: BookOpen },
+    { href: '/dashboard/payouts', label: 'Payouts', icon: DollarSign },
+    { href: '/dashboard/settings', label: 'Settings', icon: Settings },
   ]
+
+  // Buyer-only nav (no store yet)
+  const buyerNav: NavItem[] = [
+    { href: '/dashboard/library', label: 'Library', icon: BookOpen },
+    { href: '/dashboard/settings', label: 'Settings', icon: Settings },
+  ]
+
+  const nav = hasStore ? sellerNav : buyerNav
 
   async function handleLogout() {
     await signOut()
@@ -180,13 +164,23 @@ export function DashboardSidebar() {
 
   const createBtn = (onNavigate?: () => void) => (
     <div className="px-2 pt-3 pb-2">
-      <Link
-        href="/dashboard/products/new"
-        onClick={onNavigate}
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-black px-4 py-2.5 text-sm font-semibold text-white hover:bg-neutral-800 transition-colors"
-      >
-        <Plus size={15} /> Create Product
-      </Link>
+      {hasStore ? (
+        <Link
+          href="/dashboard/products/new"
+          onClick={onNavigate}
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-black px-4 py-2.5 text-sm font-semibold text-white hover:bg-neutral-800 transition-colors"
+        >
+          <Plus size={15} /> Create Product
+        </Link>
+      ) : (
+        <Link
+          href="/start-selling"
+          onClick={onNavigate}
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-black px-4 py-2.5 text-sm font-semibold text-white hover:bg-neutral-800 transition-colors"
+        >
+          <Store size={15} /> Start Selling
+        </Link>
+      )}
     </div>
   )
 

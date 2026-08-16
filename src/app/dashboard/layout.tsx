@@ -22,12 +22,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   }, [loading, router, session])
 
-  if (loading || !session || !account) {
+  if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-neutral-50">
         <div className="h-5 w-5 animate-spin rounded-full border-2 border-black border-t-transparent" />
       </div>
     )
+  }
+
+  if (!session) {
+    return null // useEffect above will redirect to /login
   }
 
   return (
@@ -37,13 +41,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div
         className={cn(
           'flex min-w-0 flex-1 flex-col overflow-x-hidden pt-14 lg:pt-0',
-          isStoreEditor && account.hasStore && 'overflow-hidden',
         )}
       >
         <main
           className={cn(
             'min-h-0 flex-1',
-            isStoreEditor && account.hasStore
+            isStoreEditor
               ? 'flex flex-col overflow-hidden p-0'
               : 'w-full max-w-6xl p-4 pb-28 sm:p-6 sm:pb-8 lg:p-8 lg:pb-10',
           )}

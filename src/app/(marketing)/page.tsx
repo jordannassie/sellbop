@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
+import { MissionSection } from '@/components/marketing/mission-section'
 import {
   ArrowRight,
   Check,
@@ -139,6 +140,9 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ── Mission ───────────────────────────────────────────────── */}
+      <MissionSection />
 
       {/* ── Final CTA ─────────────────────────────────────────────── */}
       <section className="border-t border-neutral-100 py-24 bg-black">

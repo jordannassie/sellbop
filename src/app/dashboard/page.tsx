@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { formatCurrency, timeAgo } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -43,13 +44,23 @@ function statusVariant(status: string) {
 }
 
 export default function DashboardOverview() {
-  const { session } = useAuth()
-  const { store } = useUserStore()
+  const { session, account } = useAuth()
+  const { store, loading: storeLoading } = useUserStore()
+  const router = useRouter()
   const [orders, setOrders] = useState<OrderRow[]>([])
   const [products, setProducts] = useState<ProductRow[]>([])
   const [loading, setLoading] = useState(true)
 
   const firstName = session?.name?.split(' ')[0] ?? session?.email?.split('@')[0] ?? 'there'
+  const hasStore = !!(account?.hasStore || store)
+
+  // Buyer-only users go straight to Library
+  useEffect(() => {
+    if (storeLoading) return
+    if (!hasStore) {
+      router.replace('/dashboard/library')
+    }
+  }, [storeLoading, hasStore, router])
 
   useEffect(() => {
     if (!isSupabaseConfigured()) {

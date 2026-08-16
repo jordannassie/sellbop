@@ -43,7 +43,7 @@ export default async function AuthCompletePage({
     redirect('/login')
   }
 
-  const { idea } = await searchParams
+  void searchParams
   const account = await bootstrapAuthenticatedUser(session)
-  redirect(resolvePostLoginDestination(session, account, idea))
+  redirect(resolvePostLoginDestination(session, account))
 }

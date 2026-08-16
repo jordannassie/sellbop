@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Loader2, RefreshCw, Sparkles } from 'lucide-react'
@@ -46,12 +46,18 @@ function IdeaBanner({ idea }: { idea: string }) {
 function AuthForm() {
   const router = useRouter()
   const params = useSearchParams()
-  const { signIn, signUp, signInWithGoogle } = useAuth()
+  const { signIn, signUp, signInWithGoogle, session, loading: authLoading } = useAuth()
 
   // Read idea from URL or fall back to localStorage
   const ideaFromParam = params.get('idea') ?? ''
   const idea = ideaFromParam || getLaunchIdea() || ''
-  const intent = params.get('intent') ?? ''
+
+  // If already authenticated, redirect away from login immediately
+  useEffect(() => {
+    if (!authLoading && session) {
+      router.replace('/dashboard')
+    }
+  }, [authLoading, session, router])
 
   // Detect OAuth error conditions
   const oauthError    = params.get('oauth_error')
@@ -74,19 +80,6 @@ function AuthForm() {
   // Prevent double-click on Google button (the OAuth redirect takes a moment)
   const [googleLoading, setGoogleLoading] = useState(false)
 
-  /**
-   * After successful email/password auth, route to AI Launch if
-   * there is a stored idea; otherwise fall through to /auth/complete.
-   */
-  function resolveRedirect() {
-    if (idea || intent === 'store_launch') {
-      return idea
-        ? `/auth/complete?idea=${encodeURIComponent(idea)}&intent=store_launch`
-        : '/auth/complete?intent=store_launch'
-    }
-    return '/auth/complete'
-  }
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
@@ -99,10 +92,11 @@ function AuthForm() {
         await signUp(email, password, name)
       }
 
-      router.push(resolveRedirect())
+      // Hard navigation so Next.js re-fetches with fresh session cookies.
+      // router.push alone can fail if the server-side session isn't yet visible.
+      window.location.href = '/dashboard'
     } catch (err) {
       setError(err instanceof Error ? err.message : mode === 'login' ? 'Login failed.' : 'Signup failed.')
-    } finally {
       setLoading(false)
     }
   }

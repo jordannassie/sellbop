@@ -33,7 +33,7 @@ export async function linkGuestCommerceByEmail(userId: string, email: string) {
   const admin = getSupabaseAdminClient()
   const normalizedEmail = normalizeEmail(email)
 
-  const updates = await Promise.all([
+  await Promise.all([
     admin
       .from('orders')
       .update({ buyer_user_id: userId })
@@ -44,36 +44,22 @@ export async function linkGuestCommerceByEmail(userId: string, email: string) {
       .update({ buyer_user_id: userId })
       .is('buyer_user_id', null)
       .filter('buyer_email', 'ilike', normalizedEmail),
-    admin
-      .from('subscriptions')
-      .update({ user_id: userId })
-      .is('user_id', null)
-      .filter('customer_email', 'ilike', normalizedEmail),
   ])
-
-  for (const result of updates) {
-    if (result.error) throw result.error
-  }
 }
 
 export async function getAccountSummaryByUserId(userId: string): Promise<AccountSummary> {
   const admin = getSupabaseAdminClient()
 
-  const [storeResult, purchaseResult, orderResult, subscriptionResult] = await Promise.all([
+  const [storeResult, purchaseResult, orderResult] = await Promise.all([
     admin.from('stores').select('id', { count: 'exact', head: true }).eq('owner_user_id', userId),
     admin.from('purchases').select('id', { count: 'exact', head: true }).eq('buyer_user_id', userId),
     admin.from('orders').select('id', { count: 'exact', head: true }).eq('buyer_user_id', userId),
-    admin.from('subscriptions').select('id', { count: 'exact', head: true }).eq('user_id', userId),
   ])
-
-  for (const result of [storeResult, purchaseResult, orderResult, subscriptionResult]) {
-    if (result.error) throw result.error
-  }
 
   return {
     hasStore: (storeResult.count ?? 0) > 0,
     hasPurchases: (purchaseResult.count ?? 0) > 0 || (orderResult.count ?? 0) > 0,
-    hasSubscriptions: (subscriptionResult.count ?? 0) > 0,
+    hasSubscriptions: false,
   }
 }
 
@@ -86,12 +72,8 @@ export async function bootstrapAuthenticatedUser(session: AuthSession) {
 export function resolvePostLoginDestination(
   session: AuthSession,
   account: AccountSummary,
-  launchIdea?: string,
 ) {
   if (isAllowedAdminEmail(session.email)) return '/internal/admin'
   void account
-  if (launchIdea) {
-    return `/dashboard/ai-launch?idea=${encodeURIComponent(launchIdea)}`
-  }
   return '/dashboard'
 }
