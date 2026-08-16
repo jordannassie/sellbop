@@ -1,179 +1,333 @@
 'use client'
-import { useState, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
-import { demoProductRepo } from '@/lib/adapters/demo/repositories'
-import { DEMO_SELLER_PROFILE } from '@/lib/demo-data/seed'
+import { ArrowLeft, Upload, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Select } from '@/components/ui/select'
-import { Toggle } from '@/components/ui/toggle'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ImageUpload } from '@/components/dashboard/image-upload'
-import { LinkField } from '@/components/dashboard/link-field'
 import { toast } from 'sonner'
 import { slugify } from '@/lib/utils'
-import type { ProductType } from '@/lib/domain/entities'
+import { uploadFile, buildStoragePath } from '@/lib/supabase/storage'
+import { useAuth } from '@/context/auth-context'
+import { MAX_PRODUCT_FILE_SIZE_BYTES, MAX_COVER_IMAGE_SIZE_BYTES } from '@/lib/platform-config'
 
-const TYPES = [
-  { value: 'digital_download', label: 'Digital Download' },
-  { value: 'service_offer', label: 'Service Offer' },
-  { value: 'subscription', label: 'Subscription' },
-  { value: 'bundle', label: 'Bundle' },
-]
-const CTA_OPTIONS = [
-  { value: 'Get Instant Access', label: 'Get Instant Access' },
-  { value: 'Buy Now', label: 'Buy Now' },
-  { value: 'Book and Pay', label: 'Book and Pay' },
-  { value: 'Join the Membership', label: 'Join the Membership' },
-  { value: 'Start Subscription', label: 'Start Subscription' },
-  { value: 'Download Now', label: 'Download Now' },
-  { value: 'Get the Bundle', label: 'Get the Bundle' },
-]
-
-function NewProductForm() {
+export default function NewProductPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const fromEditor = searchParams.get('from') === 'store-editor'
-  const [name, setName] = useState('')
+  const { session } = useAuth()
+  const [title, setTitle] = useState('')
   const [slug, setSlug] = useState('')
   const [description, setDescription] = useState('')
-  const [shortDescription, setShortDescription] = useState('')
-  const [productType, setProductType] = useState<ProductType>('digital_download')
-  const [price, setPrice] = useState('')
-  const [compareAtPrice, setCompareAtPrice] = useState('')
-  const [ctaText, setCtaText] = useState('Get Instant Access')
-  const [externalUrl, setExternalUrl] = useState('')
-  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null)
-  const [published, setPublished] = useState(false)
+  const [priceDollars, setPriceDollars] = useState('')
+  const [isFree, setIsFree] = useState(false)
+  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null)
+  const [coverUploading, setCoverUploading] = useState(false)
+  const [productFile, setProductFile] = useState<{ name: string; path: string; size: number; type: string } | null>(null)
+  const [fileUploading, setFileUploading] = useState(false)
+  const [isLive, setIsLive] = useState(false)
   const [saving, setSaving] = useState(false)
 
-  function handleNameChange(val: string) {
-    setName(val)
-    setSlug(slugify(val))
+  function handleTitleChange(val: string) {
+    setTitle(val)
+    if (!slug || slug === slugify(title)) {
+      setSlug(slugify(val))
+    }
+  }
+
+  async function handleCoverUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > MAX_COVER_IMAGE_SIZE_BYTES) {
+      toast.error('Cover image must be under 5 MB.')
+      return
+    }
+    setCoverUploading(true)
+    const path = buildStoragePath(session?.userId ?? 'unknown', file.name)
+    const result = await uploadFile('product-images', path, file)
+    if (result.error) {
+      toast.error('Upload failed: ' + result.error)
+    } else if (result.url) {
+      setCoverImageUrl(result.url)
+      toast.success('Cover image uploaded.')
+    }
+    setCoverUploading(false)
+  }
+
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > MAX_PRODUCT_FILE_SIZE_BYTES) {
+      toast.error('File must be under 100 MB.')
+      return
+    }
+    setFileUploading(true)
+    const path = buildStoragePath(session?.userId ?? 'unknown', file.name)
+    const result = await uploadFile('product-files', path, file)
+    if (result.error) {
+      toast.error('Upload failed: ' + result.error)
+    } else if (result.path) {
+      setProductFile({ name: file.name, path: result.path, size: file.size, type: file.type })
+      toast.success('File uploaded.')
+    }
+    setFileUploading(false)
   }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
-    if (!name || !slug || !price) return toast.error('Please fill in all required fields.')
-    const priceAmount = Math.round(parseFloat(price) * 100)
-    if (isNaN(priceAmount) || priceAmount < 50) return toast.error('Price must be at least $0.50.')
+    if (!title.trim()) return toast.error('Product title is required.')
+    if (!slug.trim()) return toast.error('Product URL slug is required.')
+
+    const priceCents = isFree ? 0 : Math.round(parseFloat(priceDollars || '0') * 100)
+    if (!isFree && (isNaN(priceCents) || priceCents < 50)) {
+      return toast.error('Price must be at least $0.50 for paid products.')
+    }
+
     setSaving(true)
     try {
-      await demoProductRepo.create({
-        sellerId: DEMO_SELLER_PROFILE.id,
-        name, slug, description, shortDescription: shortDescription || null,
-        productType, status: published ? 'published' : 'draft',
-        price: priceAmount,
-        compareAtPrice: compareAtPrice ? Math.round(parseFloat(compareAtPrice) * 100) : null,
-        currency: 'usd',
-        thumbnailUrl: thumbnailUrl, coverImageUrl: thumbnailUrl, galleryImageUrls: [],
-        category: null, tags: [], fileAssetIds: [],
-        externalUrl: externalUrl || null,
-        confirmationMessage: null, supportEmail: DEMO_SELLER_PROFILE.supportEmail,
-        ctaText, seoTitle: null, seoDescription: null,
-        licenseKeyEnabled: false, memberAccessEnabled: false,
-        downloadLimit: null, accessExpirationDays: null, variants: [],
-        publishedAt: published ? new Date().toISOString() : null,
-        marketplaceVisible: true, marketplaceExcerpt: null,
+      const res = await fetch('/api/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: title.trim(),
+          slug: slug.trim(),
+          description: description.trim() || null,
+          price_cents: priceCents,
+          cover_image_url: coverImageUrl,
+          is_live: isLive,
+        }),
       })
+
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? 'Failed to create product.')
+
+      const productId = data.product.id
+
+      // Register the uploaded file if one was uploaded
+      if (productFile) {
+        await fetch(`/api/products/${productId}/files`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            file_name: productFile.name,
+            file_type: productFile.type,
+            file_size: productFile.size,
+            storage_path: productFile.path,
+          }),
+        })
+      }
+
       toast.success('Product created!')
-      router.push(fromEditor ? '/dashboard/store-editor' : '/dashboard/products')
-    } catch { toast.error('Failed to create product.') }
-    finally { setSaving(false) }
+      router.push(`/dashboard/products/${productId}`)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to create product.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
     <div className="max-w-2xl">
-      {/* Back to Store Editor — always shown on mobile (editor nav is persistent) */}
-      <div className="mb-5 sm:hidden">
+      <div className="mb-6">
         <Link
-          href="/dashboard/store-editor"
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-neutral-500 hover:text-black transition-colors"
+          href="/dashboard/products"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-neutral-500 hover:text-black transition-colors mb-4"
         >
-          <ArrowLeft size={14} />
-          Back to Store Editor
+          <ArrowLeft size={14} /> Products
         </Link>
+        <h1 className="text-2xl font-bold text-black">Create Product</h1>
+        <p className="text-sm text-neutral-500 mt-1">Upload your file, set a price, and publish.</p>
       </div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-black">New Product</h1>
-        <p className="text-neutral-500 text-sm mt-1">Create your sell page.</p>
-      </div>
+
       <form onSubmit={handleSave} className="space-y-5">
+        {/* Product Name */}
         <Card>
-          <CardHeader><CardTitle>Basics</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Product Details</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            <Input label="Product Name *" value={name} onChange={e => handleNameChange(e.target.value)} placeholder="Notion Template Pack" required />
-            <LinkField
-              label="Product link *"
-              value={slug}
-              onChange={setSlug}
-              prefix="sellbop.com/p/"
-              checkUrl="/api/availability/product-link"
+            <Input
+              label="Product Name *"
+              value={title}
+              onChange={e => handleTitleChange(e.target.value)}
+              placeholder="e.g. Airbnb Investment Calculator"
               required
             />
-            <div className="grid grid-cols-2 gap-4">
-              <Select label="Product Type" value={productType} onChange={e => setProductType(e.target.value as ProductType)} options={TYPES} />
-              <Select label="CTA Button" value={ctaText} onChange={e => setCtaText(e.target.value)} options={CTA_OPTIONS} />
-            </div>
-            <Textarea label="Description" value={description} onChange={e => setDescription(e.target.value)} placeholder="Describe what buyers get..." rows={4} />
-            <Input label="Short Description" value={shortDescription} onChange={e => setShortDescription(e.target.value)} placeholder="One-line summary shown in listings" />
+            <Textarea
+              label="Description"
+              value={description}
+              onChange={e => setDescription(e.target.value)}
+              placeholder="What does your product include? Who is it for?"
+              rows={4}
+            />
           </CardContent>
         </Card>
 
+        {/* Cover Image */}
         <Card>
-          <CardHeader><CardTitle>Media</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Cover Image</CardTitle></CardHeader>
           <CardContent>
-            <ImageUpload value={thumbnailUrl} onChange={setThumbnailUrl} />
+            {coverImageUrl ? (
+              <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-neutral-100">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={coverImageUrl} alt="Cover" className="w-full h-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => setCoverImageUrl(null)}
+                  className="absolute top-2 right-2 p-1.5 bg-black/50 rounded-lg text-white hover:bg-black/70 transition-colors"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ) : (
+              <label className="flex flex-col items-center justify-center w-full aspect-video rounded-xl border-2 border-dashed border-neutral-200 bg-neutral-50 cursor-pointer hover:border-neutral-400 hover:bg-neutral-100 transition-all">
+                {coverUploading ? (
+                  <div className="w-5 h-5 border-2 border-neutral-400 border-t-black rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <Upload size={24} className="text-neutral-400 mb-2" />
+                    <p className="text-sm font-medium text-neutral-600">Upload cover image</p>
+                    <p className="text-xs text-neutral-400 mt-1">JPG, PNG, WebP · Max 5 MB</p>
+                  </>
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleCoverUpload}
+                  disabled={coverUploading}
+                />
+              </label>
+            )}
           </CardContent>
         </Card>
 
+        {/* Price */}
         <Card>
           <CardHeader><CardTitle>Pricing</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <Input label="Price (USD) *" type="number" value={price} onChange={e => setPrice(e.target.value)} placeholder="29" min="0.50" step="0.01" required />
-              <Input label="Compare-at Price" type="number" value={compareAtPrice} onChange={e => setCompareAtPrice(e.target.value)} placeholder="49" step="0.01" hint="Shows as strikethrough" />
+            <div className="flex items-center gap-3">
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={isFree}
+                  onChange={e => setIsFree(e.target.checked)}
+                  className="w-4 h-4 rounded border-neutral-300"
+                />
+                <span className="text-sm font-medium text-neutral-700">Free product</span>
+              </label>
             </div>
+            {!isFree && (
+              <Input
+                label="Price (USD) *"
+                type="number"
+                min="0.50"
+                step="0.01"
+                value={priceDollars}
+                onChange={e => setPriceDollars(e.target.value)}
+                placeholder="29.00"
+                required={!isFree}
+              />
+            )}
+            {isFree && (
+              <p className="text-xs text-neutral-500 bg-neutral-50 rounded-lg px-3 py-2">
+                Free products let customers get your product without paying — great for lead magnets.
+              </p>
+            )}
           </CardContent>
         </Card>
 
-        {(productType === 'service_offer' || productType === 'subscription') && (
-          <Card>
-            <CardHeader><CardTitle>Fulfillment</CardTitle></CardHeader>
-            <CardContent>
-              <Input label="Booking / Access Link" type="url" value={externalUrl} onChange={e => setExternalUrl(e.target.value)} placeholder="https://cal.com/yourname" hint="Shown to buyer after purchase" />
-            </CardContent>
-          </Card>
-        )}
-
+        {/* Digital File */}
         <Card>
-          <CardContent className="pt-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-neutral-900">Publish Page</p>
-                <p className="text-xs text-neutral-500 mt-0.5">Make this product publicly visible.</p>
+          <CardHeader><CardTitle>Digital File</CardTitle></CardHeader>
+          <CardContent>
+            {productFile ? (
+              <div className="flex items-center gap-3 bg-neutral-50 rounded-xl px-4 py-3 border border-neutral-200">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-neutral-900 truncate">{productFile.name}</p>
+                  <p className="text-xs text-neutral-500">{(productFile.size / 1024 / 1024).toFixed(1)} MB</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setProductFile(null)}
+                  className="p-1.5 text-neutral-400 hover:text-red-500 transition-colors"
+                >
+                  <X size={14} />
+                </button>
               </div>
-              <Toggle checked={published} onChange={setPublished} />
-            </div>
+            ) : (
+              <label className="flex flex-col items-center justify-center w-full py-10 rounded-xl border-2 border-dashed border-neutral-200 bg-neutral-50 cursor-pointer hover:border-neutral-400 hover:bg-neutral-100 transition-all">
+                {fileUploading ? (
+                  <div className="w-5 h-5 border-2 border-neutral-400 border-t-black rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <Upload size={24} className="text-neutral-400 mb-2" />
+                    <p className="text-sm font-medium text-neutral-600">Upload product file</p>
+                    <p className="text-xs text-neutral-400 mt-1">PDF, ZIP, XLSX, DOCX, images and more · Max 100 MB</p>
+                  </>
+                )}
+                <input
+                  type="file"
+                  className="hidden"
+                  onChange={handleFileUpload}
+                  disabled={fileUploading}
+                />
+              </label>
+            )}
           </CardContent>
         </Card>
 
-        <div className="flex gap-3">
-          <Button type="submit" loading={saving}>{published ? 'Publish Product' : 'Save as Draft'}</Button>
-        <Button type="button" variant="secondary" onClick={() => router.back()}>Cancel</Button>
-      </div>
-    </form>
-  </div>
-  )
-}
+        {/* Product URL */}
+        <Card>
+          <CardHeader><CardTitle>Product URL</CardTitle></CardHeader>
+          <CardContent>
+            <div className="flex items-center rounded-xl border border-neutral-200 overflow-hidden">
+              <span className="px-3 py-2.5 text-sm text-neutral-500 bg-neutral-50 border-r border-neutral-200 shrink-0">
+                sellbop.com/p/
+              </span>
+              <input
+                type="text"
+                value={slug}
+                onChange={e => setSlug(slugify(e.target.value))}
+                className="flex-1 px-3 py-2.5 text-sm font-mono focus:outline-none"
+                placeholder="my-product-name"
+              />
+            </div>
+            <p className="text-xs text-neutral-400 mt-1.5">
+              Your product will be available at sellbop.com/p/{slug || 'your-product-name'}
+            </p>
+          </CardContent>
+        </Card>
 
-export default function NewProductPage() {
-  return (
-    <Suspense fallback={null}>
-      <NewProductForm />
-    </Suspense>
+        {/* Publish */}
+        <Card>
+          <CardHeader><CardTitle>Visibility</CardTitle></CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-3">
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={isLive}
+                  onChange={e => setIsLive(e.target.checked)}
+                  className="w-4 h-4 rounded border-neutral-300"
+                />
+                <span className="text-sm font-medium text-neutral-700">Publish immediately</span>
+              </label>
+            </div>
+            <p className="text-xs text-neutral-400 mt-2">
+              {isLive ? 'Product will be publicly visible after saving.' : 'Product will be saved as a draft.'}
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Actions */}
+        <div className="flex items-center gap-3 pb-8">
+          <Button type="submit" loading={saving} disabled={fileUploading || coverUploading}>
+            {isLive ? 'Publish Product' : 'Save Draft'}
+          </Button>
+          <Link href="/dashboard/products">
+            <Button type="button" variant="secondary">Cancel</Button>
+          </Link>
+        </div>
+      </form>
+    </div>
   )
 }

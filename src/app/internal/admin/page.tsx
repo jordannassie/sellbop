@@ -4,10 +4,8 @@ import { AdminSidebar, type AdminSection } from '@/components/admin/admin-sideba
 import { AdminOverview } from '@/components/admin/overview'
 import { UsersSection, SellersSection, BuyersSection, ProductsSection } from '@/components/admin/users-section'
 import { OrdersSection } from '@/components/admin/orders-section'
-import { SubscriptionsSection } from '@/components/admin/subscriptions-section'
-import { SupportSection } from '@/components/admin/support-section'
 import { requireAdminUser } from '@/lib/admin/access'
-import { getAdminOrders, getAdminOverviewData, getAdminSubscriptions, getAdminUsers } from '@/lib/admin/users'
+import { getAdminOrders, getAdminOverviewData, getAdminUsers } from '@/lib/admin/users'
 
 function isAdminSection(value: string | undefined): value is AdminSection {
   return value === 'overview'
@@ -16,8 +14,6 @@ function isAdminSection(value: string | undefined): value is AdminSection {
     || value === 'buyers'
     || value === 'products'
     || value === 'orders'
-    || value === 'subscriptions'
-    || value === 'support'
 }
 
 export default async function AdminPage({
@@ -30,16 +26,10 @@ export default async function AdminPage({
   const params = await searchParams
   const section: AdminSection = isAdminSection(params.section) ? params.section : 'overview'
 
-  const usersPromise = getAdminUsers()
-  const overviewPromise = getAdminOverviewData()
-  const ordersPromise = getAdminOrders()
-  const subscriptionsPromise = getAdminSubscriptions()
-
-  const [users, overview, orders, subscriptions] = await Promise.all([
-    usersPromise,
-    overviewPromise,
-    ordersPromise,
-    subscriptionsPromise,
+  const [users, overview, orders] = await Promise.all([
+    getAdminUsers(),
+    getAdminOverviewData(),
+    getAdminOrders(),
   ])
 
   return (
@@ -62,15 +52,13 @@ export default async function AdminPage({
           </div>
         </div>
 
-        <div className={section === 'support' ? 'p-8 pb-0' : 'max-w-6xl p-8'}>
+        <div className="max-w-6xl p-8">
           {section === 'overview' && <AdminOverview data={overview} />}
           {section === 'users' && <UsersSection users={users} />}
           {section === 'sellers' && <SellersSection users={users} />}
           {section === 'buyers' && <BuyersSection users={users} />}
           {section === 'products' && <ProductsSection />}
           {section === 'orders' && <OrdersSection orders={orders} />}
-          {section === 'subscriptions' && <SubscriptionsSection subscriptions={subscriptions} />}
-          {section === 'support' && <SupportSection />}
         </div>
       </main>
     </div>

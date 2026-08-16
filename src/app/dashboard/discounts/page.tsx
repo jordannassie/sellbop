@@ -1,72 +1,171 @@
 'use client'
-import { useState, useEffect } from 'react'
-import { demoCouponRepo } from '@/lib/adapters/demo/repositories'
-import { DEMO_SELLER_PROFILE } from '@/lib/demo-data/seed'
-import { formatDate } from '@/lib/utils'
+import { useEffect, useState } from 'react'
+import { useAuth } from '@/context/auth-context'
+import { formatCurrency } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Select } from '@/components/ui/select'
-import { EmptyState } from '@/components/ui/empty-state'
-import { Tag } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
-import type { Coupon } from '@/lib/domain/entities'
+import { Tag, Trash2, Plus } from 'lucide-react'
+import { isSupabaseConfigured } from '@/lib/env'
+import { getSupabaseBrowserClient } from '@/lib/supabase/client'
+import { useUserStore } from '@/hooks/use-user-store'
+
+interface DiscountCode {
+  id: string
+  code: string
+  discount_type: string
+  discount_value: number
+  max_uses: number | null
+  used_count: number
+  active: boolean
+  expires_at: string | null
+  created_at: string
+}
 
 export default function DiscountsPage() {
-  const [coupons, setCoupons] = useState<Coupon[]>([])
+  const { session } = useAuth()
+  const { store } = useUserStore()
+  const [codes, setCodes] = useState<DiscountCode[]>([])
+  const [loading, setLoading] = useState(true)
+  const [creating, setCreating] = useState(false)
   const [showForm, setShowForm] = useState(false)
-  const [code, setCode] = useState('')
-  const [type, setType] = useState<'percent' | 'fixed'>('percent')
-  const [value, setValue] = useState('')
-  const [maxUses, setMaxUses] = useState('')
-  const [saving, setSaving] = useState(false)
 
-  useEffect(() => { demoCouponRepo.findBySellerId(DEMO_SELLER_PROFILE.id).then(setCoupons) }, [])
+  // Form
+  const [code, setCode] = useState('')
+  const [discountType, setDiscountType] = useState<'percent' | 'fixed'>('percent')
+  const [discountValue, setDiscountValue] = useState('')
+  const [maxUses, setMaxUses] = useState('')
+  const [expiresAt, setExpiresAt] = useState('')
+
+  useEffect(() => {
+    if (!session || !store || !isSupabaseConfigured()) { setLoading(false); return }
+    const supabase = getSupabaseBrowserClient()
+    if (!supabase) { setLoading(false); return }
+    supabase
+      .from('discount_codes')
+      .select('*')
+      .eq('seller_id', session.userId)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        setCodes(data ?? [])
+        setLoading(false)
+      })
+  }, [session, store])
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
-    if (!code || !value) return
-    setSaving(true)
-    const c = await demoCouponRepo.create({
-      sellerId: DEMO_SELLER_PROFILE.id, code: code.toUpperCase(),
-      type, value: type === 'fixed' ? Math.round(parseFloat(value) * 100) : parseFloat(value),
-      maxUses: maxUses ? parseInt(maxUses) : null, usedCount: 0,
-      active: true, expiresAt: null, productIds: null,
-    })
-    setCoupons(prev => [...prev, c])
-    setShowForm(false); setCode(''); setValue(''); setMaxUses('')
-    toast.success(`Coupon ${c.code} created.`)
-    setSaving(false)
+    if (!session || !store || !code.trim() || !discountValue) return
+    const val = parseInt(discountValue)
+    if (isNaN(val) || val <= 0) return toast.error('Invalid discount value.')
+    if (discountType === 'percent' && val > 100) return toast.error('Percentage cannot exceed 100.')
+    setCreating(true)
+    const supabase = getSupabaseBrowserClient()
+    if (!supabase) { toast.error('Not connected.'); setCreating(false); return }
+    const { data, error } = await supabase
+      .from('discount_codes')
+      .insert({
+        store_id: store.id,
+        seller_id: session.userId,
+        code: code.trim().toUpperCase(),
+        discount_type: discountType,
+        discount_value: discountType === 'fixed' ? Math.round(parseFloat(discountValue) * 100) : val,
+        max_uses: maxUses ? parseInt(maxUses) : null,
+        expires_at: expiresAt || null,
+        active: true,
+      })
+      .select('*')
+      .single()
+    if (error) { toast.error(error.message) }
+    else { setCodes(prev => [data, ...prev]); toast.success('Discount code created.'); setShowForm(false); setCode(''); setDiscountValue('') }
+    setCreating(false)
   }
 
-  async function toggleActive(coupon: Coupon) {
-    await demoCouponRepo.update(coupon.id, { active: !coupon.active })
-    setCoupons(prev => prev.map(c => c.id === coupon.id ? { ...c, active: !c.active } : c))
+  async function handleToggle(id: string, active: boolean) {
+    const supabase = getSupabaseBrowserClient()
+    if (!supabase) return
+    await supabase.from('discount_codes').update({ active: !active }).eq('id', id)
+    setCodes(prev => prev.map(c => c.id === id ? { ...c, active: !active } : c))
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm('Delete this discount code?')) return
+    const supabase = getSupabaseBrowserClient()
+    if (!supabase) return
+    await supabase.from('discount_codes').delete().eq('id', id)
+    setCodes(prev => prev.filter(c => c.id !== id))
+    toast.success('Discount code deleted.')
   }
 
   return (
     <div>
-      <div className="mb-8 flex items-center justify-between">
+      <div className="mb-6 flex items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-black">Discounts</h1>
-          <p className="text-neutral-500 text-sm mt-1">{coupons.filter(c => c.active).length} active coupons</p>
+          <p className="mt-1 text-sm text-neutral-500">Create coupon codes for your products.</p>
         </div>
-        <Button onClick={() => setShowForm(!showForm)}>+ New Coupon</Button>
+        <Button size="sm" onClick={() => setShowForm(v => !v)}>
+          <Plus size={14} /> New Code
+        </Button>
       </div>
 
       {showForm && (
-        <Card className="mb-6">
-          <CardHeader><CardTitle>Create Coupon</CardTitle></CardHeader>
+        <Card className="mb-5">
+          <CardHeader><CardTitle>Create Discount Code</CardTitle></CardHeader>
           <CardContent>
-            <form onSubmit={handleCreate} className="grid sm:grid-cols-4 gap-4">
-              <Input label="Code" value={code} onChange={e => setCode(e.target.value.toUpperCase())} placeholder="WELCOME10" required />
-              <Select label="Type" value={type} onChange={e => setType(e.target.value as 'percent' | 'fixed')} options={[{ value: 'percent', label: 'Percent %' }, { value: 'fixed', label: 'Fixed $' }]} />
-              <Input label={type === 'percent' ? 'Percent Off' : 'Amount Off ($)'} type="number" value={value} onChange={e => setValue(e.target.value)} placeholder={type === 'percent' ? '10' : '5.00'} required />
-              <Input label="Max Uses" type="number" value={maxUses} onChange={e => setMaxUses(e.target.value)} placeholder="Unlimited" />
-              <div className="sm:col-span-4 flex gap-3">
-                <Button type="submit" loading={saving} size="sm">Create Coupon</Button>
-                <Button type="button" variant="secondary" size="sm" onClick={() => setShowForm(false)}>Cancel</Button>
+            <form onSubmit={handleCreate} className="space-y-4">
+              <Input
+                label="Code *"
+                value={code}
+                onChange={e => setCode(e.target.value.toUpperCase())}
+                placeholder="SUMMER20"
+                className="font-mono uppercase"
+                required
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-neutral-500 mb-1">Type</label>
+                  <select
+                    value={discountType}
+                    onChange={e => setDiscountType(e.target.value as 'percent' | 'fixed')}
+                    className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2.5 text-sm focus:outline-none"
+                  >
+                    <option value="percent">Percentage (%)</option>
+                    <option value="fixed">Fixed Amount ($)</option>
+                  </select>
+                </div>
+                <Input
+                  label={discountType === 'percent' ? 'Percent off *' : 'Dollars off *'}
+                  type="number"
+                  min="1"
+                  max={discountType === 'percent' ? '100' : undefined}
+                  step={discountType === 'fixed' ? '0.01' : '1'}
+                  value={discountValue}
+                  onChange={e => setDiscountValue(e.target.value)}
+                  placeholder={discountType === 'percent' ? '20' : '10.00'}
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  label="Max uses (optional)"
+                  type="number"
+                  min="1"
+                  value={maxUses}
+                  onChange={e => setMaxUses(e.target.value)}
+                  placeholder="∞"
+                />
+                <Input
+                  label="Expires at (optional)"
+                  type="date"
+                  value={expiresAt}
+                  onChange={e => setExpiresAt(e.target.value)}
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button type="submit" loading={creating}>Create Code</Button>
+                <Button type="button" variant="secondary" onClick={() => setShowForm(false)}>Cancel</Button>
               </div>
             </form>
           </CardContent>
@@ -74,34 +173,46 @@ export default function DiscountsPage() {
       )}
 
       <Card>
-        <CardHeader><CardTitle>All Coupons</CardTitle></CardHeader>
+        <CardHeader><CardTitle>Discount Codes</CardTitle></CardHeader>
         <CardContent className="p-0">
-          {coupons.length === 0 ? (
-            <EmptyState icon={<Tag size={32} />} title="No coupons yet" />
+          {loading ? (
+            <div className="px-6 py-10 space-y-3">
+              {[1,2].map(i => <div key={i} className="h-12 bg-neutral-100 rounded animate-pulse" />)}
+            </div>
+          ) : codes.length === 0 ? (
+            <div className="px-6 py-16 text-center">
+              <Tag size={32} className="mx-auto mb-3 text-neutral-200" />
+              <p className="text-sm font-medium text-neutral-700 mb-1">No discount codes yet</p>
+              <p className="text-xs text-neutral-400">Create discount codes to offer deals to your customers.</p>
+            </div>
           ) : (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-neutral-100 bg-neutral-50">
-                  {['Code', 'Discount', 'Uses', 'Status', 'Created', ''].map(h => (
-                    <th key={h} className="text-left px-6 py-3 text-xs font-medium text-neutral-500">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-neutral-50">
-                {coupons.map(c => (
-                  <tr key={c.id} className="hover:bg-neutral-50">
-                    <td className="px-6 py-3 font-mono font-medium text-black">{c.code}</td>
-                    <td className="px-6 py-3 text-neutral-700">{c.type === 'percent' ? `${c.value}%` : `$${(c.value / 100).toFixed(2)}`} off</td>
-                    <td className="px-6 py-3 text-neutral-600">{c.usedCount}{c.maxUses ? ` / ${c.maxUses}` : ''}</td>
-                    <td className="px-6 py-3"><Badge variant={c.active ? 'success' : 'neutral'}>{c.active ? 'Active' : 'Inactive'}</Badge></td>
-                    <td className="px-6 py-3 text-neutral-500 text-xs">{formatDate(c.createdAt)}</td>
-                    <td className="px-6 py-3">
-                      <button onClick={() => toggleActive(c)} className="text-xs text-neutral-500 hover:text-black">{c.active ? 'Disable' : 'Enable'}</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="divide-y divide-neutral-50">
+              {codes.map(c => (
+                <div key={c.id} className="px-4 sm:px-6 py-3 flex items-center gap-3 sm:gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <code className="text-sm font-mono font-bold text-black">{c.code}</code>
+                      <Badge variant={c.active ? 'success' : 'neutral'}>{c.active ? 'Active' : 'Inactive'}</Badge>
+                    </div>
+                    <p className="text-xs text-neutral-500 mt-0.5">
+                      {c.discount_type === 'percent'
+                        ? `${c.discount_value}% off`
+                        : `${formatCurrency(c.discount_value / 100)} off`}
+                      {' · '}{c.used_count} uses{c.max_uses ? ` / ${c.max_uses}` : ''}
+                      {c.expires_at ? ` · Expires ${new Date(c.expires_at).toLocaleDateString()}` : ''}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <Button size="sm" variant="ghost" onClick={() => handleToggle(c.id, c.active)}>
+                      {c.active ? 'Disable' : 'Enable'}
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => handleDelete(c.id)} className="text-red-500 hover:bg-red-50">
+                      <Trash2 size={13} />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </CardContent>
       </Card>

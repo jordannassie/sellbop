@@ -32,6 +32,11 @@ const DEMO_STORE_ROW: StoreRow = {
   header_layout: null,
   layout_mode: null,
   branding_mode: null,
+  support_email: null,
+  stripe_account_id: null,
+  stripe_onboarding_complete: false,
+  stripe_charges_enabled: false,
+  stripe_payouts_enabled: false,
   created_at: DEMO_SELLER_PROFILE.createdAt,
   updated_at: DEMO_SELLER_PROFILE.createdAt,
 }

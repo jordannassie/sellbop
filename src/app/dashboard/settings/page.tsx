@@ -1,341 +1,302 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
 import { useAuth } from '@/context/auth-context'
-import { useDemoMode } from '@/hooks/use-demo-mode'
+import { useUserStore } from '@/hooks/use-user-store'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { uploadFile, buildStoragePath } from '@/lib/supabase/storage'
-import { DEMO_SELLER_PROFILE } from '@/lib/demo-data/seed'
-import {
-  ArrowUpRight,
-  CreditCard,
-  FlaskConical,
-  HelpCircle,
-  Loader2,
-  Plug,
-  Settings,
-  Store,
-  Upload,
-  User,
-} from 'lucide-react'
-
-const SETTING_CARDS = [
-  {
-    title: 'Account',
-    description: 'Name, email, and support settings.',
-    href: '#account',
-    icon: User,
-  },
-  {
-    title: 'Billing',
-    description: 'Platform plan, invoices, and payment method.',
-    href: '/dashboard/billing',
-    icon: CreditCard,
-  },
-  {
-    title: 'Integrations',
-    description: 'Printify, Stripe, and connected apps.',
-    href: '/dashboard/printify',
-    icon: Plug,
-  },
-  {
-    title: 'Store Settings',
-    description: 'Domain, notifications, and store preferences.',
-    href: '/dashboard/storefront',
-    icon: Store,
-  },
-  {
-    title: 'Support',
-    description: 'Get help or contact the SellBop team.',
-    href: 'mailto:support@sellbop.com',
-    icon: HelpCircle,
-    external: true,
-  },
-]
+import { Upload, User, Loader2, ExternalLink } from 'lucide-react'
 
 export default function SettingsPage() {
-  const { session, updateAvatarUrl } = useAuth()
-  const { demoMode, ready, toggle } = useDemoMode()
+  const router = useRouter()
+  const { session, signOut, updateAvatarUrl } = useAuth()
+  const { store, saveStore, refetch } = useUserStore()
 
-  // Pre-fill Account form from the real auth session
+  // Profile form
   const [displayName, setDisplayName] = useState('')
+  const [bio, setBio] = useState('')
   const [supportEmail, setSupportEmail] = useState('')
+  const [storeName, setStoreName] = useState('')
+  const [storeSlug, setStoreSlug] = useState('')
   const [saving, setSaving] = useState(false)
 
-  // Account photo state
+  // Avatar
   const [profileAvatar, setProfileAvatar] = useState<string | null>(null)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const photoInputRef = useRef<HTMLInputElement>(null)
 
-  /* eslint-disable react-hooks/set-state-in-effect */
+  // Password
+  const [newPassword, setNewPassword] = useState('')
+  const [savingPassword, setSavingPassword] = useState(false)
+
+  // Danger
+  const [deletingAccount, setDeletingAccount] = useState(false)
+
   useEffect(() => {
     setDisplayName(session?.name ?? '')
     setSupportEmail(session?.email ?? '')
-    // Sync avatar from session (includes profile avatar once loaded)
     if (session?.avatarUrl) setProfileAvatar(session.avatarUrl)
   }, [session])
-  /* eslint-enable react-hooks/set-state-in-effect */
 
-  async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  useEffect(() => {
+    if (store) {
+      setStoreName(store.name ?? '')
+      setStoreSlug(store.slug ?? '')
+      setBio(store.bio ?? '')
+      setSupportEmail(store.support_email ?? session?.email ?? '')
+      if (store.avatar_url) setProfileAvatar(store.avatar_url)
+    }
+  }, [store, session?.email])
+
+  async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
-    if (!file) return
+    if (!file || !session) return
+    if (file.size > 5 * 1024 * 1024) { toast.error('Image must be under 5 MB.'); return }
     setUploadingPhoto(true)
-    try {
-      const ownerId = session?.userId ?? DEMO_SELLER_PROFILE.id
-      const path = buildStoragePath(ownerId, file.name)
-      const result = await uploadFile('store-images', path, file)
-      if (result.error) { toast.error(result.error); return }
-      const url = result.url!
-
+    const path = buildStoragePath(session.userId, file.name)
+    const result = await uploadFile('store-images', path, file)
+    if (result.error) { toast.error('Upload failed: ' + result.error) }
+    else if (result.url) {
+      setProfileAvatar(result.url)
+      updateAvatarUrl(result.url)
+      // Save to store
+      await saveStore({ avatar_url: result.url })
+      // Save to profile
       const supabase = getSupabaseBrowserClient()
-      if (supabase && session) {
-        // Save to profiles table (preferred source of truth)
-        await supabase
-          .from('profiles')
-          .update({ avatar_url: url, updated_at: new Date().toISOString() })
-          .eq('user_id', session.userId)
-        // Also sync auth metadata so it persists across sign-ins
-        await supabase.auth.updateUser({ data: { avatar_url: url } })
-      } else {
-        // Demo / offline: persist locally
-        try { localStorage.setItem('profile_avatar_url', url) } catch { /* ignore */ }
+      if (supabase) {
+        await supabase.from('profiles').upsert({
+          user_id: session.userId,
+          email: session.email,
+          avatar_url: result.url,
+        })
+      }
+      toast.success('Profile photo updated.')
+    }
+    setUploadingPhoto(false)
+  }
+
+  async function handleSaveProfile(e: React.FormEvent) {
+    e.preventDefault()
+    if (!session) return
+    setSaving(true)
+    try {
+      const supabase = getSupabaseBrowserClient()
+      if (supabase) {
+        await supabase.from('profiles').upsert({
+          user_id: session.userId,
+          email: session.email,
+          full_name: displayName.trim() || null,
+          avatar_url: profileAvatar,
+        })
       }
 
-      setProfileAvatar(url)
-      updateAvatarUrl(url)
-      toast.success('Account photo updated.')
-    } catch {
-      toast.error('Upload failed. Please try again.')
+      const storeErr = await saveStore({
+        name: storeName.trim() || displayName.trim(),
+        bio: bio.trim() || null,
+        support_email: supportEmail.trim() || session.email,
+      })
+      if (storeErr) throw new Error(storeErr)
+      refetch()
+      toast.success('Profile saved.')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save.')
     } finally {
-      setUploadingPhoto(false)
-      // Reset input so the same file can be re-selected
-      if (photoInputRef.current) photoInputRef.current.value = ''
+      setSaving(false)
     }
   }
 
-  async function handleSave(e: React.FormEvent) {
+  async function handleChangePassword(e: React.FormEvent) {
     e.preventDefault()
-    setSaving(true)
-    await new Promise(r => setTimeout(r, 600))
-    toast.success('Settings saved.')
-    setSaving(false)
+    if (!newPassword || newPassword.length < 8) {
+      toast.error('Password must be at least 8 characters.')
+      return
+    }
+    setSavingPassword(true)
+    const supabase = getSupabaseBrowserClient()
+    if (!supabase) { toast.error('Not connected.'); setSavingPassword(false); return }
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    if (error) { toast.error(error.message) }
+    else { toast.success('Password updated.'); setNewPassword('') }
+    setSavingPassword(false)
   }
 
-  const isDemo = !getSupabaseBrowserClient() || !session
+  async function handleDeleteAccount() {
+    if (!confirm('Are you sure? This will permanently delete your account, products, and all data. This cannot be undone.')) return
+    setDeletingAccount(true)
+    toast.error('Account deletion requires contacting support@sellbop.com for now.')
+    setDeletingAccount(false)
+  }
+
+  async function handleLogout() {
+    await signOut()
+    router.push('/')
+  }
+
+  const storeUrl = store?.slug ? `/store/${store.slug}` : null
 
   return (
     <div className="max-w-2xl">
-      {/* Header */}
       <div className="mb-6">
-        <div className="flex items-center gap-2 mb-1">
-          <Settings size={18} className="text-neutral-400" />
-          <h1 className="text-2xl font-bold text-black">Settings</h1>
-        </div>
-        <p className="text-sm text-neutral-500">Manage your account and business preferences.</p>
+        <h1 className="text-2xl font-bold text-black">Settings</h1>
+        <p className="text-sm text-neutral-500 mt-1">Manage your profile, store, and account.</p>
       </div>
 
-      {/* Quick nav cards */}
-      <div className="grid grid-cols-2 gap-3 mb-8 sm:grid-cols-3">
-        {SETTING_CARDS.map(card => {
-          const inner = (
-            <div className="group rounded-xl border border-neutral-200 bg-white p-4 hover:border-neutral-300 hover:shadow-sm transition-all">
-              <div className="mb-2 flex items-center justify-between">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-neutral-100">
-                  <card.icon size={15} className="text-neutral-600" />
+      <div className="space-y-5">
+        {/* Profile */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Profile</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {/* Avatar */}
+            <div className="flex items-center gap-4 mb-6">
+              <div className="relative">
+                <div className="w-16 h-16 rounded-full bg-neutral-100 overflow-hidden flex items-center justify-center">
+                  {profileAvatar ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={profileAvatar} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    <User size={22} className="text-neutral-400" />
+                  )}
                 </div>
-                <ArrowUpRight size={12} className="text-neutral-300 group-hover:text-neutral-500 transition-colors" />
               </div>
-              <p className="text-sm font-semibold text-black">{card.title}</p>
-              <p className="mt-0.5 text-[11px] text-neutral-500 leading-relaxed">{card.description}</p>
-            </div>
-          )
-
-          if (card.external || card.href.startsWith('#')) {
-            return <a key={card.title} href={card.href}>{inner}</a>
-          }
-          return <Link key={card.title} href={card.href}>{inner}</Link>
-        })}
-      </div>
-
-      {/* Account Photo card */}
-      <Card className="mb-5" id="account">
-        <CardHeader><CardTitle>Account Photo</CardTitle></CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-5">
-            {/* Avatar preview */}
-            <div className="relative flex-shrink-0">
-              {profileAvatar ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={profileAvatar}
-                  alt="Profile"
-                  className="h-16 w-16 rounded-full object-cover border border-neutral-200"
-                />
-              ) : (
-                <div className="h-16 w-16 rounded-full bg-neutral-900 flex items-center justify-center text-white text-xl font-bold">
-                  {((session?.name?.charAt(0) ?? session?.email?.charAt(0)) || 'U').toUpperCase()}
-                </div>
-              )}
-              {uploadingPhoto && (
-                <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40">
-                  <Loader2 size={16} className="animate-spin text-white" />
-                </div>
-              )}
-            </div>
-
-            {/* Upload controls */}
-            <div className="min-w-0">
+              <div>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => photoInputRef.current?.click()}
+                  disabled={uploadingPhoto}
+                >
+                  {uploadingPhoto ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
+                  {uploadingPhoto ? 'Uploading…' : 'Change photo'}
+                </Button>
+                <p className="text-xs text-neutral-400 mt-1">JPG, PNG · Max 5 MB</p>
+              </div>
               <input
                 ref={photoInputRef}
                 type="file"
                 accept="image/*"
                 className="hidden"
-                onChange={handlePhotoUpload}
+                onChange={handleAvatarUpload}
               />
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                disabled={uploadingPhoto}
-                onClick={() => photoInputRef.current?.click()}
-              >
-                <Upload size={13} />
-                {uploadingPhoto ? 'Uploading…' : 'Upload photo'}
-              </Button>
-              <p className="mt-1.5 text-xs text-neutral-400 leading-relaxed">
-                Used inside your SellBop dashboard. Your public store photo can be changed in{' '}
-                <Link href="/dashboard/storefront" className="underline hover:text-black transition-colors">
-                  Store Profile
-                </Link>.
-              </p>
-              {isDemo && (
-                <p className="mt-1 text-[11px] text-amber-600">
-                  Demo mode — image preview only.
-                </p>
-              )}
             </div>
-          </div>
-        </CardContent>
-      </Card>
 
-      {/* Account form */}
-      <form id="account-form" onSubmit={handleSave} className="space-y-5">
-        <Card>
-          <CardHeader><CardTitle>Account</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            <Input
-              label="Account Name"
-              value={displayName}
-              onChange={e => setDisplayName(e.target.value)}
-              hint="Your personal account name — not shown publicly."
-              placeholder={session?.name ?? 'Your name'}
-            />
-            <Input
-              label="Support Email"
-              type="email"
-              value={supportEmail}
-              onChange={e => setSupportEmail(e.target.value)}
-              hint="Shown on product pages and receipts sent to buyers."
-              placeholder={session?.email ?? 'you@example.com'}
-            />
+            <form onSubmit={handleSaveProfile} className="space-y-4">
+              <Input
+                label="Display Name"
+                value={displayName}
+                onChange={e => setDisplayName(e.target.value)}
+                placeholder="Your name"
+              />
+              <Input
+                label="Bio"
+                value={bio}
+                onChange={e => setBio(e.target.value)}
+                placeholder="A short description about you"
+              />
+              <Input
+                label="Support Email"
+                type="email"
+                value={supportEmail}
+                onChange={e => setSupportEmail(e.target.value)}
+                placeholder="support@yourstore.com"
+              />
+              <Button type="submit" loading={saving}>Save Profile</Button>
+            </form>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader><CardTitle>Checkout Settings</CardTitle></CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center justify-between py-1">
-              <div>
-                <p className="text-sm font-medium text-neutral-900">Collect buyer name</p>
-                <p className="text-xs text-neutral-500">Ask for full name at checkout.</p>
-              </div>
-              <div className="w-9 h-5 bg-black rounded-full flex items-center justify-end px-0.5">
-                <div className="w-4 h-4 bg-white rounded-full" />
-              </div>
-            </div>
-            <div className="flex items-center justify-between py-1 border-t border-neutral-100">
-              <div>
-                <p className="text-sm font-medium text-neutral-900">Send receipt emails</p>
-                <p className="text-xs text-neutral-500">Automatically email buyers after purchase.</p>
-              </div>
-              <div className="w-9 h-5 bg-black rounded-full flex items-center justify-end px-0.5">
-                <div className="w-4 h-4 bg-white rounded-full" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* ── Developer / Demo Mode ──────────────────────────── */}
+        {/* Store */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FlaskConical size={15} className="text-neutral-500" />
-              Developer
-            </CardTitle>
+            <CardTitle>Store</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex-1 min-w-0 pr-4">
-                <p className="text-sm font-medium text-neutral-900">Use demo data</p>
-                <p className="text-xs text-neutral-500 leading-relaxed mt-0.5">
-                  Turns on sample products, orders, customers, and store data for testing.
-                  Turn off to see your real store with clean empty states.
-                </p>
+          <CardContent>
+            <form onSubmit={handleSaveProfile} className="space-y-4">
+              <Input
+                label="Store Name"
+                value={storeName}
+                onChange={e => setStoreName(e.target.value)}
+                placeholder="My Awesome Store"
+              />
+              <div>
+                <label className="block text-xs font-medium text-neutral-500 mb-1">Store URL</label>
+                <div className="flex items-center rounded-xl border border-neutral-200 overflow-hidden">
+                  <span className="px-3 py-2.5 text-sm text-neutral-500 bg-neutral-50 border-r border-neutral-200 shrink-0">
+                    sellbop.com/store/
+                  </span>
+                  <span className="px-3 py-2.5 text-sm font-mono text-neutral-700">{storeSlug || '—'}</span>
+                </div>
+                <p className="text-xs text-neutral-400 mt-1">Store slug is set automatically and cannot be changed here yet.</p>
               </div>
-              {/* Toggle button — only interactive once localStorage is read */}
-              <button
-                type="button"
-                disabled={!ready}
-                onClick={() => toggle(!demoMode)}
-                aria-label="Toggle demo data"
-                className={`relative flex-shrink-0 w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none ${
-                  demoMode ? 'bg-black' : 'bg-neutral-200'
-                } ${!ready ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
-              >
-                <span
-                  className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${
-                    demoMode ? 'translate-x-5' : 'translate-x-0'
-                  }`}
-                />
-              </button>
-            </div>
-
-            <p className="text-[11px] text-neutral-400 leading-relaxed">
-              You can also toggle via URL:{' '}
-              <code className="font-mono bg-neutral-100 px-1 py-0.5 rounded">?demo=1</code>
-              {' '}to enable,{' '}
-              <code className="font-mono bg-neutral-100 px-1 py-0.5 rounded">?demo=0</code>
-              {' '}to disable.
-            </p>
+              {storeUrl && (
+                <a href={storeUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-neutral-600 hover:text-black transition-colors">
+                  View your store <ExternalLink size={13} />
+                </a>
+              )}
+              <Button type="submit" loading={saving}>Save Store</Button>
+            </form>
           </CardContent>
         </Card>
 
+        {/* Account */}
         <Card>
-          <CardHeader><CardTitle>Danger Zone</CardTitle></CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-neutral-900">Delete Account</p>
-                <p className="text-xs text-neutral-500">Permanently delete your account and all data.</p>
-              </div>
-              <Button
-                type="button"
-                variant="danger"
-                size="sm"
-                onClick={() => toast.error('Account deletion is not available in beta.')}
-              >
-                Delete Account
+          <CardHeader>
+            <CardTitle>Account</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <label className="block text-xs font-medium text-neutral-500 mb-1">Email</label>
+              <p className="text-sm text-neutral-700">{session?.email}</p>
+            </div>
+
+            <form onSubmit={handleChangePassword} className="space-y-3 pt-2 border-t border-neutral-100">
+              <p className="text-sm font-medium text-neutral-700">Change Password</p>
+              <Input
+                label="New Password"
+                type="password"
+                value={newPassword}
+                onChange={e => setNewPassword(e.target.value)}
+                placeholder="New password (min 8 chars)"
+              />
+              <Button type="submit" size="sm" variant="secondary" loading={savingPassword}>
+                Update Password
+              </Button>
+            </form>
+
+            <div className="pt-2 border-t border-neutral-100">
+              <Button variant="ghost" onClick={handleLogout} className="text-neutral-600">
+                Log out
               </Button>
             </div>
           </CardContent>
         </Card>
 
-        <Button type="submit" loading={saving}>Save Settings</Button>
-      </form>
+        {/* Danger zone */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-red-600">Danger Zone</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-neutral-600 mb-4">
+              Permanently delete your account, products, and all associated data.
+              This action cannot be undone.
+            </p>
+            <Button
+              variant="ghost"
+              onClick={handleDeleteAccount}
+              loading={deletingAccount}
+              className="text-red-500 hover:bg-red-50 hover:text-red-600"
+            >
+              Delete Account
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

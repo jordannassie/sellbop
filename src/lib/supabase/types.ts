@@ -43,6 +43,11 @@ export interface Database {
           banner_url: string | null
           layout_mode: string | null
           branding_mode: string | null
+          support_email: string | null
+          stripe_account_id: string | null
+          stripe_onboarding_complete: boolean
+          stripe_charges_enabled: boolean
+          stripe_payouts_enabled: boolean
           created_at: string
           updated_at: string
         }
@@ -58,6 +63,11 @@ export interface Database {
           banner_url?: string | null
           layout_mode?: string | null
           branding_mode?: string | null
+          support_email?: string | null
+          stripe_account_id?: string | null
+          stripe_onboarding_complete?: boolean
+          stripe_charges_enabled?: boolean
+          stripe_payouts_enabled?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -96,7 +106,7 @@ export interface Database {
           store_id: string
           title: string
           slug: string
-          product_type: string
+          product_type?: string
           short_description?: string | null
           description?: string | null
           image_url?: string | null
@@ -120,53 +130,36 @@ export interface Database {
         Relationships: []
       }
 
-      product_variants: {
+      product_files: {
         Row: {
           id: string
           product_id: string
-          external_variant_id: string | null
-          color: string | null
-          size: string | null
-          sku: string | null
-          retail_price_cents: number | null
-          is_active: boolean
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          product_id: string
-          external_variant_id?: string | null
-          color?: string | null
-          size?: string | null
-          sku?: string | null
-          retail_price_cents?: number | null
-          is_active?: boolean
-          created_at?: string
-        }
-        Update: Partial<Database['public']['Tables']['product_variants']['Insert']>
-        Relationships: []
-      }
-
-      store_product_visibility: {
-        Row: {
-          id: string
-          store_id: string
-          product_id: string
-          is_visible: boolean
-          is_featured: boolean
+          seller_id: string
+          file_name: string
+          file_url: string
+          file_type: string
+          file_size: number | null
+          storage_path: string | null
+          upload_status: string
+          visibility: string
           sort_order: number
           created_at: string
         }
         Insert: {
           id?: string
-          store_id: string
           product_id: string
-          is_visible?: boolean
-          is_featured?: boolean
+          seller_id: string
+          file_name: string
+          file_url?: string
+          file_type?: string
+          file_size?: number | null
+          storage_path?: string | null
+          upload_status?: string
+          visibility?: string
           sort_order?: number
           created_at?: string
         }
-        Update: Partial<Database['public']['Tables']['store_product_visibility']['Insert']>
+        Update: Partial<Database['public']['Tables']['product_files']['Insert']>
         Relationships: []
       }
 
@@ -189,8 +182,17 @@ export interface Database {
           subtotal_cents: number
           shipping_cents: number
           total_cents: number
+          discount_cents: number
+          platform_fee_cents: number
+          currency: string
           status: string
           payment_status: string
+          refund_status: string
+          stripe_session_id: string | null
+          stripe_payment_intent_id: string | null
+          product_title_snapshot: string | null
+          product_id: string | null
+          notes: string | null
           fulfillment_provider: string | null
           created_at: string
           updated_at: string
@@ -213,8 +215,17 @@ export interface Database {
           subtotal_cents: number
           shipping_cents?: number
           total_cents: number
+          discount_cents?: number
+          platform_fee_cents?: number
+          currency?: string
           status?: string
           payment_status?: string
+          refund_status?: string
+          stripe_session_id?: string | null
+          stripe_payment_intent_id?: string | null
+          product_title_snapshot?: string | null
+          product_id?: string | null
+          notes?: string | null
           fulfillment_provider?: string | null
           created_at?: string
           updated_at?: string
@@ -257,6 +268,8 @@ export interface Database {
           buyer_email: string
           product_id: string
           order_id: string
+          file_id: string | null
+          status: string
           created_at: string
           updated_at: string
         }
@@ -266,10 +279,45 @@ export interface Database {
           buyer_email: string
           product_id: string
           order_id: string
+          file_id?: string | null
+          status?: string
           created_at?: string
           updated_at?: string
         }
         Update: Partial<Database['public']['Tables']['purchases']['Insert']>
+        Relationships: []
+      }
+
+      discount_codes: {
+        Row: {
+          id: string
+          store_id: string
+          seller_id: string
+          code: string
+          discount_type: string
+          discount_value: number
+          product_id: string | null
+          max_uses: number | null
+          used_count: number
+          active: boolean
+          expires_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          store_id: string
+          seller_id: string
+          code: string
+          discount_type?: string
+          discount_value: number
+          product_id?: string | null
+          max_uses?: number | null
+          used_count?: number
+          active?: boolean
+          expires_at?: string | null
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['discount_codes']['Insert']>
         Relationships: []
       }
 
@@ -305,83 +353,6 @@ export interface Database {
           updated_at?: string
         }
         Update: Partial<Database['public']['Tables']['subscriptions']['Insert']>
-        Relationships: []
-      }
-
-      printify_connections: {
-        Row: {
-          id: string
-          user_id: string
-          shop_id: string
-          token_encrypted: string | null
-          is_connected: boolean
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          shop_id: string
-          token_encrypted?: string | null
-          is_connected?: boolean
-          created_at?: string
-          updated_at?: string
-        }
-        Update: Partial<Database['public']['Tables']['printify_connections']['Insert']>
-        Relationships: []
-      }
-
-      fulfillment_orders: {
-        Row: {
-          id: string
-          order_id: string
-          provider: string
-          external_order_id: string | null
-          status: string
-          raw_response_json: Json | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          order_id: string
-          provider: string
-          external_order_id?: string | null
-          status?: string
-          raw_response_json?: Json | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: Partial<Database['public']['Tables']['fulfillment_orders']['Insert']>
-        Relationships: []
-      }
-
-      // ── V5 Power Upgrade tables ────────────────────────────────────────────
-
-      product_files: {
-        Row: {
-          id: string
-          product_id: string
-          seller_id: string
-          file_name: string
-          file_url: string
-          file_type: string
-          visibility: string
-          sort_order: number
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          product_id: string
-          seller_id: string
-          file_name: string
-          file_url: string
-          file_type?: string
-          visibility?: string
-          sort_order?: number
-          created_at?: string
-        }
-        Update: Partial<Database['public']['Tables']['product_files']['Insert']>
         Relationships: []
       }
 
@@ -438,64 +409,6 @@ export interface Database {
           created_at?: string
         }
         Update: Partial<Database['public']['Tables']['product_reviews']['Insert']>
-        Relationships: []
-      }
-
-      affiliate_links: {
-        Row: {
-          id: string
-          product_id: string
-          seller_id: string
-          affiliate_code: string
-          affiliate_name: string | null
-          affiliate_email: string | null
-          commission_pct: number
-          enabled: boolean
-          total_clicks: number
-          total_orders: number
-          total_revenue: number
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          product_id: string
-          seller_id: string
-          affiliate_code: string
-          affiliate_name?: string | null
-          affiliate_email?: string | null
-          commission_pct?: number
-          enabled?: boolean
-          total_clicks?: number
-          total_orders?: number
-          total_revenue?: number
-          created_at?: string
-        }
-        Update: Partial<Database['public']['Tables']['affiliate_links']['Insert']>
-        Relationships: []
-      }
-
-      affiliate_clicks: {
-        Row: {
-          id: string
-          affiliate_link_id: string
-          product_id: string
-          affiliate_code: string
-          order_id: string | null
-          referrer_url: string | null
-          ip_hash: string | null
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          affiliate_link_id: string
-          product_id: string
-          affiliate_code: string
-          order_id?: string | null
-          referrer_url?: string | null
-          ip_hash?: string | null
-          created_at?: string
-        }
-        Update: Partial<Database['public']['Tables']['affiliate_clicks']['Insert']>
         Relationships: []
       }
     }

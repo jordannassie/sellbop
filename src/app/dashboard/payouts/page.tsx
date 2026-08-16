@@ -1,76 +1,150 @@
 'use client'
-import { useState, useEffect } from 'react'
-import { demoPayoutRepo, demoOrderRepo } from '@/lib/adapters/demo/repositories'
-import { DEMO_SELLER_PROFILE } from '@/lib/demo-data/seed'
-import { formatCurrency, formatDate } from '@/lib/utils'
-import { StatCard } from '@/components/ui/stat-card'
+import { useEffect, useState } from 'react'
+import { useAuth } from '@/context/auth-context'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { DollarSign } from 'lucide-react'
-import type { PayoutRecord, Order } from '@/lib/domain/entities'
+import { DollarSign, ExternalLink } from 'lucide-react'
+import { isSupabaseConfigured } from '@/lib/env'
+import { formatCurrency } from '@/lib/utils'
+
+interface StripeStatus {
+  connected: boolean
+  onboarding_complete: boolean
+  charges_enabled: boolean
+  payouts_enabled: boolean
+}
+
+interface OrderRow {
+  id: string
+  total_cents: number
+  platform_fee_cents: number
+  payment_status: string
+  created_at: string
+}
 
 export default function PayoutsPage() {
-  const [payouts, setPayouts] = useState<PayoutRecord[]>([])
-  const [orders, setOrders] = useState<Order[]>([])
+  const { session } = useAuth()
+  const [stripeStatus, setStripeStatus] = useState<StripeStatus | null>(null)
+  const [orders, setOrders] = useState<OrderRow[]>([])
+  const [loading, setLoading] = useState(true)
+  const [connecting, setConnecting] = useState(false)
 
   useEffect(() => {
-    const sid = DEMO_SELLER_PROFILE.id
-    demoPayoutRepo.findBySellerId(sid).then(setPayouts)
-    demoOrderRepo.findAll(sid).then(setOrders)
-  }, [])
+    if (!session || !isSupabaseConfigured()) { setLoading(false); return }
+    Promise.all([
+      fetch('/api/stripe/connect').then(r => r.ok ? r.json() : null),
+      fetch('/api/orders').then(r => r.ok ? r.json() : { orders: [] }),
+    ]).then(([stripe, ordersData]) => {
+      setStripeStatus(stripe)
+      setOrders(ordersData.orders ?? [])
+    }).catch(() => {}).finally(() => setLoading(false))
+  }, [session])
 
-  const totalEarned = orders.filter(o => o.paymentStatus === 'paid').reduce((s, o) => s + o.amount, 0)
-  const totalPaid = payouts.filter(p => p.status === 'paid').reduce((s, p) => s + p.amount, 0)
-  const pending = payouts.find(p => p.status === 'pending')
+  const paidOrders = orders.filter(o => o.payment_status === 'paid')
+  const grossRevenue = paidOrders.reduce((s, o) => s + (o.total_cents ?? 0), 0) / 100
+  const platformFees = paidOrders.reduce((s, o) => s + (o.platform_fee_cents ?? 0), 0) / 100
+  const netRevenue = grossRevenue - platformFees
+
+  async function handleConnectStripe() {
+    setConnecting(true)
+    try {
+      const res = await fetch('/api/stripe/connect', { method: 'POST' })
+      const data = await res.json()
+      if (data.onboarding_url) {
+        window.location.href = data.onboarding_url
+      }
+    } catch {
+      // noop
+    } finally {
+      setConnecting(false)
+    }
+  }
 
   return (
     <div>
-      <div className="mb-8">
+      <div className="mb-6">
         <h1 className="text-2xl font-bold text-black">Payouts</h1>
-        <p className="text-neutral-500 text-sm mt-1">Connect Stripe to enable live payouts.</p>
+        <p className="mt-1 text-sm text-neutral-500">Connect Stripe to receive your earnings directly.</p>
       </div>
 
-      <div className="grid grid-cols-3 gap-4 mb-8">
-        <StatCard label="Total Earned" value={formatCurrency(totalEarned)} icon={<DollarSign size={14} />} />
-        <StatCard label="Paid Out" value={formatCurrency(totalPaid)} icon={<DollarSign size={14} />} />
-        <StatCard label="Next Payout" value={pending ? formatCurrency(pending.amount) : '—'} icon={<DollarSign size={14} />} />
-      </div>
-
-      {/* Payout method banner */}
-      <div className="mb-6 p-5 bg-neutral-50 border border-neutral-200 rounded-2xl flex items-center justify-between">
-        <div>
-          <p className="font-semibold text-black text-sm">Connect your bank account</p>
-          <p className="text-xs text-neutral-500 mt-0.5">Stripe Connect is required for live payouts. Connect when you&apos;re ready to go live.</p>
-        </div>
-        <Button variant="secondary" size="sm" onClick={() => alert('Demo: Would redirect to Stripe Connect onboarding.')}>Connect Stripe →</Button>
-      </div>
-
-      <Card>
-        <CardHeader><CardTitle>Payout History</CardTitle></CardHeader>
-        <CardContent className="p-0">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-neutral-100 bg-neutral-50">
-                {['Period', 'Orders', 'Amount', 'Status', 'Paid Date'].map(h => (
-                  <th key={h} className="text-left px-6 py-3 text-xs font-medium text-neutral-500">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-neutral-50">
-              {payouts.map(p => (
-                <tr key={p.id} className="hover:bg-neutral-50">
-                  <td className="px-6 py-3 text-neutral-700 text-xs">{formatDate(p.periodStart)} – {formatDate(p.periodEnd)}</td>
-                  <td className="px-6 py-3 text-neutral-600">{p.ordersIncluded}</td>
-                  <td className="px-6 py-3 font-semibold text-black">{formatCurrency(p.amount)}</td>
-                  <td className="px-6 py-3"><Badge variant={p.status === 'paid' ? 'success' : p.status === 'pending' ? 'warning' : 'danger'}>{p.status}</Badge></td>
-                  <td className="px-6 py-3 text-neutral-500 text-xs">{p.paidAt ? formatDate(p.paidAt) : '—'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {/* Stripe connection card */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Stripe Connection</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="h-16 bg-neutral-100 rounded animate-pulse" />
+          ) : stripeStatus?.connected ? (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Badge variant="success">Connected</Badge>
+                {stripeStatus.charges_enabled && <Badge variant="success">Charges enabled</Badge>}
+                {stripeStatus.payouts_enabled && <Badge variant="success">Payouts enabled</Badge>}
+              </div>
+              <p className="text-sm text-neutral-600">
+                Your Stripe account is connected. Payouts will be sent automatically by Stripe.
+              </p>
+              <a
+                href="https://dashboard.stripe.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-sm text-neutral-600 hover:text-black transition-colors"
+              >
+                Open Stripe Dashboard <ExternalLink size={13} />
+              </a>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Badge variant="neutral">Not connected</Badge>
+              </div>
+              <p className="text-sm text-neutral-600">
+                Connect your Stripe account to start accepting payments and receive payouts.
+                Sellbop uses Stripe Connect to securely transfer your earnings.
+              </p>
+              <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+                <p className="text-xs text-amber-700">
+                  <strong>Note:</strong> Stripe integration is prepared but not yet fully activated.
+                  Contact your developer to complete the Stripe Connect setup. See{' '}
+                  <code className="font-mono bg-amber-100 px-1 rounded">STRIPE-INTEGRATION-HANDOFF.md</code> for details.
+                </p>
+              </div>
+              <Button onClick={handleConnectStripe} loading={connecting} disabled>
+                Connect Stripe (Setup Required)
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
+
+      {/* Earnings summary */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        {[
+          { label: 'Gross Revenue', value: formatCurrency(grossRevenue), icon: DollarSign },
+          { label: 'Platform Fees', value: formatCurrency(platformFees), icon: DollarSign },
+          { label: 'Your Net', value: formatCurrency(netRevenue), icon: DollarSign, highlight: true },
+        ].map(stat => (
+          <div key={stat.label} className={`rounded-xl border p-5 ${stat.highlight ? 'border-black bg-black text-white' : 'border-neutral-200 bg-white'}`}>
+            <div className="flex items-center gap-2 mb-2">
+              <stat.icon size={14} className={stat.highlight ? 'text-white/60' : 'text-neutral-400'} />
+              <p className={`text-xs ${stat.highlight ? 'text-white/60' : 'text-neutral-500'}`}>{stat.label}</p>
+            </div>
+            {loading ? (
+              <div className={`h-7 w-24 rounded animate-pulse ${stat.highlight ? 'bg-white/20' : 'bg-neutral-100'}`} />
+            ) : (
+              <p className={`text-2xl font-bold ${stat.highlight ? 'text-white' : 'text-black'}`}>{stat.value}</p>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <div className="rounded-xl border border-neutral-100 bg-neutral-50 px-4 py-3 text-xs text-neutral-500">
+        <strong className="text-neutral-700">How it works:</strong> After connecting Stripe, customers pay through Stripe Checkout.
+        Sellbop deducts its platform fee and transfers the remainder to your connected Stripe account automatically.
+        You manage your own payout schedule in the Stripe dashboard.
+      </div>
     </div>
   )
 }

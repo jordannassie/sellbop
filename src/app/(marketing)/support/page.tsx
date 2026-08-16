@@ -1,57 +1,58 @@
-import type { Metadata } from 'next'
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
 
-export const metadata: Metadata = {
-  title: 'Support — SellBop',
-  description: 'Get help with your SellBop account, products, or purchases.',
+export const metadata = {
+  title: 'Support — Sellbop',
+  description: 'Get help with Sellbop.',
 }
 
 export default function SupportPage() {
   return (
-    <main className="max-w-2xl mx-auto px-4 sm:px-6 py-20">
-      <p className="text-xs font-bold uppercase tracking-[0.3em] text-neutral-400 mb-4">Help</p>
-      <h1 className="text-3xl sm:text-4xl font-black text-black tracking-tight mb-3">Support</h1>
-      <p className="text-neutral-500 text-sm mb-10">
-        We&apos;re here to help. Whether you&apos;re a creator or a buyer, reach out and we&apos;ll get back to you quickly.
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-16">
+      <h1 className="text-3xl font-bold text-black mb-2">Support</h1>
+      <p className="text-neutral-500 text-base mb-10">
+        Have a question or need help? We&rsquo;re here for you.
       </p>
 
       <div className="space-y-6">
-
-        <div className="bg-white border border-neutral-200 rounded-2xl p-6">
-          <h2 className="text-base font-bold text-black mb-1">Email Support</h2>
-          <p className="text-sm text-neutral-500 mb-3">
-            For account issues, purchase questions, refund requests, or general help.
+        <div className="rounded-2xl border border-neutral-200 bg-white p-6">
+          <h2 className="text-lg font-bold text-black mb-2">Email Support</h2>
+          <p className="text-neutral-600 text-sm mb-4">
+            For account issues, billing questions, or anything else — email our support team.
           </p>
-          <a
-            href="mailto:support@sellbop.com"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-black underline underline-offset-2 hover:opacity-70 transition-opacity"
-          >
-            support@sellbop.com
+          <a href="mailto:support@sellbop.com">
+            <Button>Email support@sellbop.com</Button>
           </a>
         </div>
 
-        <div className="bg-white border border-neutral-200 rounded-2xl p-6">
-          <h2 className="text-base font-bold text-black mb-1">Creator Support</h2>
-          <p className="text-sm text-neutral-500 mb-3">
-            Questions about setting up your store, products, or payouts? We&apos;re here to help you launch faster.
-          </p>
-          <a
-            href="mailto:creators@sellbop.com"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-black underline underline-offset-2 hover:opacity-70 transition-opacity"
-          >
-            creators@sellbop.com
-          </a>
+        <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-6">
+          <h2 className="text-lg font-bold text-black mb-2">Common questions</h2>
+          <div className="space-y-4 text-sm text-neutral-600">
+            <div>
+              <p className="font-medium text-black">How do I create a product?</p>
+              <p className="mt-1">Log in to your dashboard and click &ldquo;Create Product.&rdquo; Upload your file, set a price, and publish.</p>
+            </div>
+            <div>
+              <p className="font-medium text-black">When do I get paid?</p>
+              <p className="mt-1">Connect your Stripe account in Settings → Payments. Stripe handles payouts directly to your bank.</p>
+            </div>
+            <div>
+              <p className="font-medium text-black">How do buyers download my product?</p>
+              <p className="mt-1">After purchase, buyers receive a secure download link. For free products, they enter their email and get access immediately.</p>
+            </div>
+            <div>
+              <p className="font-medium text-black">What file types can I sell?</p>
+              <p className="mt-1">PDFs, ZIPs, spreadsheets, images, audio files, videos, and more. Max 100 MB per file.</p>
+            </div>
+          </div>
         </div>
 
-        <div className="bg-neutral-50 border border-neutral-100 rounded-2xl p-6">
-          <h2 className="text-base font-bold text-black mb-1">Response Times</h2>
-          <ul className="space-y-1 text-sm text-neutral-500 mt-2">
-            <li>• General support: within 24–48 hours</li>
-            <li>• Urgent/billing issues: within 12 hours</li>
-            <li>• Beta period: response times may vary</li>
-          </ul>
+        <div className="text-center pt-4">
+          <Link href="/" className="text-sm text-neutral-500 hover:text-black transition-colors">
+            ← Back to Sellbop
+          </Link>
         </div>
-
       </div>
-    </main>
+    </div>
   )
 }

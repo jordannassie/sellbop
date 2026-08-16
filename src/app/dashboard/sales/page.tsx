@@ -1,204 +1,148 @@
 'use client'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { demoOrderRepo, demoCustomerRepo } from '@/lib/adapters/demo/repositories'
-import { DEMO_SELLER_PROFILE } from '@/lib/demo-data/seed'
 import { useAuth } from '@/context/auth-context'
-import { useDemoMode } from '@/hooks/use-demo-mode'
 import { formatCurrency, timeAgo } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import {
-  ArrowUpRight,
-  BarChart3,
-  DollarSign,
-  Repeat2,
-  ShoppingBag,
-  Tag,
-  Users,
-} from 'lucide-react'
-import type { Order } from '@/lib/domain/entities'
+import { ShoppingBag } from 'lucide-react'
+import { isSupabaseConfigured } from '@/lib/env'
 
-interface SectionCard {
-  title: string
-  description: string
-  href: string
-  icon: React.ComponentType<{ size?: number; className?: string }>
-  stat?: string
-  statLabel?: string
+interface OrderRow {
+  id: string
+  buyer_email: string | null
+  buyer_name: string | null
+  total_cents: number
+  platform_fee_cents: number
+  payment_status: string
+  refund_status: string
+  created_at: string
+  product_title_snapshot: string | null
+  currency: string
 }
 
 function statusVariant(status: string) {
-  return status === 'completed' ? 'success' : status === 'refunded' ? 'warning' : status === 'failed' ? 'danger' : 'neutral'
+  if (status === 'paid') return 'success'
+  if (status === 'refunded') return 'warning'
+  if (status === 'failed') return 'danger'
+  return 'neutral'
 }
 
-export default function SalesSectionPage() {
-  const { session, loading: authLoading } = useAuth()
-  const { demoMode, ready } = useDemoMode()
-  const [orders, setOrders] = useState<Order[]>([])
-  const [customerCount, setCustomerCount] = useState(0)
+export default function SalesPage() {
+  const { session } = useAuth()
+  const [orders, setOrders] = useState<OrderRow[]>([])
+  const [loading, setLoading] = useState(true)
 
-  // Load demo orders/customers only when demo mode is ON or user is not authenticated.
-  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    if (authLoading || !ready) return
-    if (demoMode || !session) {
-      const sid = DEMO_SELLER_PROFILE.id
-      Promise.all([
-        demoOrderRepo.findAll(sid),
-        demoCustomerRepo.findAll(sid),
-      ]).then(([o, c]) => {
-        setOrders(o)
-        setCustomerCount(c.length)
-      })
-    } else {
-      setOrders([])       // Real user, demo OFF → zero state
-      setCustomerCount(0)
-    }
-  }, [authLoading, demoMode, ready, session])
-  /* eslint-enable react-hooks/set-state-in-effect */
+    if (!session || !isSupabaseConfigured()) { setLoading(false); return }
+    fetch('/api/orders')
+      .then(r => r.ok ? r.json() : { orders: [] })
+      .then(data => setOrders(data.orders ?? []))
+      .catch(() => setOrders([]))
+      .finally(() => setLoading(false))
+  }, [session])
 
-  const paidOrders = orders.filter(o => o.paymentStatus === 'paid')
-  const totalRevenue = paidOrders.reduce((s, o) => s + o.amount, 0)
-  const recentOrders = orders.slice(0, 6)
-
-  const CARDS: SectionCard[] = [
-    {
-      title: 'Orders',
-      description: 'View and manage all customer orders.',
-      href: '/dashboard/orders',
-      icon: ShoppingBag,
-      stat: paidOrders.length.toString(),
-      statLabel: 'paid orders',
-    },
-    {
-      title: 'Customers',
-      description: 'See who has purchased from your store.',
-      href: '/dashboard/customers',
-      icon: Users,
-      stat: customerCount.toString(),
-      statLabel: 'customers',
-    },
-    {
-      title: 'Subscriptions',
-      description: 'Manage recurring subscriptions and memberships.',
-      href: '/dashboard/subscriptions',
-      icon: Repeat2,
-      stat: '',
-      statLabel: 'active',
-    },
-    {
-      title: 'Analytics',
-      description: 'Track views, conversion, and revenue over time.',
-      href: '/dashboard/analytics',
-      icon: BarChart3,
-    },
-    {
-      title: 'Discounts',
-      description: 'Create and manage discount codes.',
-      href: '/dashboard/discounts',
-      icon: Tag,
-    },
-    {
-      title: 'Payouts',
-      description: 'Track your earnings and payout history.',
-      href: '/dashboard/payouts',
-      icon: DollarSign,
-      stat: formatCurrency(totalRevenue),
-      statLabel: 'total revenue',
-    },
-  ]
+  const paidOrders = orders.filter(o => o.payment_status === 'paid')
+  const totalRevenue = paidOrders.reduce((s, o) => s + (o.total_cents ?? 0), 0) / 100
+  const totalFees = paidOrders.reduce((s, o) => s + (o.platform_fee_cents ?? 0), 0) / 100
+  const netRevenue = totalRevenue - totalFees
 
   return (
     <div>
-      {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-black">Sales</h1>
-        <p className="mt-1 text-sm text-neutral-500">
-          Orders, customers, subscriptions, and revenue.
-        </p>
+        <p className="mt-1 text-sm text-neutral-500">All orders from your customers.</p>
       </div>
 
-      {/* Summary stats */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 mb-6">
+      {/* Stats */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 mb-6">
         {[
-          { label: 'Total Revenue', value: formatCurrency(totalRevenue) },
-          { label: 'Total Orders', value: paidOrders.length.toString() },
-          { label: 'Customers', value: customerCount.toString() },
+          { label: 'Gross Revenue', value: formatCurrency(totalRevenue) },
+          { label: 'Platform Fees', value: formatCurrency(totalFees) },
+          { label: 'Net Revenue', value: formatCurrency(netRevenue) },
+          { label: 'Orders', value: paidOrders.length.toString() },
         ].map(stat => (
           <div key={stat.label} className="rounded-xl border border-neutral-200 bg-white p-4">
             <p className="text-xs text-neutral-500">{stat.label}</p>
-            <p className="mt-1 text-xl font-bold text-black">{stat.value}</p>
+            {loading ? (
+              <div className="h-6 w-20 bg-neutral-100 rounded animate-pulse mt-1" />
+            ) : (
+              <p className="mt-1 text-xl font-bold text-black">{stat.value}</p>
+            )}
           </div>
         ))}
       </div>
 
-      {/* Section cards */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 mb-8">
-        {CARDS.map(card => (
-          <Link key={card.href} href={card.href}>
-            <div className="group rounded-2xl border border-neutral-200 bg-white p-4 hover:border-neutral-300 hover:shadow-sm transition-all">
-              <div className="mb-3 flex items-center justify-between">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-neutral-100">
-                  <card.icon size={17} className="text-neutral-600" />
-                </div>
-                <ArrowUpRight size={14} className="text-neutral-300 group-hover:text-neutral-600 transition-colors" />
-              </div>
-              <p className="font-semibold text-sm text-black">{card.title}</p>
-              <p className="text-xs text-neutral-500 mt-1 mb-3 leading-relaxed">{card.description}</p>
-              {card.stat !== undefined && (
-                <p className="text-xs text-neutral-400">
-                  <span className="font-bold text-black">{card.stat}</span> {card.statLabel}
-                </p>
-              )}
-            </div>
-          </Link>
-        ))}
-      </div>
-
-      {/* Recent orders */}
+      {/* Orders table */}
       <Card>
         <CardHeader>
-          <CardTitle>Recent Orders</CardTitle>
-          <Link href="/dashboard/orders">
-            <Button size="xs" variant="ghost">View all →</Button>
-          </Link>
+          <CardTitle>Orders</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          {recentOrders.length === 0 ? (
-            <div className="px-6 py-8 text-center text-sm text-neutral-400">
-              No orders yet. Share your store to get your first sale.
-            </div>
-          ) : (
+          {loading ? (
             <div className="divide-y divide-neutral-50">
-              {recentOrders.map(order => (
-                <Link key={order.id} href={`/dashboard/orders/${order.id}`}>
-                  <div className="flex items-center justify-between px-6 py-3 hover:bg-neutral-50 transition-colors">
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-neutral-900 truncate">{order.customerEmail}</p>
-                      <p className="text-xs text-neutral-400">
-                        {order.productName} · {timeAgo(order.createdAt)}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <Badge variant={statusVariant(order.status)}>{order.status}</Badge>
-                      <span className="text-sm font-semibold text-black">
-                        {formatCurrency(order.amount)}
-                      </span>
-                    </div>
+              {[1,2,3,4,5].map(i => (
+                <div key={i} className="px-6 py-4 flex items-center gap-4 animate-pulse">
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 bg-neutral-100 rounded w-48" />
+                    <div className="h-3 bg-neutral-100 rounded w-32" />
                   </div>
-                </Link>
+                  <div className="h-6 w-16 bg-neutral-100 rounded" />
+                </div>
               ))}
             </div>
+          ) : orders.length === 0 ? (
+            <div className="px-6 py-16 text-center">
+              <ShoppingBag size={32} className="mx-auto mb-3 text-neutral-200" />
+              <p className="text-sm font-medium text-neutral-700 mb-1">No orders yet</p>
+              <p className="text-xs text-neutral-400">
+                Orders will appear here after your first sale. Make sure at least one product is live and shared.
+              </p>
+            </div>
+          ) : (
+            <>
+              {/* Table header (desktop) */}
+              <div className="hidden sm:grid grid-cols-12 gap-4 px-6 py-2 border-b border-neutral-100 text-xs font-medium text-neutral-400 uppercase tracking-wide">
+                <div className="col-span-4">Customer</div>
+                <div className="col-span-3">Product</div>
+                <div className="col-span-2">Amount</div>
+                <div className="col-span-2">Status</div>
+                <div className="col-span-1">Date</div>
+              </div>
+              <div className="divide-y divide-neutral-50">
+                {orders.map(order => (
+                  <Link key={order.id} href={`/dashboard/orders/${order.id}`}>
+                    <div className="sm:grid sm:grid-cols-12 sm:gap-4 px-4 sm:px-6 py-3 hover:bg-neutral-50 transition-colors flex items-center gap-3 sm:flex-none">
+                      <div className="sm:col-span-4 min-w-0 flex-1 sm:flex-none">
+                        <p className="text-sm font-medium text-neutral-900 truncate">{order.buyer_email ?? '—'}</p>
+                        {order.buyer_name && <p className="text-xs text-neutral-400 truncate sm:hidden">{order.buyer_name}</p>}
+                      </div>
+                      <div className="sm:col-span-3 hidden sm:block">
+                        <p className="text-sm text-neutral-600 truncate">{order.product_title_snapshot ?? '—'}</p>
+                      </div>
+                      <div className="sm:col-span-2 shrink-0">
+                        <p className="text-sm font-semibold text-black">{formatCurrency((order.total_cents ?? 0) / 100)}</p>
+                      </div>
+                      <div className="sm:col-span-2 shrink-0">
+                        <Badge variant={statusVariant(order.payment_status)}>{order.payment_status}</Badge>
+                      </div>
+                      <div className="sm:col-span-1 hidden sm:block">
+                        <p className="text-xs text-neutral-400">{timeAgo(order.created_at)}</p>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
 
-      <div className="mt-4 rounded-xl border border-neutral-100 bg-neutral-50 px-4 py-3 text-xs text-neutral-500">
-        <span className="font-medium text-neutral-700">Next:</span> Connect Stripe to process real payments and see live revenue.
-        Subscription management and payout tracking will activate automatically.
-      </div>
+      {!isSupabaseConfigured() && (
+        <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-700">
+          Supabase is not configured. Sales data is unavailable until connected.
+        </div>
+      )}
     </div>
   )
 }
