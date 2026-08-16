@@ -93,7 +93,12 @@ export async function POST(request: Request) {
     .select('*')
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    if (error.message?.includes('does not exist') || error.message?.includes('relation')) {
+      return NextResponse.json({ error: 'Affiliate system not yet active. Please run database migrations.' }, { status: 503 })
+    }
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
 
   return NextResponse.json({ relationship }, { status: 201 })
 }

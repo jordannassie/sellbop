@@ -42,6 +42,10 @@ export async function GET(request: Request) {
   const { data, error } = await dbQuery
 
   if (error) {
+    // Gracefully handle missing columns (migration not yet applied)
+    if (error.message?.includes('does not exist') || error.message?.includes('column')) {
+      return NextResponse.json({ products: [], migrationRequired: true })
+    }
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
