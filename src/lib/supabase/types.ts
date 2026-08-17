@@ -41,6 +41,7 @@ export interface Database {
           avatar_url: string | null
           header_layout: string | null
           banner_url: string | null
+          social_links: Record<string, string> | null
           layout_mode: string | null
           branding_mode: string | null
           support_email: string | null
@@ -61,6 +62,7 @@ export interface Database {
           avatar_url?: string | null
           header_layout?: string | null
           banner_url?: string | null
+          social_links?: Record<string, string> | null
           layout_mode?: string | null
           branding_mode?: string | null
           support_email?: string | null

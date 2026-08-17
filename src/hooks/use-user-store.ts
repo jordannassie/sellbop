@@ -29,6 +29,7 @@ const DEMO_STORE_ROW: StoreRow = {
   bio: DEMO_STOREFRONT.bio ?? null,
   avatar_url: DEMO_STOREFRONT.avatarUrl ?? null,
   banner_url: DEMO_STOREFRONT.bannerUrl ?? null,
+  social_links: null,
   header_layout: null,
   layout_mode: null,
   branding_mode: null,

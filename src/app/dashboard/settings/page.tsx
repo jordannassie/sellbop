@@ -10,6 +10,7 @@ import { useUserStore } from '@/hooks/use-user-store'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { uploadFile, buildStoragePath } from '@/lib/supabase/storage'
 import { Upload, User, Loader2, ExternalLink, Image as ImageIcon, X } from 'lucide-react'
+import { SOCIAL_PLATFORMS, SocialIcon, normalizeSocialUrl } from '@/components/ui/social-icons'
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -34,6 +35,10 @@ export default function SettingsPage() {
   const [uploadingBanner, setUploadingBanner] = useState(false)
   const bannerInputRef = useRef<HTMLInputElement>(null)
 
+  // Social links
+  const [socialLinks, setSocialLinks] = useState<Record<string, string>>({})
+  const [savingSocial, setSavingSocial] = useState(false)
+
   // Password
   const [newPassword, setNewPassword] = useState('')
   const [savingPassword, setSavingPassword] = useState(false)
@@ -55,6 +60,7 @@ export default function SettingsPage() {
       setSupportEmail(store.support_email ?? session?.email ?? '')
       if (store.avatar_url) setProfileAvatar(store.avatar_url)
       if (store.banner_url) setBannerUrl(store.banner_url)
+      if (store.social_links) setSocialLinks(store.social_links as Record<string, string>)
     }
   }, [store, session?.email])
 
@@ -108,6 +114,31 @@ export default function SettingsPage() {
     setBannerUrl(null)
     await saveStore({ banner_url: null })
     toast.success('Banner removed.')
+  }
+
+  function setSocialLink(key: string, value: string) {
+    setSocialLinks(prev => ({ ...prev, [key]: value }))
+  }
+
+  async function handleSaveSocial(e: React.FormEvent) {
+    e.preventDefault()
+    setSavingSocial(true)
+    try {
+      // Normalize and filter empty entries
+      const normalized: Record<string, string> = {}
+      for (const [k, v] of Object.entries(socialLinks)) {
+        const url = normalizeSocialUrl(v)
+        if (url) normalized[k] = url
+      }
+      const err = await saveStore({ social_links: normalized })
+      if (err) throw new Error(err)
+      setSocialLinks(normalized)
+      toast.success('Social links saved.')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save.')
+    } finally {
+      setSavingSocial(false)
+    }
   }
 
   async function handleSaveProfile(e: React.FormEvent) {
@@ -317,6 +348,38 @@ export default function SettingsPage() {
                 </a>
               )}
               <Button type="submit" loading={saving}>Save Store</Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        {/* Social Links */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Social Links</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xs text-neutral-400 mb-4">Add links to your social profiles. Only platforms you fill in will appear on your storefront.</p>
+            <form onSubmit={handleSaveSocial} className="space-y-3">
+              {SOCIAL_PLATFORMS.map(platform => (
+                <div key={platform.key} className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 w-32 flex-shrink-0">
+                    <span className="text-neutral-500 flex-shrink-0">
+                      <SocialIcon platform={platform.key} size={14} />
+                    </span>
+                    <span className="text-xs font-medium text-neutral-600 truncate">{platform.label}</span>
+                  </div>
+                  <input
+                    type="url"
+                    value={socialLinks[platform.key] ?? ''}
+                    onChange={e => setSocialLink(platform.key, e.target.value)}
+                    placeholder={platform.placeholder}
+                    className="flex-1 rounded-xl border border-neutral-200 px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-1 focus:ring-black placeholder:text-neutral-300"
+                  />
+                </div>
+              ))}
+              <div className="pt-2">
+                <Button type="submit" loading={savingSocial}>Save Social Links</Button>
+              </div>
             </form>
           </CardContent>
         </Card>

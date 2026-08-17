@@ -36,16 +36,21 @@ export async function GET(
     avatarUrl = profile?.avatar_url ?? null
   }
 
-  // Try to load banner_url (added in migration 011)
+  // Try to load banner_url + social_links (added in migrations 011/012)
   let bannerUrl: string | null = null
+  let socialLinks: Record<string, string> = {}
   try {
     const { data: extra } = await admin
       .from('stores')
-      .select('banner_url')
+      .select('banner_url, social_links')
       .eq('id', store.id)
       .maybeSingle()
-    if (extra) bannerUrl = (extra as Record<string, unknown>).banner_url as string | null ?? null
-  } catch { /* column not yet in production — ignore */ }
+    if (extra) {
+      bannerUrl = (extra as Record<string, unknown>).banner_url as string | null ?? null
+      const sl = (extra as Record<string, unknown>).social_links
+      if (sl && typeof sl === 'object') socialLinks = sl as Record<string, string>
+    }
+  } catch { /* columns not yet in production — ignore */ }
 
   // Load products — core fields only
   const { data: rawProducts } = await admin
@@ -90,7 +95,7 @@ export async function GET(
   const hasAffiliateProducts = enrichedProducts.some(p => p.affiliate_enabled && (p.price_cents ?? 0) > 0)
 
   return NextResponse.json({
-    store: { ...store, avatar_url: avatarUrl, banner_url: bannerUrl },
+    store: { ...store, avatar_url: avatarUrl, banner_url: bannerUrl, social_links: socialLinks },
     products: enrichedProducts,
     hasAffiliateProducts,
   })

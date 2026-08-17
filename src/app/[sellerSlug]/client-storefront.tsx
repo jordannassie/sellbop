@@ -7,6 +7,7 @@ import {
   User, Package, Share2, Check, TrendingUp, ArrowRight, Copy, ChevronDown,
 } from 'lucide-react'
 import { isSupabaseConfigured } from '@/lib/env'
+import { SocialIcon, SOCIAL_PLATFORMS } from '@/components/ui/social-icons'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -17,6 +18,7 @@ interface StoreData {
   bio: string | null
   avatar_url: string | null
   banner_url: string | null
+  social_links: Record<string, string> | null
 }
 
 interface ProductCard {
@@ -31,7 +33,33 @@ interface ProductCard {
   affiliate_commission_percent: number | null
 }
 
-// ── Share Store button (hero variant — white/translucent) ─────────────────────
+// ── Social Links row ──────────────────────────────────────────────────────────
+
+function SocialLinksRow({ links, name }: { links: Record<string, string>; name: string }) {
+  // Only show platforms that have a value, in canonical order
+  const populated = SOCIAL_PLATFORMS.filter(p => links[p.key])
+  if (populated.length === 0) return null
+
+  return (
+    <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
+      {populated.map(platform => (
+        <a
+          key={platform.key}
+          href={links[platform.key]}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`Visit ${name} on ${platform.label}`}
+          title={platform.label}
+          className="group relative flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-600 shadow-sm hover:border-neutral-400 hover:text-black transition-all"
+        >
+          <SocialIcon platform={platform.key} size={15} />
+        </a>
+      ))}
+    </div>
+  )
+}
+
+// ── Share Store button ────────────────────────────────────────────────────────
 
 function ShareStoreButton({ slug, name }: { slug: string; name: string }) {
   const [copied, setCopied] = useState(false)
@@ -315,6 +343,11 @@ export function ClientStorefront({ slug }: { slug: string }) {
           <p className="text-sm text-neutral-500 max-w-sm leading-relaxed mb-5">
             {store.headline ?? store.bio}
           </p>
+        )}
+
+        {/* Social links */}
+        {store.social_links && Object.keys(store.social_links).length > 0 && (
+          <SocialLinksRow links={store.social_links} name={store.name} />
         )}
 
         {/* Buttons */}
