@@ -146,25 +146,36 @@ export function DashboardSidebar() {
 
   const avatarUrl = session?.avatarUrl ?? store?.avatar_url ?? null
 
+  // Profile click: go to public storefront if seller, else settings
+  const profileHref = hasStore && store?.slug ? `/${store.slug}` : '/dashboard/settings'
+  const displayName = session?.name ?? session?.email?.split('@')[0] ?? 'You'
+  const initial = (displayName.charAt(0) || 'U').toUpperCase()
+
   const userBlock = session && (
-    <Link
-      href="/dashboard/settings"
-      className="flex items-center gap-3 border-b border-neutral-100 px-4 py-3 hover:bg-neutral-50 transition-colors"
-    >
-      <UserAvatar
-        avatarUrl={avatarUrl}
-        name={session.name}
-        email={session.email}
-        sizeClass="h-9 w-9"
-        textClass="text-xs"
-      />
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-xs font-semibold text-neutral-800">
-          {session.name ?? session.email.split('@')[0]}
+    <div className="flex flex-col items-center px-4 pt-6 pb-4 border-b border-neutral-100">
+      <Link href={profileHref} className="group mb-3 block" title="View your store">
+        <div className="w-24 h-24 rounded-full overflow-hidden ring-[3px] ring-neutral-100 bg-neutral-900 flex items-center justify-center group-hover:ring-neutral-300 transition-all">
+          {avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={avatarUrl}
+              alt={displayName}
+              className="w-full h-full object-cover object-center"
+            />
+          ) : (
+            <span className="text-white font-bold text-xl select-none">{initial}</span>
+          )}
+        </div>
+      </Link>
+      <Link href={profileHref} className="group">
+        <p className="text-sm font-semibold text-neutral-900 text-center truncate max-w-[168px] leading-snug group-hover:underline underline-offset-2 transition-colors">
+          {displayName}
         </p>
-        <p className="mt-0.5 truncate text-[11px] text-neutral-400">{session.email}</p>
-      </div>
-    </Link>
+      </Link>
+      <p className="text-[11px] text-neutral-400 text-center truncate max-w-[168px] mt-0.5">
+        {session.email}
+      </p>
+    </div>
   )
 
   const createBtn = (onNavigate?: () => void) => (
