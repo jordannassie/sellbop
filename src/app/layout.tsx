@@ -6,6 +6,9 @@ import { Toaster } from 'sonner'
 export const metadata: Metadata = {
   title: 'SellBop.com — Sell anything in minutes',
   description: 'Create one simple page for your product or offer and start getting paid. SellBop.com',
+  verification: {
+    google: 'd5UdjSy0h18EGpt7Vn2dezTtx0_lbwmBrty4mA5jn14',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
