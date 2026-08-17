@@ -175,6 +175,7 @@ export function ClientProductPage({ slug }: { slug: string }) {
           productSlug: product.slug,
           buyerEmail: buyerEmail.trim(),
           buyerName: buyerName.trim() || undefined,
+          refCode: refCode || undefined,
         }),
       })
       const data = await res.json()

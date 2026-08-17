@@ -1,13 +1,11 @@
 import { NextResponse } from 'next/server'
+import Stripe from 'stripe'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { isSupabaseAdminConfigured } from '@/lib/env'
 import { env } from '@/lib/env'
 
 // POST /api/stripe/connect — begin Stripe Connect onboarding for a seller
-// ── STRIPE INTEGRATION POINT ──────────────────────────────────────────────────
-// Activate by adding Stripe credentials. See STRIPE-INTEGRATION-HANDOFF.md.
-// ─────────────────────────────────────────────────────────────────────────────
 export async function POST() {
   if (!isSupabaseAdminConfigured()) {
     return NextResponse.json({ error: 'Database not configured.' }, { status: 503 })
@@ -24,46 +22,42 @@ export async function POST() {
     }, { status: 503 })
   }
 
-  // ── STRIPE CONNECT ONBOARDING ──────────────────────────────────────────────
-  // import Stripe from 'stripe'
-  // const stripe = new Stripe(env.stripe.secretKey)
-  //
-  // const admin = getSupabaseAdminClient()
-  // const { data: store } = await admin
-  //   .from('stores')
-  //   .select('id, stripe_account_id')
-  //   .eq('owner_user_id', user.id)
-  //   .maybeSingle()
-  //
-  // let accountId = store?.stripe_account_id
-  //
-  // if (!accountId) {
-  //   const account = await stripe.accounts.create({
-  //     type: 'express',
-  //     email: user.email,
-  //     capabilities: { transfers: { requested: true } },
-  //   })
-  //   accountId = account.id
-  //
-  //   await admin.from('stores')
-  //     .update({ stripe_account_id: accountId })
-  //     .eq('owner_user_id', user.id)
-  // }
-  //
-  // const accountLink = await stripe.accountLinks.create({
-  //   account: accountId,
-  //   refresh_url: `${env.app.url}/api/stripe/connect/refresh`,
-  //   return_url: `${env.app.url}/api/stripe/connect/return`,
-  //   type: 'account_onboarding',
-  // })
-  //
-  // return NextResponse.json({ onboarding_url: accountLink.url })
-  // ─────────────────────────────────────────────────────────────────────────
+  const stripe = new Stripe(env.stripe.secretKey)
+  const admin = getSupabaseAdminClient()
 
-  return NextResponse.json({
-    stripe_required: true,
-    message: 'Stripe Connect integration is prepared but not yet activated.',
-  }, { status: 503 })
+  const { data: store } = await admin
+    .from('stores')
+    .select('id, stripe_account_id')
+    .eq('owner_user_id', user.id)
+    .maybeSingle()
+
+  if (!store) {
+    return NextResponse.json({ error: 'No store found for this account.' }, { status: 404 })
+  }
+
+  let accountId = store.stripe_account_id
+
+  if (!accountId) {
+    const account = await stripe.accounts.create({
+      type: 'express',
+      email: user.email,
+      capabilities: { transfers: { requested: true } },
+    })
+    accountId = account.id
+
+    await admin.from('stores')
+      .update({ stripe_account_id: accountId })
+      .eq('owner_user_id', user.id)
+  }
+
+  const accountLink = await stripe.accountLinks.create({
+    account: accountId,
+    refresh_url: `${env.app.url}/api/stripe/connect/refresh`,
+    return_url: `${env.app.url}/api/stripe/connect/return`,
+    type: 'account_onboarding',
+  })
+
+  return NextResponse.json({ onboarding_url: accountLink.url })
 }
 
 // GET /api/stripe/connect — return Stripe account status

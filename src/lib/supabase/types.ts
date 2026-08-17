@@ -303,6 +303,8 @@ export interface Database {
           product_id: string | null
           notes: string | null
           fulfillment_provider: string | null
+          affiliate_relationship_id: string | null
+          affiliate_commission_id: string | null
           created_at: string
           updated_at: string
         }
@@ -336,6 +338,8 @@ export interface Database {
           product_id?: string | null
           notes?: string | null
           fulfillment_provider?: string | null
+          affiliate_relationship_id?: string | null
+          affiliate_commission_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -379,6 +383,7 @@ export interface Database {
           order_id: string
           file_id: string | null
           status: string
+          affiliate_relationship_id: string | null
           created_at: string
           updated_at: string
         }
@@ -390,6 +395,7 @@ export interface Database {
           order_id: string
           file_id?: string | null
           status?: string
+          affiliate_relationship_id?: string | null
           created_at?: string
           updated_at?: string
         }

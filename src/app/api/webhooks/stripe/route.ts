@@ -1,14 +1,12 @@
 import { NextResponse } from 'next/server'
+import Stripe from 'stripe'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { isSupabaseAdminConfigured } from '@/lib/env'
 import { env } from '@/lib/env'
 import { calcPlatformFeeCents } from '@/lib/platform-config'
+import { calcCommissionCents, calcAvailableAt } from '@/lib/affiliates'
 
 // POST /api/webhooks/stripe — Stripe webhook endpoint
-// ── STRIPE INTEGRATION POINT ──────────────────────────────────────────────────
-// This route is prepared but requires Stripe credentials to activate.
-// See STRIPE-INTEGRATION-HANDOFF.md for complete setup instructions.
-// ─────────────────────────────────────────────────────────────────────────────
 export async function POST(request: Request) {
   const body = await request.text()
   const signature = request.headers.get('stripe-signature')
@@ -21,66 +19,98 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'No Stripe signature.' }, { status: 400 })
   }
 
-  // ── WEBHOOK SIGNATURE VERIFICATION ────────────────────────────────────────
-  // import Stripe from 'stripe'
-  // const stripe = new Stripe(env.stripe.secretKey)
-  // let event: Stripe.Event
-  // try {
-  //   event = stripe.webhooks.constructEvent(body, signature, env.stripe.webhookSecret)
-  // } catch (err) {
-  //   return NextResponse.json({ error: 'Invalid signature.' }, { status: 400 })
-  // }
-  // ─────────────────────────────────────────────────────────────────────────
+  const stripe = new Stripe(env.stripe.secretKey)
+  let event: Stripe.Event
+  try {
+    event = stripe.webhooks.constructEvent(body, signature, env.stripe.webhookSecret)
+  } catch {
+    return NextResponse.json({ error: 'Invalid signature.' }, { status: 400 })
+  }
 
-  // ── EVENT HANDLERS ────────────────────────────────────────────────────────
-  //
-  // switch (event.type) {
-  //
-  //   case 'checkout.session.completed': {
-  //     const session = event.data.object as Stripe.Checkout.Session
-  //     await handleCheckoutCompleted(session)
-  //     break
-  //   }
-  //
-  //   case 'payment_intent.payment_failed': {
-  //     // Update order payment_status = 'failed'
-  //     break
-  //   }
-  //
-  //   case 'charge.refunded': {
-  //     // Update order: payment_status = 'refunded', refund_status = 'refunded'
-  //     // Revoke purchase entitlement
-  //     break
-  //   }
-  //
-  //   case 'charge.dispute.created': {
-  //     // Update order: refund_status = 'pending'
-  //     break
-  //   }
-  //
-  //   case 'account.updated': {
-  //     // Update store: stripe_charges_enabled, stripe_payouts_enabled
-  //     break
-  //   }
-  // }
-  // ─────────────────────────────────────────────────────────────────────────
+  switch (event.type) {
+    case 'checkout.session.completed': {
+      const session = event.data.object as Stripe.Checkout.Session
+      await handleCheckoutCompleted(session)
+      break
+    }
 
-  return NextResponse.json({ received: true, stripe_required: true })
+    case 'payment_intent.payment_failed': {
+      const intent = event.data.object as Stripe.PaymentIntent
+      if (isSupabaseAdminConfigured()) {
+        const admin = getSupabaseAdminClient()
+        await admin
+          .from('orders')
+          .update({ payment_status: 'failed' })
+          .eq('stripe_payment_intent_id', intent.id)
+      }
+      break
+    }
+
+    case 'charge.refunded': {
+      const charge = event.data.object as Stripe.Charge
+      const paymentIntentId = typeof charge.payment_intent === 'string' ? charge.payment_intent : null
+      if (isSupabaseAdminConfigured() && paymentIntentId) {
+        const admin = getSupabaseAdminClient()
+        const { data: order } = await admin
+          .from('orders')
+          .update({ payment_status: 'refunded', refund_status: 'refunded' })
+          .eq('stripe_payment_intent_id', paymentIntentId)
+          .select('id, affiliate_commission_id')
+          .maybeSingle()
+
+        if (order) {
+          await admin.from('purchases').update({ status: 'revoked' }).eq('order_id', order.id)
+
+          if (order.affiliate_commission_id) {
+            await admin
+              .from('affiliate_commissions')
+              .update({ status: 'reversed', reversed_at: new Date().toISOString(), reversal_reason: 'order_refunded' })
+              .eq('id', order.affiliate_commission_id)
+          }
+        }
+      }
+      break
+    }
+
+    case 'charge.dispute.created': {
+      const dispute = event.data.object as Stripe.Dispute
+      const paymentIntentId = typeof dispute.payment_intent === 'string' ? dispute.payment_intent : null
+      if (isSupabaseAdminConfigured() && paymentIntentId) {
+        const admin = getSupabaseAdminClient()
+        await admin
+          .from('orders')
+          .update({ refund_status: 'disputed' })
+          .eq('stripe_payment_intent_id', paymentIntentId)
+      }
+      break
+    }
+
+    case 'account.updated': {
+      const account = event.data.object as Stripe.Account
+      if (isSupabaseAdminConfigured()) {
+        const admin = getSupabaseAdminClient()
+        await admin
+          .from('stores')
+          .update({
+            stripe_charges_enabled: !!account.charges_enabled,
+            stripe_payouts_enabled: !!account.payouts_enabled,
+            stripe_onboarding_complete: !!(account.details_submitted && account.charges_enabled),
+          })
+          .eq('stripe_account_id', account.id)
+      }
+      break
+    }
+  }
+
+  return NextResponse.json({ received: true })
 }
 
 /**
  * Handle a completed Stripe Checkout Session.
- * Creates the order, order items, and purchase entitlement.
- * Called from the webhook handler once Stripe is configured.
+ * Creates the order, order items, purchase entitlement, and — if the
+ * checkout carried affiliate attribution — a pending affiliate commission.
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function handleCheckoutCompleted(session: {
-  id: string
-  customer_email?: string | null
-  payment_intent?: string | null
-  metadata?: Record<string, string>
-  amount_total?: number | null
-}) {
+async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   if (!isSupabaseAdminConfigured()) return
 
   const admin = getSupabaseAdminClient()
@@ -90,6 +120,10 @@ async function handleCheckoutCompleted(session: {
   const buyerEmail = meta.buyer_email ?? session.customer_email
   const buyerName = meta.buyer_name ?? null
   const discountCents = parseInt(meta.discount_cents ?? '0')
+  const affiliateRelationshipId = meta.affiliate_relationship_id || null
+  const affiliateCommissionPercent = meta.affiliate_commission_percent
+    ? parseInt(meta.affiliate_commission_percent)
+    : 0
 
   if (!productId || !storeId || !buyerEmail) return
 
@@ -120,6 +154,7 @@ async function handleCheckoutCompleted(session: {
 
   const totalCents = session.amount_total ?? product.price_cents ?? 0
   const platformFeeCents = calcPlatformFeeCents(totalCents)
+  const paymentIntentId = typeof session.payment_intent === 'string' ? session.payment_intent : null
 
   const { data: order } = await admin
     .from('orders')
@@ -138,11 +173,10 @@ async function handleCheckoutCompleted(session: {
       payment_status: 'paid',
       refund_status: 'none',
       stripe_session_id: session.id,
-      stripe_payment_intent_id: typeof session.payment_intent === 'string'
-        ? session.payment_intent
-        : null,
+      stripe_payment_intent_id: paymentIntentId,
       product_id: productId,
       product_title_snapshot: product.title,
+      affiliate_relationship_id: affiliateRelationshipId,
     })
     .select('id')
     .single()
@@ -165,6 +199,7 @@ async function handleCheckoutCompleted(session: {
     product_id: productId,
     order_id: order.id,
     status: 'active',
+    affiliate_relationship_id: affiliateRelationshipId,
   })
 
   // Increment discount code usage if applicable
@@ -175,6 +210,41 @@ async function handleCheckoutCompleted(session: {
       } as never)
     } catch {
       // Best-effort — non-blocking
+    }
+  }
+
+  // Affiliate commission — pending until the hold period elapses
+  if (affiliateRelationshipId && affiliateCommissionPercent > 0) {
+    const { data: relationship } = await admin
+      .from('affiliate_relationships')
+      .select('id, affiliate_user_id, seller_id, status')
+      .eq('id', affiliateRelationshipId)
+      .maybeSingle()
+
+    if (relationship && relationship.status === 'active') {
+      const commissionCents = calcCommissionCents(totalCents, affiliateCommissionPercent)
+
+      const { data: commission } = await admin
+        .from('affiliate_commissions')
+        .insert({
+          relationship_id: relationship.id,
+          affiliate_user_id: relationship.affiliate_user_id,
+          seller_id: relationship.seller_id,
+          product_id: productId,
+          order_id: order.id,
+          gross_sale_cents: totalCents,
+          commission_percent: affiliateCommissionPercent,
+          commission_cents: commissionCents,
+          currency: 'usd',
+          status: 'pending',
+          available_at: calcAvailableAt().toISOString(),
+        })
+        .select('id')
+        .single()
+
+      if (commission) {
+        await admin.from('orders').update({ affiliate_commission_id: commission.id }).eq('id', order.id)
+      }
     }
   }
 }

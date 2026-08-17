@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import Stripe from 'stripe'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { isSupabaseAdminConfigured } from '@/lib/env'
 import { env } from '@/lib/env'
@@ -9,13 +10,13 @@ interface PaidCheckoutPayload {
   buyerEmail: string
   buyerName?: string
   discountCode?: string
+  /** Affiliate referral code, if the buyer arrived via an affiliate link
+   *  (?ref=CODE) during this browsing session. Same-session attribution
+   *  only for now — see AFFILIATE-TRACKING.md for the cross-session upgrade path. */
+  refCode?: string
 }
 
 // POST /api/checkout/paid — initiate Stripe Checkout Session
-// ── STRIPE INTEGRATION POINT ──────────────────────────────────────────────────
-// This route is prepared for Stripe but not yet activated.
-// See STRIPE-INTEGRATION-HANDOFF.md for complete implementation instructions.
-// ─────────────────────────────────────────────────────────────────────────────
 export async function POST(request: Request) {
   if (!isSupabaseAdminConfigured()) {
     return NextResponse.json({ error: 'Database not configured.' }, { status: 503 })
@@ -28,7 +29,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 })
   }
 
-  const { productSlug, buyerEmail, buyerName, discountCode } = body
+  const { productSlug, buyerEmail, buyerName, discountCode, refCode } = body
   if (!productSlug?.trim() || !buyerEmail?.trim()) {
     return NextResponse.json({ error: 'productSlug and buyerEmail are required.' }, { status: 400 })
   }
@@ -43,7 +44,7 @@ export async function POST(request: Request) {
   // Load product — server-side price; NEVER trust client
   const { data: product } = await admin
     .from('products')
-    .select('id, store_id, title, price_cents, is_live, product_type')
+    .select('id, store_id, title, price_cents, is_live, product_type, affiliate_enabled, affiliate_commission_percent')
     .eq('slug', productSlug.trim())
     .maybeSingle()
 
@@ -63,6 +64,12 @@ export async function POST(request: Request) {
     .maybeSingle()
 
   if (!store) return NextResponse.json({ error: 'Store not found.' }, { status: 500 })
+
+  if (!store.stripe_account_id || !store.stripe_charges_enabled) {
+    return NextResponse.json({
+      error: 'This seller has not finished connecting their Stripe account yet.',
+    }, { status: 400 })
+  }
 
   // Apply discount code (server-side)
   let discountCents = 0
@@ -95,56 +102,71 @@ export async function POST(request: Request) {
   const platformFeeCents = calcPlatformFeeCents(totalCents)
   const appUrl = env.app.url
 
-  // ── STRIPE CHECKOUT SESSION CREATION ──────────────────────────────────────
-  // Uncomment and complete when Stripe credentials are configured.
-  //
-  // if (!env.stripe.secretKey) {
-  //   return NextResponse.json({ error: 'Stripe not configured.' }, { status: 503 })
-  // }
-  //
-  // import Stripe from 'stripe'
-  // const stripe = new Stripe(env.stripe.secretKey)
-  //
-  // const session = await stripe.checkout.sessions.create({
-  //   mode: 'payment',
-  //   customer_email: buyerEmail,
-  //   line_items: [{
-  //     price_data: {
-  //       currency: 'usd',
-  //       unit_amount: totalCents,
-  //       product_data: { name: product.title },
-  //     },
-  //     quantity: 1,
-  //   }],
-  //   payment_intent_data: {
-  //     application_fee_amount: platformFeeCents,
-  //     transfer_data: { destination: store.stripe_account_id },
-  //     metadata: {
-  //       sellbop_product_id: product.id,
-  //       sellbop_product_slug: productSlug,
-  //       sellbop_store_id: store.id,
-  //       buyer_email: buyerEmail,
-  //       buyer_name: buyerName ?? '',
-  //       discount_code_id: discountCodeId ?? '',
-  //       discount_cents: discountCents,
-  //     },
-  //   },
-  //   success_url: `${appUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-  //   cancel_url: `${appUrl}/p/${productSlug}`,
-  // })
-  //
-  // return NextResponse.json({ checkout_url: session.url })
-  // ──────────────────────────────────────────────────────────────────────────
+  // Resolve affiliate attribution — same-session only: the referral code
+  // must have been present in the URL for this exact checkout call. If it
+  // matches an active relationship for this product, we record it on the
+  // order and the webhook creates a pending commission for the affiliate.
+  let affiliateRelationshipId: string | null = null
+  let affiliateCommissionPercent: number | null = null
+  if (refCode?.trim() && product.affiliate_enabled) {
+    const { data: relationship } = await admin
+      .from('affiliate_relationships')
+      .select('id, affiliate_user_id, product_id, seller_id, status')
+      .eq('referral_code', refCode.trim().toUpperCase())
+      .eq('product_id', product.id)
+      .eq('status', 'active')
+      .maybeSingle()
 
-  // Return clear placeholder response until Stripe is connected
-  return NextResponse.json({
-    stripe_required: true,
-    message: 'Stripe Connect is not yet activated. See STRIPE-INTEGRATION-HANDOFF.md.',
-    product_id: product.id,
-    product_title: product.title,
-    price_cents: priceCents,
-    discount_cents: discountCents,
-    total_cents: totalCents,
-    platform_fee_cents: platformFeeCents,
-  }, { status: 503 })
+    if (relationship) {
+      affiliateRelationshipId = relationship.id
+      affiliateCommissionPercent = product.affiliate_commission_percent ?? 0
+    }
+  }
+
+  if (!env.stripe.secretKey) {
+    return NextResponse.json({
+      stripe_required: true,
+      message: 'Stripe Connect is not yet activated. See STRIPE-INTEGRATION-HANDOFF.md.',
+      product_id: product.id,
+      product_title: product.title,
+      price_cents: priceCents,
+      discount_cents: discountCents,
+      total_cents: totalCents,
+      platform_fee_cents: platformFeeCents,
+    }, { status: 503 })
+  }
+
+  const stripe = new Stripe(env.stripe.secretKey)
+
+  const session = await stripe.checkout.sessions.create({
+    mode: 'payment',
+    customer_email: buyerEmail,
+    line_items: [{
+      price_data: {
+        currency: 'usd',
+        unit_amount: totalCents,
+        product_data: { name: product.title },
+      },
+      quantity: 1,
+    }],
+    payment_intent_data: {
+      application_fee_amount: platformFeeCents,
+      transfer_data: { destination: store.stripe_account_id },
+    },
+    metadata: {
+      sellbop_product_id: product.id,
+      sellbop_product_slug: productSlug,
+      sellbop_store_id: store.id,
+      buyer_email: buyerEmail,
+      buyer_name: buyerName ?? '',
+      discount_code_id: discountCodeId ?? '',
+      discount_cents: String(discountCents),
+      affiliate_relationship_id: affiliateRelationshipId ?? '',
+      affiliate_commission_percent: affiliateCommissionPercent !== null ? String(affiliateCommissionPercent) : '',
+    },
+    success_url: `${appUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${appUrl}/p/${productSlug}`,
+  })
+
+  return NextResponse.json({ checkout_url: session.url })
 }
