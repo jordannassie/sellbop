@@ -288,9 +288,9 @@ export function ClientStorefront({ slug }: { slug: string }) {
 
         {/* Creator card — overlaps banner bottom */}
         <div className="max-w-3xl mx-auto px-4 sm:px-6">
-          <div className="flex flex-col items-center text-center -mt-12 pb-8">
+          <div className="flex flex-col items-center text-center -mt-12 sm:-mt-14 md:-mt-16 pb-8">
             {/* Avatar */}
-            <div className="w-24 h-24 rounded-full overflow-hidden bg-white border-4 border-white shadow-md flex items-center justify-center mb-4">
+            <div className="w-24 h-24 sm:w-28 sm:h-28 md:w-36 md:h-36 rounded-full overflow-hidden bg-white border-[5px] border-white shadow-md flex items-center justify-center mb-4">
               {store.avatar_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={store.avatar_url} alt={store.name} className="w-full h-full object-cover" />
