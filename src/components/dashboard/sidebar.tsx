@@ -275,7 +275,7 @@ export function DashboardSidebar() {
       {/* Mobile slide-in drawer */}
       <aside
         className={cn(
-          'fixed bottom-0 right-0 top-14 z-40 flex w-72 translate-x-full flex-col overflow-y-auto border-l border-neutral-100 bg-white shadow-xl transition-transform duration-200 ease-out lg:hidden',
+          'fixed bottom-14 right-0 top-14 z-40 flex w-72 translate-x-full flex-col overflow-y-auto border-l border-neutral-100 bg-white shadow-xl transition-transform duration-200 ease-out lg:hidden',
           mobileOpen && 'translate-x-0',
         )}
         aria-hidden={!mobileOpen}
