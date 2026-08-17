@@ -59,6 +59,15 @@ export async function POST() {
           },
         },
       },
+      defaults: {
+        // Stripe monitors risk and is responsible for negative balances on
+        // this recipient account (Stripe-managed risk). Required whenever a
+        // recipient requests the stripe_transfers capability.
+        responsibilities: {
+          fees_collector: 'stripe',
+          losses_collector: 'stripe',
+        },
+      },
     })
     accountId = account.id
 
