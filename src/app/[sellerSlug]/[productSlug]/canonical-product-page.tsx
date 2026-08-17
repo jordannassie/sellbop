@@ -73,19 +73,19 @@ function ShareProductButton({ url, title }: { url: string; title: string }) {
 
 function CreatorRow({ store }: { store: StoreData }) {
   return (
-    <Link href={`/${store.slug}`} className="group flex items-center gap-3 mb-6">
-      <div className="w-10 h-10 rounded-full overflow-hidden bg-neutral-100 border border-neutral-200 flex-shrink-0 ring-2 ring-white">
+    <Link href={`/${store.slug}`} className="group flex items-center gap-4 mb-6">
+      <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden bg-neutral-100 border border-neutral-200 flex-shrink-0 ring-2 ring-white">
         {store.avatar_url ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={store.avatar_url} alt={store.name} className="w-full h-full object-cover" />
+          <img src={store.avatar_url} alt={store.name} className="w-full h-full object-cover object-center" />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <User size={16} className="text-neutral-400" />
+            <User size={22} className="text-neutral-400" />
           </div>
         )}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-neutral-900 group-hover:text-black leading-none mb-0.5 transition-colors">
+        <p className="text-sm font-semibold text-neutral-900 group-hover:text-black leading-none mb-1 transition-colors">
           {store.name}
         </p>
         <p className="text-xs text-neutral-400 leading-none">sellbop.com/{store.slug}</p>
