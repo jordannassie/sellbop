@@ -18,7 +18,7 @@ Copy and paste the contents of each file into the SQL Editor and click **Run**:
 2. `supabase/migrations/009_mvp_sellbop.sql`
 3. `supabase/migrations/010_affiliates_and_marketplace.sql`
 4. `supabase/migrations/013_resources_center.sql`
-5. `supabase/migrations/015_agent_integrations.sql`
+5. `supabase/migrations/014_agent_integrations.sql`
 
 ---
 

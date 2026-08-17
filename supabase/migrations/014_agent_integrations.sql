@@ -1,5 +1,5 @@
 -- ============================================================
--- 015 — AI Agent Integrations
+-- 014 — AI Agent Integrations
 -- ============================================================
 -- Adds scoped API-token connections for external AI agents
 -- (Claude, Higgsfield, ChatGPT, custom) plus an activity log
@@ -11,7 +11,7 @@
 -- behavior change for the current app).
 --
 -- Run this in the Supabase SQL Editor for production, in order
--- after 012_social_links.sql. Idempotent — safe to re-run.
+-- after 013_resources_center.sql. Idempotent — safe to re-run.
 -- ============================================================
 
 -- ── 1. Agent connections ──────────────────────────────────────
