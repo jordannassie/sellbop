@@ -21,6 +21,16 @@ import { INTEGRATIONS } from '@/lib/resources/defaults'
 const CLAUDE = INTEGRATIONS.claude
 const HIGGSFIELD = INTEGRATIONS.higgsfield
 
+const HIGGSFIELD_MCP_URL = 'https://mcp.higgsfield.ai/mcp'
+const CLAUDE_CONNECTORS_URL = 'https://claude.ai/settings/connectors'
+const HIGGSFIELD_EXAMPLE_PROMPT =
+  'Create a cover image for my SellBop product using Higgsfield, then upload it to the product draft.'
+const HIGGSFIELD_SETUP_STEPS = [
+  'Copy the Higgsfield MCP URL',
+  'Add it in Claude → Settings → Connectors',
+  'Sign in to Higgsfield',
+]
+
 const MAIN_PROMPT =
   'Create me a $49 digital product for Airbnb hosts. Build the files, create the SellBop listing, set affiliates to 30%, and leave it as a draft for me to review.'
 
@@ -212,36 +222,52 @@ export function ConnectAiPage() {
             />
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-2 mb-1">
-                <h2 className="text-lg font-bold text-black">2. Connect Higgsfield</h2>
+                <h2 className="text-lg font-bold text-black">2. Higgsfield</h2>
                 <StatusBadge setupGuide />
               </div>
-              <p className="text-sm text-neutral-500 mb-2">
-                Create product covers, mockups, social graphics, images, and videos with AI.
+              <p className="text-sm text-neutral-500 mb-4">
+                Generate product images and videos with Claude.
               </p>
-              <p className="text-xs text-neutral-400 mb-4 leading-relaxed">
-                Higgsfield connects to Claude. Claude then uses it when building your SellBop products.
-              </p>
-              <a href={HIGGSFIELD.cta_url} target="_blank" rel="noopener noreferrer">
-                <Button variant="secondary" className="font-bold">
-                  Connect Higgsfield <ExternalLink size={14} />
-                </Button>
-              </a>
-              <p className="text-[10px] text-neutral-400 mt-2">{HIGGSFIELD.powered_by}</p>
 
-              <ExpandableHelp label="How do I connect Higgsfield?">
-                <p className="text-sm font-semibold text-black mb-2">{HIGGSFIELD.steps_title}</p>
-                <ol className="space-y-2 mb-3">
-                  {HIGGSFIELD.steps?.map((step, i) => (
-                    <li key={step} className="flex gap-2 text-sm text-neutral-600">
-                      <span className="font-bold text-black flex-shrink-0">{i + 1}.</span>
-                      {step}
-                    </li>
-                  ))}
-                </ol>
-                <p className="text-xs text-neutral-400 font-mono break-all">
-                  Higgsfield MCP URL: https://mcp.higgsfield.ai/mcp
+              <div className="rounded-xl bg-neutral-50 border border-neutral-100 p-3 mb-3">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1.5">
+                  Higgsfield MCP URL
                 </p>
-              </ExpandableHelp>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 min-w-0 truncate text-xs font-mono text-neutral-700">
+                    {HIGGSFIELD_MCP_URL}
+                  </code>
+                  <CopyButton text={HIGGSFIELD_MCP_URL} label="Copy URL" />
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2 mb-4">
+                <a href={CLAUDE_CONNECTORS_URL} target="_blank" rel="noopener noreferrer">
+                  <Button variant="secondary" className="font-bold">
+                    Open Claude Connectors <ExternalLink size={14} />
+                  </Button>
+                </a>
+              </div>
+
+              <ol className="space-y-1.5 mb-4">
+                {HIGGSFIELD_SETUP_STEPS.map((step, i) => (
+                  <li key={step} className="flex gap-2 text-sm text-neutral-600">
+                    <span className="font-bold text-black flex-shrink-0">{i + 1}.</span>
+                    {step}
+                  </li>
+                ))}
+              </ol>
+              <p className="text-[10px] text-neutral-400 mb-4">{HIGGSFIELD.powered_by}</p>
+
+              <div className="rounded-xl bg-neutral-900 p-3.5">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1.5">
+                  Try it
+                </p>
+                <p className="text-sm text-white leading-relaxed mb-2">
+                  &ldquo;{HIGGSFIELD_EXAMPLE_PROMPT}&rdquo;
+                </p>
+                <CopyButton text={HIGGSFIELD_EXAMPLE_PROMPT} label="Copy Prompt" />
+              </div>
             </div>
           </div>
         </div>
