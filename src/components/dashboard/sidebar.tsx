@@ -3,7 +3,25 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { BookOpen, GraduationCap, LayoutDashboard, LogOut, Menu, Package, Settings, Store, Users, DollarSign, ShoppingBag, Tag, X, Plus, TrendingUp, Grid3x3, ExternalLink, } from 'lucide-react'
+import {
+  BookOpen,
+  GraduationCap,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  Package,
+  Settings,
+  Store,
+  Users,
+  DollarSign,
+  ShoppingBag,
+  X,
+  Plus,
+  TrendingUp,
+  Grid3x3,
+  ExternalLink,
+  ChevronDown,
+} from 'lucide-react'
 import { useAuth } from '@/context/auth-context'
 import { useUserStore } from '@/hooks/use-user-store'
 import { cn } from '@/lib/utils'
@@ -47,6 +65,46 @@ function NavLink({
       <item.icon size={16} />
       {item.label}
     </Link>
+  )
+}
+
+const CREATE_OPTIONS = [
+  { label: 'Create with AI', href: '/dashboard/ai-launch' },
+  { label: 'Create manually', href: '/dashboard/products/new' },
+  { label: 'View products', href: '/dashboard/products' },
+]
+
+function CreateMenu({ onNavigate }: { onNavigate?: () => void }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="relative px-2 pt-3 pb-2">
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="flex w-full items-center justify-between gap-2 rounded-xl bg-black px-4 py-2.5 text-sm font-semibold text-white hover:bg-neutral-800 transition-colors"
+      >
+        <span className="flex items-center gap-2">
+          <Plus size={15} /> Create
+        </span>
+        <ChevronDown size={13} className={cn('transition-transform', open && 'rotate-180')} />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="absolute left-2 right-2 top-full z-20 mt-1 rounded-xl border border-neutral-100 bg-white py-1.5 shadow-lg">
+            {CREATE_OPTIONS.map(opt => (
+              <Link
+                key={opt.href}
+                href={opt.href}
+                onClick={() => { setOpen(false); onNavigate?.() }}
+                className="flex items-center px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 hover:text-black transition-colors"
+              >
+                {opt.label}
+              </Link>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
   )
 }
 
@@ -100,9 +158,9 @@ export function DashboardSidebar() {
 
   const hasStore = !!(account?.hasStore || store)
 
-  // Full seller nav
   const sellerNav: NavItem[] = [
-    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, exact: true },
+    { href: '/dashboard', label: 'Overview', icon: LayoutDashboard, exact: true },
+    { href: '/dashboard/store', label: 'Store', icon: Store, activePaths: ['/dashboard/storefront', '/dashboard/store-editor'] },
     { href: '/dashboard/products', label: 'Products', icon: Package },
     { href: '/dashboard/sales', label: 'Sales', icon: ShoppingBag, activePaths: ['/dashboard/orders'] },
     { href: '/dashboard/customers', label: 'Customers', icon: Users },
@@ -111,10 +169,9 @@ export function DashboardSidebar() {
     { href: '/dashboard/library', label: 'Library', icon: BookOpen },
     { href: '/dashboard/resources', label: 'Resources', icon: GraduationCap },
     { href: '/dashboard/payouts', label: 'Payouts', icon: DollarSign },
-    { href: '/dashboard/settings', label: 'Settings', icon: Settings },
+    { href: '/dashboard/settings', label: 'Settings', icon: Settings, activePaths: ['/dashboard/settings/ai-integrations', '/dashboard/billing'] },
   ]
 
-  // Buyer-only nav (no store yet)
   const buyerNav: NavItem[] = [
     { href: '/marketplace', label: 'Marketplace', icon: Grid3x3 },
     { href: '/dashboard/affiliates', label: 'Affiliates', icon: TrendingUp },
@@ -131,11 +188,10 @@ export function DashboardSidebar() {
   }
 
   const avatarUrl = session?.avatarUrl ?? store?.avatar_url ?? null
-
-  // Profile click: go to public storefront if seller, else settings
   const profileHref = hasStore && store?.slug ? `/${store.slug}` : '/dashboard/settings'
   const displayName = session?.name ?? session?.email?.split('@')[0] ?? 'You'
   const initial = (displayName.charAt(0) || 'U').toUpperCase()
+  const storeHref = store?.slug ? `/${store.slug}` : null
 
   const userBlock = session && (
     <div className="flex flex-col items-center px-4 pt-6 pb-4 border-b border-neutral-100">
@@ -171,18 +227,10 @@ export function DashboardSidebar() {
     </div>
   )
 
-  const storeHref = store?.slug ? `/store/${store.slug}` : null
-
-  const createBtn = (onNavigate?: () => void) => (
+  const createArea = (onNavigate?: () => void) => (
     <div className="px-2 pt-3 pb-2 space-y-2">
       {hasStore ? (
-        <Link
-          href="/dashboard/products/new"
-          onClick={onNavigate}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-black px-4 py-2.5 text-sm font-semibold text-white hover:bg-neutral-800 transition-colors"
-        >
-          <Plus size={15} /> Create Product
-        </Link>
+        <CreateMenu onNavigate={onNavigate} />
       ) : (
         <Link
           href="/start-selling"
@@ -228,7 +276,6 @@ export function DashboardSidebar() {
 
   return (
     <>
-      {/* Mobile top header */}
       <header className="fixed left-0 right-0 top-0 z-40 flex h-14 items-center justify-between border-b border-neutral-100 bg-white px-4 lg:hidden">
         <SellBopLogo size="lg" />
         <div className="flex items-center gap-2">
@@ -254,7 +301,6 @@ export function DashboardSidebar() {
         </div>
       </header>
 
-      {/* Mobile overlay */}
       <div
         className={cn(
           'fixed inset-0 z-30 bg-black/25 transition-opacity duration-200 lg:hidden',
@@ -264,7 +310,6 @@ export function DashboardSidebar() {
         aria-hidden="true"
       />
 
-      {/* Mobile slide-in drawer */}
       <aside
         className={cn(
           'fixed bottom-0 right-0 top-14 z-40 flex w-72 translate-x-full flex-col overflow-y-auto border-l border-neutral-100 bg-white shadow-xl transition-transform duration-200 ease-out pb-16 lg:hidden',
@@ -273,17 +318,16 @@ export function DashboardSidebar() {
         aria-hidden={!mobileOpen}
       >
         {userBlock}
-        {createBtn(() => setMobileOpen(false))}
+        {createArea(() => setMobileOpen(false))}
         {navLinks(() => setMobileOpen(false))}
       </aside>
 
-      {/* Desktop sidebar */}
       <aside className="hidden min-h-screen w-56 shrink-0 flex-col border-r border-neutral-100 bg-white lg:flex">
         <div className="flex h-14 items-center border-b border-neutral-100 px-5">
           <SellBopLogo size="lg" />
         </div>
         {userBlock}
-        {createBtn()}
+        {createArea()}
         {navLinks()}
         {logoutBtn}
       </aside>

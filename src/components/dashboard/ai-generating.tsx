@@ -10,11 +10,11 @@ import { cn } from '@/lib/utils'
 
 const STEPS = [
   'Understanding your idea...',
-  'Writing your store headline...',
-  'Creating your product page...',
-  'Suggesting pricing...',
-  'Building FAQ...',
-  'Preparing launch copy...',
+  'Building your product launch...',
+  'Creating your product page copy...',
+  'Suggesting your price...',
+  'Writing your FAQ...',
+  'Preparing your launch plan...',
 ]
 
 interface AIGeneratingProps {

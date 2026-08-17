@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Loader2, RefreshCw, Sparkles } from 'lucide-react'
@@ -8,7 +8,7 @@ import { toast } from 'sonner'
 import { useAuth } from '@/context/auth-context'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { getLaunchIdea, saveLaunchIdea } from '@/lib/launch-idea'
+import { getLaunchIdea, saveLaunchIdea, clearLaunchIdea } from '@/lib/launch-idea'
 
 function GoogleIcon() {
   return (
@@ -29,14 +29,14 @@ function IdeaBanner({ idea }: { idea: string }) {
       <div className="flex items-center justify-center gap-2 mb-3">
         <Sparkles size={13} className="text-white/50" />
         <p className="text-[11px] font-bold text-white/50 uppercase tracking-[0.15em]">
-          Let&apos;s build your store for
+          Let&apos;s create your product for
         </p>
       </div>
       <p className="text-xl sm:text-2xl font-bold text-white leading-snug mb-3">
         &ldquo;{display}&rdquo;
       </p>
       <p className="text-sm text-white/50 leading-relaxed">
-        Create your account and SellBop will draft your store, product page, pricing,
+        Create your account and SellBop will help you build your product page, pricing,
         FAQ, checkout copy, and launch plan.
       </p>
     </div>
@@ -46,18 +46,21 @@ function IdeaBanner({ idea }: { idea: string }) {
 function AuthForm() {
   const router = useRouter()
   const params = useSearchParams()
-  const { signIn, signUp, signInWithGoogle, session, loading: authLoading } = useAuth()
+  const { signIn, signUp, signInWithGoogle } = useAuth()
 
-  // Read idea from URL or fall back to localStorage
-  const ideaFromParam = params.get('idea') ?? ''
-  const idea = ideaFromParam || getLaunchIdea() || ''
+  const intent = params.get('intent') ?? ''
 
-  // If already authenticated, redirect away from login immediately
-  useEffect(() => {
-    if (!authLoading && session) {
-      router.replace('/dashboard')
-    }
-  }, [authLoading, session, router])
+  // Read the idea once and immediately clear localStorage so a page refresh
+  // or direct navigation never shows a stale banner. The value is captured
+  // in state so it stays stable across re-renders (important for the Google
+  // OAuth closure that re-saves it before the redirect).
+  const [idea] = useState<string>(() => {
+    const fromParam = params.get('idea') ?? ''
+    if (fromParam) return fromParam
+    const stored = getLaunchIdea()
+    if (stored) clearLaunchIdea()   // consume once — won't survive refresh
+    return stored ?? ''
+  })
 
   // Detect OAuth error conditions
   const oauthError    = params.get('oauth_error')
@@ -80,6 +83,19 @@ function AuthForm() {
   // Prevent double-click on Google button (the OAuth redirect takes a moment)
   const [googleLoading, setGoogleLoading] = useState(false)
 
+  /**
+   * After successful email/password auth, route to AI Launch if
+   * there is a stored idea; otherwise fall through to /auth/complete.
+   */
+  function resolveRedirect() {
+    if (idea || intent === 'store_launch') {
+      return idea
+        ? `/auth/complete?idea=${encodeURIComponent(idea)}&intent=store_launch`
+        : '/auth/complete?intent=store_launch'
+    }
+    return '/auth/complete'
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
@@ -92,11 +108,10 @@ function AuthForm() {
         await signUp(email, password, name)
       }
 
-      // Hard navigation so Next.js re-fetches with fresh session cookies.
-      // router.push alone can fail if the server-side session isn't yet visible.
-      window.location.href = '/dashboard'
+      router.push(resolveRedirect())
     } catch (err) {
       setError(err instanceof Error ? err.message : mode === 'login' ? 'Login failed.' : 'Signup failed.')
+    } finally {
       setLoading(false)
     }
   }
@@ -217,12 +232,6 @@ function AuthForm() {
             <div className="h-px flex-1 bg-neutral-100" />
             <span className="text-xs font-medium text-neutral-400">or continue with email</span>
             <div className="h-px flex-1 bg-neutral-100" />
-          </div>
-
-          <div className="mb-4 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-xs text-neutral-600">
-            {mode === 'login'
-              ? 'Use Google or your SellBop email and password.'
-              : 'One SellBop account works for buyers, sellers, or both.'}
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-3" autoComplete="off">

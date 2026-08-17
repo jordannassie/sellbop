@@ -1,0 +1,369 @@
+'use client'
+import Link from 'next/link'
+import { useEffect, useRef, useState } from 'react'
+import { demoStorefrontRepo } from '@/lib/adapters/demo/repositories'
+import { DEMO_SELLER_PROFILE } from '@/lib/demo-data/seed'
+import { useAuth } from '@/context/auth-context'
+import { useUserStore } from '@/hooks/use-user-store'
+import { LinkField } from '@/components/dashboard/link-field'
+import {
+  ArrowUpRight,
+  Check,
+  Copy,
+  EyeOff,
+  Globe,
+  ImageIcon,
+  Layers,
+  LayoutTemplate,
+  Palette,
+  User,
+} from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { toast } from 'sonner'
+import type { Storefront } from '@/lib/domain/entities'
+
+interface SectionCard {
+  title: string
+  description: string
+  href: string
+  icon: React.ComponentType<{ size?: number; className?: string }>
+  cta: string
+  highlight?: boolean
+}
+
+const CARDS: SectionCard[] = [
+  {
+    title: 'Store Profile',
+    description: 'Edit your store name, bio, social links, and avatar.',
+    href: '/dashboard/storefront',
+    icon: User,
+    cta: 'Edit Profile',
+  },
+  {
+    title: 'Store Editor',
+    description: 'Customize your store layout, featured products, and design.',
+    href: '/dashboard/store-editor',
+    icon: Layers,
+    cta: 'Open Editor',
+    highlight: true,
+  },
+  {
+    title: 'Theme & Design',
+    description: 'Change colors, button styles, card layout, and density.',
+    href: '/dashboard/store-editor?section=design',
+    icon: Palette,
+    cta: 'Customize',
+  },
+  {
+    title: 'Banner & Media',
+    description: 'Add a banner image or header media to your store.',
+    href: '/dashboard/storefront',
+    icon: ImageIcon,
+    cta: 'Set Banner',
+  },
+  {
+    title: 'Page Layout',
+    description: 'Control section order, visibility, and header style.',
+    href: '/dashboard/store-editor?section=sections',
+    icon: LayoutTemplate,
+    cta: 'Edit Layout',
+  },
+]
+
+export default function StoreSectionPage() {
+  const { session } = useAuth()
+  const { store: userStore, isDemo, saveStore } = useUserStore()
+
+  // Demo mode: track published state via demoStorefrontRepo (localStorage)
+  const [demoStorefront, setDemoStorefront] = useState<Storefront | null>(null)
+  const [publishing, setPublishing]     = useState(false)
+  const [copied, setCopied]             = useState(false)
+  const [draftSlug, setDraftSlug]       = useState('')
+  const [savedSlug, setSavedSlug]       = useState('')
+  const [savingLink, setSavingLink]     = useState(false)
+  const [linkStatus, setLinkStatus]     = useState<'idle'|'checking'|'available'|'taken'|'invalid'>('idle')
+  const initialized = useRef(false)
+
+  // Seed slugs once when the store first loads (avoids reset on refetch)
+  useEffect(() => {
+    if (!userStore || initialized.current) return
+    initialized.current = true
+    setDraftSlug(userStore.slug)
+    setSavedSlug(userStore.slug)
+  }, [userStore])
+
+  // Demo mode only: load published state from localStorage
+  async function loadDemoStorefront() {
+    const s = await demoStorefrontRepo.findBySellerId(DEMO_SELLER_PROFILE.id)
+    if (s) setDemoStorefront(s as Storefront)
+  }
+
+  useEffect(() => {
+    if (isDemo) void loadDemoStorefront()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDemo])
+
+  // Active slug: saved value → store row → demo fallback (ONLY for demo users)
+  // Never fall back to DEMO_SELLER_PROFILE.slug for real logged-in users.
+  const activeSlug = savedSlug || userStore?.slug || (isDemo && !session ? DEMO_SELLER_PROFILE.slug : '')
+  const hasUnsavedLink = draftSlug !== '' && draftSlug !== savedSlug
+
+  const storeLinkOwnerParam = {
+    key: 'ownerId',
+    value: session?.userId ?? DEMO_SELLER_PROFILE.userId,
+  }
+
+  async function handleSaveLink() {
+    if (!draftSlug || draftSlug === savedSlug) return
+    setSavingLink(true)
+    try {
+      if (!isDemo) {
+        // Real user: persist to Supabase
+        const err = await saveStore({ slug: draftSlug })
+        if (err) {
+          // Show a friendly message — don't expose raw Supabase/PostgREST errors
+          if (err.toLowerCase().includes('unique') || err.toLowerCase().includes('duplicate') || err.toLowerCase().includes('already exists')) {
+            toast.error('That store link is already taken. Try another one.')
+          } else {
+            toast.error('Could not save your store link. Please try again.')
+          }
+          return
+        }
+      } else {
+        // Demo mode: keep localStorage in sync
+        if (demoStorefront) {
+          await demoStorefrontRepo.upsert({ ...demoStorefront, slug: draftSlug })
+          await loadDemoStorefront()
+        }
+      }
+      setSavedSlug(draftSlug)
+      toast.success('Store link updated!')
+    } catch {
+      toast.error('Failed to save store link.')
+    } finally {
+      setSavingLink(false)
+    }
+  }
+
+  // Publish / unpublish only meaningful in demo mode.
+  // Real stores are always accessible via Supabase once they have a slug.
+  async function handlePublish() {
+    if (!isDemo) return
+    setPublishing(true)
+    try {
+      if (!demoStorefront) { toast.error('Complete your store profile first.'); return }
+      await demoStorefrontRepo.upsert({ ...demoStorefront, published: true })
+      await loadDemoStorefront()
+      toast.success('Store published! Your store is now live.')
+    } catch {
+      toast.error('Failed to publish store.')
+    } finally {
+      setPublishing(false)
+    }
+  }
+
+  async function handleUnpublish() {
+    if (!isDemo) return
+    try {
+      if (!demoStorefront) return
+      await demoStorefrontRepo.upsert({ ...demoStorefront, published: false })
+      await loadDemoStorefront()
+      toast.success('Store unpublished.')
+    } catch {
+      toast.error('Failed.')
+    }
+  }
+
+  function handleCopyLink() {
+    const link = typeof window !== 'undefined'
+      ? `${window.location.origin}/store/${activeSlug}`
+      : `/store/${activeSlug}`
+    void navigator.clipboard.writeText(link)
+    setCopied(true)
+    toast.success('Store link copied!')
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  // Real users: store is always live (Supabase returns it publicly by slug).
+  // Demo users: track published flag via demoStorefrontRepo.
+  const isPublished = isDemo ? (demoStorefront?.published ?? false) : true
+
+  return (
+    <div className="max-w-3xl">
+      {/* Header */}
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <h1 className="text-2xl font-bold text-black">Store</h1>
+            <Badge variant={isPublished ? 'success' : 'neutral'}>
+              {isPublished ? 'Live' : 'Draft'}
+            </Badge>
+          </div>
+          <p className="text-sm text-neutral-500">
+            {isPublished
+              ? `Your store is live at sellbop.com/store/${activeSlug}`
+              : 'Your store is in draft — not yet public.'}
+          </p>
+        </div>
+        {activeSlug && (
+          <Link href={`/store/${activeSlug}`} target="_blank">
+            <Button variant="secondary" size="sm">
+              <Globe size={13} /> Preview <ArrowUpRight size={12} />
+            </Button>
+          </Link>
+        )}
+      </div>
+
+      {/* Publish controls */}
+      <div className="mb-6 rounded-2xl border border-neutral-200 bg-white p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className={`h-2.5 w-2.5 rounded-full ${isPublished ? 'bg-emerald-500' : 'bg-neutral-300'}`} />
+            <div>
+              <p className="text-sm font-semibold text-black">
+                {isPublished ? 'Store is live' : 'Store is in draft'}
+              </p>
+              <p className="text-xs text-neutral-500">
+                {isPublished
+                  ? `Accessible at sellbop.com/store/${savedSlug || activeSlug}`
+                  : 'Publish to make your store visible and shareable'}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            {isPublished ? (
+              <>
+                <Button variant="secondary" size="sm" onClick={handleCopyLink}>
+                  {copied ? <Check size={13} /> : <Copy size={13} />}
+                  {copied ? 'Copied!' : 'Copy Link'}
+                </Button>
+                {/* Unpublish only available in demo mode */}
+                {isDemo && (
+                  <Button variant="ghost" size="sm" onClick={handleUnpublish}>
+                    <EyeOff size={13} /> Unpublish
+                  </Button>
+                )}
+              </>
+            ) : (
+              <Button onClick={handlePublish} loading={publishing} size="sm">
+                <Globe size={13} /> Publish Store
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Editable store link ──────────────────────────────── */}
+      <div className="mb-6 rounded-2xl border border-neutral-200 bg-white p-4 space-y-3">
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-sm font-semibold text-black">Store link</p>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleCopyLink}
+              title="Copy link"
+              className="flex items-center gap-1.5 h-7 px-2.5 rounded-lg text-xs font-medium text-neutral-600 border border-neutral-200 hover:bg-neutral-50 transition-colors"
+            >
+              {copied ? <Check size={11} className="text-emerald-500" /> : <Copy size={11} />}
+              {copied ? 'Copied' : 'Copy'}
+            </button>
+            {activeSlug && (
+              <Link href={`/store/${activeSlug}`} target="_blank">
+                <button
+                  type="button"
+                  className="flex items-center gap-1.5 h-7 px-2.5 rounded-lg text-xs font-medium text-neutral-600 border border-neutral-200 hover:bg-neutral-50 transition-colors"
+                >
+                  <ArrowUpRight size={11} /> Open
+                </button>
+              </Link>
+            )}
+          </div>
+        </div>
+
+        <LinkField
+          value={draftSlug}
+          onChange={setDraftSlug}
+          onStatusChange={setLinkStatus}
+          prefix="sellbop.com/store/"
+          checkUrl="/api/availability/store-link"
+          ownerParam={storeLinkOwnerParam}
+          label=""
+        />
+
+        {hasUnsavedLink && linkStatus === 'available' && (
+          <p className="text-xs text-emerald-600">Available — save to make this your live link.</p>
+        )}
+        {!hasUnsavedLink && (
+          <p className="text-xs text-neutral-400">
+            Choose a short link people can remember. Letters, numbers, and dashes only.
+          </p>
+        )}
+        {hasUnsavedLink && linkStatus === 'idle' && (
+          <p className="text-xs text-amber-600">Save to make this link live.</p>
+        )}
+
+        <Button
+          type="button"
+          size="sm"
+          loading={savingLink}
+          disabled={!draftSlug || draftSlug === savedSlug || linkStatus === 'taken' || linkStatus === 'invalid' || linkStatus === 'checking'}
+          onClick={handleSaveLink}
+        >
+          Save store link
+        </Button>
+      </div>
+
+      {/* Cards grid */}
+      <div className="grid gap-4 sm:grid-cols-2">
+        {CARDS.map(card => (
+          <Link key={card.href} href={card.href}>
+            <div
+              className={`group rounded-2xl border p-5 transition-all hover:shadow-sm hover:border-neutral-300 ${
+                card.highlight
+                  ? 'border-black bg-black text-white'
+                  : 'border-neutral-200 bg-white'
+              }`}
+            >
+              <div className="mb-3 flex items-center gap-3">
+                <div
+                  className={`flex h-9 w-9 items-center justify-center rounded-xl ${
+                    card.highlight ? 'bg-white/10' : 'bg-neutral-100'
+                  }`}
+                >
+                  <card.icon
+                    size={17}
+                    className={card.highlight ? 'text-white' : 'text-neutral-600'}
+                  />
+                </div>
+                <p
+                  className={`font-semibold text-sm ${
+                    card.highlight ? 'text-white' : 'text-black'
+                  }`}
+                >
+                  {card.title}
+                </p>
+              </div>
+              <p
+                className={`text-xs leading-relaxed mb-4 ${
+                  card.highlight ? 'text-white/70' : 'text-neutral-500'
+                }`}
+              >
+                {card.description}
+              </p>
+              <span
+                className={`inline-flex items-center gap-1 text-xs font-semibold ${
+                  card.highlight
+                    ? 'text-white/90 group-hover:text-white'
+                    : 'text-neutral-700 group-hover:text-black'
+                }`}
+              >
+                {card.cta} <ArrowUpRight size={11} />
+              </span>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </div>
+  )
+}

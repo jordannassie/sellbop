@@ -80,11 +80,13 @@ export function useUserStore(): UseUserStoreResult {
     setLoading(true)
     ensureUserStore(supabase, session.userId, session.name, session.email)
       .then(s => {
-        setStore(s ?? DEMO_STORE_ROW)
+        // s can be null if creation failed — do NOT fall back to demo data for
+        // real users: that would show alexjohnson as their store slug.
+        setStore(s)
         setLoading(false)
       })
       .catch(() => {
-        setStore(DEMO_STORE_ROW)
+        setStore(null)
         setLoading(false)
       })
   // tick is the manual refetch trigger; supabase is stable (singleton)
@@ -98,25 +100,24 @@ export function useUserStore(): UseUserStoreResult {
     async (patch: Database['public']['Tables']['stores']['Update']): Promise<string | null> => {
       if (!supabase || !session) return null // demo mode — no-op
 
+      let targetId = store?.id
+      if (!targetId) {
+        const created = await ensureUserStore(supabase, session.userId, session.name, session.email)
+        if (!created) return 'Could not find or create your store. Please refresh and try again.'
+        targetId = created.id
+        setStore(created)
+      }
+
       const doUpdate = async (p: typeof patch) =>
         supabase
           .from('stores')
           .update({ ...p, updated_at: new Date().toISOString() })
-          .eq('owner_user_id', session.userId)
+          .eq('id', targetId!)
           .select('*')
-          .single()
+          .maybeSingle()
 
       let { data, error } = await doUpdate(patch)
 
-      // PGRST116 = no rows matched → store may not exist yet; create it and retry
-      if (error?.code === 'PGRST116' || (!data && !error)) {
-        await ensureUserStore(supabase, session.userId, session.name, session.email)
-        const retry = await doUpdate(patch)
-        data = retry.data
-        error = retry.error
-      }
-
-      // If a column doesn't exist yet (migration pending), retry without unknown columns
       if (error?.message?.includes('column') && error.message.includes('does not exist')) {
         const safePatch: Database['public']['Tables']['stores']['Update'] = {}
         const knownCols = ['name', 'headline', 'bio', 'avatar_url', 'banner_url', 'social_links', 'support_email', 'header_layout']
@@ -131,14 +132,13 @@ export function useUserStore(): UseUserStoreResult {
       }
 
       if (error) return error.message
-      if (!data) return 'No store was updated. Please refresh and try again.'
+      if (!data) return 'Could not save your store link. Please try again.'
 
-      // Update local state from the verified returned row
       setStore(data as StoreRow)
       return null
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [session?.userId],
+    [session?.userId, store?.id],
   )
 
   return {

@@ -14,7 +14,6 @@ import {
   Copy,
   ExternalLink,
   Globe,
-  Layers,
   Package,
   Sparkles,
   Wand2,
@@ -124,7 +123,7 @@ export function LaunchDashboard({ userName, onDismiss }: LaunchDashboardProps) {
   const router = useRouter()
   const { checklist, completedCount, totalCount, percentComplete, storefront, markComplete, refresh } = useLaunchChecklist()
   const [publishing, setPublishing] = useState(false)
-  const [expandChecklist, setExpandChecklist] = useState(false)
+  const [expandChecklist, setExpandChecklist] = useState(true)
   const [prompt, setPrompt] = useState('')
 
   const storeSlug = storefront?.slug ?? DEMO_SELLER_PROFILE.slug
@@ -190,16 +189,19 @@ export function LaunchDashboard({ userName, onDismiss }: LaunchDashboardProps) {
             <Sparkles size={16} className="text-white" />
           </div>
           <div>
-            <p className="font-bold text-white text-base leading-tight">
-              {userName ? `Launch your store, ${userName}` : 'Launch your SellBop store'}
-            </p>
-            <p className="text-white/60 text-xs mt-0.5">
-              Use AI to build your first product, preview your store, and publish when ready.
+            <div className="flex items-center gap-2 mb-0.5">
+              <p className="font-bold text-white text-base leading-tight">AI Launch Coach</p>
+              <span className="rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold px-2 py-0.5 leading-none">
+                Ready to help
+              </span>
+            </div>
+            <p className="text-white/60 text-xs">
+              Tell SellBop what you know, teach, or want to sell. Your AI Launch Coach will help you create the product, set the price, build the page, and plan your first sales.
             </p>
           </div>
         </div>
         {onDismiss && (
-          <button onClick={onDismiss} className="text-white/40 hover:text-white transition-colors">
+          <button onClick={onDismiss} className="text-white/40 hover:text-white transition-colors shrink-0">
             <X size={16} />
           </button>
         )}
@@ -229,12 +231,32 @@ export function LaunchDashboard({ userName, onDismiss }: LaunchDashboardProps) {
             value={prompt}
             onChange={e => setPrompt(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && launchWithPrompt()}
-            placeholder="What would you like to sell? Let AI build your store plan…"
+            placeholder="What do you want to create or sell today?"
             className="flex-1 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-2.5 text-sm placeholder:text-neutral-400 focus:border-black focus:bg-white focus:outline-none transition-colors"
           />
           <Button onClick={() => launchWithPrompt()} size="sm">
-            <Wand2 size={13} /> Build with AI
+            <Wand2 size={13} /> Start Launch
           </Button>
+        </div>
+
+        {/* ── Quick action chips ──────────────────────────────────── */}
+        <div className="flex flex-wrap gap-2">
+          {[
+            'Help me find a product idea',
+            'Build my product page',
+            'Suggest my price',
+            'Create my launch plan',
+            'Help me get my first 10 sales',
+          ].map(chip => (
+            <button
+              key={chip}
+              type="button"
+              onClick={() => launchWithPrompt(chip)}
+              className="rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1.5 text-[11px] font-medium text-neutral-600 hover:border-black hover:bg-white hover:text-black transition-colors"
+            >
+              {chip}
+            </button>
+          ))}
         </div>
 
         {/* ── Primary CTA ────────────────────────────────────────── */}
@@ -279,7 +301,8 @@ export function LaunchDashboard({ userName, onDismiss }: LaunchDashboardProps) {
               className="flex items-center gap-2 text-xs font-semibold text-neutral-500 hover:text-black transition-colors mb-2"
             >
               <ClipboardCheck size={13} />
-              {expandChecklist ? 'Hide' : 'Show'} checklist ({incompleteItems.length} remaining)
+              Launch Checklist
+              <span className="text-neutral-400 font-normal">— {incompleteItems.length} step{incompleteItems.length === 1 ? '' : 's'} remaining</span>
             </button>
 
             {expandChecklist && (
@@ -334,14 +357,14 @@ export function LaunchDashboard({ userName, onDismiss }: LaunchDashboardProps) {
 
       {/* ── Quick nav ──────────────────────────────────────────── */}
       <div className="bg-neutral-50 border-t border-neutral-100 px-5 py-3 flex flex-wrap gap-3">
-        <Link href="/dashboard/storefront" className="flex items-center gap-1.5 text-xs font-medium text-neutral-500 hover:text-black transition-colors">
-          <Layers size={11} /> Edit Store Profile
+        <Link href="/dashboard/ai-launch" className="flex items-center gap-1.5 text-xs font-medium text-neutral-500 hover:text-black transition-colors">
+          <Wand2 size={11} /> Create with AI
         </Link>
         <Link href="/dashboard/products/new" className="flex items-center gap-1.5 text-xs font-medium text-neutral-500 hover:text-black transition-colors">
-          <Package size={11} /> New Product
+          <Package size={11} /> Create manually
         </Link>
         <Link href="/dashboard/store-editor" onClick={handleMarkPreview} className="flex items-center gap-1.5 text-xs font-medium text-neutral-500 hover:text-black transition-colors">
-          <ExternalLink size={11} /> Preview Store
+          <ExternalLink size={11} /> Preview store
         </Link>
       </div>
     </div>

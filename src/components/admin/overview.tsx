@@ -1,5 +1,6 @@
 import { formatCurrency } from '@/lib/utils'
 import type { AdminOverviewData } from '@/lib/admin/users'
+import { DemoModeToggle } from './demo-mode-toggle'
 
 function Stat({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
@@ -28,6 +29,13 @@ export function AdminOverview({ data }: { data: AdminOverviewData }) {
           <Stat label="Orders" value={data.totalOrders} sub="All time" />
           <Stat label="Active Subs" value={data.activeSubscriptions} sub="Currently billing" />
           <Stat label="Gross Revenue" value={formatCurrency(data.grossRevenueCents)} sub="Paid orders" />
+        </div>
+      </div>
+
+      <div>
+        <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-neutral-400">Settings</p>
+        <div className="max-w-sm">
+          <DemoModeToggle />
         </div>
       </div>
     </div>
