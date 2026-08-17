@@ -106,8 +106,8 @@ export default function DashboardOverview() {
           <Link href={`/store/${storeSlug}`} target="_blank">
             <Button
               size="sm"
-              className="font-bold"
-              style={{ background: '#00E676', color: '#000', borderColor: '#00E676' }}
+              className="font-bold text-white hover:opacity-90"
+              style={{ background: '#00E676', borderColor: '#00E676' }}
             >
               <ExternalLink size={13} /> View Store
             </Button>
