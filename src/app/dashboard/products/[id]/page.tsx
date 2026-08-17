@@ -64,8 +64,8 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
   const [isFree, setIsFree] = useState(false)
   const [isLive, setIsLive] = useState(false)
   const [category, setCategory] = useState('')
-  const [marketplaceListing, setMarketplaceListing] = useState(false)
-  const [affiliateEnabled, setAffiliateEnabled] = useState(false)
+  const [marketplaceListing, setMarketplaceListing] = useState(true)
+  const [affiliateEnabled, setAffiliateEnabled] = useState(true)
   const [affiliateCommission, setAffiliateCommission] = useState(30)
   const [customCommission, setCustomCommission] = useState('')
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null)
@@ -92,8 +92,9 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
           setIsLive(p.is_live)
           setCoverImageUrl(p.cover_image_url ?? p.image_url ?? null)
           setCategory(p.category ?? '')
-          setMarketplaceListing(p.marketplace_listing ?? false)
-          setAffiliateEnabled(p.affiliate_enabled ?? false)
+          // Null means the product was created before these fields existed — default to ON
+          setMarketplaceListing(p.marketplace_listing ?? true)
+          setAffiliateEnabled(p.affiliate_enabled ?? true)
           const commPct = p.affiliate_commission_percent ?? 30
           if ([10, 20, 30, 40, 50].includes(commPct)) {
             setAffiliateCommission(commPct)

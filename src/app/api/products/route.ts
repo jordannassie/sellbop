@@ -30,6 +30,7 @@ export async function GET() {
     .select(`
       id, title, slug, product_type, description, short_description,
       cover_image_url, image_url, price_cents, is_live,
+      marketplace_listing, affiliate_enabled, affiliate_commission_percent,
       created_at, updated_at, store_id
     `)
     .eq('store_id', store.id)
@@ -133,10 +134,11 @@ export async function POST(request: Request) {
       cover_image_url: cover_image_url ?? null,
       is_live: is_live ?? false,
       category: category ?? null,
-      marketplace_listing: marketplace_listing ?? false,
-      affiliate_enabled: affiliate_enabled ?? false,
-      affiliate_commission_percent: affiliate_enabled ? (affiliate_commission_percent ?? null) : null,
-      affiliate_updated_at: affiliate_enabled ? new Date().toISOString() : null,
+      // Default ON: every new product is Marketplace-listed and affiliate-enabled at 30%
+      marketplace_listing: marketplace_listing ?? true,
+      affiliate_enabled: affiliate_enabled ?? true,
+      affiliate_commission_percent: (affiliate_enabled ?? true) ? (affiliate_commission_percent ?? 30) : null,
+      affiliate_updated_at: (affiliate_enabled ?? true) ? new Date().toISOString() : null,
     })
     .select('*')
     .single()

@@ -31,7 +31,7 @@ export default function NewProductPage() {
   const [fileUploading, setFileUploading] = useState(false)
   const [isLive, setIsLive] = useState(false)
   const [marketplaceListing, setMarketplaceListing] = useState(true)
-  const [affiliateEnabled, setAffiliateEnabled] = useState(false)
+  const [affiliateEnabled, setAffiliateEnabled] = useState(true)
   const [affiliateCommission, setAffiliateCommission] = useState(30)
   const [customCommission, setCustomCommission] = useState('')
   const [saving, setSaving] = useState(false)

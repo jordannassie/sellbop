@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
-import { Package, ExternalLink, Pencil, Copy, Trash2 } from 'lucide-react'
+import { Package, ExternalLink, Pencil, Copy, Trash2, TrendingUp, Grid3x3 } from 'lucide-react'
 import { toast } from 'sonner'
 import { isSupabaseConfigured } from '@/lib/env'
 
@@ -23,6 +23,9 @@ interface ProductRow {
   sales_count: number
   created_at: string
   updated_at: string
+  marketplace_listing: boolean | null
+  affiliate_enabled: boolean | null
+  affiliate_commission_percent: number | null
 }
 
 function ProductRow({ p, onDelete, storeSlug }: {
@@ -70,13 +73,24 @@ function ProductRow({ p, onDelete, storeSlug }: {
       {/* Info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-          <p className="text-sm font-semibold text-black truncate max-w-[200px] sm:max-w-none">{p.title}</p>
+          <p className="text-sm font-semibold text-black truncate max-w-[160px] sm:max-w-none">{p.title}</p>
           <Badge variant={p.is_live ? 'success' : 'neutral'}>
             {p.is_live ? 'Live' : 'Draft'}
           </Badge>
+          {/* Growth feature indicators */}
+          {(p.marketplace_listing ?? true) && (
+            <span className="hidden sm:inline-flex items-center gap-0.5 text-[10px] font-medium text-neutral-400">
+              <Grid3x3 size={9} /> Marketplace
+            </span>
+          )}
+          {(p.affiliate_enabled ?? true) && (p.price_cents ?? 0) > 0 && (
+            <span className="hidden sm:inline-flex items-center gap-0.5 text-[10px] font-medium" style={{ color: '#00A854' }}>
+              <TrendingUp size={9} /> {p.affiliate_commission_percent ?? 30}% Affiliate
+            </span>
+          )}
         </div>
         <p className="text-xs text-neutral-500 truncate">
-          {(p.price_cents ?? 0) === 0 ? 'Free' : formatCurrency((p.price_cents ?? 0) / 100)}
+          {(p.price_cents ?? 0) === 0 ? 'Free' : formatCurrency(p.price_cents ?? 0)}
           {' · '}{p.sales_count} sales
           <span className="hidden sm:inline"> · Updated {timeAgo(p.updated_at ?? p.created_at)}</span>
         </p>
