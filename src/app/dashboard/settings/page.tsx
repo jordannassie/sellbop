@@ -394,7 +394,8 @@ export default function SettingsPage() {
                     <span className="text-xs font-medium text-neutral-600 truncate">{platform.label}</span>
                   </div>
                   <input
-                    type="url"
+                    type="text"
+                    inputMode="url"
                     value={socialLinks[platform.key] ?? ''}
                     onChange={e => setSocialLink(platform.key, e.target.value)}
                     placeholder={platform.placeholder}

@@ -12,21 +12,21 @@ export type SocialPlatform = {
 }
 
 export const SOCIAL_PLATFORMS: SocialPlatform[] = [
-  { key: 'website',   label: 'Website',      placeholder: 'https://yourwebsite.com' },
-  { key: 'instagram', label: 'Instagram',     placeholder: 'https://instagram.com/username' },
-  { key: 'tiktok',    label: 'TikTok',        placeholder: 'https://tiktok.com/@username' },
-  { key: 'youtube',   label: 'YouTube',       placeholder: 'https://youtube.com/@channel' },
-  { key: 'facebook',  label: 'Facebook',      placeholder: 'https://facebook.com/page' },
-  { key: 'x',         label: 'X / Twitter',   placeholder: 'https://x.com/username' },
-  { key: 'linkedin',  label: 'LinkedIn',      placeholder: 'https://linkedin.com/in/username' },
-  { key: 'threads',   label: 'Threads',       placeholder: 'https://threads.net/@username' },
-  { key: 'pinterest', label: 'Pinterest',     placeholder: 'https://pinterest.com/username' },
-  { key: 'twitch',    label: 'Twitch',        placeholder: 'https://twitch.tv/username' },
-  { key: 'discord',   label: 'Discord',       placeholder: 'https://discord.gg/invite' },
-  { key: 'snapchat',  label: 'Snapchat',      placeholder: 'https://snapchat.com/add/username' },
-  { key: 'reddit',    label: 'Reddit',        placeholder: 'https://reddit.com/u/username' },
-  { key: 'github',    label: 'GitHub',        placeholder: 'https://github.com/username' },
-  { key: 'other',     label: 'Other Link',    placeholder: 'https://' },
+  { key: 'website',   label: 'Website',      placeholder: 'yourwebsite.com' },
+  { key: 'instagram', label: 'Instagram',     placeholder: 'instagram.com/username' },
+  { key: 'tiktok',    label: 'TikTok',        placeholder: 'tiktok.com/@username' },
+  { key: 'youtube',   label: 'YouTube',       placeholder: 'youtube.com/@channel' },
+  { key: 'facebook',  label: 'Facebook',      placeholder: 'facebook.com/page' },
+  { key: 'x',         label: 'X / Twitter',   placeholder: 'x.com/username' },
+  { key: 'linkedin',  label: 'LinkedIn',      placeholder: 'linkedin.com/in/username' },
+  { key: 'threads',   label: 'Threads',       placeholder: 'threads.net/@username' },
+  { key: 'pinterest', label: 'Pinterest',     placeholder: 'pinterest.com/username' },
+  { key: 'twitch',    label: 'Twitch',        placeholder: 'twitch.tv/username' },
+  { key: 'discord',   label: 'Discord',       placeholder: 'discord.gg/invite' },
+  { key: 'snapchat',  label: 'Snapchat',      placeholder: 'snapchat.com/add/username' },
+  { key: 'reddit',    label: 'Reddit',        placeholder: 'reddit.com/u/username' },
+  { key: 'github',    label: 'GitHub',        placeholder: 'github.com/username' },
+  { key: 'other',     label: 'Other Link',    placeholder: 'yourlink.com' },
 ]
 
 // ── Brand SVG icons ───────────────────────────────────────────────────────────
@@ -68,7 +68,10 @@ export function SocialIcon({ platform, size = 16 }: { platform: string; size?: n
 export function normalizeSocialUrl(raw: string): string {
   const v = raw.trim()
   if (!v) return ''
-  if (/^(javascript|data|vbscript):/i.test(v)) return ''
+  // Block unsafe / non-web protocols
+  if (/^(javascript|data|vbscript|file):/i.test(v)) return ''
+  // Preserve existing https:// or http://
   if (/^https?:\/\//i.test(v)) return v
+  // Everything else (e.g. "instagram.com/jordan", "1billion.org") → prepend https://
   return 'https://' + v
 }
