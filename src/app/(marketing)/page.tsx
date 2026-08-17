@@ -24,6 +24,11 @@ import {
   Music2,
   ListChecks,
   Plus,
+  Zap,
+  FileText,
+  ImageIcon,
+  Layers,
+  Tag,
 } from 'lucide-react'
 
 // Avatar positions for the affiliate creator cloud
@@ -480,6 +485,254 @@ export default async function HomePage() {
                 <span className="text-sm font-medium text-neutral-700">{label}</span>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── AI Tools / MCP ────────────────────────────────────────── */}
+      <section className="border-t border-neutral-100 py-24 bg-white overflow-hidden">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+
+          {/* Header */}
+          <div className="text-center mb-14">
+            <span className="inline-flex items-center gap-1.5 bg-neutral-900 text-[#00E676] text-[11px] font-black tracking-[0.2em] uppercase px-3 py-1.5 rounded-full mb-5">
+              <Zap size={10} aria-hidden="true" /> MCP Powered
+            </span>
+            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black text-black tracking-tight leading-tight mb-4">
+              Build Products With Your AI
+            </h2>
+            <p className="text-neutral-500 text-lg max-w-2xl mx-auto leading-relaxed">
+              Connect Claude, Higgsfield, and other AI tools to create digital products, generate images, build product pages, and sell everything through SellBop.
+            </p>
+          </div>
+
+          {/* ── Two integration cards ── */}
+          <div className="grid sm:grid-cols-2 gap-5 mb-14">
+
+            {/* Claude */}
+            <div className="group rounded-3xl border border-neutral-200 bg-neutral-50 p-7 flex flex-col hover:border-neutral-300 hover:shadow-md transition-all duration-200">
+              <div className="flex items-start justify-between mb-5">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="https://qsvmgzdaashfsavmfjuz.supabase.co/storage/v1/object/public/SELL/images/Tools/claude-ai-logo-rounded-hd-free-png.webp"
+                  alt="Claude"
+                  className="w-16 h-16 rounded-2xl object-cover shadow-sm"
+                />
+                <span className="rounded-full bg-orange-100 text-orange-700 text-[11px] font-black px-2.5 py-1 tracking-wide">
+                  AI Agent
+                </span>
+              </div>
+              <h3 className="text-2xl font-black text-black mb-2">Claude</h3>
+              <p className="text-neutral-500 text-sm leading-relaxed mb-5">
+                Tell Claude what you want to sell and let it help build the entire product.
+              </p>
+
+              <div className="grid grid-cols-2 gap-y-2 gap-x-3 mb-6">
+                {[
+                  'Research product ideas',
+                  'Write product content',
+                  'Create guides & files',
+                  'Write descriptions',
+                  'Set pricing',
+                  'Configure affiliates',
+                  'Upload assets',
+                  'Publish products',
+                ].map(c => (
+                  <div key={c} className="flex items-start gap-1.5 text-xs text-neutral-600">
+                    <Check size={11} className="text-emerald-500 flex-shrink-0 mt-0.5" />
+                    <span>{c}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Prompt box */}
+              <div className="rounded-2xl bg-neutral-900 p-4 mb-6 flex-1">
+                <p className="text-[10px] font-mono text-neutral-500 mb-2 uppercase tracking-widest">Prompt</p>
+                <p className="text-sm text-white leading-relaxed">
+                  &ldquo;Create me a $49 digital product for Airbnb hosts, build the files, add the listing, turn affiliates on at 30%, and save it as a draft.&rdquo;
+                </p>
+              </div>
+
+              <Link href="/dashboard/settings">
+                <button className="w-full flex items-center justify-center gap-2 rounded-xl bg-black text-white text-sm font-bold px-4 py-3 hover:bg-neutral-800 transition-colors">
+                  Connect Claude <ArrowRight size={14} />
+                </button>
+              </Link>
+            </div>
+
+            {/* Higgsfield */}
+            <div className="group rounded-3xl border border-neutral-200 bg-neutral-50 p-7 flex flex-col hover:border-neutral-300 hover:shadow-md transition-all duration-200">
+              <div className="flex items-start justify-between mb-5">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="https://qsvmgzdaashfsavmfjuz.supabase.co/storage/v1/object/public/SELL/images/Tools/output.webp"
+                  alt="Higgsfield"
+                  className="w-16 h-16 rounded-2xl object-cover shadow-sm"
+                />
+                <span className="rounded-full bg-violet-100 text-violet-700 text-[11px] font-black px-2.5 py-1 tracking-wide">
+                  Images + Video
+                </span>
+              </div>
+              <h3 className="text-2xl font-black text-black mb-2">Higgsfield</h3>
+              <p className="text-neutral-500 text-sm leading-relaxed mb-5">
+                Let your AI generate professional product visuals without leaving the workflow.
+              </p>
+
+              <div className="grid grid-cols-2 gap-y-2 gap-x-3 mb-6">
+                {[
+                  'Product cover images',
+                  'Marketplace thumbnails',
+                  'Product mockups',
+                  'Promo graphics',
+                  'Social media creatives',
+                  'Lifestyle images',
+                  'Product videos',
+                  'Ad creatives',
+                ].map(c => (
+                  <div key={c} className="flex items-start gap-1.5 text-xs text-neutral-600">
+                    <Check size={11} className="text-violet-500 flex-shrink-0 mt-0.5" />
+                    <span>{c}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* How it works */}
+              <div className="rounded-2xl bg-neutral-900 p-4 mb-6 flex-1">
+                <p className="text-[10px] font-mono text-neutral-500 mb-2 uppercase tracking-widest">How it works</p>
+                <p className="text-sm text-white leading-relaxed">
+                  Claude can use Higgsfield MCP to generate the visuals, then upload them directly into your SellBop product.
+                </p>
+              </div>
+
+              <Link href="/dashboard/settings">
+                <button className="w-full flex items-center justify-center gap-2 rounded-xl border border-neutral-200 bg-white text-black text-sm font-bold px-4 py-3 hover:border-neutral-300 hover:shadow-sm transition-all">
+                  Connect Higgsfield <ArrowRight size={14} />
+                </button>
+              </Link>
+            </div>
+          </div>
+
+          {/* ── Workflow strip ── */}
+          <div className="rounded-3xl border border-neutral-100 bg-neutral-50 p-8 mb-12">
+            <h3 className="text-2xl sm:text-3xl font-black text-black text-center mb-8">
+              One Prompt. Complete Product.
+            </h3>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-2 flex-wrap">
+              {[
+                { label: '1. Tell Claude what to build',   Icon: Zap },
+                { label: '2. Claude creates the product',  Icon: FileText },
+                { label: '3. Higgsfield generates visuals', Icon: ImageIcon },
+                { label: '4. SellBop builds the listing',  Icon: Layers },
+                { label: '5. Turn on affiliates',          Icon: TrendingUp },
+                { label: '6. Publish & Sell',              Icon: Tag },
+              ].map(({ label, Icon }, i, arr) => (
+                <div key={label} className="flex flex-col sm:flex-row items-center gap-2">
+                  <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-neutral-200 text-xs font-bold text-neutral-700 whitespace-nowrap shadow-sm">
+                    <Icon size={12} className="text-neutral-400 flex-shrink-0" />
+                    {label}
+                  </div>
+                  {i < arr.length - 1 && (
+                    <ArrowRight
+                      size={13}
+                      className="text-neutral-300 flex-shrink-0 rotate-90 sm:rotate-0"
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Example result ── */}
+          <div className="rounded-3xl border border-neutral-200 bg-neutral-50 p-6 sm:p-8 mb-14">
+            <div className="flex items-center gap-3 mb-5 pb-5 border-b border-neutral-200">
+              <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center flex-shrink-0">
+                <span className="text-white text-xs font-black">You</span>
+              </div>
+              <p className="text-sm text-neutral-600 leading-relaxed italic">
+                &ldquo;Create a digital product for real estate agents.&rdquo;
+              </p>
+            </div>
+
+            {/* AI result card */}
+            <div className="flex flex-col sm:flex-row gap-5 items-start">
+              <div className="w-full sm:max-w-sm rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <span className="inline-flex items-center gap-1 text-[10px] font-black text-[#00A854] uppercase tracking-widest mb-1.5 bg-emerald-50 px-2 py-0.5 rounded-full">
+                      <Zap size={8} /> AI Generated
+                    </span>
+                    <h4 className="text-xl font-black text-black leading-snug">Open House Lead Kit</h4>
+                  </div>
+                  <span className="text-2xl font-black text-black ml-3">$39</span>
+                </div>
+
+                <div className="space-y-1.5 mb-4">
+                  {[
+                    'Lead Capture Checklist',
+                    'Follow-Up Scripts',
+                    'Lead Tracking Sheet',
+                    '3 Promotional Graphics',
+                  ].map(item => (
+                    <div key={item} className="flex items-center gap-2 text-sm text-neutral-600">
+                      <Check size={13} className="text-emerald-500 flex-shrink-0" />
+                      {item}
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex items-center justify-between border-t border-neutral-100 pt-3 mb-4">
+                  <span className="text-xs text-neutral-500">Affiliate Commission</span>
+                  <span className="text-sm font-black" style={{ color: '#00E676' }}>30%</span>
+                </div>
+
+                <div className="mb-4">
+                  <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-700">
+                    Draft Ready
+                  </span>
+                </div>
+
+                <div className="flex gap-2">
+                  <button className="flex-1 rounded-xl border border-neutral-200 py-2.5 text-xs font-bold text-neutral-700 hover:bg-neutral-50 transition-colors">
+                    Preview
+                  </button>
+                  <button className="flex-1 rounded-xl bg-black py-2.5 text-xs font-bold text-white hover:bg-neutral-800 transition-colors">
+                    Publish
+                  </button>
+                </div>
+              </div>
+
+              <div className="hidden sm:flex flex-col justify-center gap-4 pt-2">
+                {[
+                  'Product page built',
+                  'Files attached',
+                  'Affiliate link ready',
+                  'Visuals generated',
+                ].map(s => (
+                  <div key={s} className="flex items-center gap-2 text-sm text-neutral-500">
+                    <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                      <Check size={11} className="text-emerald-600" />
+                    </div>
+                    {s}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* ── Final statement ── */}
+          <div className="text-center">
+            <h2 className="text-4xl sm:text-5xl font-black text-black tracking-tight leading-tight mb-4">
+              Your AI Creates It.<br />
+              <span style={{ color: '#00E676' }}>SellBop Sells It.</span>
+            </h2>
+            <p className="text-neutral-500 text-base max-w-xl mx-auto mb-8 leading-relaxed">
+              Connect the tools you already use and turn AI-generated ideas, files, images, videos, and digital products into something people can actually buy.
+            </p>
+            <Link href="/signup">
+              <button className="inline-flex items-center gap-2 bg-black text-white text-sm font-bold px-8 py-3.5 rounded-xl hover:bg-neutral-800 transition-colors">
+                Start Building <ArrowRight size={14} />
+              </button>
+            </Link>
           </div>
         </div>
       </section>
