@@ -2,6 +2,8 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { env, isSupabaseConfigured } from '@/lib/env'
 import type { Database } from '@/lib/supabase/types'
+import { bootstrapAuthenticatedUser, resolvePostLoginDestination } from '@/lib/auth/post-login'
+import type { AuthSession } from '@/lib/domain/auth'
 
 /**
  * OAuth callback handler.
@@ -14,9 +16,16 @@ import type { Database } from '@/lib/supabase/types'
  * Rules:
  *  1. Check for OAuth error params FIRST — never attempt a code exchange when
  *     Supabase already reported an error.
- *  2. Exchange the code exactly once, then redirect to a clean URL (no code
- *     in the address bar).  This prevents the browser back-button from
- *     re-triggering the exchange.
+ *  2. Exchange the code exactly once, then redirect straight to the user's
+ *     final destination (dashboard / admin) in THIS SAME response — do not
+ *     bounce through a second route that re-reads cookies on a fresh request.
+ *     Relying on a follow-up request to see cookies set on this redirect's
+ *     Set-Cookie headers is racy (some hosts/CDNs don't reliably propagate
+ *     multiple Set-Cookie headers on a redirect before the next request
+ *     lands), and was intermittently sending signed-in users back to
+ *     /login instead of /dashboard. Deciding the destination here, from the
+ *     user object `exchangeCodeForSession` already returns, removes that
+ *     race entirely.
  *  3. On `flow_state_already_used` (e.g. double-click or browser back after
  *     OAuth), redirect to /login with a friendly error identifier rather than
  *     a raw technical string.
@@ -55,9 +64,11 @@ export async function GET(request: NextRequest) {
   }
 
   // ── Step 3: exchange code for session ─────────────────────────────────────
-  // Build the success redirect first so we can attach session cookies to it.
-  const redirectUrl = new URL('/auth/complete', request.url)
-  const response    = NextResponse.redirect(redirectUrl)
+  // We don't know the final destination yet, so start the response pointed
+  // at /dashboard and correct the Location below once we've resolved it.
+  // (The response object — and its Set-Cookie headers — stays the same
+  // either way; only the Location header changes.)
+  const response = NextResponse.redirect(new URL('/dashboard', request.url))
 
   const supabase = createServerClient<Database>(env.supabase.url!, env.supabase.anonKey!, {
     cookies: {
@@ -72,7 +83,7 @@ export async function GET(request: NextRequest) {
     },
   })
 
-  const { error } = await supabase.auth.exchangeCodeForSession(code)
+  const { data, error } = await supabase.auth.exchangeCodeForSession(code)
 
   if (error) {
     // Even if the exchange itself fails with flow_state_already_used, show
@@ -92,6 +103,40 @@ export async function GET(request: NextRequest) {
     )
   }
 
-  // ── Step 4: success — redirect to clean URL with session cookies set ──────
+  // ── Step 4: resolve the destination from the user we just got back ────────
+  // Deliberately NOT re-reading the session via cookies() on a follow-up
+  // request — we already have the user right here.
+  const user = data.user
+  if (!user?.email) {
+    return NextResponse.redirect(new URL('/login?error=missing-user-email', request.url))
+  }
+
+  const session: AuthSession = {
+    userId: user.id,
+    email: user.email,
+    name:
+      (user.user_metadata?.full_name as string | undefined) ??
+      (user.user_metadata?.name as string | undefined) ??
+      null,
+    avatarUrl:
+      (user.user_metadata?.avatar_url as string | undefined) ??
+      (user.user_metadata?.picture as string | undefined) ??
+      null,
+  }
+
+  let destination = '/dashboard'
+  try {
+    const account = await bootstrapAuthenticatedUser(session)
+    destination = resolvePostLoginDestination(session, account)
+  } catch {
+    // If profile bootstrap (upsert/link) fails, don't strand the user on
+    // /login — they're authenticated. Fall back to the default destination
+    // and let the dashboard's own data-loading handle any retry.
+    destination = '/dashboard'
+  }
+
+  // Rewrite the Location on the SAME response so the Set-Cookie headers
+  // from the exchange above are preserved.
+  response.headers.set('Location', new URL(destination, request.url).toString())
   return response
 }
