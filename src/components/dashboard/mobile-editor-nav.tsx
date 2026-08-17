@@ -38,7 +38,7 @@ const BOTTOM_NAV = [
     Icon: ShoppingCart,
     href: '/dashboard/sales',
     exact: false,
-    activePaths: ['/dashboard/orders', '/dashboard/subscriptions', '/dashboard/customers', '/dashboard/analytics'],
+    activePaths: ['/dashboard/orders', '/dashboard/subscriptions', '/dashboard/customers', '/dashboard/discounts', '/dashboard/payouts'],
   },
   {
     id: 'library',
