@@ -17,6 +17,8 @@ import {
 import { useAuth } from '@/context/auth-context'
 import { useUserStore } from '@/hooks/use-user-store'
 import { GettingStartedCard } from '@/components/dashboard/getting-started-card'
+import { StripePaymentsCard } from '@/components/dashboard/stripe-payments-card'
+import { StripeLiveProductsWarning } from '@/components/dashboard/stripe-live-products-warning'
 import { isSupabaseConfigured } from '@/lib/env'
 
 interface OrderRow {
@@ -116,6 +118,8 @@ export default function DashboardOverview() {
         )}
       </div>
 
+      <StripePaymentsCard />
+      <StripeLiveProductsWarning liveProductCount={publishedProducts} />
       <GettingStartedCard />
 
       {/* Action cards */}

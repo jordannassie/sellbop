@@ -8,16 +8,14 @@ export interface OnboardingStatus {
   manual_steps: Record<string, boolean>
   auto: {
     create_product: boolean
-    claude: boolean
     affiliates: boolean
     bank_connected: boolean
-    profile_complete: boolean
   }
   completed_count: number
   total_steps: number
 }
 
-const TOTAL_STEPS = 7
+const TOTAL_STEPS = 4
 
 async function getUserId() {
   const supabase = await getSupabaseServerClient()
@@ -30,49 +28,31 @@ async function computeAutoSteps(userId: string) {
 
   const { data: store } = await admin
     .from('stores')
-    .select('id, headline, bio, avatar_url, support_email, stripe_charges_enabled')
+    .select('id, stripe_charges_enabled')
     .eq('owner_user_id', userId)
     .maybeSingle()
 
   if (!store) {
     return {
       create_product: false,
-      claude: false,
       affiliates: false,
       bank_connected: false,
-      profile_complete: false,
     }
   }
 
-  const [{ data: products }, { data: connections }] = await Promise.all([
+  const [{ data: products }] = await Promise.all([
     admin
       .from('products')
       .select('id, affiliate_enabled')
       .eq('store_id', store.id),
-    admin
-      .from('agent_connections')
-      .select('id, provider, revoked_at')
-      .eq('user_id', userId),
   ])
 
   const list = products ?? []
-  const activeClaude = (connections ?? []).some(
-    c => c.provider === 'claude' && !c.revoked_at,
-  )
-
-  const profileComplete = Boolean(
-    store.headline?.trim() &&
-    store.bio?.trim() &&
-    store.avatar_url?.trim() &&
-    store.support_email?.trim(),
-  )
 
   return {
     create_product: list.length >= 1,
-    claude: activeClaude,
     affiliates: list.some(p => p.affiliate_enabled === true),
     bank_connected: store.stripe_charges_enabled === true,
-    profile_complete: profileComplete,
   }
 }
 
@@ -83,10 +63,8 @@ export async function GET() {
       manual_steps: {},
       auto: {
         create_product: false,
-        claude: false,
         affiliates: false,
         bank_connected: false,
-        profile_complete: false,
       },
       completed_count: 0,
       total_steps: TOTAL_STEPS,
@@ -112,12 +90,9 @@ export async function GET() {
 
   const steps = [
     auto.create_product,
-    auto.claude || manual.claude === true,
-    manual.higgsfield === true,
+    auto.bank_connected,
     auto.affiliates,
     manual.share_store === true,
-    auto.bank_connected,
-    auto.profile_complete,
   ]
   const completed_count = steps.filter(Boolean).length
 
@@ -137,10 +112,8 @@ export async function PATCH(request: Request) {
       manual_steps: {},
       auto: {
         create_product: false,
-        claude: false,
         affiliates: false,
         bank_connected: false,
-        profile_complete: false,
       },
       completed_count: 0,
       total_steps: TOTAL_STEPS,

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Check, ChevronDown, Circle, X, ArrowRight, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useUserStore } from '@/hooks/use-user-store'
+import { startStripeConnect } from '@/components/dashboard/stripe-payments-card'
 import type { OnboardingStatus } from '@/app/api/onboarding/route'
 
 const STORAGE_EXPANDED = 'sellbop_onboarding_expanded'
@@ -20,44 +21,21 @@ const STEPS = [
     autoKey: 'create_product' as const,
   },
   {
-    id: 'claude',
-    title: 'Connect Claude',
-    desc: 'Let AI help build and manage your products.',
-    cta: 'Connect Claude',
-    href: '/dashboard/settings/ai-integrations',
-    autoKey: 'claude' as const,
-  },
-  {
-    id: 'higgsfield',
-    title: 'Connect Higgsfield',
-    desc: 'Generate professional product images and videos.',
-    cta: 'Learn How',
-    href: '/dashboard/resources/connect-ai#higgsfield',
-    manualKey: 'higgsfield' as const,
+    id: 'stripe',
+    title: 'Connect Stripe',
+    desc: 'Connect your bank through Stripe so you can receive payments from your sales.',
+    descComplete: 'Your store is ready to receive payments.',
+    cta: 'Connect Stripe',
+    stripeConnect: true,
+    autoKey: 'bank_connected' as const,
   },
   {
     id: 'affiliates',
     title: 'Turn On Affiliates',
-    desc: 'Let other people sell your products.',
-    cta: 'Set Up Affiliates',
+    desc: 'Let other people sell your products and earn commission.',
+    cta: 'View Products',
     href: '/dashboard/products',
     autoKey: 'affiliates' as const,
-  },
-  {
-    id: 'bank_connected',
-    title: 'Connect Your Bank Account',
-    desc: 'Connect Stripe so you can actually get paid out.',
-    cta: 'Connect Bank Account',
-    href: '/dashboard/payouts',
-    autoKey: 'bank_connected' as const,
-  },
-  {
-    id: 'profile_complete',
-    title: 'Fill Out Your Store Profile',
-    desc: 'Add a headline, bio, photo, and support email so buyers trust your store.',
-    cta: 'Edit Profile',
-    href: '/dashboard/settings',
-    autoKey: 'profile_complete' as const,
   },
   {
     id: 'share_store',
@@ -95,9 +73,10 @@ export function GettingStartedCard() {
   const [expanded, setExpanded] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [savingKey, setSavingKey] = useState<string | null>(null)
+  const [connectingStripe, setConnectingStripe] = useState(false)
 
-  useEffect(() => {
-    fetch('/api/onboarding')
+  function loadStatus() {
+    return fetch('/api/onboarding')
       .then(r => (r.ok ? r.json() : null))
       .then(data => {
         setStatus(data)
@@ -109,7 +88,10 @@ export function GettingStartedCard() {
           }
         }
       })
-      .finally(() => setLoading(false))
+  }
+
+  useEffect(() => {
+    loadStatus().finally(() => setLoading(false))
   }, [])
 
   if (loading || !status || status.dismissed) return null
@@ -175,6 +157,15 @@ export function GettingStartedCard() {
     }
   }
 
+  async function handleStripeConnect() {
+    setConnectingStripe(true)
+    try {
+      await startStripeConnect()
+    } finally {
+      setConnectingStripe(false)
+    }
+  }
+
   if (allComplete) {
     return (
       <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 flex items-center justify-between gap-3 min-h-[72px]">
@@ -201,7 +192,6 @@ export function GettingStartedCard() {
 
   return (
     <div className="mb-6 rounded-2xl border border-neutral-200 bg-white overflow-hidden shadow-sm">
-      {/* Collapsed / clickable header */}
       <button
         type="button"
         onClick={toggleExpanded}
@@ -233,7 +223,6 @@ export function GettingStartedCard() {
         </div>
       </button>
 
-      {/* Expanded checklist */}
       <div
         className={`grid transition-all duration-200 ease-in-out ${
           expanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
@@ -258,17 +247,30 @@ export function GettingStartedCard() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-sm text-black">{step.title}</p>
-                      <p className="text-xs text-neutral-500 mt-0.5">{step.desc}</p>
+                      <p className="text-xs text-neutral-500 mt-0.5">
+                        {done && 'descComplete' in step && step.descComplete
+                          ? step.descComplete
+                          : step.desc}
+                      </p>
                       {!done && (
                         <div className="flex flex-wrap gap-2 mt-2">
-                          {href && (
+                          {step.stripeConnect ? (
+                            <Button
+                              size="xs"
+                              variant="secondary"
+                              onClick={handleStripeConnect}
+                              disabled={connectingStripe}
+                            >
+                              {connectingStripe ? 'Connecting…' : step.cta}
+                            </Button>
+                          ) : href ? (
                             <Link href={href} target={step.id === 'share_store' ? '_blank' : undefined}>
                               <Button size="xs" variant="secondary">
                                 {step.id === 'share_store' && <ExternalLink size={11} />}
                                 {step.cta}
                               </Button>
                             </Link>
-                          )}
+                          ) : null}
                           {step.manualKey && (
                             <button
                               type="button"

@@ -16,7 +16,7 @@ import { env, isSupabaseAdminConfigured } from '@/lib/env'
 // columns to store these (no schema change needed) — for a recipient-only
 // account "charges_enabled" means "can receive transfers".
 export async function GET(request: NextRequest) {
-  const dashboardUrl = new URL('/dashboard/payouts', request.url)
+  const dashboardUrl = new URL('/dashboard', request.url)
 
   if (!isSupabaseAdminConfigured() || !env.stripe.secretKey) {
     return NextResponse.redirect(dashboardUrl)

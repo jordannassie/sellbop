@@ -9,7 +9,7 @@ import { env, isSupabaseAdminConfigured } from '@/lib/env'
 // away and back. Generate a fresh v2 Account Link and send them right back
 // into onboarding.
 export async function GET(request: NextRequest) {
-  const dashboardUrl = new URL('/dashboard/payouts', request.url)
+  const dashboardUrl = new URL('/dashboard', request.url)
 
   if (!isSupabaseAdminConfigured() || !env.stripe.secretKey) {
     return NextResponse.redirect(dashboardUrl)
