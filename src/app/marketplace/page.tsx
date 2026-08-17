@@ -8,8 +8,10 @@ import { PublicHeader } from '@/components/marketing/public-header'
 import { ProductImage } from '@/components/ui/product-image'
 import { ProductPriceDisplay } from '@/components/ui/product-price-display'
 import { getEffectiveProductPrice } from '@/lib/pricing/product-price'
-
-const CATEGORIES = ['All', 'Business', 'Money', 'Templates', 'Education', 'Real Estate', 'Faith', 'Fitness', 'Design', 'Other']
+import {
+  MARKETPLACE_CATEGORY_FILTERS,
+  normalizeProductCategory,
+} from '@/lib/product-categories'
 
 interface MarketplaceProduct {
   id: string
@@ -38,6 +40,8 @@ function ProductCard({ product }: { product: MarketplaceProduct }) {
   const commPercent = product.affiliateCommissionPercent ?? 0
   const commCents = Math.floor(pricing.effectivePriceCents * (commPercent / 100))
 
+  const displayCategory = normalizeProductCategory(product.category)
+
   return (
     <div className="group relative overflow-hidden rounded-2xl border border-neutral-200 bg-white hover:border-neutral-300 hover:shadow-md transition-all duration-200">
       {/* Cover image */}
@@ -50,10 +54,10 @@ function ProductCard({ product }: { product: MarketplaceProduct }) {
             className="object-cover group-hover:scale-105 transition-transform duration-300"
             iconSize="lg"
           />
-          {product.category && (
-            <div className="absolute top-3 left-3">
-              <span className="inline-flex items-center rounded-full bg-white/90 backdrop-blur-sm px-2.5 py-1 text-[10px] font-bold text-neutral-700 shadow-sm">
-                {product.category}
+          {displayCategory && (
+            <div className="absolute top-3 left-3 max-w-[calc(100%-1.5rem)]">
+              <span className="inline-flex items-center rounded-full bg-white/90 backdrop-blur-sm px-2.5 py-1 text-[10px] font-bold text-neutral-700 shadow-sm whitespace-nowrap">
+                {displayCategory}
               </span>
             </div>
           )}
@@ -181,13 +185,13 @@ export default function MarketplacePage() {
           </div>
         </div>
 
-        {/* Category pills */}
-        <div className="flex gap-2 overflow-x-auto pb-2 mb-6 scrollbar-hide">
-          {CATEGORIES.map(cat => (
+        {/* Category pills — horizontal scroll for all 14 categories */}
+        <div className="flex gap-2 overflow-x-auto pb-2 mb-6 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
+          {MARKETPLACE_CATEGORY_FILTERS.map(cat => (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              className={`flex-shrink-0 rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
+              className={`flex-shrink-0 rounded-full border px-4 py-1.5 text-sm font-medium transition-colors whitespace-nowrap ${
                 activeCategory === cat
                   ? 'bg-black border-black text-white'
                   : 'border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300 hover:text-black'

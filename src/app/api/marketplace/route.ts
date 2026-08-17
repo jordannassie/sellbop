@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { isSupabaseAdminConfigured } from '@/lib/env'
+import { getCategoryFilterValues, normalizeProductCategory } from '@/lib/product-categories'
 
 export async function GET(request: Request) {
   if (!isSupabaseAdminConfigured()) {
@@ -29,7 +30,7 @@ export async function GET(request: Request) {
     .limit(limit)
 
   if (category && category !== 'All') {
-    dbQuery = dbQuery.eq('category', category)
+    dbQuery = dbQuery.in('category', getCategoryFilterValues(category))
   }
 
   if (query) {
@@ -61,7 +62,7 @@ export async function GET(request: Request) {
       saleEnabled: p.sale_enabled ?? false,
       salePriceCents: p.sale_price_cents ?? null,
       saleEndsAt: p.sale_ends_at ?? null,
-      category: p.category ?? null,
+      category: normalizeProductCategory(p.category as string | null),
       affiliateEnabled: p.affiliate_enabled ?? false,
       affiliateCommissionPercent: p.affiliate_commission_percent ?? null,
       createdAt: p.created_at,

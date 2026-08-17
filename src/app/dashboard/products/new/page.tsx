@@ -22,8 +22,8 @@ import { ProductPricingSection } from '@/components/dashboard/product-pricing-se
 import { DropUploadZone } from '@/components/dashboard/drop-upload-zone'
 import { ProductFileRow } from '@/components/dashboard/product-file-row'
 import { datetimeLocalToIso, validateSalePricingForSave } from '@/lib/pricing/product-price'
+import { PRODUCT_CATEGORIES } from '@/lib/product-categories'
 
-const CATEGORIES = ['Business', 'Money', 'Templates', 'Education', 'Real Estate', 'Faith', 'Fitness', 'Design', 'Other']
 const COMMISSION_PRESETS = [10, 20, 30, 40, 50]
 
 export default function NewProductPage() {
@@ -329,7 +329,7 @@ export default function NewProductPage() {
               className="w-full rounded-xl border border-neutral-200 px-3 py-2.5 text-sm text-neutral-900 bg-white focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
             >
               <option value="">No category</option>
-              {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+              {PRODUCT_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </CardContent>
         </Card>

@@ -27,8 +27,8 @@ import {
   toDatetimeLocalValue,
   validateSalePricingForSave,
 } from '@/lib/pricing/product-price'
+import { PRODUCT_CATEGORIES, normalizeProductCategory } from '@/lib/product-categories'
 
-const CATEGORIES = ['Business', 'Money', 'Templates', 'Education', 'Real Estate', 'Faith', 'Fitness', 'Design', 'Other']
 const COMMISSION_PRESETS = [10, 20, 30, 40, 50]
 
 interface ProductFile {
@@ -118,7 +118,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
           setSaleEndsAt(toDatetimeLocalValue(p.sale_ends_at))
           setIsLive(p.is_live)
           setCoverImageUrl(p.cover_image_url ?? p.image_url ?? null)
-          setCategory(p.category ?? '')
+          setCategory(normalizeProductCategory(p.category) ?? '')
           // Null means the product was created before these fields existed — default to ON
           setMarketplaceListing(p.marketplace_listing ?? true)
           setAffiliateEnabled(p.affiliate_enabled ?? true)
@@ -434,7 +434,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
               className="w-full rounded-xl border border-neutral-200 px-3 py-2.5 text-sm text-neutral-900 bg-white focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
             >
               <option value="">No category</option>
-              {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+              {PRODUCT_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </CardContent>
         </Card>
