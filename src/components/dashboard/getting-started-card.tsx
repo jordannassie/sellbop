@@ -44,6 +44,22 @@ const STEPS = [
     autoKey: 'affiliates' as const,
   },
   {
+    id: 'bank_connected',
+    title: 'Connect Your Bank Account',
+    desc: 'Connect Stripe so you can actually get paid out.',
+    cta: 'Connect Bank Account',
+    href: '/dashboard/payouts',
+    autoKey: 'bank_connected' as const,
+  },
+  {
+    id: 'profile_complete',
+    title: 'Fill Out Your Store Profile',
+    desc: 'Add a headline, bio, photo, and support email so buyers trust your store.',
+    cta: 'Edit Profile',
+    href: '/dashboard/settings',
+    autoKey: 'profile_complete' as const,
+  },
+  {
     id: 'share_store',
     title: 'Share Your Store',
     desc: 'Start getting customers.',
@@ -77,6 +93,8 @@ export function GettingStartedCard() {
   const [status, setStatus] = useState<OnboardingStatus | null>(null)
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [savingKey, setSavingKey] = useState<string | null>(null)
 
   useEffect(() => {
     fetch('/api/onboarding')
@@ -107,26 +125,53 @@ export function GettingStartedCard() {
   }
 
   async function dismiss() {
-    const res = await fetch('/api/onboarding', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ dismissed: true }),
-    })
-    if (res.ok) {
+    setError(null)
+    try {
+      const res = await fetch('/api/onboarding', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dismissed: true }),
+      })
+      if (!res.ok) {
+        const body = await res.json().catch(() => null)
+        console.error('Failed to dismiss onboarding card', res.status, body)
+        setError("Couldn't dismiss this. Try again.")
+        return
+      }
       const data = await res.json()
       setStatus(data)
+    } catch (err) {
+      console.error('Failed to dismiss onboarding card', err)
+      setError("Couldn't dismiss this. Try again.")
     }
   }
 
   async function markManual(key: string) {
-    const res = await fetch('/api/onboarding', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ manual_steps: { [key]: true } }),
-    })
-    if (res.ok) {
+    setError(null)
+    setSavingKey(key)
+    try {
+      const res = await fetch('/api/onboarding', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ manual_steps: { [key]: true } }),
+      })
+      if (!res.ok) {
+        const body = await res.json().catch(() => null)
+        console.error('Failed to mark step complete', res.status, body)
+        setError(
+          res.status === 401
+            ? 'Please sign in again to save this.'
+            : "Couldn't save that. Try again.",
+        )
+        return
+      }
       const data = await res.json()
       setStatus(data)
+    } catch (err) {
+      console.error('Failed to mark step complete', err)
+      setError("Couldn't save that. Try again.")
+    } finally {
+      setSavingKey(null)
     }
   }
 
@@ -228,9 +273,10 @@ export function GettingStartedCard() {
                             <button
                               type="button"
                               onClick={() => markManual(step.manualKey!)}
-                              className="text-xs text-neutral-400 hover:text-black underline underline-offset-2"
+                              disabled={savingKey === step.manualKey}
+                              className="text-xs text-neutral-400 hover:text-black underline underline-offset-2 disabled:opacity-50 disabled:cursor-wait"
                             >
-                              Mark complete
+                              {savingKey === step.manualKey ? 'Saving…' : 'Mark complete'}
                             </button>
                           )}
                         </div>
@@ -240,6 +286,10 @@ export function GettingStartedCard() {
                 )
               })}
             </div>
+
+            {error && (
+              <p className="mt-3 text-xs text-red-600">{error}</p>
+            )}
 
             <div className="flex items-center justify-between mt-3 pt-2">
               <Link
