@@ -518,6 +518,93 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['product_reviews']['Insert']>
         Relationships: []
       }
+
+      resource_pages: {
+        Row: {
+          id: string
+          slug: string
+          title: string
+          subtitle: string | null
+          category: string | null
+          icon: string | null
+          image_url: string | null
+          content_json: Json
+          sort_order: number
+          is_published: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          slug: string
+          title: string
+          subtitle?: string | null
+          category?: string | null
+          icon?: string | null
+          image_url?: string | null
+          content_json?: Json
+          sort_order?: number
+          is_published?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['resource_pages']['Insert']>
+        Relationships: []
+      }
+
+      resource_cards: {
+        Row: {
+          id: string
+          page_slug: string
+          title: string
+          subtitle: string | null
+          description: string | null
+          icon: string | null
+          image_url: string | null
+          cta_text: string | null
+          cta_url: string | null
+          sort_order: number
+          is_published: boolean
+          metadata: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          page_slug?: string
+          title: string
+          subtitle?: string | null
+          description?: string | null
+          icon?: string | null
+          image_url?: string | null
+          cta_text?: string | null
+          cta_url?: string | null
+          sort_order?: number
+          is_published?: boolean
+          metadata?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['resource_cards']['Insert']>
+        Relationships: []
+      }
+
+      seller_onboarding: {
+        Row: {
+          user_id: string
+          dismissed: boolean
+          manual_steps: Json
+          updated_at: string
+        }
+        Insert: {
+          user_id: string
+          dismissed?: boolean
+          manual_steps?: Json
+          updated_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['seller_onboarding']['Insert']>
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: Record<string, never>

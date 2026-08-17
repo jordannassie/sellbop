@@ -3,24 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import {
-  BookOpen,
-  LayoutDashboard,
-  LogOut,
-  Menu,
-  Package,
-  Settings,
-  Store,
-  Users,
-  DollarSign,
-  ShoppingBag,
-  Tag,
-  X,
-  Plus,
-  TrendingUp,
-  Grid3x3,
-  ExternalLink,
-} from 'lucide-react'
+import { BookOpen, GraduationCap, LayoutDashboard, LogOut, Menu, Package, Settings, Store, Users, DollarSign, ShoppingBag, Tag, X, Plus, TrendingUp, Grid3x3, ExternalLink, } from 'lucide-react'
 import { useAuth } from '@/context/auth-context'
 import { useUserStore } from '@/hooks/use-user-store'
 import { cn } from '@/lib/utils'
@@ -126,6 +109,7 @@ export function DashboardSidebar() {
     { href: '/marketplace', label: 'Marketplace', icon: Grid3x3 },
     { href: '/dashboard/affiliates', label: 'Affiliates', icon: TrendingUp },
     { href: '/dashboard/library', label: 'Library', icon: BookOpen },
+    { href: '/dashboard/resources', label: 'Resources', icon: GraduationCap },
     { href: '/dashboard/payouts', label: 'Payouts', icon: DollarSign },
     { href: '/dashboard/settings', label: 'Settings', icon: Settings },
   ]
@@ -135,6 +119,7 @@ export function DashboardSidebar() {
     { href: '/marketplace', label: 'Marketplace', icon: Grid3x3 },
     { href: '/dashboard/affiliates', label: 'Affiliates', icon: TrendingUp },
     { href: '/dashboard/library', label: 'Library', icon: BookOpen },
+    { href: '/dashboard/resources', label: 'Resources', icon: GraduationCap },
     { href: '/dashboard/settings', label: 'Settings', icon: Settings },
   ]
 

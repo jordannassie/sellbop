@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/context/auth-context'
 import { useUserStore } from '@/hooks/use-user-store'
+import { GettingStartedCard } from '@/components/dashboard/getting-started-card'
 import { isSupabaseConfigured } from '@/lib/env'
 
 interface OrderRow {
@@ -114,6 +115,8 @@ export default function DashboardOverview() {
           </Link>
         )}
       </div>
+
+      <GettingStartedCard />
 
       {/* Action cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-8">

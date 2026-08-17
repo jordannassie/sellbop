@@ -3,6 +3,7 @@ import { LogOut } from 'lucide-react'
 import { AdminSidebar, type AdminSection } from '@/components/admin/admin-sidebar'
 import { AdminOverview } from '@/components/admin/overview'
 import { UsersSection, SellersSection, BuyersSection, ProductsSection } from '@/components/admin/users-section'
+import { ResourcesAdminSection } from '@/components/admin/resources-section'
 import { OrdersSection } from '@/components/admin/orders-section'
 import { requireAdminUser } from '@/lib/admin/access'
 import { getAdminOrders, getAdminOverviewData, getAdminUsers } from '@/lib/admin/users'
@@ -14,6 +15,7 @@ function isAdminSection(value: string | undefined): value is AdminSection {
     || value === 'buyers'
     || value === 'products'
     || value === 'orders'
+    || value === 'resources'
 }
 
 export default async function AdminPage({
@@ -59,6 +61,7 @@ export default async function AdminPage({
           {section === 'buyers' && <BuyersSection users={users} />}
           {section === 'products' && <ProductsSection />}
           {section === 'orders' && <OrdersSection orders={orders} />}
+          {section === 'resources' && <ResourcesAdminSection />}
         </div>
       </main>
     </div>
