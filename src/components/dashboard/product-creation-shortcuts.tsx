@@ -60,8 +60,8 @@ export function ProductFileCreationHeaderLinks() {
 export function ProductFileCreationHelperText() {
   return (
     <p className="text-xs text-neutral-400 mt-3 leading-relaxed">
-      Create your file with Docs, Sheets, Canva, or Notion — export or download it, then upload it
-      to SellBop.
+      Upload a file or add a website link buyers can access after purchase. Create files with Docs,
+      Sheets, Canva, or Notion — or link directly to a Notion page, Google Doc, course, or site.
     </p>
   )
 }

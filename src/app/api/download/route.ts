@@ -41,7 +41,7 @@ export async function GET(request: Request) {
   // Get the product file
   let fileQuery = admin
     .from('product_files')
-    .select('id, file_name, storage_path, file_type')
+    .select('id, file_name, storage_path, file_type, file_url')
     .eq('product_id', productId)
 
   if (purchase.file_id) {
@@ -50,6 +50,14 @@ export async function GET(request: Request) {
 
   const { data: files } = await fileQuery.order('sort_order', { ascending: true })
   const file = files?.[0]
+
+  if (file?.file_type === 'link' && file.file_url) {
+    return NextResponse.json({
+      download_url: file.file_url,
+      file_name: file.file_name,
+      is_link: true,
+    })
+  }
 
   if (!file?.storage_path) {
     return NextResponse.json({ error: 'No file available for this product.' }, { status: 404 })

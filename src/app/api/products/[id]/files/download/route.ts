@@ -46,11 +46,20 @@ export async function GET(
   const admin = getSupabaseAdminClient()
   const { data: file } = await admin
     .from('product_files')
-    .select('id, file_name, file_type, storage_path')
+    .select('id, file_name, file_type, storage_path, file_url')
     .eq('id', fileId)
     .eq('product_id', productId)
     .eq('seller_id', user.id)
     .maybeSingle()
+
+  if (file?.file_type === 'link' && file.file_url) {
+    return NextResponse.json({
+      download_url: file.file_url,
+      file_name: file.file_name,
+      file_type: file.file_type,
+      is_link: true,
+    })
+  }
 
   if (!file?.storage_path) {
     return NextResponse.json({ error: 'File not available.' }, { status: 404 })

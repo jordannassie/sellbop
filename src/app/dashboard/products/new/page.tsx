@@ -22,6 +22,7 @@ import type { GalleryMediaItem } from '@/components/product-media/add-media-moda
 import { ProductPricingSection } from '@/components/dashboard/product-pricing-section'
 import { DropUploadZone } from '@/components/dashboard/drop-upload-zone'
 import { ProductFileRow } from '@/components/dashboard/product-file-row'
+import { AddProductLinkForm } from '@/components/dashboard/add-product-link-form'
 import { datetimeLocalToIso, validateSalePricingForSave } from '@/lib/pricing/product-price'
 import { PRODUCT_CATEGORIES } from '@/lib/product-categories'
 
@@ -48,6 +49,7 @@ export default function NewProductPage() {
     type: string
     previewUrl: string | null
   } | null>(null)
+  const [productLinks, setProductLinks] = useState<{ url: string; name: string }[]>([])
   const [fileUploading, setFileUploading] = useState(false)
   const [isLive, setIsLive] = useState(false)
   const [marketplaceListing, setMarketplaceListing] = useState(true)
@@ -180,6 +182,18 @@ export default function NewProductPage() {
         })
       }
 
+      for (const link of productLinks) {
+        await fetch(`/api/products/${productId}/files`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            file_name: link.name,
+            file_url: link.url,
+            file_type: 'link',
+          }),
+        })
+      }
+
       if (mediaItems.length > 0) {
         await saveProductMedia(productId, mediaItems)
       }
@@ -259,13 +273,27 @@ export default function NewProductPage() {
           </CardContent>
         </Card>
 
-        {/* Digital File */}
+        {/* Digital Files */}
         <Card>
           <CardHeader>
-            <CardTitle>Digital File</CardTitle>
+            <CardTitle>Digital Files</CardTitle>
             <ProductFileCreationHeaderLinks />
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-3">
+            {productLinks.length > 0 && (
+              <div className="space-y-2">
+                {productLinks.map((link, index) => (
+                  <ProductFileRow
+                    key={`${link.url}-${index}`}
+                    fileName={link.name}
+                    fileType="link"
+                    fileUrl={link.url}
+                    storagePath={null}
+                    onRemove={() => setProductLinks(prev => prev.filter((_, i) => i !== index))}
+                  />
+                ))}
+              </div>
+            )}
             {productFile ? (
               <ProductFileRow
                 fileName={productFile.name}
@@ -295,6 +323,14 @@ export default function NewProductPage() {
                 )}
               </DropUploadZone>
             )}
+            <AddProductLinkForm
+              onAdd={async link => {
+                setProductLinks(prev => [...prev, link])
+                toast.success('Link added.')
+              }}
+              disabled={fileUploading}
+              hasFiles={!!productFile || productLinks.length > 0}
+            />
             <ProductFileCreationHelperText />
           </CardContent>
         </Card>

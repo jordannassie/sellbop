@@ -22,6 +22,7 @@ import { ProductMediaSection } from '@/components/product-media/product-media-se
 import type { GalleryMediaItem } from '@/components/product-media/add-media-modal'
 import { DropUploadZone } from '@/components/dashboard/drop-upload-zone'
 import { ProductFileRow } from '@/components/dashboard/product-file-row'
+import { AddProductLinkForm } from '@/components/dashboard/add-product-link-form'
 import { ProductPricingSection } from '@/components/dashboard/product-pricing-section'
 import {
   datetimeLocalToIso,
@@ -37,6 +38,7 @@ interface ProductFile {
   file_name: string
   file_type: string
   file_size: number | null
+  file_url: string | null
   storage_path: string | null
   created_at: string
 }
@@ -166,6 +168,26 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
       }
     }
     setFileUploading(false)
+  }
+
+  async function addProductLink(link: { url: string; name: string }) {
+    if (!productId) return
+    const res = await fetch(`/api/products/${productId}/files`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        file_name: link.name,
+        file_url: link.url,
+        file_type: 'link',
+      }),
+    })
+    const data = await res.json()
+    if (res.ok && data.file) {
+      setFiles(prev => [...prev, data.file])
+      toast.success('Link added.')
+    } else {
+      toast.error(data.error ?? 'Failed to add link.')
+    }
   }
 
   async function handleDeleteFile(fileId: string) {
@@ -369,6 +391,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                     fileName={f.file_name}
                     fileSize={f.file_size}
                     fileType={f.file_type}
+                    fileUrl={f.file_url}
                     storagePath={f.storage_path}
                     productId={productId}
                     fileId={f.id}
@@ -389,7 +412,12 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
               )}
               {fileUploading ? 'Uploading…' : files.length > 0 ? 'Drop or click to add another file' : 'Drop or click to upload product file'}
             </DropUploadZone>
-            <p className="text-xs text-neutral-400">Files are stored privately and delivered securely after purchase.</p>
+            <AddProductLinkForm
+              onAdd={addProductLink}
+              disabled={fileUploading}
+              hasFiles={files.length > 0}
+            />
+            <p className="text-xs text-neutral-400">Files and links are stored privately and delivered securely after purchase.</p>
             <ProductFileCreationHelperText />
           </CardContent>
         </Card>

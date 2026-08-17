@@ -9,14 +9,18 @@ import {
   FileArchive,
   FileSpreadsheet,
   File,
+  Globe,
+  ExternalLink,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { isProductLink } from '@/lib/product-files/url'
 
 interface ProductFileRowProps {
   fileName: string
   fileSize?: number | null
   fileType?: string | null
+  fileUrl?: string | null
   storagePath: string | null
   productId?: string | null
   fileId?: string | null
@@ -25,9 +29,11 @@ interface ProductFileRowProps {
   onRemove?: () => void
 }
 
-type FileKind = 'image' | 'pdf' | 'archive' | 'spreadsheet' | 'document' | 'other'
+type FileKind = 'image' | 'pdf' | 'archive' | 'spreadsheet' | 'document' | 'link' | 'other'
 
-function getFileKind(fileName: string, fileType?: string | null): FileKind {
+function getFileKind(fileName: string, fileType?: string | null, fileUrl?: string | null, storagePath?: string | null): FileKind {
+  if (isProductLink(fileType, fileUrl, storagePath)) return 'link'
+
   const mime = fileType?.toLowerCase() ?? ''
   const ext = fileName.split('.').pop()?.toLowerCase() ?? ''
 
@@ -75,6 +81,8 @@ function isPreviewable(type: string | null | undefined, name: string): boolean {
 function FileTypeIcon({ kind }: { kind: FileKind }) {
   const className = 'text-neutral-500'
   switch (kind) {
+    case 'link':
+      return <Globe size={22} className="text-blue-500" />
     case 'pdf':
       return <FileText size={22} className="text-red-500" />
     case 'archive':
@@ -93,17 +101,21 @@ function FileTypeIcon({ kind }: { kind: FileKind }) {
 function FilePreviewThumb({
   fileName,
   fileType,
+  fileUrl,
+  storagePath,
   previewUrl,
   loading,
   onClick,
 }: {
   fileName: string
   fileType?: string | null
+  fileUrl?: string | null
+  storagePath?: string | null
   previewUrl: string | null
   loading?: boolean
   onClick?: () => void
 }) {
-  const kind = getFileKind(fileName, fileType)
+  const kind = getFileKind(fileName, fileType, fileUrl, storagePath)
 
   return (
     <button
@@ -134,12 +146,15 @@ function FilePreviewThumb({
         <div
           className={cn(
             'w-full h-full flex flex-col items-center justify-center gap-0.5',
-            kind === 'pdf' ? 'bg-red-50' : 'bg-neutral-100',
+            kind === 'pdf' ? 'bg-red-50' : kind === 'link' ? 'bg-blue-50' : 'bg-neutral-100',
           )}
         >
           <FileTypeIcon kind={kind} />
           {kind === 'pdf' && (
             <span className="text-[9px] font-bold uppercase text-red-600">PDF</span>
+          )}
+          {kind === 'link' && (
+            <span className="text-[9px] font-bold uppercase text-blue-600">LINK</span>
           )}
         </div>
       )}
@@ -151,6 +166,7 @@ export function ProductFileRow({
   fileName,
   fileSize,
   fileType,
+  fileUrl,
   storagePath,
   productId,
   fileId,
@@ -161,11 +177,21 @@ export function ProductFileRow({
   const [previewLoading, setPreviewLoading] = useState(false)
   const [remotePreviewUrl, setRemotePreviewUrl] = useState<string | null>(null)
 
+  const isLink = isProductLink(fileType, fileUrl, storagePath)
   const previewUrl = localPreviewUrl ?? remotePreviewUrl
-  const sizeLabel = formatFileSize(fileSize)
+  const sizeLabel = isLink ? 'Website link' : formatFileSize(fileSize)
+  const linkSubtitle = isLink && fileUrl
+    ? (() => {
+        try {
+          return new URL(fileUrl).hostname.replace(/^www\./, '')
+        } catch {
+          return fileUrl
+        }
+      })()
+    : null
 
   useEffect(() => {
-    if (localPreviewUrl || !productId || !fileId || !storagePath) return
+    if (localPreviewUrl || isLink || !productId || !fileId || !storagePath) return
 
     let cancelled = false
     setPreviewLoading(true)
@@ -182,9 +208,14 @@ export function ProductFileRow({
     return () => {
       cancelled = true
     }
-  }, [localPreviewUrl, productId, fileId, storagePath])
+  }, [localPreviewUrl, isLink, productId, fileId, storagePath])
 
-  async function handleDownload() {
+  async function handleOpen() {
+    if (isLink && fileUrl) {
+      window.open(fileUrl, '_blank', 'noopener,noreferrer')
+      return
+    }
+
     if (!storagePath) {
       toast.error('File not available yet.')
       return
@@ -232,24 +263,28 @@ export function ProductFileRow({
       <FilePreviewThumb
         fileName={fileName}
         fileType={fileType}
+        fileUrl={fileUrl}
+        storagePath={storagePath}
         previewUrl={previewUrl}
         loading={previewLoading && !localPreviewUrl}
-        onClick={storagePath ? handleDownload : undefined}
+        onClick={isLink || storagePath ? handleOpen : undefined}
       />
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-neutral-900 truncate">{fileName}</p>
-        {sizeLabel && <p className="text-xs text-neutral-500">{sizeLabel}</p>}
+        {(linkSubtitle || sizeLabel) && (
+          <p className="text-xs text-neutral-500 truncate">{linkSubtitle ?? sizeLabel}</p>
+        )}
       </div>
-      {storagePath && (
+      {(isLink || storagePath) && (
         <button
           type="button"
-          onClick={handleDownload}
+          onClick={handleOpen}
           disabled={loading}
           className="p-1.5 text-neutral-400 hover:text-black transition-colors disabled:opacity-50"
-          title="Download or preview file"
-          aria-label="Download or preview file"
+          title={isLink ? 'Open link' : 'Download or preview file'}
+          aria-label={isLink ? 'Open link' : 'Download or preview file'}
         >
-          <Download size={14} />
+          {isLink ? <ExternalLink size={14} /> : <Download size={14} />}
         </button>
       )}
       {onRemove && (

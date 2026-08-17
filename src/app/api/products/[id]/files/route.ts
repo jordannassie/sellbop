@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { isSupabaseAdminConfigured } from '@/lib/env'
+import { normalizeProductLinkUrl, productLinkDisplayName } from '@/lib/product-files/url'
 
 async function verifyProductOwnership(productId: string, userId: string) {
   const admin = getSupabaseAdminClient()
@@ -40,7 +41,37 @@ export async function POST(
   if (!ownership) return NextResponse.json({ error: 'Product not found.' }, { status: 404 })
 
   const body = await request.json()
-  const { file_name, file_type, file_size, storage_path } = body
+  const { file_name, file_type, file_size, storage_path, file_url } = body
+
+  const isLink = file_type === 'link' || (!!file_url && !storage_path)
+
+  if (isLink) {
+    const normalizedUrl = normalizeProductLinkUrl(String(file_url ?? ''))
+    if (!normalizedUrl) {
+      return NextResponse.json({ error: 'A valid http(s) URL is required.' }, { status: 400 })
+    }
+
+    const admin = getSupabaseAdminClient()
+    const { data: file, error } = await admin
+      .from('product_files')
+      .insert({
+        product_id: productId,
+        seller_id: user.id,
+        file_name: productLinkDisplayName(normalizedUrl, file_name),
+        file_url: normalizedUrl,
+        file_type: 'link',
+        file_size: null,
+        storage_path: null,
+        upload_status: 'complete',
+        visibility: 'buyers',
+        sort_order: 0,
+      })
+      .select('*')
+      .single()
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ file }, { status: 201 })
+  }
 
   if (!file_name || !storage_path) {
     return NextResponse.json({ error: 'file_name and storage_path are required.' }, { status: 400 })
