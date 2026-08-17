@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { SellBopLogo } from '@/components/ui/sellbop-logo'
+import { PublicHeader } from '@/components/marketing/public-header'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Shield, Download, ArrowRight, User, TrendingUp, Check, Copy, Share2 } from 'lucide-react'
@@ -212,9 +212,7 @@ export function CanonicalProductPage({
     const showShareEarn = affiliateEnabled && commPercent > 0 && !isFree
     return (
       <div className="min-h-screen bg-neutral-50 flex flex-col">
-        <div className="bg-white border-b border-neutral-100">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center"><SellBopLogo size="lg" /></div>
-        </div>
+        <PublicHeader />
         <div className="flex-1 flex items-center justify-center px-4 py-16">
           <div className="max-w-md w-full">
             <div className="text-center mb-6">
@@ -278,9 +276,7 @@ export function CanonicalProductPage({
   if (state === 'stripe_required') {
     return (
       <div className="min-h-screen bg-neutral-50 flex flex-col">
-        <div className="bg-white border-b border-neutral-100">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center"><SellBopLogo size="lg" /></div>
-        </div>
+        <PublicHeader />
         <div className="flex-1 flex items-center justify-center px-4 py-16">
           <div className="max-w-md w-full text-center">
             <div className="w-14 h-14 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -297,17 +293,7 @@ export function CanonicalProductPage({
 
   return (
     <div className="min-h-screen bg-neutral-50">
-      <div className="bg-white border-b border-neutral-100">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-          <SellBopLogo size="lg" />
-          {store && (
-            <Link href={`/${store.slug}`} className="text-sm text-neutral-500 hover:text-black transition-colors">
-              {store.name}
-            </Link>
-          )}
-        </div>
-      </div>
-
+      <PublicHeader />
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12">
         <div className="grid lg:grid-cols-5 gap-10">
           {/* Left: product info */}

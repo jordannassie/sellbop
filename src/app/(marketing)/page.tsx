@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { MissionSection } from '@/components/marketing/mission-section'
+import { HeroBanner } from '@/components/marketing/hero-banner'
 import {
   ArrowRight,
   Check,
@@ -17,41 +18,47 @@ export default function HomePage() {
   return (
     <>
       {/* ── Hero ─────────────────────────────────────────────────── */}
-      <section className="max-w-4xl mx-auto px-4 sm:px-6 pt-20 pb-24 text-center">
-        <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold px-3 py-1.5 rounded-full mb-6">
-          <TrendingUp size={11} />
-          Introducing Sellbop Share
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 pt-16 pb-20">
+        {/* Text block */}
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold px-3 py-1.5 rounded-full mb-6">
+            <TrendingUp size={11} />
+            Introducing Sellbop Share
+          </div>
+
+          <h1 className="text-5xl sm:text-7xl font-black text-black tracking-tight leading-[1.05] mb-5">
+            Sell digital products.<br className="hidden sm:block" />
+            <span className="text-emerald-600">Let everyone sell them.</span>
+          </h1>
+
+          <p className="text-lg sm:text-xl text-neutral-500 max-w-lg mx-auto mb-8 leading-relaxed">
+            Upload your product, choose what affiliates earn, and build your own sales network.
+          </p>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-6">
+            <Link href="/signup">
+              <Button size="lg" className="w-full sm:w-auto">
+                Start Selling <ArrowRight size={16} />
+              </Button>
+            </Link>
+            <Link href="/marketplace">
+              <Button size="lg" variant="secondary" className="w-full sm:w-auto">
+                Explore Marketplace
+              </Button>
+            </Link>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+            {['Free to start', 'No monthly fees', 'Instant delivery'].map(text => (
+              <span key={text} className="flex items-center gap-1.5 text-sm text-neutral-500">
+                <Check size={13} className="text-emerald-500" /> {text}
+              </span>
+            ))}
+          </div>
         </div>
 
-        <h1 className="text-5xl sm:text-7xl font-black text-black tracking-tight leading-[1.05] mb-5">
-          Sell digital products.<br className="hidden sm:block" />
-          <span className="text-emerald-600">Let everyone sell them.</span>
-        </h1>
-
-        <p className="text-lg sm:text-xl text-neutral-500 max-w-lg mx-auto mb-10 leading-relaxed">
-          Upload your product, choose what affiliates earn, and build your own sales network.
-        </p>
-
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-8">
-          <Link href="/signup">
-            <Button size="lg" className="w-full sm:w-auto">
-              Start Selling <ArrowRight size={16} />
-            </Button>
-          </Link>
-          <Link href="/marketplace">
-            <Button size="lg" variant="secondary" className="w-full sm:w-auto">
-              Explore Marketplace
-            </Button>
-          </Link>
-        </div>
-
-        <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
-          {['Free to start', 'No monthly fees', 'Instant delivery'].map(text => (
-            <span key={text} className="flex items-center gap-1.5 text-sm text-neutral-500">
-              <Check size={13} className="text-emerald-500" /> {text}
-            </span>
-          ))}
-        </div>
+        {/* Rotating banner showcase */}
+        <HeroBanner />
       </section>
 
       {/* ── How it works ─────────────────────────────────────────── */}

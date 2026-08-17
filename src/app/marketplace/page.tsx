@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Search, X, TrendingUp, ArrowRight } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
-import { SellBopLogo } from '@/components/ui/sellbop-logo'
+import { PublicHeader } from '@/components/marketing/public-header'
 
 const CATEGORIES = ['All', 'Business', 'Money', 'Templates', 'Education', 'Real Estate', 'Faith', 'Fitness', 'Design', 'Other']
 
@@ -58,7 +58,7 @@ function ProductCard({ product }: { product: MarketplaceProduct }) {
       </Link>
 
       <div className="p-4">
-        <Link href={`/p/${product.slug}`}>
+        <Link href={product.storeSlug ? `/${product.storeSlug}/${product.slug}` : `/p/${product.slug}`}>
           <h3 className="font-semibold text-neutral-900 leading-snug line-clamp-2 hover:text-black transition-colors mb-1">
             {product.title}
           </h3>
@@ -72,7 +72,7 @@ function ProductCard({ product }: { product: MarketplaceProduct }) {
           <p className="text-xs text-neutral-400 mb-3">
             by{' '}
             {product.storeSlug ? (
-              <Link href={`/store/${product.storeSlug}`} className="hover:text-black hover:underline">
+              <Link href={`/${product.storeSlug}`} className="hover:text-black hover:underline">
                 {product.storeName}
               </Link>
             ) : product.storeName}
@@ -87,7 +87,10 @@ function ProductCard({ product }: { product: MarketplaceProduct }) {
           </div>
 
           {product.affiliateEnabled && commPercent > 0 && (
-            <Link href={`/p/${product.slug}`} className="flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-1 text-[10px] font-bold text-emerald-700 hover:bg-emerald-100 transition-colors">
+            <Link
+              href={product.storeSlug ? `/${product.storeSlug}/${product.slug}` : `/p/${product.slug}`}
+              className="flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-1 text-[10px] font-bold text-emerald-700 hover:bg-emerald-100 transition-colors"
+            >
               <TrendingUp size={9} />
               Earn {commPercent}% · {formatCurrency(commCents)}/sale
             </Link>
@@ -95,7 +98,7 @@ function ProductCard({ product }: { product: MarketplaceProduct }) {
         </div>
 
         <Link
-          href={`/p/${product.slug}`}
+          href={product.storeSlug ? `/${product.storeSlug}/${product.slug}` : `/p/${product.slug}`}
           className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl bg-black py-2 text-sm font-semibold text-white hover:bg-neutral-800 transition-colors"
         >
           View Product <ArrowRight size={13} />
@@ -135,25 +138,7 @@ export default function MarketplacePage() {
 
   return (
     <div className="min-h-screen bg-neutral-50">
-      {/* Header */}
-      <header className="bg-white border-b border-neutral-100 sticky top-0 z-30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
-          <Link href="/">
-            <SellBopLogo size="lg" />
-          </Link>
-          <div className="flex items-center gap-3">
-            <Link href="/login" className="text-sm font-medium text-neutral-600 hover:text-black transition-colors">
-              Log in
-            </Link>
-            <Link
-              href="/signup"
-              className="rounded-xl bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-800 transition-colors"
-            >
-              Start Selling
-            </Link>
-          </div>
-        </div>
-      </header>
+      <PublicHeader activeHref="/marketplace" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
         {/* Hero */}

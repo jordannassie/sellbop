@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { SellBopLogo } from '@/components/ui/sellbop-logo'
+import { PublicHeader } from '@/components/marketing/public-header'
 import { formatCurrency } from '@/lib/utils'
 import { User, Package } from 'lucide-react'
 import { isSupabaseConfigured } from '@/lib/env'
@@ -70,23 +70,7 @@ export function ClientStorefront({ slug }: { slug: string }) {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Nav */}
-      <div className="border-b border-neutral-100 bg-white sticky top-0 z-20">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-          <Link href="/"><SellBopLogo size="sm" /></Link>
-          <div className="flex items-center gap-3">
-            <Link href="/marketplace" className="text-sm text-neutral-500 hover:text-black transition-colors">
-              Marketplace
-            </Link>
-            <Link
-              href="/signup"
-              className="rounded-xl bg-black px-4 py-1.5 text-sm font-semibold text-white hover:bg-neutral-800 transition-colors"
-            >
-              Start Selling
-            </Link>
-          </div>
-        </div>
-      </div>
+      <PublicHeader />
 
       {/* Creator header */}
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
