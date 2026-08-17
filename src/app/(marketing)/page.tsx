@@ -12,6 +12,15 @@ import {
   TrendingUp,
   Users,
   DollarSign,
+  BookOpen,
+  Table2,
+  SlidersHorizontal,
+  Palette,
+  Camera,
+  Code2,
+  Music2,
+  ListChecks,
+  Plus,
 } from 'lucide-react'
 
 export default function HomePage() {
@@ -215,21 +224,22 @@ export default function HomePage() {
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {[
-              'eBooks & PDFs',
-              'Templates & Spreadsheets',
-              'Presets & Filters',
-              'Design Assets',
-              'Photography',
-              'Software & Scripts',
-              'Audio & Music',
-              'Guides & Checklists',
-              'And more…',
-            ].map(item => (
+              { label: 'eBooks & PDFs',            Icon: BookOpen },
+              { label: 'Templates & Spreadsheets', Icon: Table2 },
+              { label: 'Presets & Filters',        Icon: SlidersHorizontal },
+              { label: 'Design Assets',            Icon: Palette },
+              { label: 'Photography',              Icon: Camera },
+              { label: 'Software & Scripts',       Icon: Code2 },
+              { label: 'Audio & Music',            Icon: Music2 },
+              { label: 'Guides & Checklists',      Icon: ListChecks },
+              { label: 'And more…',               Icon: Plus },
+            ].map(({ label, Icon }) => (
               <div
-                key={item}
-                className="rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm font-medium text-neutral-700 text-center hover:border-neutral-300 hover:bg-white transition-all"
+                key={label}
+                className="group flex items-center gap-3 rounded-xl border border-neutral-200 bg-white px-4 py-3.5 hover:border-neutral-300 hover:shadow-sm transition-all duration-150"
               >
-                {item}
+                <Icon size={16} style={{ color: '#00E676' }} className="flex-shrink-0" />
+                <span className="text-sm font-medium text-neutral-700">{label}</span>
               </div>
             ))}
           </div>
