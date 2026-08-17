@@ -42,18 +42,31 @@ const SOCIAL_LINKS = [
   },
 ]
 
+const NAV_LINKS = [
+  ['Sell', '/signup'],
+  ['Login', '/login'],
+  ['Dashboard', '/dashboard'],
+  ['Terms', '/terms'],
+  ['Privacy', '/privacy'],
+  ['Refund Policy', '/refund-policy'],
+  ['Support', '/support'],
+  ['Admin', '/internal/admin'],
+] as const
+
 export function MarketingFooter() {
   return (
     <footer className="border-t border-neutral-100 bg-white">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-6 mb-6">
-          <div className="flex items-center gap-2">
-            <SellBopLogo size="sm" />
-            <span className="text-neutral-300">·</span>
-            <span className="text-xs text-neutral-500">Upload it. Price it. Sell it.</span>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
+        {/* Brand + social */}
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between pb-6 border-b border-neutral-100">
+          <div className="flex flex-col gap-1.5 sm:gap-2">
+            <div className="flex items-center gap-2">
+              <SellBopLogo size="sm" />
+            </div>
+            <p className="text-xs text-neutral-500">Upload it. Price it. Sell it.</p>
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 sm:gap-0.5">
             {SOCIAL_LINKS.map(s => (
               <a
                 key={s.label}
@@ -67,28 +80,27 @@ export function MarketingFooter() {
               </a>
             ))}
           </div>
-
-          <p className="text-xs text-neutral-400">© {new Date().getFullYear()} Sellbop</p>
         </div>
 
-        <div className="border-t border-neutral-100 pt-5 flex items-center justify-center flex-wrap gap-x-5 gap-y-2 mb-6">
-          {[
-            ['Sell', '/signup'],
-            ['Login', '/login'],
-            ['Dashboard', '/dashboard'],
-            ['Terms', '/terms'],
-            ['Privacy', '/privacy'],
-            ['Refund Policy', '/refund-policy'],
-            ['Support', '/support'],
-            ['Admin', '/internal/admin'],
-          ].map(([label, href]) => (
-            <Link key={href} href={href} className="text-xs text-neutral-500 hover:text-black transition-colors">
+        {/* Nav links */}
+        <nav
+          aria-label="Footer"
+          className="py-5 flex flex-wrap items-center justify-center gap-x-5 gap-y-2.5"
+        >
+          {NAV_LINKS.map(([label, href]) => (
+            <Link
+              key={href}
+              href={href}
+              className="text-xs text-neutral-500 hover:text-black transition-colors"
+            >
               {label}
             </Link>
           ))}
-        </div>
+        </nav>
 
-        <div className="flex items-center justify-center">
+        {/* Payment + copyright */}
+        <div className="pt-5 border-t border-neutral-100 flex flex-col-reverse sm:flex-row items-center justify-between gap-4">
+          <p className="text-xs text-neutral-400">© {new Date().getFullYear()} Sellbop</p>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/payment-cards.png"
