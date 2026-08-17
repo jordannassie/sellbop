@@ -75,6 +75,12 @@ const handler = createMcpHandler((server) => {
   )
 
   server.registerTool(
+    'list_products',
+    { title: 'List Products', description: "List the connected seller's products.", inputSchema: z.object({}) },
+    async (_args, ctx) => tool(() => getProducts(identityOf(ctx))),
+  )
+
+  server.registerTool(
     'get_product',
     {
       title: 'Get Product',

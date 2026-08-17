@@ -13,16 +13,23 @@ import {
   Package,
   Sparkles,
   Store,
+  X,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { INTEGRATIONS } from '@/lib/resources/defaults'
+import {
+  CLAUDE_TEST_PROMPT,
+  getClaudeConnectionState,
+  type ClaudeConnectionState,
+} from '@/lib/agent/connection-status'
 
 const CLAUDE = INTEGRATIONS.claude
 const HIGGSFIELD = INTEGRATIONS.higgsfield
 
 const HIGGSFIELD_MCP_URL = 'https://mcp.higgsfield.ai/mcp'
 const CLAUDE_CONNECTORS_URL = 'https://claude.ai/settings/connectors'
+const PRODUCTION_MCP_URL = 'https://sellbop.com/api/mcp'
 const HIGGSFIELD_EXAMPLE_PROMPT =
   'Create a cover image for my SellBop product using Higgsfield, then upload it to the product draft.'
 const HIGGSFIELD_SETUP_STEPS = [
@@ -99,18 +106,18 @@ function ExpandableHelp({
   )
 }
 
-function StatusBadge({ connected, setupGuide }: { connected?: boolean; setupGuide?: boolean }) {
-  if (setupGuide) {
-    return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2.5 py-0.5 text-[11px] font-semibold text-neutral-600">
-        Setup Guide
-      </span>
-    )
-  }
-  if (connected) {
+function StatusBadge({ state }: { state: ClaudeConnectionState }) {
+  if (state === 'connected') {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700">
         <Check size={12} /> Connected
+      </span>
+    )
+  }
+  if (state === 'mcp_ready') {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-sky-50 px-2.5 py-0.5 text-[11px] font-semibold text-sky-700">
+        <Check size={12} /> MCP Ready
       </span>
     )
   }
@@ -121,24 +128,117 @@ function StatusBadge({ connected, setupGuide }: { connected?: boolean; setupGuid
   )
 }
 
+function HiggsfieldStatusBadge({ connected }: { connected?: boolean }) {
+  if (connected) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700">
+        <Check size={12} /> Connected
+      </span>
+    )
+  }
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2.5 py-0.5 text-[11px] font-semibold text-neutral-600">
+      Setup Guide
+    </span>
+  )
+}
+
+function ConnectClaudeModal({ mcpUrl, onClose }: { mcpUrl: string; onClose: () => void }) {
+  function copyMcpUrl() {
+    navigator.clipboard.writeText(mcpUrl)
+    toast.success('MCP URL copied.')
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between p-5 sm:p-6 border-b border-neutral-100">
+          <div>
+            <h2 className="text-lg font-bold text-black">Connect SellBop to Claude</h2>
+            <p className="text-sm text-neutral-500 mt-1">
+              Add SellBop as a connector in your Claude account.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-neutral-100 transition-colors"
+          >
+            <X size={16} className="text-neutral-500" />
+          </button>
+        </div>
+
+        <div className="p-5 sm:p-6 space-y-5 text-sm text-neutral-600">
+          <div>
+            <p className="font-semibold text-black mb-2">Step 1 — Copy your SellBop MCP URL</p>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 min-w-0 rounded-lg bg-neutral-100 px-3 py-2 text-xs font-mono break-all">
+                {mcpUrl}
+              </code>
+              <Button size="sm" variant="secondary" onClick={copyMcpUrl}>
+                <Copy size={13} /> Copy MCP URL
+              </Button>
+            </div>
+          </div>
+
+          <div>
+            <p className="font-semibold text-black mb-2">Step 2 — Open Claude Connectors</p>
+            <a href={CLAUDE_CONNECTORS_URL} target="_blank" rel="noopener noreferrer">
+              <Button variant="secondary" className="font-bold">
+                Open Claude Connectors <ExternalLink size={14} />
+              </Button>
+            </a>
+          </div>
+
+          <div>
+            <p className="font-semibold text-black mb-2">Step 3 — Add SellBop in Claude</p>
+            <p className="leading-relaxed">
+              Add SellBop as a custom connector and paste the MCP URL. Sign in to SellBop if Claude
+              asks you to authenticate.
+            </p>
+          </div>
+
+          <div>
+            <p className="font-semibold text-black mb-2">Step 4 — Test the connection</p>
+            <p className="leading-relaxed mb-3">
+              Ask Claude: &ldquo;{CLAUDE_TEST_PROMPT}&rdquo;
+            </p>
+            <CopyButton text={CLAUDE_TEST_PROMPT} label="Copy test prompt" />
+          </div>
+
+          <p className="text-xs text-neutral-400 pt-1 border-t border-neutral-100">
+            Powered by SellBop MCP · Manage connections in{' '}
+            <Link href="/dashboard/settings/ai-integrations" className="underline">
+              Settings → AI & Integrations
+            </Link>
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 const HIGGSFIELD_CONNECTED_KEY = 'sellbop-higgsfield-connected'
 
 export function ConnectAiPage() {
-  const [claudeConnected, setClaudeConnected] = useState(false)
+  const [claudeState, setClaudeState] = useState<ClaudeConnectionState>('not_connected')
   const [higgsfieldConnected, setHiggsfieldConnected] = useState(false)
   const [advancedOpen, setAdvancedOpen] = useState(false)
+  const [connectModalOpen, setConnectModalOpen] = useState(false)
   const mcpUrl =
-    typeof window !== 'undefined' ? `${window.location.origin}/api/mcp` : 'https://sellbop.com/api/mcp'
+    typeof window !== 'undefined' ? `${window.location.origin}/api/mcp` : PRODUCTION_MCP_URL
 
   useEffect(() => {
     fetch('/api/agent-connections')
       .then(r => (r.ok ? r.json() : { connections: [] }))
       .then(data => {
-        const active = (data.connections ?? []).some(
-          (c: { provider: string; revoked_at: string | null }) =>
-            c.provider === 'claude' && !c.revoked_at,
-        )
-        setClaudeConnected(active)
+        setClaudeState(getClaudeConnectionState(data.connections ?? []))
       })
       .catch(() => {})
 
@@ -158,6 +258,10 @@ export function ConnectAiPage() {
 
   return (
     <div className="max-w-3xl">
+      {connectModalOpen && (
+        <ConnectClaudeModal mcpUrl={mcpUrl} onClose={() => setConnectModalOpen(false)} />
+      )}
+
       <Link
         href="/dashboard/resources"
         className="inline-flex items-center gap-1 text-xs font-medium text-neutral-400 hover:text-black mb-4 transition-colors"
@@ -191,29 +295,23 @@ export function ConnectAiPage() {
             />
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-2 mb-1">
-                <h2 className="text-lg font-bold text-black">1. Connect Claude</h2>
-                <StatusBadge connected={claudeConnected} />
+                <h2 className="text-lg font-bold text-black">1. Connect Claude to SellBop</h2>
+                <StatusBadge state={claudeState} />
               </div>
               <p className="text-sm text-neutral-500 mb-4">
-                Let Claude create and manage products in your SellBop store.
+                Let your Claude create, edit, and publish products directly to your SellBop store.
               </p>
-              <Link href="/dashboard/settings/ai-integrations">
-                <Button className="font-bold">
-                  Connect Claude <ArrowRight size={14} />
-                </Button>
-              </Link>
-              <p className="text-[10px] text-neutral-400 mt-2">{CLAUDE.powered_by}</p>
+              <Button className="font-bold" onClick={() => setConnectModalOpen(true)}>
+                Connect Claude <ArrowRight size={14} />
+              </Button>
+              <p className="text-[10px] text-neutral-400 mt-2">Powered by SellBop MCP</p>
 
-              <ExpandableHelp label="How do I connect Claude?">
-                <p className="text-sm font-semibold text-black mb-2">{CLAUDE.steps_title}</p>
-                <ol className="space-y-2 mb-4">
-                  {CLAUDE.steps?.map((step, i) => (
-                    <li key={step} className="flex gap-2 text-sm text-neutral-600">
-                      <span className="font-bold text-black flex-shrink-0">{i + 1}.</span>
-                      {step}
-                    </li>
-                  ))}
-                </ol>
+              <ExpandableHelp label="How does this work?">
+                <p className="text-sm text-neutral-600 leading-relaxed mb-4">
+                  Connect SellBop as a tool in your Claude account. Once connected, Claude can
+                  securely create and manage products in your SellBop store using your SellBop
+                  account permissions.
+                </p>
                 <div className="grid sm:grid-cols-2 gap-1.5 mb-4">
                   {CLAUDE.features.slice(0, 6).map(f => (
                     <div key={f} className="flex items-center gap-1.5 text-xs text-neutral-500">
@@ -222,16 +320,30 @@ export function ConnectAiPage() {
                     </div>
                   ))}
                 </div>
-                <div className="rounded-lg bg-neutral-50 border border-neutral-100 p-3">
+                <div className="rounded-lg bg-neutral-50 border border-neutral-100 p-3 mb-4">
                   <p className="text-xs font-semibold text-black mb-1">What you'll be asked to do</p>
                   <p className="text-xs text-neutral-500 leading-relaxed">
-                    Claude will open a SellBop sign-in/consent screen — approve it there, the same way you
-                    approved Higgsfield. Once connected, Claude can read/create/edit products, upload files
-                    and images, and manage affiliates. It can never delete products, issue refunds, view
-                    payouts, or change your Stripe settings — those stay out of reach on purpose.
+                    Claude opens a SellBop sign-in/consent screen — approve it there. Once connected,
+                    Claude can read/create/edit products, upload files and images, and manage
+                    affiliates. It can never delete products, issue refunds, view payouts, or change
+                    your Stripe settings.
                   </p>
                 </div>
               </ExpandableHelp>
+
+              <div className="mt-5 rounded-xl bg-neutral-50 border border-neutral-100 p-4">
+                <p className="text-xs font-bold text-black mb-1">Test your connection</p>
+                <p className="text-sm text-neutral-600 mb-3">
+                  Ask Claude: &ldquo;{CLAUDE_TEST_PROMPT}&rdquo;
+                </p>
+                <CopyButton text={CLAUDE_TEST_PROMPT} label="Copy test prompt" />
+                {claudeState === 'mcp_ready' && (
+                  <p className="text-xs text-sky-700 mt-3">
+                    Your SellBop account is authorized — try the prompt above in Claude to confirm
+                    the connection is working.
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -248,7 +360,7 @@ export function ConnectAiPage() {
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-2 mb-1">
                 <h2 className="text-lg font-bold text-black">2. Higgsfield</h2>
-                {higgsfieldConnected ? <StatusBadge connected /> : <StatusBadge setupGuide />}
+                {higgsfieldConnected ? <HiggsfieldStatusBadge connected /> : <HiggsfieldStatusBadge />}
               </div>
               <p className="text-sm text-neutral-500 mb-4">
                 Generate product images and videos with Claude.

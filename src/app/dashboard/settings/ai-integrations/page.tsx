@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { Bot, ChevronDown, Copy, ExternalLink, Loader2, MessageSquare, Plus, ShieldCheck, Sparkles, Trash2, Zap } from 'lucide-react'
+import { getClaudeConnectionState, CLAUDE_TEST_PROMPT } from '@/lib/agent/connection-status'
 
 const MCP_URL =
   typeof window !== 'undefined'
@@ -278,17 +279,23 @@ export default function AiIntegrationsPage() {
             <div className="px-5 pb-5 pt-0 border-t border-neutral-100 space-y-5">
               <Card>
                 <CardHeader className="flex flex-row items-center gap-2">
-                  <CardTitle>Connect Claude</CardTitle>
-                  {connections.some(c => c.provider === 'claude' && !c.revoked_at) && (
-                    <Badge variant="success">Connected</Badge>
-                  )}
+                  <CardTitle>Connect Claude to SellBop</CardTitle>
+                  {(() => {
+                    const state = getClaudeConnectionState(connections)
+                    if (state === 'connected') return <Badge variant="success">Connected</Badge>
+                    if (state === 'mcp_ready') return <Badge variant="neutral">MCP Ready</Badge>
+                    return <Badge variant="neutral">Not Connected</Badge>
+                  })()}
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm text-neutral-600">
+                  <p className="text-neutral-600">
+                    Let your Claude create, edit, and publish products directly to your SellBop store.
+                  </p>
                   <ol className="list-decimal list-inside space-y-1.5">
-                    <li>Create a Claude connection below and copy your token.</li>
-                    <li>Open Claude → Customize → Connectors → Add SellBop.</li>
-                    <li>Paste the MCP URL and your token when prompted.</li>
-                    <li>Ask Claude to create products in your SellBop store.</li>
+                    <li>Copy the SellBop MCP URL below.</li>
+                    <li>Open Claude → Settings → Connectors → Add SellBop.</li>
+                    <li>Paste the MCP URL and sign in to SellBop when prompted.</li>
+                    <li>Ask Claude: &ldquo;{CLAUDE_TEST_PROMPT}&rdquo;</li>
                   </ol>
                   <div className="flex items-center gap-2 pt-1">
                     <code className="flex-1 rounded-lg bg-neutral-100 px-3 py-2 text-xs font-mono break-all">{MCP_URL}</code>
@@ -303,7 +310,7 @@ export default function AiIntegrationsPage() {
                       settings.
                     </p>
                   </div>
-                  <p className="text-xs text-neutral-400">Powered by MCP · See AGENT-API.md for full REST API docs.</p>
+                  <p className="text-xs text-neutral-400">Powered by SellBop MCP · See AGENT-API.md for full REST API docs.</p>
                 </CardContent>
               </Card>
 
