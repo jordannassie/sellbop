@@ -20,6 +20,7 @@ import {
 } from '@/components/dashboard/product-creation-shortcuts'
 import { ProductPricingSection } from '@/components/dashboard/product-pricing-section'
 import { DropUploadZone } from '@/components/dashboard/drop-upload-zone'
+import { ProductFileRow } from '@/components/dashboard/product-file-row'
 import { datetimeLocalToIso, validateSalePricingForSave } from '@/lib/pricing/product-price'
 
 const CATEGORIES = ['Business', 'Money', 'Templates', 'Education', 'Real Estate', 'Faith', 'Fitness', 'Design', 'Other']
@@ -268,19 +269,13 @@ export default function NewProductPage() {
           </CardHeader>
           <CardContent>
             {productFile ? (
-              <div className="flex items-center gap-3 bg-neutral-50 rounded-xl px-4 py-3 border border-neutral-200">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-neutral-900 truncate">{productFile.name}</p>
-                  <p className="text-xs text-neutral-500">{(productFile.size / 1024 / 1024).toFixed(1)} MB</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setProductFile(null)}
-                  className="p-1.5 text-neutral-400 hover:text-red-500 transition-colors"
-                >
-                  <X size={14} />
-                </button>
-              </div>
+              <ProductFileRow
+                fileName={productFile.name}
+                fileSize={productFile.size}
+                fileType={productFile.type}
+                storagePath={productFile.path}
+                onRemove={() => setProductFile(null)}
+              />
             ) : (
               <DropUploadZone
                 onFile={uploadProductFile}

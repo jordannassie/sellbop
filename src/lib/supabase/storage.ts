@@ -55,13 +55,14 @@ export async function getSignedUrl(
   bucket: UploadBucket,
   path: string,
   expiresInSeconds = 3600,
+  options?: { download?: string | boolean },
 ): Promise<string | null> {
   const supabase = getSupabaseBrowserClient()
   if (!supabase) return null
 
   const { data, error } = await supabase.storage
     .from(bucket)
-    .createSignedUrl(path, expiresInSeconds)
+    .createSignedUrl(path, expiresInSeconds, options)
 
   return error ? null : data.signedUrl
 }

@@ -20,6 +20,7 @@ import {
   ProductFileCreationHelperText,
 } from '@/components/dashboard/product-creation-shortcuts'
 import { DropUploadZone } from '@/components/dashboard/drop-upload-zone'
+import { ProductFileRow } from '@/components/dashboard/product-file-row'
 import { ProductPricingSection } from '@/components/dashboard/product-pricing-section'
 import {
   datetimeLocalToIso,
@@ -377,15 +378,14 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
             {files.length > 0 && (
               <div className="space-y-2">
                 {files.map(f => (
-                  <div key={f.id} className="flex items-center gap-3 bg-neutral-50 rounded-xl px-4 py-3 border border-neutral-200">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{f.file_name}</p>
-                      <p className="text-xs text-neutral-400">{f.file_size ? `${(f.file_size / 1024 / 1024).toFixed(1)} MB` : ''}</p>
-                    </div>
-                    <button type="button" onClick={() => handleDeleteFile(f.id)} className="p-1.5 text-neutral-400 hover:text-red-500 transition-colors">
-                      <X size={14} />
-                    </button>
-                  </div>
+                  <ProductFileRow
+                    key={f.id}
+                    fileName={f.file_name}
+                    fileSize={f.file_size}
+                    fileType={f.file_type}
+                    storagePath={f.storage_path}
+                    onRemove={() => handleDeleteFile(f.id)}
+                  />
                 ))}
               </div>
             )}
