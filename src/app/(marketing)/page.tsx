@@ -21,7 +21,6 @@ import {
   Palette,
   Camera,
   Code2,
-  Music2,
   Plus,
   Zap,
   Sparkles,
@@ -467,33 +466,32 @@ export default async function HomePage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 sm:grid-rows-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 sm:grid-rows-3 gap-4">
 
             {/* Center hero — first on mobile */}
-            <div className="order-first sm:order-none sm:col-start-2 sm:row-start-1 sm:row-span-3 rounded-3xl bg-black p-8 flex flex-col items-center justify-center text-center min-h-[300px]">
-              <div className="relative mb-8 w-28 h-24">
-                <div className="absolute inset-x-2 top-0 h-16 rounded-xl bg-neutral-800/80 border border-neutral-700" />
-                <div className="absolute inset-x-4 top-3 h-16 rounded-xl bg-neutral-700/80 border border-neutral-600" />
-                <div
-                  className="absolute inset-x-6 top-6 h-16 rounded-xl flex items-center justify-center border"
-                  style={{ background: 'rgba(0,230,118,0.15)', borderColor: 'rgba(0,230,118,0.3)' }}
-                >
-                  <Upload size={28} style={{ color: '#00E676' }} />
-                </div>
+            <div className="order-first sm:order-none sm:col-start-2 sm:row-start-1 sm:row-span-3 relative overflow-hidden rounded-3xl min-h-[300px]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="https://qsvmgzdaashfsavmfjuz.supabase.co/storage/v1/object/public/SELL/images/People/c34a0091-ff30-48a5-af07-a889d85387c1.png"
+                alt=""
+                className="absolute inset-0 w-full h-full object-cover object-center"
+              />
+              <div className="absolute inset-0 bg-black/65" />
+              <div className="relative z-10 h-full p-8 flex flex-col items-center justify-center text-center">
+                <h3 className="text-2xl sm:text-3xl font-black text-white mb-2">All digital. All yours.</h3>
+                <p className="text-neutral-300 text-sm mb-8">Upload once. Sell unlimited.</p>
+                <Link href="/signup">
+                  <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center hover:scale-105 transition-transform">
+                    <ArrowRight size={18} className="text-black" />
+                  </div>
+                </Link>
               </div>
-              <h3 className="text-2xl sm:text-3xl font-black text-white mb-2">All digital. All yours.</h3>
-              <p className="text-neutral-400 text-sm mb-8">Upload once. Sell unlimited.</p>
-              <Link href="/signup">
-                <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center hover:scale-105 transition-transform">
-                  <ArrowRight size={18} className="text-black" />
-                </div>
-              </Link>
             </div>
 
             {/* Left column */}
             {[
               { label: 'eBooks & PDFs', desc: 'Write it. Export it. Sell it everywhere.', Icon: BookOpen, grid: 'sm:col-start-1 sm:row-start-1' },
-              { label: 'Audio & Music', desc: 'Beats, tracks, and sound packs.', Icon: Music2, grid: 'sm:col-start-1 sm:row-start-2' },
+              { label: 'Software & Scripts', desc: 'Tools, plugins, and code.', Icon: Code2, grid: 'sm:col-start-1 sm:row-start-2' },
               { label: 'Presets & Filters', desc: 'Photo, video, and creative presets.', Icon: SlidersHorizontal, grid: 'sm:col-start-1 sm:row-start-3' },
             ].map(({ label, desc, Icon, grid }) => (
               <div
@@ -521,7 +519,6 @@ export default async function HomePage() {
               { label: 'Design Assets', desc: 'Graphics, mockups, icons & more.', Icon: Palette, grid: 'sm:col-start-3 sm:row-start-1' },
               { label: 'Templates & Spreadsheets', desc: 'Docs, sheets, and ready-to-use kits.', Icon: Table2, grid: 'sm:col-start-3 sm:row-start-2' },
               { label: 'Photography', desc: 'Photos, stock, and bundles.', Icon: Camera, grid: 'sm:col-start-3 sm:row-start-3' },
-              { label: 'Software & Scripts', desc: 'Tools, plugins, and code.', Icon: Code2, grid: 'sm:col-start-3 sm:row-start-4' },
             ].map(({ label, desc, Icon, grid }) => (
               <div
                 key={label}
