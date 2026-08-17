@@ -19,6 +19,7 @@ import {
   ProductFileCreationHelperText,
 } from '@/components/dashboard/product-creation-shortcuts'
 import { ProductPricingSection } from '@/components/dashboard/product-pricing-section'
+import { DropUploadZone } from '@/components/dashboard/drop-upload-zone'
 import { datetimeLocalToIso, validateSalePricingForSave } from '@/lib/pricing/product-price'
 
 const CATEGORIES = ['Business', 'Money', 'Templates', 'Education', 'Real Estate', 'Faith', 'Fitness', 'Design', 'Other']
@@ -58,9 +59,7 @@ export default function NewProductPage() {
     }
   }
 
-  async function handleCoverUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
+  async function uploadCoverFile(file: File) {
     if (file.size > MAX_COVER_IMAGE_SIZE_BYTES) {
       toast.error('Cover image must be under 5 MB.')
       return
@@ -77,9 +76,7 @@ export default function NewProductPage() {
     setCoverUploading(false)
   }
 
-  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
+  async function uploadProductFile(file: File) {
     if (file.size > MAX_PRODUCT_FILE_SIZE_BYTES) {
       toast.error('File must be under 100 MB.')
       return
@@ -225,24 +222,22 @@ export default function NewProductPage() {
                 </button>
               </div>
             ) : (
-              <label className="flex flex-col items-center justify-center w-full aspect-video rounded-xl border-2 border-dashed border-neutral-200 bg-neutral-50 cursor-pointer hover:border-neutral-400 hover:bg-neutral-100 transition-all">
+              <DropUploadZone
+                onFile={uploadCoverFile}
+                accept="image/*"
+                disabled={coverUploading}
+                className="flex flex-col items-center justify-center w-full aspect-video"
+              >
                 {coverUploading ? (
                   <div className="w-5 h-5 border-2 border-neutral-400 border-t-black rounded-full animate-spin" />
                 ) : (
                   <>
                     <Upload size={24} className="text-neutral-400 mb-2" />
-                    <p className="text-sm font-medium text-neutral-600">Upload cover image</p>
+                    <p className="text-sm font-medium text-neutral-600">Drop or click to upload cover image</p>
                     <p className="text-xs text-neutral-400 mt-1">JPG, PNG, WebP · Max 5 MB</p>
                   </>
                 )}
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleCoverUpload}
-                  disabled={coverUploading}
-                />
-              </label>
+              </DropUploadZone>
             )}
             <CoverImageCreationHelperText />
           </CardContent>
@@ -287,23 +282,21 @@ export default function NewProductPage() {
                 </button>
               </div>
             ) : (
-              <label className="flex flex-col items-center justify-center w-full py-10 rounded-xl border-2 border-dashed border-neutral-200 bg-neutral-50 cursor-pointer hover:border-neutral-400 hover:bg-neutral-100 transition-all">
+              <DropUploadZone
+                onFile={uploadProductFile}
+                disabled={fileUploading}
+                className="flex flex-col items-center justify-center w-full py-10"
+              >
                 {fileUploading ? (
                   <div className="w-5 h-5 border-2 border-neutral-400 border-t-black rounded-full animate-spin" />
                 ) : (
                   <>
                     <Upload size={24} className="text-neutral-400 mb-2" />
-                    <p className="text-sm font-medium text-neutral-600">Upload product file</p>
+                    <p className="text-sm font-medium text-neutral-600">Drop or click to upload product file</p>
                     <p className="text-xs text-neutral-400 mt-1">PDF, ZIP, XLSX, DOCX, images and more · Max 100 MB</p>
                   </>
                 )}
-                <input
-                  type="file"
-                  className="hidden"
-                  onChange={handleFileUpload}
-                  disabled={fileUploading}
-                />
-              </label>
+              </DropUploadZone>
             )}
             <ProductFileCreationHelperText />
           </CardContent>

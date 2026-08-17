@@ -19,6 +19,7 @@ import {
   ProductFileCreationHeaderLinks,
   ProductFileCreationHelperText,
 } from '@/components/dashboard/product-creation-shortcuts'
+import { DropUploadZone } from '@/components/dashboard/drop-upload-zone'
 import { ProductPricingSection } from '@/components/dashboard/product-pricing-section'
 import {
   datetimeLocalToIso,
@@ -134,9 +135,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  async function handleCoverUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
+  async function uploadCoverFile(file: File) {
     if (file.size > MAX_COVER_IMAGE_SIZE_BYTES) { toast.error('Cover image must be under 5 MB.'); return }
     setCoverUploading(true)
     const path = buildStoragePath(session?.userId ?? 'unknown', file.name)
@@ -146,10 +145,8 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
     setCoverUploading(false)
   }
 
-  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  async function uploadProductFile(file: File) {
     if (!productId) return
-    const file = e.target.files?.[0]
-    if (!file) return
     if (file.size > MAX_PRODUCT_FILE_SIZE_BYTES) { toast.error('File must be under 100 MB.'); return }
     setFileUploading(true)
     const path = buildStoragePath(session?.userId ?? 'unknown', file.name)
@@ -332,18 +329,22 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                 </button>
               </div>
             ) : (
-              <label className="flex flex-col items-center justify-center w-full aspect-video rounded-xl border-2 border-dashed border-neutral-200 bg-neutral-50 cursor-pointer hover:border-neutral-400 hover:bg-neutral-100 transition-all">
+              <DropUploadZone
+                onFile={uploadCoverFile}
+                accept="image/*"
+                disabled={coverUploading}
+                className="flex flex-col items-center justify-center w-full aspect-video"
+              >
                 {coverUploading ? (
                   <div className="w-5 h-5 border-2 border-neutral-400 border-t-black rounded-full animate-spin" />
                 ) : (
                   <>
                     <Upload size={22} className="text-neutral-400 mb-2" />
-                    <p className="text-sm font-medium text-neutral-600">Upload cover image</p>
+                    <p className="text-sm font-medium text-neutral-600">Drop or click to upload cover image</p>
                     <p className="text-xs text-neutral-400 mt-1">JPG, PNG, WebP · Max 5 MB</p>
                   </>
                 )}
-                <input type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} disabled={coverUploading} />
-              </label>
+              </DropUploadZone>
             )}
             <CoverImageCreationHelperText />
           </CardContent>
@@ -388,15 +389,18 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                 ))}
               </div>
             )}
-            <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-neutral-600 hover:text-black transition-colors py-3 border border-dashed border-neutral-200 rounded-xl justify-center">
+            <DropUploadZone
+              onFile={uploadProductFile}
+              disabled={fileUploading}
+              className="flex items-center justify-center gap-2 w-full py-3 text-sm font-medium text-neutral-600 hover:text-black"
+            >
               {fileUploading ? (
                 <div className="w-4 h-4 border-2 border-neutral-400 border-t-black rounded-full animate-spin" />
               ) : (
                 <Upload size={16} />
               )}
-              {fileUploading ? 'Uploading…' : files.length > 0 ? 'Add another file' : 'Upload product file'}
-              <input type="file" className="hidden" onChange={handleFileUpload} disabled={fileUploading} />
-            </label>
+              {fileUploading ? 'Uploading…' : files.length > 0 ? 'Drop or click to add another file' : 'Drop or click to upload product file'}
+            </DropUploadZone>
             <p className="text-xs text-neutral-400">Files are stored privately and delivered securely after purchase.</p>
             <ProductFileCreationHelperText />
           </CardContent>
