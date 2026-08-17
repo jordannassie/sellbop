@@ -139,7 +139,7 @@ export const DEFAULT_RESOURCE_PAGES: Omit<ResourcePageRow, 'id' | 'created_at' |
   {
     slug: 'connect-ai',
     title: 'Connect Your AI',
-    subtitle: 'Use Claude, Higgsfield, and other AI tools to help build products for your SellBop store.',
+    subtitle: 'Claude builds the product. Higgsfield creates the visuals. SellBop helps you sell it.',
     category: 'ai',
     icon: 'sparkles',
     image_url: null,
