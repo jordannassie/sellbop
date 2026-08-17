@@ -297,9 +297,10 @@ export default function AiIntegrationsPage() {
                   <div className="rounded-lg bg-neutral-50 border border-neutral-100 p-3">
                     <p className="text-xs font-semibold text-black mb-1">What you'll be asked to do</p>
                     <p className="text-xs text-neutral-500 leading-relaxed">
-                      No separate sign-in — pasting the token itself is what proves it&apos;s you. Claude can
-                      then read/create/edit products, upload files and images, and manage affiliates. It can
-                      never delete products, issue refunds, view payouts, or touch Stripe settings.
+                      Claude opens a SellBop sign-in/consent screen — approve it there, same as Higgsfield.
+                      Claude can then read/create/edit products, upload files and images, and manage
+                      affiliates. It can never delete products, issue refunds, view payouts, or touch Stripe
+                      settings.
                     </p>
                   </div>
                   <p className="text-xs text-neutral-400">Powered by MCP · See AGENT-API.md for full REST API docs.</p>

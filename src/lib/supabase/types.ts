@@ -658,6 +658,54 @@ export interface Database {
         Relationships: []
       }
 
+      oauth_clients: {
+        Row: {
+          id: string
+          client_id: string
+          client_name: string | null
+          redirect_uris: string[]
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          client_id: string
+          client_name?: string | null
+          redirect_uris?: string[]
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['oauth_clients']['Insert']>
+        Relationships: []
+      }
+
+      oauth_authorization_codes: {
+        Row: {
+          code: string
+          client_id: string
+          user_id: string
+          redirect_uri: string
+          code_challenge: string
+          code_challenge_method: string
+          scope: string | null
+          used: boolean
+          expires_at: string
+          created_at: string
+        }
+        Insert: {
+          code: string
+          client_id: string
+          user_id: string
+          redirect_uri: string
+          code_challenge: string
+          code_challenge_method?: string
+          scope?: string | null
+          used?: boolean
+          expires_at: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['oauth_authorization_codes']['Insert']>
+        Relationships: []
+      }
+
       agent_activity_log: {
         Row: {
           id: string

@@ -94,7 +94,8 @@ function AuthForm() {
 
       // Hard navigation so Next.js re-fetches with fresh session cookies.
       // router.push alone can fail if the server-side session isn't yet visible.
-      window.location.href = '/dashboard'
+      const next = params.get('next')
+      window.location.href = next && next.startsWith('/') ? next : '/dashboard'
     } catch (err) {
       setError(err instanceof Error ? err.message : mode === 'login' ? 'Login failed.' : 'Signup failed.')
       setLoading(false)

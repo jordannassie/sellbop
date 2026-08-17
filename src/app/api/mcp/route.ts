@@ -303,6 +303,9 @@ const verifyToken = async (_req: Request, bearerToken?: string): Promise<AuthInf
   }
 }
 
-const authHandler = withMcpAuth(handler, verifyToken, { required: true })
+const authHandler = withMcpAuth(handler, verifyToken, {
+  required: true,
+  resourceMetadataPath: '/.well-known/oauth-protected-resource',
+})
 
 export { authHandler as GET, authHandler as POST }

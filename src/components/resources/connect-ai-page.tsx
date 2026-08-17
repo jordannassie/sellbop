@@ -225,11 +225,10 @@ export function ConnectAiPage() {
                 <div className="rounded-lg bg-neutral-50 border border-neutral-100 p-3">
                   <p className="text-xs font-semibold text-black mb-1">What you'll be asked to do</p>
                   <p className="text-xs text-neutral-500 leading-relaxed">
-                    You create a token in SellBop (below) and paste it into Claude&apos;s connector settings
-                    along with the MCP URL — no separate sign-in screen, since the token itself is what
-                    proves it&apos;s you. Claude can then read/create/edit products, upload files and images,
-                    and manage affiliates. It can never delete products, issue refunds, view payouts, or
-                    change your Stripe settings — those stay out of reach on purpose.
+                    Claude will open a SellBop sign-in/consent screen — approve it there, the same way you
+                    approved Higgsfield. Once connected, Claude can read/create/edit products, upload files
+                    and images, and manage affiliates. It can never delete products, issue refunds, view
+                    payouts, or change your Stripe settings — those stay out of reach on purpose.
                   </p>
                 </div>
               </ExpandableHelp>
