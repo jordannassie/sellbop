@@ -119,7 +119,7 @@ export function useUserStore(): UseUserStoreResult {
       // If a column doesn't exist yet (migration pending), retry without unknown columns
       if (error?.message?.includes('column') && error.message.includes('does not exist')) {
         const safePatch: Database['public']['Tables']['stores']['Update'] = {}
-        const knownCols = ['name', 'headline', 'bio', 'avatar_url', 'header_layout']
+        const knownCols = ['name', 'headline', 'bio', 'avatar_url', 'banner_url', 'social_links', 'support_email', 'header_layout']
         for (const k of knownCols) {
           if (k in patch) {
             (safePatch as Record<string, unknown>)[k] = (patch as Record<string, unknown>)[k]

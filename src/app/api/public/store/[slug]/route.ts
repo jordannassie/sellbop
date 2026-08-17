@@ -15,10 +15,10 @@ export async function GET(
 
   const admin = getSupabaseAdminClient()
 
-  // Core store query — only columns guaranteed in production schema
+  // Single comprehensive query — includes banner_url and social_links
   const { data: store, error } = await admin
     .from('stores')
-    .select('id, slug, name, headline, bio, avatar_url, owner_user_id')
+    .select('id, slug, name, headline, bio, avatar_url, banner_url, social_links, owner_user_id')
     .eq('slug', slug)
     .maybeSingle()
 
@@ -36,21 +36,11 @@ export async function GET(
     avatarUrl = profile?.avatar_url ?? null
   }
 
-  // Try to load banner_url + social_links (added in migrations 011/012)
-  let bannerUrl: string | null = null
-  let socialLinks: Record<string, string> = {}
-  try {
-    const { data: extra } = await admin
-      .from('stores')
-      .select('banner_url, social_links')
-      .eq('id', store.id)
-      .maybeSingle()
-    if (extra) {
-      bannerUrl = (extra as Record<string, unknown>).banner_url as string | null ?? null
-      const sl = (extra as Record<string, unknown>).social_links
-      if (sl && typeof sl === 'object') socialLinks = sl as Record<string, string>
-    }
-  } catch { /* columns not yet in production — ignore */ }
+  // Extract banner and social links from the single query result
+  const bannerUrl: string | null = (store as Record<string, unknown>).banner_url as string | null ?? null
+  const rawSl = (store as Record<string, unknown>).social_links
+  const socialLinks: Record<string, string> =
+    rawSl && typeof rawSl === 'object' ? rawSl as Record<string, string> : {}
 
   // Load products — core fields only
   const { data: rawProducts } = await admin
@@ -94,9 +84,18 @@ export async function GET(
 
   const hasAffiliateProducts = enrichedProducts.some(p => p.affiliate_enabled && (p.price_cents ?? 0) > 0)
 
-  return NextResponse.json({
-    store: { ...store, avatar_url: avatarUrl, banner_url: bannerUrl, social_links: socialLinks },
-    products: enrichedProducts,
-    hasAffiliateProducts,
-  })
+  return NextResponse.json(
+    {
+      store: { ...store, avatar_url: avatarUrl, banner_url: bannerUrl, social_links: socialLinks },
+      products: enrichedProducts,
+      hasAffiliateProducts,
+    },
+    {
+      headers: {
+        // Never serve a stale store object from Netlify/CDN/browser cache —
+        // banner_url and other fields must always reflect the live DB row.
+        'Cache-Control': 'no-store, must-revalidate',
+      },
+    },
+  )
 }

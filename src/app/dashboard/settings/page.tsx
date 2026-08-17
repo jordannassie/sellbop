@@ -95,25 +95,46 @@ export default function SettingsPage() {
     const file = e.target.files?.[0]
     if (!file || !session) return
     if (file.size > 10 * 1024 * 1024) { toast.error('Banner must be under 10 MB.'); return }
+
+    // Guard against blob: or data: URLs slipping through (shouldn't happen with real Supabase)
     setUploadingBanner(true)
     const path = buildStoragePath(session.userId, `banner-${file.name}`)
     const result = await uploadFile('store-banners', path, file)
-    if (result.error) { toast.error('Upload failed: ' + result.error) }
-    else if (result.url) {
-      setBannerUrl(result.url)
-      const err = await saveStore({ banner_url: result.url })
-      if (err) toast.error('Banner saved to storage but store update failed: run migration 011.')
-      else toast.success('Banner updated.')
+
+    if (result.error) {
+      toast.error('Upload failed: ' + result.error)
+    } else if (result.url) {
+      // Reject browser-local blob/data URLs — they are not durable
+      if (result.url.startsWith('blob:') || result.url.startsWith('data:')) {
+        toast.error('Upload did not return a real storage URL. Check Supabase configuration.')
+      } else {
+        setBannerUrl(result.url)
+        const err = await saveStore({ banner_url: result.url })
+        if (err) {
+          toast.error('Banner uploaded but could not save to store: ' + err)
+        } else {
+          toast.success('Banner updated.')
+          // Refresh store state and bust any server-side page cache
+          refetch()
+          router.refresh()
+        }
+      }
     }
+
     setUploadingBanner(false)
-    // Reset input
     if (bannerInputRef.current) bannerInputRef.current.value = ''
   }
 
   async function handleRemoveBanner() {
     setBannerUrl(null)
-    await saveStore({ banner_url: null })
-    toast.success('Banner removed.')
+    const err = await saveStore({ banner_url: null })
+    if (err) {
+      toast.error('Could not remove banner: ' + err)
+    } else {
+      toast.success('Banner removed.')
+      refetch()
+      router.refresh()
+    }
   }
 
   function setSocialLink(key: string, value: string) {
@@ -160,9 +181,13 @@ export default function SettingsPage() {
         name: storeName.trim() || displayName.trim(),
         bio: bio.trim() || null,
         support_email: supportEmail.trim() || session.email,
+        // Always re-affirm banner_url so clicking Save Store never accidentally
+        // clears a banner that was set independently by handleBannerUpload.
+        banner_url: bannerUrl,
       })
       if (storeErr) throw new Error(storeErr)
       refetch()
+      router.refresh()
       toast.success('Profile saved.')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to save.')
