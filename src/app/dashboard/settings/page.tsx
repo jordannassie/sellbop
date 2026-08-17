@@ -9,7 +9,7 @@ import { useAuth } from '@/context/auth-context'
 import { useUserStore } from '@/hooks/use-user-store'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { uploadFile, buildStoragePath } from '@/lib/supabase/storage'
-import { Upload, User, Loader2, ExternalLink } from 'lucide-react'
+import { Upload, User, Loader2, ExternalLink, Image as ImageIcon, X } from 'lucide-react'
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -28,6 +28,11 @@ export default function SettingsPage() {
   const [profileAvatar, setProfileAvatar] = useState<string | null>(null)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const photoInputRef = useRef<HTMLInputElement>(null)
+
+  // Banner
+  const [bannerUrl, setBannerUrl] = useState<string | null>(null)
+  const [uploadingBanner, setUploadingBanner] = useState(false)
+  const bannerInputRef = useRef<HTMLInputElement>(null)
 
   // Password
   const [newPassword, setNewPassword] = useState('')
@@ -49,6 +54,7 @@ export default function SettingsPage() {
       setBio(store.bio ?? '')
       setSupportEmail(store.support_email ?? session?.email ?? '')
       if (store.avatar_url) setProfileAvatar(store.avatar_url)
+      if (store.banner_url) setBannerUrl(store.banner_url)
     }
   }, [store, session?.email])
 
@@ -77,6 +83,31 @@ export default function SettingsPage() {
       toast.success('Profile photo updated.')
     }
     setUploadingPhoto(false)
+  }
+
+  async function handleBannerUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !session) return
+    if (file.size > 10 * 1024 * 1024) { toast.error('Banner must be under 10 MB.'); return }
+    setUploadingBanner(true)
+    const path = buildStoragePath(session.userId, `banner-${file.name}`)
+    const result = await uploadFile('store-banners', path, file)
+    if (result.error) { toast.error('Upload failed: ' + result.error) }
+    else if (result.url) {
+      setBannerUrl(result.url)
+      const err = await saveStore({ banner_url: result.url })
+      if (err) toast.error('Banner saved to storage but store update failed: run migration 011.')
+      else toast.success('Banner updated.')
+    }
+    setUploadingBanner(false)
+    // Reset input
+    if (bannerInputRef.current) bannerInputRef.current.value = ''
+  }
+
+  async function handleRemoveBanner() {
+    setBannerUrl(null)
+    await saveStore({ banner_url: null })
+    toast.success('Banner removed.')
   }
 
   async function handleSaveProfile(e: React.FormEvent) {
@@ -215,7 +246,54 @@ export default function SettingsPage() {
           <CardHeader>
             <CardTitle>Store</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-5">
+            {/* Banner image */}
+            <div>
+              <label className="block text-xs font-medium text-neutral-500 mb-2">Store Banner</label>
+              <div
+                className="relative w-full rounded-xl overflow-hidden border border-neutral-200 bg-neutral-100 mb-2"
+                style={{ aspectRatio: '4/1' }}
+              >
+                {bannerUrl ? (
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={bannerUrl} alt="Store banner" className="w-full h-full object-cover" />
+                    <button
+                      onClick={handleRemoveBanner}
+                      className="absolute top-2 right-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors"
+                      aria-label="Remove banner"
+                    >
+                      <X size={12} />
+                    </button>
+                  </>
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center gap-1">
+                    <ImageIcon size={20} className="text-neutral-300" />
+                    <p className="text-xs text-neutral-400">No banner uploaded</p>
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center gap-3">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => bannerInputRef.current?.click()}
+                  disabled={uploadingBanner}
+                >
+                  {uploadingBanner ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
+                  {uploadingBanner ? 'Uploading…' : bannerUrl ? 'Change Banner' : 'Upload Banner'}
+                </Button>
+                <p className="text-xs text-neutral-400">Wide landscape · JPG, PNG · Max 10 MB</p>
+              </div>
+              <input
+                ref={bannerInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleBannerUpload}
+              />
+            </div>
+
             <form onSubmit={handleSaveProfile} className="space-y-4">
               <Input
                 label="Store Name"
