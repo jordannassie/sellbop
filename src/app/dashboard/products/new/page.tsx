@@ -12,7 +12,12 @@ import { slugify, formatCurrency } from '@/lib/utils'
 import { uploadFile, buildStoragePath } from '@/lib/supabase/storage'
 import { useAuth } from '@/context/auth-context'
 import { MAX_PRODUCT_FILE_SIZE_BYTES, MAX_COVER_IMAGE_SIZE_BYTES } from '@/lib/platform-config'
-import { CoverImageCreationShortcuts, ProductFileCreationShortcuts } from '@/components/dashboard/product-creation-shortcuts'
+import {
+  CoverImageCreationHeaderLink,
+  CoverImageCreationHelperText,
+  ProductFileCreationHeaderLinks,
+  ProductFileCreationHelperText,
+} from '@/components/dashboard/product-creation-shortcuts'
 import { ProductPricingSection } from '@/components/dashboard/product-pricing-section'
 import { datetimeLocalToIso, validateSalePricingForSave } from '@/lib/pricing/product-price'
 
@@ -202,7 +207,10 @@ export default function NewProductPage() {
 
         {/* Cover Image */}
         <Card>
-          <CardHeader><CardTitle>Cover Image</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Cover Image</CardTitle>
+            <CoverImageCreationHeaderLink />
+          </CardHeader>
           <CardContent>
             {coverImageUrl ? (
               <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-neutral-100">
@@ -236,7 +244,7 @@ export default function NewProductPage() {
                 />
               </label>
             )}
-            <CoverImageCreationShortcuts />
+            <CoverImageCreationHelperText />
           </CardContent>
         </Card>
         <Card>
@@ -259,7 +267,10 @@ export default function NewProductPage() {
 
         {/* Digital File */}
         <Card>
-          <CardHeader><CardTitle>Digital File</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Digital File</CardTitle>
+            <ProductFileCreationHeaderLinks />
+          </CardHeader>
           <CardContent>
             {productFile ? (
               <div className="flex items-center gap-3 bg-neutral-50 rounded-xl px-4 py-3 border border-neutral-200">
@@ -294,7 +305,7 @@ export default function NewProductPage() {
                 />
               </label>
             )}
-            <ProductFileCreationShortcuts />
+            <ProductFileCreationHelperText />
           </CardContent>
         </Card>
 

@@ -1,56 +1,81 @@
-import { ExternalLink } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+const SUPABASE_TOOLS =
+  'https://qsvmgzdaashfsavmfjuz.supabase.co/storage/v1/object/public/SELL/images/Tools'
 
 const FILE_CREATION_LINKS = [
-  { label: 'Google Docs', href: 'https://docs.google.com/document/create' },
-  { label: 'Google Sheets', href: 'https://docs.google.com/spreadsheets/create' },
-  { label: 'Canva', href: 'https://www.canva.com/create/' },
-  { label: 'Notion', href: 'https://www.notion.so' },
+  {
+    label: 'Google Docs',
+    href: 'https://docs.google.com/document/create',
+    icon: 'https://www.gstatic.com/images/branding/product/2x/docs_2020q4_48dp.png',
+  },
+  {
+    label: 'Google Sheets',
+    href: 'https://docs.google.com/spreadsheets/create',
+    icon: 'https://www.gstatic.com/images/branding/product/2x/sheets_2020q4_48dp.png',
+  },
+  {
+    label: 'Canva',
+    href: 'https://www.canva.com/create/',
+    icon: 'https://www.canva.com/favicon.ico',
+  },
+  {
+    label: 'Notion',
+    href: 'https://www.notion.so',
+    icon: 'https://upload.wikimedia.org/wikipedia/commons/4/45/Notion_app_logo.png',
+  },
 ] as const
 
 const HIGGSFIELD_URL = 'https://higgsfield.ai'
+const HIGGSFIELD_ICON = `${SUPABASE_TOOLS}/output.webp`
 
-function ExternalChip({ label, href }: { label: string; href: string }) {
+function IconLink({ href, label, icon }: { href: string; label: string; icon: string }) {
   return (
     <a
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="inline-flex items-center gap-1 rounded-lg border border-neutral-200 bg-white px-2.5 py-1.5 text-xs font-medium text-neutral-600 hover:border-neutral-300 hover:text-black transition-colors"
+      title={label}
+      aria-label={label}
+      className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-neutral-200 bg-white hover:border-neutral-300 hover:shadow-sm transition-all"
     >
-      {label}
-      <ExternalLink size={11} className="text-neutral-400" />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={icon} alt="" className="h-5 w-5 object-contain" />
     </a>
   )
 }
 
-export function ProductFileCreationShortcuts() {
+/** Icon links for the Digital File card header (top right). */
+export function ProductFileCreationHeaderLinks() {
   return (
-    <div className="mt-4 pt-4 border-t border-neutral-100">
-      <p className="text-xs font-medium text-neutral-500 mb-2">Create your product with</p>
-      <div className="flex flex-wrap gap-2">
-        {FILE_CREATION_LINKS.map(link => (
-          <ExternalChip key={link.label} label={link.label} href={link.href} />
-        ))}
-      </div>
-      <p className="text-xs text-neutral-400 mt-2.5 leading-relaxed">
-        Create your file, export or download it, then upload it to SellBop.
-      </p>
+    <div className="flex flex-wrap items-center justify-end gap-1.5">
+      {FILE_CREATION_LINKS.map(link => (
+        <IconLink key={link.label} href={link.href} label={link.label} icon={link.icon} />
+      ))}
     </div>
   )
 }
 
-export function CoverImageCreationShortcuts() {
+/** Helper copy below the Digital File upload area. */
+export function ProductFileCreationHelperText() {
   return (
-    <div className="mt-4 pt-4 border-t border-neutral-100">
-      <a href={HIGGSFIELD_URL} target="_blank" rel="noopener noreferrer">
-        <Button type="button" size="sm" variant="secondary">
-          Create with Higgsfield <ExternalLink size={13} />
-        </Button>
-      </a>
-      <p className="text-xs text-neutral-400 mt-2.5 leading-relaxed">
-        Need a cover? Create one with Higgsfield, then upload it here.
-      </p>
-    </div>
+    <p className="text-xs text-neutral-400 mt-3 leading-relaxed">
+      Create your file with Docs, Sheets, Canva, or Notion — export or download it, then upload it
+      to SellBop.
+    </p>
+  )
+}
+
+/** Higgsfield link for the Cover Image card header (top right). */
+export function CoverImageCreationHeaderLink() {
+  return (
+    <IconLink href={HIGGSFIELD_URL} label="Create with Higgsfield" icon={HIGGSFIELD_ICON} />
+  )
+}
+
+/** Helper copy below the Cover Image upload area. */
+export function CoverImageCreationHelperText() {
+  return (
+    <p className="text-xs text-neutral-400 mt-3 leading-relaxed">
+      Need a cover? Create one with Higgsfield, then upload it here.
+    </p>
   )
 }

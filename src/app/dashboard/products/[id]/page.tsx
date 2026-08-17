@@ -13,7 +13,12 @@ import { slugify, formatCurrency } from '@/lib/utils'
 import { uploadFile, buildStoragePath } from '@/lib/supabase/storage'
 import { useAuth } from '@/context/auth-context'
 import { MAX_PRODUCT_FILE_SIZE_BYTES, MAX_COVER_IMAGE_SIZE_BYTES } from '@/lib/platform-config'
-import { CoverImageCreationShortcuts, ProductFileCreationShortcuts } from '@/components/dashboard/product-creation-shortcuts'
+import {
+  CoverImageCreationHeaderLink,
+  CoverImageCreationHelperText,
+  ProductFileCreationHeaderLinks,
+  ProductFileCreationHelperText,
+} from '@/components/dashboard/product-creation-shortcuts'
 import { ProductPricingSection } from '@/components/dashboard/product-pricing-section'
 import {
   datetimeLocalToIso,
@@ -313,7 +318,10 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
 
         {/* Cover Image */}
         <Card>
-          <CardHeader><CardTitle>Cover Image</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Cover Image</CardTitle>
+            <CoverImageCreationHeaderLink />
+          </CardHeader>
           <CardContent>
             {coverImageUrl ? (
               <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-neutral-100">
@@ -337,7 +345,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                 <input type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} disabled={coverUploading} />
               </label>
             )}
-            <CoverImageCreationShortcuts />
+            <CoverImageCreationHelperText />
           </CardContent>
         </Card>
         <Card>
@@ -360,7 +368,10 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
 
         {/* Files */}
         <Card>
-          <CardHeader><CardTitle>Digital Files</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Digital Files</CardTitle>
+            <ProductFileCreationHeaderLinks />
+          </CardHeader>
           <CardContent className="space-y-3">
             {files.length > 0 && (
               <div className="space-y-2">
@@ -386,8 +397,8 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
               {fileUploading ? 'Uploading…' : files.length > 0 ? 'Add another file' : 'Upload product file'}
               <input type="file" className="hidden" onChange={handleFileUpload} disabled={fileUploading} />
             </label>
-            <ProductFileCreationShortcuts />
             <p className="text-xs text-neutral-400">Files are stored privately and delivered securely after purchase.</p>
+            <ProductFileCreationHelperText />
           </CardContent>
         </Card>
 
