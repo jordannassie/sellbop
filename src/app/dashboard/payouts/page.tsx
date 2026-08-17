@@ -8,6 +8,20 @@ import { DollarSign, ExternalLink } from 'lucide-react'
 import { isSupabaseConfigured } from '@/lib/env'
 import { formatCurrency } from '@/lib/utils'
 
+const STRIPE_LOGO_URL =
+  'https://qsvmgzdaashfsavmfjuz.supabase.co/storage/v1/object/public/SELL/images/Stripe_Logo,_revised_2016.svg.webp'
+
+function StripeLogo({ className = 'h-6' }: { className?: string }) {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={STRIPE_LOGO_URL}
+      alt="Stripe"
+      className={`w-auto object-contain ${className}`}
+    />
+  )
+}
+
 interface StripeStatus {
   connected: boolean
   onboarding_complete: boolean
@@ -71,7 +85,10 @@ export default function PayoutsPage() {
       {/* Stripe connection card */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>Stripe Connection</CardTitle>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <CardTitle>Stripe Connection</CardTitle>
+            <StripeLogo className="h-7" />
+          </div>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -137,6 +154,10 @@ export default function PayoutsPage() {
         <strong className="text-neutral-700">How it works:</strong> After connecting Stripe, customers pay through Stripe Checkout.
         Sellbop deducts its platform fee and transfers the remainder to your connected Stripe account automatically.
         You manage your own payout schedule in the Stripe dashboard.
+        <div className="mt-3 pt-3 border-t border-neutral-200 flex flex-wrap items-center gap-2">
+          <span className="text-neutral-500">Payments powered by</span>
+          <StripeLogo className="h-5" />
+        </div>
       </div>
     </div>
   )
