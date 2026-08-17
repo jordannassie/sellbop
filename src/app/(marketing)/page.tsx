@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { MissionSection } from '@/components/marketing/mission-section'
 import { HeroBanner } from '@/components/marketing/hero-banner'
+import { AFFILIATE_CLOUD_PHOTOS } from '@/lib/demo-avatars'
 import { isSupabaseConfigured } from '@/lib/env'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 import {
@@ -318,8 +319,8 @@ export default async function HomePage() {
                 }}
               />
 
-              {AVATAR_SLOTS.map(([xPct, yPct, size, badge, delay, color], i) => {
-                const avatarUrl = creatorAvatarUrls[i] ?? null
+              {AVATAR_SLOTS.map(([xPct, yPct, size, badge, delay], i) => {
+                const avatarUrl = creatorAvatarUrls[i] ?? AFFILIATE_CLOUD_PHOTOS[i % AFFILIATE_CLOUD_PHOTOS.length]
                 const isMobileVisible = AVATAR_SLOTS[i][6]
 
                 return (
@@ -334,29 +335,14 @@ export default async function HomePage() {
                       animation: `avatarFloat ${3 + (delay % 1.5)}s ease-in-out ${delay}s infinite`,
                     }}
                   >
-                    {/* Avatar circle */}
-                    <div
-                      className="relative w-full h-full rounded-full ring-2 ring-white/10 overflow-hidden flex items-center justify-center"
-                      style={{ background: color }}
-                    >
-                      {avatarUrl ? (
-                        /* eslint-disable-next-line @next/next/no-img-element */
-                        <img
-                          src={avatarUrl}
-                          alt=""
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <svg
-                          width={Math.round(size * 0.5)}
-                          height={Math.round(size * 0.5)}
-                          viewBox="0 0 24 24"
-                          fill="rgba(255,255,255,0.35)"
-                        >
-                          <circle cx="12" cy="8" r="4" />
-                          <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
-                        </svg>
-                      )}
+                    <div className="relative w-full h-full rounded-full ring-2 ring-white/20 overflow-hidden shadow-lg shadow-black/40">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={avatarUrl}
+                        alt=""
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
                     </div>
 
                     {/* Commission badge */}
