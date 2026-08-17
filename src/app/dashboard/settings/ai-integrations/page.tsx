@@ -12,6 +12,8 @@ const MCP_URL =
     ? `${window.location.origin}/api/mcp`
     : 'https://sellbop.com/api/mcp'
 
+const HIGGSFIELD_MCP_URL = 'https://mcp.higgsfield.ai/mcp'
+
 type Provider = 'claude' | 'higgsfield' | 'chatgpt' | 'custom'
 
 interface Connection {
@@ -136,6 +138,11 @@ export default function AiIntegrationsPage() {
     toast.success('MCP URL copied.')
   }
 
+  function copyHiggsfieldUrl() {
+    navigator.clipboard.writeText(HIGGSFIELD_MCP_URL)
+    toast.success('Higgsfield MCP URL copied.')
+  }
+
   return (
     <div className="max-w-2xl">
       <div className="mb-6">
@@ -165,6 +172,29 @@ export default function AiIntegrationsPage() {
               <Button size="sm" variant="secondary" onClick={copyMcpUrl}><Copy size={13} /></Button>
             </div>
             <p className="text-xs text-neutral-400">Powered by MCP · See AGENT-API.md for full REST API docs.</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Connect Higgsfield</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm text-neutral-600">
+            <ol className="list-decimal list-inside space-y-1.5">
+              <li>Copy the Higgsfield MCP URL below.</li>
+              <li>Open Claude → Customize → Connectors → Add Higgsfield.</li>
+              <li>Paste the URL when prompted.</li>
+              <li>Sign in to Higgsfield, then ask Claude to generate product images or videos.</li>
+            </ol>
+            <div className="flex items-center gap-2 pt-1">
+              <code className="flex-1 rounded-lg bg-neutral-100 px-3 py-2 text-xs font-mono break-all">{HIGGSFIELD_MCP_URL}</code>
+              <Button size="sm" variant="secondary" onClick={copyHiggsfieldUrl}><Copy size={13} /></Button>
+            </div>
+            <p className="text-xs text-neutral-400">
+              Powered by MCP · Higgsfield connects directly to Claude — once both Claude and Higgsfield are
+              connected, Claude can generate a product image or video and upload it straight into your SellBop
+              product draft.
+            </p>
           </CardContent>
         </Card>
 
