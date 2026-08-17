@@ -27,6 +27,8 @@ const FILE_CREATION_LINKS = [
 const HIGGSFIELD_URL = 'https://higgsfield.ai'
 const HIGGSFIELD_ICON = `${SUPABASE_TOOLS}/output.webp`
 
+export { HIGGSFIELD_URL, HIGGSFIELD_ICON }
+
 function IconLink({ href, label, icon }: { href: string; label: string; icon: string }) {
   return (
     <a

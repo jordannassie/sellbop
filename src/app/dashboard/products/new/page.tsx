@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Upload, X, Store, TrendingUp } from 'lucide-react'
+import { ArrowLeft, Upload, Store, TrendingUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -11,13 +11,14 @@ import { toast } from 'sonner'
 import { slugify, formatCurrency } from '@/lib/utils'
 import { uploadFile, buildStoragePath } from '@/lib/supabase/storage'
 import { useAuth } from '@/context/auth-context'
-import { MAX_PRODUCT_FILE_SIZE_BYTES, MAX_COVER_IMAGE_SIZE_BYTES } from '@/lib/platform-config'
+import { MAX_PRODUCT_FILE_SIZE_BYTES } from '@/lib/platform-config'
 import {
   CoverImageCreationHeaderLink,
-  CoverImageCreationHelperText,
   ProductFileCreationHeaderLinks,
   ProductFileCreationHelperText,
 } from '@/components/dashboard/product-creation-shortcuts'
+import { ProductMediaSection } from '@/components/product-media/product-media-section'
+import type { GalleryMediaItem } from '@/components/product-media/add-media-modal'
 import { ProductPricingSection } from '@/components/dashboard/product-pricing-section'
 import { DropUploadZone } from '@/components/dashboard/drop-upload-zone'
 import { ProductFileRow } from '@/components/dashboard/product-file-row'
@@ -38,8 +39,8 @@ export default function NewProductPage() {
   const [salePriceDollars, setSalePriceDollars] = useState('')
   const [saleEndsAt, setSaleEndsAt] = useState('')
   const [category, setCategory] = useState('')
+  const [mediaItems, setMediaItems] = useState<GalleryMediaItem[]>([])
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null)
-  const [coverUploading, setCoverUploading] = useState(false)
   const [productFile, setProductFile] = useState<{ name: string; path: string; size: number; type: string } | null>(null)
   const [fileUploading, setFileUploading] = useState(false)
   const [isLive, setIsLive] = useState(false)
@@ -60,21 +61,25 @@ export default function NewProductPage() {
     }
   }
 
-  async function uploadCoverFile(file: File) {
-    if (file.size > MAX_COVER_IMAGE_SIZE_BYTES) {
-      toast.error('Cover image must be under 5 MB.')
-      return
+  async function saveProductMedia(productId: string, items: GalleryMediaItem[]) {
+    for (const item of items) {
+      await fetch(`/api/products/${productId}/media`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          media_type: item.media_type,
+          url: item.url,
+          thumbnail_url: item.thumbnail_url,
+          provider: item.provider,
+          storage_path: 'storage_path' in item ? item.storage_path : null,
+        }),
+      })
     }
-    setCoverUploading(true)
-    const path = buildStoragePath(session?.userId ?? 'unknown', file.name)
-    const result = await uploadFile('product-images', path, file)
-    if (result.error) {
-      toast.error('Upload failed: ' + result.error)
-    } else if (result.url) {
-      setCoverImageUrl(result.url)
-      toast.success('Cover image uploaded.')
-    }
-    setCoverUploading(false)
+  }
+
+  function handleMediaChange(items: GalleryMediaItem[], primaryImageUrl: string | null) {
+    setMediaItems(items)
+    setCoverImageUrl(primaryImageUrl)
   }
 
   async function uploadProductFile(file: File) {
@@ -159,6 +164,10 @@ export default function NewProductPage() {
         })
       }
 
+      if (mediaItems.length > 0) {
+        await saveProductMedia(productId, mediaItems)
+      }
+
       toast.success('Product created!')
       router.push(`/dashboard/products/${productId}`)
     } catch (err) {
@@ -203,44 +212,17 @@ export default function NewProductPage() {
           </CardContent>
         </Card>
 
-        {/* Cover Image */}
+        {/* Product Media */}
         <Card>
           <CardHeader>
-            <CardTitle>Cover Image</CardTitle>
+            <CardTitle>Product Media</CardTitle>
             <CoverImageCreationHeaderLink />
           </CardHeader>
           <CardContent>
-            {coverImageUrl ? (
-              <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-neutral-100">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={coverImageUrl} alt="Cover" className="w-full h-full object-cover" />
-                <button
-                  type="button"
-                  onClick={() => setCoverImageUrl(null)}
-                  className="absolute top-2 right-2 p-1.5 bg-black/50 rounded-lg text-white hover:bg-black/70 transition-colors"
-                >
-                  <X size={14} />
-                </button>
-              </div>
-            ) : (
-              <DropUploadZone
-                onFile={uploadCoverFile}
-                accept="image/*"
-                disabled={coverUploading}
-                className="flex flex-col items-center justify-center w-full aspect-video"
-              >
-                {coverUploading ? (
-                  <div className="w-5 h-5 border-2 border-neutral-400 border-t-black rounded-full animate-spin" />
-                ) : (
-                  <>
-                    <Upload size={24} className="text-neutral-400 mb-2" />
-                    <p className="text-sm font-medium text-neutral-600">Drop or click to upload cover image</p>
-                    <p className="text-xs text-neutral-400 mt-1">JPG, PNG, WebP · Max 5 MB</p>
-                  </>
-                )}
-              </DropUploadZone>
-            )}
-            <CoverImageCreationHelperText />
+            <p className="text-sm text-neutral-600 mb-4">
+              Add images and videos that show customers what they&apos;re buying.
+            </p>
+            <ProductMediaSection items={mediaItems} onChange={handleMediaChange} />
           </CardContent>
         </Card>
         <Card>
@@ -462,7 +444,7 @@ export default function NewProductPage() {
 
         {/* Actions */}
         <div className="flex items-center gap-3 pb-8">
-          <Button type="submit" loading={saving} disabled={fileUploading || coverUploading}>
+          <Button type="submit" loading={saving} disabled={fileUploading}>
             {isLive ? 'Publish Product' : 'Save Draft'}
           </Button>
           <Link href="/dashboard/products">

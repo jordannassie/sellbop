@@ -12,13 +12,14 @@ import { toast } from 'sonner'
 import { slugify, formatCurrency } from '@/lib/utils'
 import { uploadFile, buildStoragePath } from '@/lib/supabase/storage'
 import { useAuth } from '@/context/auth-context'
-import { MAX_PRODUCT_FILE_SIZE_BYTES, MAX_COVER_IMAGE_SIZE_BYTES } from '@/lib/platform-config'
+import { MAX_PRODUCT_FILE_SIZE_BYTES } from '@/lib/platform-config'
 import {
   CoverImageCreationHeaderLink,
-  CoverImageCreationHelperText,
   ProductFileCreationHeaderLinks,
   ProductFileCreationHelperText,
 } from '@/components/dashboard/product-creation-shortcuts'
+import { ProductMediaSection } from '@/components/product-media/product-media-section'
+import type { GalleryMediaItem } from '@/components/product-media/add-media-modal'
 import { DropUploadZone } from '@/components/dashboard/drop-upload-zone'
 import { ProductFileRow } from '@/components/dashboard/product-file-row'
 import { ProductPricingSection } from '@/components/dashboard/product-pricing-section'
@@ -88,8 +89,8 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
   const [affiliateEnabled, setAffiliateEnabled] = useState(true)
   const [affiliateCommission, setAffiliateCommission] = useState(30)
   const [customCommission, setCustomCommission] = useState('')
+  const [mediaItems, setMediaItems] = useState<GalleryMediaItem[]>([])
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null)
-  const [coverUploading, setCoverUploading] = useState(false)
   const [fileUploading, setFileUploading] = useState(false)
 
   useEffect(() => {
@@ -118,6 +119,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
           setSaleEndsAt(toDatetimeLocalValue(p.sale_ends_at))
           setIsLive(p.is_live)
           setCoverImageUrl(p.cover_image_url ?? p.image_url ?? null)
+          setMediaItems(data.media ?? [])
           setCategory(normalizeProductCategory(p.category) ?? '')
           // Null means the product was created before these fields existed — default to ON
           setMarketplaceListing(p.marketplace_listing ?? true)
@@ -136,14 +138,9 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  async function uploadCoverFile(file: File) {
-    if (file.size > MAX_COVER_IMAGE_SIZE_BYTES) { toast.error('Cover image must be under 5 MB.'); return }
-    setCoverUploading(true)
-    const path = buildStoragePath(session?.userId ?? 'unknown', file.name)
-    const result = await uploadFile('product-images', path, file)
-    if (result.error) { toast.error('Upload failed: ' + result.error) }
-    else if (result.url) { setCoverImageUrl(result.url); toast.success('Cover image updated.') }
-    setCoverUploading(false)
+  function handleMediaChange(items: GalleryMediaItem[], primaryImageUrl: string | null) {
+    setMediaItems(items)
+    setCoverImageUrl(primaryImageUrl)
   }
 
   async function uploadProductFile(file: File) {
@@ -314,40 +311,29 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
           </CardContent>
         </Card>
 
-        {/* Cover Image */}
+        {/* Product Media */}
         <Card>
           <CardHeader>
-            <CardTitle>Cover Image</CardTitle>
+            <CardTitle>Product Media</CardTitle>
             <CoverImageCreationHeaderLink />
           </CardHeader>
           <CardContent>
-            {coverImageUrl ? (
-              <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-neutral-100">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={coverImageUrl} alt="Cover" className="w-full h-full object-cover" />
-                <button type="button" onClick={() => setCoverImageUrl(null)} className="absolute top-2 right-2 p-1.5 bg-black/50 rounded-lg text-white hover:bg-black/70 transition-colors">
-                  <X size={14} />
-                </button>
-              </div>
-            ) : (
-              <DropUploadZone
-                onFile={uploadCoverFile}
-                accept="image/*"
-                disabled={coverUploading}
-                className="flex flex-col items-center justify-center w-full aspect-video"
-              >
-                {coverUploading ? (
-                  <div className="w-5 h-5 border-2 border-neutral-400 border-t-black rounded-full animate-spin" />
-                ) : (
-                  <>
-                    <Upload size={22} className="text-neutral-400 mb-2" />
-                    <p className="text-sm font-medium text-neutral-600">Drop or click to upload cover image</p>
-                    <p className="text-xs text-neutral-400 mt-1">JPG, PNG, WebP · Max 5 MB</p>
-                  </>
-                )}
-              </DropUploadZone>
-            )}
-            <CoverImageCreationHelperText />
+            <p className="text-sm text-neutral-600 mb-4">
+              Add images and videos that show customers what they&apos;re buying.
+            </p>
+            <ProductMediaSection
+              productId={productId}
+              items={mediaItems}
+              onChange={handleMediaChange}
+              onLegacyCoverClear={async () => {
+                if (!productId) return
+                await fetch(`/api/products/${productId}`, {
+                  method: 'PATCH',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ cover_image_url: null }),
+                })
+              }}
+            />
           </CardContent>
         </Card>
         <Card>
@@ -563,7 +549,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
         {/* Actions */}
         <div className="flex items-center justify-between gap-3 pb-8">
           <div className="flex items-center gap-3">
-            <Button type="submit" loading={saving} disabled={fileUploading || coverUploading}>
+            <Button type="submit" loading={saving} disabled={fileUploading}>
               Save Changes
             </Button>
             <Link href="/dashboard/products">

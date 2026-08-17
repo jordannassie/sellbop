@@ -8,6 +8,7 @@ import {
   normalizeSaleFieldsForSave,
   validateSalePricingForSave,
 } from '@/lib/pricing/product-price'
+import { mapMediaRow, withLegacyCoverMedia } from '@/lib/product-media/utils'
 
 async function getSellerStore(userId: string) {
   const admin = getSupabaseAdminClient()
@@ -76,7 +77,22 @@ export async function GET(
     .eq('product_id', id)
     .eq('payment_status', 'paid')
 
-  return NextResponse.json({ product, files: files ?? [], sales_count: salesCount ?? 0 })
+  let media = withLegacyCoverMedia([], product?.cover_image_url ?? product?.image_url)
+  try {
+    const { data: mediaRows } = await admin
+      .from('product_media')
+      .select('*')
+      .eq('product_id', id)
+      .order('sort_order', { ascending: true })
+    media = withLegacyCoverMedia(
+      (mediaRows ?? []).map(mapMediaRow),
+      product?.cover_image_url ?? product?.image_url,
+    )
+  } catch {
+    // migration pending
+  }
+
+  return NextResponse.json({ product, files: files ?? [], sales_count: salesCount ?? 0, media })
 }
 
 // PATCH /api/products/[id]

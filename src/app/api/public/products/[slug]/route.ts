@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { isSupabaseAdminConfigured } from '@/lib/env'
+import { mapMediaRow, withLegacyCoverMedia } from '@/lib/product-media/utils'
 
 // GET /api/public/products/[slug] — publicly fetch a published product by slug
 // Also supports ?sellerSlug=xxx to scope product lookup to a specific store
@@ -88,6 +89,21 @@ export async function GET(
     .eq('product_id', product.id)
     .eq('payment_status', 'paid')
 
+  let media: ReturnType<typeof mapMediaRow>[] = []
+  try {
+    const { data: mediaRows } = await admin
+      .from('product_media')
+      .select('*')
+      .eq('product_id', product.id)
+      .order('sort_order', { ascending: true })
+    media = withLegacyCoverMedia(
+      (mediaRows ?? []).map(mapMediaRow),
+      product.cover_image_url ?? product.image_url,
+    )
+  } catch {
+    media = withLegacyCoverMedia([], product.cover_image_url ?? product.image_url)
+  }
+
   return NextResponse.json({
     product: {
       ...product,
@@ -96,5 +112,6 @@ export async function GET(
     },
     store: store ? { ...store, avatar_url: avatarUrl } : null,
     sales_count: salesCount ?? 0,
+    media,
   })
 }

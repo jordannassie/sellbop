@@ -13,6 +13,8 @@ import { formatCurrency } from '@/lib/utils'
 import { isSupabaseConfigured } from '@/lib/env'
 import { getEffectiveProductPrice } from '@/lib/pricing/product-price'
 import { ProductPriceDisplay } from '@/components/ui/product-price-display'
+import { ProductMediaGalleryViewer } from '@/components/product-media/product-media-gallery-viewer'
+import type { ProductMediaItem } from '@/lib/product-media/types'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -117,6 +119,7 @@ export function CanonicalProductPage({ sellerSlug, productSlug }: { sellerSlug: 
   const [promoteLoading, setPromoteLoading] = useState(false)
   const [affiliateUrl, setAffiliateUrl] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const [media, setMedia] = useState<ProductMediaItem[]>([])
 
   const pricing = product
     ? getEffectiveProductPrice(product)
@@ -137,6 +140,7 @@ export function CanonicalProductPage({ sellerSlug, productSlug }: { sellerSlug: 
         if (!data) { setState('notfound'); return }
         setProduct(data.product)
         setStore(data.store)
+        setMedia(data.media ?? [])
         setState('ready')
         if (refCode) {
           fetch('/api/affiliates/click', {
@@ -384,7 +388,15 @@ export function CanonicalProductPage({ sellerSlug, productSlug }: { sellerSlug: 
             {store && <CreatorRow store={store} />}
 
             {/* Cover image */}
-            {coverUrl && (
+            {media.length > 0 ? (
+              <ProductMediaGalleryViewer
+                items={media}
+                aspectStyle={{ aspectRatio: '4/3' }}
+                mainObjectFit="cover"
+                enableLightbox
+                className="mb-7"
+              />
+            ) : coverUrl ? (
               <div
                 className="relative w-full rounded-2xl overflow-hidden bg-neutral-100 mb-7"
                 style={{ aspectRatio: '4/3' }}
@@ -396,7 +408,7 @@ export function CanonicalProductPage({ sellerSlug, productSlug }: { sellerSlug: 
                   className="w-full h-full object-cover"
                 />
               </div>
-            )}
+            ) : null}
 
             {/* Title + share */}
             <div className="flex items-start justify-between gap-4 mb-4">

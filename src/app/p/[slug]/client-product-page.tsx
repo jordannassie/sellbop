@@ -10,6 +10,8 @@ import { formatCurrency } from '@/lib/utils'
 import { isSupabaseConfigured } from '@/lib/env'
 import { getEffectiveProductPrice } from '@/lib/pricing/product-price'
 import { ProductPriceDisplay } from '@/components/ui/product-price-display'
+import { ProductMediaGalleryViewer } from '@/components/product-media/product-media-gallery-viewer'
+import type { ProductMediaItem } from '@/lib/product-media/types'
 
 interface ProductData {
   id: string
@@ -58,6 +60,7 @@ export function ClientProductPage({ slug }: { slug: string }) {
   const [promoteLoading, setPromoteLoading] = useState(false)
   const [affiliateUrl, setAffiliateUrl] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const [media, setMedia] = useState<ProductMediaItem[]>([])
 
   const pricing = product
     ? getEffectiveProductPrice(product)
@@ -79,6 +82,7 @@ export function ClientProductPage({ slug }: { slug: string }) {
         if (!data) { setState('notfound'); return }
         setProduct(data.product)
         setStore(data.store)
+        setMedia(data.media ?? [])
         setState('ready')
 
         // Record affiliate click server-side (fire and forget)
@@ -380,12 +384,20 @@ export function ClientProductPage({ slug }: { slug: string }) {
             )}
 
             {/* Cover image */}
-            {coverUrl && (
+            {media.length > 0 ? (
+              <ProductMediaGalleryViewer
+                items={media}
+                aspectClassName="aspect-video"
+                mainObjectFit="cover"
+                enableLightbox
+                className="mb-6"
+              />
+            ) : coverUrl ? (
               <div className="aspect-video rounded-2xl overflow-hidden bg-neutral-100 mb-6">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={coverUrl} alt={product?.title} className="w-full h-full object-cover" />
               </div>
-            )}
+            ) : null}
 
             {/* Title & description */}
             <h1 className="text-3xl font-bold text-black mb-4">{product?.title}</h1>

@@ -278,6 +278,35 @@ export interface Database {
         Relationships: []
       }
 
+      product_media: {
+        Row: {
+          id: string
+          product_id: string
+          seller_id: string
+          media_type: string
+          url: string
+          thumbnail_url: string | null
+          provider: string
+          storage_path: string | null
+          sort_order: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          product_id: string
+          seller_id: string
+          media_type: string
+          url: string
+          thumbnail_url?: string | null
+          provider: string
+          storage_path?: string | null
+          sort_order?: number
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['product_media']['Insert']>
+        Relationships: []
+      }
+
       orders: {
         Row: {
           id: string
