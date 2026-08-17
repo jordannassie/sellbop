@@ -54,8 +54,8 @@ export function HeroBanner() {
 
   return (
     <div
-      className="relative w-full overflow-hidden rounded-2xl shadow-xl"
-      style={{ aspectRatio: '16/7' }}
+      className="relative w-full overflow-hidden rounded-2xl bg-black"
+      style={{ aspectRatio: '16/9' }}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
@@ -71,7 +71,7 @@ export function HeroBanner() {
             src={banner.src}
             alt={banner.alt}
             fill
-            className="object-cover"
+            className="object-contain"
             sizes="(max-width: 768px) 100vw, 90vw"
             priority={i === 0}
             unoptimized
