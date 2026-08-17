@@ -283,7 +283,7 @@ export default function SettingsPage() {
                   {uploadingBanner ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
                   {uploadingBanner ? 'Uploading…' : bannerUrl ? 'Change Banner' : 'Upload Banner'}
                 </Button>
-                <p className="text-xs text-neutral-400">Wide landscape · JPG, PNG · Max 10 MB</p>
+                <p className="text-xs text-neutral-400">1920 × 600 recommended · JPG, PNG · Max 10 MB</p>
               </div>
               <input
                 ref={bannerInputRef}
