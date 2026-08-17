@@ -1,7 +1,10 @@
+import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { MissionSection } from '@/components/marketing/mission-section'
 import { HeroBanner } from '@/components/marketing/hero-banner'
+import { isSupabaseConfigured } from '@/lib/env'
+import { getSupabaseServerClient } from '@/lib/supabase/server'
 import {
   ArrowRight,
   Check,
@@ -23,7 +26,15 @@ import {
   Plus,
 } from 'lucide-react'
 
-export default function HomePage() {
+export default async function HomePage() {
+  // Redirect authenticated users straight to their dashboard
+  if (isSupabaseConfigured()) {
+    try {
+      const supabase = await getSupabaseServerClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) redirect('/dashboard')
+    } catch { /* session unavailable — show homepage */ }
+  }
   return (
     <>
       {/* ── Hero ─────────────────────────────────────────────────── */}
@@ -146,21 +157,31 @@ export default function HomePage() {
 
             {/* Visual mockup */}
             <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-6 shadow-sm">
-              <div className="rounded-xl border border-neutral-200 bg-white p-5 mb-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">Airbnb Calculator</p>
-                    <p className="text-2xl font-black text-black">$49</p>
+              <div className="rounded-xl border border-neutral-200 bg-white overflow-hidden mb-4">
+                {/* Product cover image */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="https://qsvmgzdaashfsavmfjuz.supabase.co/storage/v1/object/public/SELL/images/HOLD.png"
+                  alt="Digital Product"
+                  className="w-full object-cover rounded-t-xl"
+                  style={{ aspectRatio: '16/7', objectFit: 'cover' }}
+                />
+                <div className="p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">Digital Product</p>
+                      <p className="text-2xl font-black text-black">$49</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-neutral-400">Sellbop Share</p>
+                      <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-bold" style={{ background: '#ecfff6', color: '#00A854' }}>ON · 30%</span>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-xs text-neutral-400">Sellbop Share</p>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700">ON · 30%</span>
-                  </div>
-                </div>
-                <div className="border-t border-neutral-100 pt-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-neutral-500">Affiliate earns per sale</span>
-                    <span className="text-2xl font-black text-emerald-600">$14.70</span>
+                  <div className="border-t border-neutral-100 pt-3">
+                    <div className="flex justify-between text-sm items-baseline">
+                      <span className="text-neutral-500">Affiliate earns per sale</span>
+                      <span className="text-2xl font-black" style={{ color: '#00E676' }}>$14.70</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -180,7 +201,7 @@ export default function HomePage() {
 
               <div className="mt-4 rounded-xl bg-black p-4">
                 <div className="flex items-center justify-between gap-2 mb-2">
-                  <p className="text-xs font-mono text-neutral-400 truncate">sellbop.com/p/airbnb-calculator?ref=ABC12345</p>
+                  <p className="text-xs font-mono text-neutral-400 truncate">sellbop.com/creator/product?ref=ABC12345</p>
                 </div>
                 <div className="flex w-full items-center justify-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-black text-black">
                   COPY LINK
