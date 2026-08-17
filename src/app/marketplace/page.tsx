@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { Search, X, TrendingUp, ArrowRight } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { PublicHeader } from '@/components/marketing/public-header'
+import { ProductImage } from '@/components/ui/product-image'
 
 const CATEGORIES = ['All', 'Business', 'Money', 'Templates', 'Education', 'Real Estate', 'Faith', 'Fitness', 'Design', 'Other']
 
@@ -32,21 +32,13 @@ function ProductCard({ product }: { product: MarketplaceProduct }) {
       {/* Cover image */}
       <Link href={`/p/${product.slug}`}>
         <div className="relative h-48 bg-gradient-to-br from-neutral-100 to-neutral-200 overflow-hidden">
-          {product.coverImage ? (
-            <Image
-              src={product.coverImage}
-              alt={product.title}
-              fill
-              className="object-cover group-hover:scale-105 transition-transform duration-300"
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center">
-              <div className="text-5xl font-black text-neutral-300 select-none">
-                {product.title.charAt(0)}
-              </div>
-            </div>
-          )}
+          <ProductImage
+            src={product.coverImage}
+            alt=""
+            fill
+            className="object-cover group-hover:scale-105 transition-transform duration-300"
+            iconSize="lg"
+          />
           {product.category && (
             <div className="absolute top-3 left-3">
               <span className="inline-flex items-center rounded-full bg-white/90 backdrop-blur-sm px-2.5 py-1 text-[10px] font-bold text-neutral-700 shadow-sm">

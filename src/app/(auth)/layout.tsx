@@ -80,22 +80,22 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
               </ul>
             </div>
 
-            {/* Social proof facepile — no CTAs on this panel */}
-            <div className="mt-7 pt-6 border-t border-white/10 flex items-center gap-3">
-              <div className="flex -space-x-2.5">
+            {/* Social proof facepile */}
+            <div className="mt-7 pt-6 border-t border-white/10">
+              <div className="flex -space-x-2.5 mb-3">
                 {HERO_FACEPILE_PHOTOS.slice(0, 5).map((url, i) => (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     key={i}
                     src={url}
-                    alt="Creator"
+                    alt=""
                     width={30}
                     height={30}
-                    className="w-7 h-7 rounded-full border-2 border-neutral-950 object-cover"
+                    className="w-7 h-7 rounded-full border-2 border-neutral-950 object-cover bg-neutral-800"
                   />
                 ))}
               </div>
-              <p className="text-xs text-neutral-400 leading-snug">
+              <p className="text-xs text-neutral-400 leading-relaxed">
                 <span className="text-white font-semibold">Creators are already building with AI</span>
                 {' '}— launch your store and start selling
               </p>
