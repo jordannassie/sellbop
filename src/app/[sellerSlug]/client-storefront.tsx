@@ -3,6 +3,8 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { PublicHeader } from '@/components/marketing/public-header'
 import { formatCurrency } from '@/lib/utils'
+import { getEffectiveProductPrice } from '@/lib/pricing/product-price'
+import { ProductPriceDisplay } from '@/components/ui/product-price-display'
 import {
   User, Package, Share2, Check, TrendingUp, ArrowRight, Copy, ChevronDown,
 } from 'lucide-react'
@@ -29,6 +31,9 @@ interface ProductCard {
   cover_image_url: string | null
   image_url: string | null
   price_cents: number | null
+  sale_enabled?: boolean
+  sale_price_cents?: number | null
+  sale_ends_at?: string | null
   affiliate_enabled: boolean
   affiliate_commission_percent: number | null
 }
@@ -167,7 +172,8 @@ function AffiliatePanel({
         {open && (
           <div className="mt-4 space-y-3">
             {eligibleProducts.map(product => {
-              const commCents = Math.floor((product.price_cents ?? 0) * ((product.affiliate_commission_percent ?? 0) / 100))
+              const pricing = getEffectiveProductPrice(product)
+              const commCents = Math.floor(pricing.effectivePriceCents * ((product.affiliate_commission_percent ?? 0) / 100))
               const hasLink = !!linkMap[product.id]
               const isLoading = loadingId === product.id
               const isCopied = copiedId === product.id
@@ -399,9 +405,10 @@ export function ClientStorefront({ slug }: { slug: string }) {
             >
               {products.map(p => {
                 const coverUrl = p.cover_image_url ?? p.image_url
-                const isFree = (p.price_cents ?? 0) === 0
+                const pricing = getEffectiveProductPrice(p)
+                const isFree = pricing.regularPriceCents === 0
                 const commPercent = p.affiliate_commission_percent ?? 0
-                const commCents = Math.floor((p.price_cents ?? 0) * (commPercent / 100))
+                const commCents = Math.floor(pricing.effectivePriceCents * (commPercent / 100))
                 const showAffiliate = p.affiliate_enabled && commPercent > 0 && !isFree
 
                 return (
@@ -419,6 +426,13 @@ export function ClientStorefront({ slug }: { slug: string }) {
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
                             <Package size={28} className="text-neutral-300" />
+                          </div>
+                        )}
+                        {pricing.isOnSale && (
+                          <div className="absolute top-2.5 left-2.5">
+                            <span className="inline-flex items-center rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">
+                              {pricing.discountPercent}% OFF
+                            </span>
                           </div>
                         )}
                         {showAffiliate && (
@@ -440,9 +454,7 @@ export function ClientStorefront({ slug }: { slug: string }) {
                           {p.title}
                         </p>
                         <div className="flex items-center justify-between gap-2 mt-2">
-                          <p className="text-sm font-bold text-black">
-                            {isFree ? 'Free' : formatCurrency(p.price_cents ?? 0)}
-                          </p>
+                          <ProductPriceDisplay pricing={pricing} size="sm" showBadge badgeVariant="sale" />
                           {showAffiliate && (
                             <span className="text-[11px] font-medium" style={{ color: '#00A854' }}>
                               {formatCurrency(commCents)}/sale
