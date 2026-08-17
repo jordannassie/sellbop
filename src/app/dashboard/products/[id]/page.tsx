@@ -14,6 +14,12 @@ import { uploadFile, buildStoragePath } from '@/lib/supabase/storage'
 import { useAuth } from '@/context/auth-context'
 import { MAX_PRODUCT_FILE_SIZE_BYTES, MAX_COVER_IMAGE_SIZE_BYTES } from '@/lib/platform-config'
 import { CoverImageCreationShortcuts, ProductFileCreationShortcuts } from '@/components/dashboard/product-creation-shortcuts'
+import { ProductPricingSection } from '@/components/dashboard/product-pricing-section'
+import {
+  datetimeLocalToIso,
+  toDatetimeLocalValue,
+  validateSalePricingForSave,
+} from '@/lib/pricing/product-price'
 
 const CATEGORIES = ['Business', 'Money', 'Templates', 'Education', 'Real Estate', 'Faith', 'Fitness', 'Design', 'Other']
 const COMMISSION_PRESETS = [10, 20, 30, 40, 50]
@@ -34,6 +40,9 @@ interface Product {
   description: string | null
   short_description: string | null
   price_cents: number | null
+  sale_enabled?: boolean
+  sale_price_cents?: number | null
+  sale_ends_at?: string | null
   cover_image_url: string | null
   image_url: string | null
   is_live: boolean
@@ -63,6 +72,9 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
   const [description, setDescription] = useState('')
   const [priceDollars, setPriceDollars] = useState('')
   const [isFree, setIsFree] = useState(false)
+  const [saleEnabled, setSaleEnabled] = useState(false)
+  const [salePriceDollars, setSalePriceDollars] = useState('')
+  const [saleEndsAt, setSaleEndsAt] = useState('')
   const [isLive, setIsLive] = useState(false)
   const [category, setCategory] = useState('')
   const [marketplaceListing, setMarketplaceListing] = useState(true)
@@ -90,6 +102,13 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
           const priceCents = p.price_cents ?? 0
           setIsFree(priceCents === 0)
           setPriceDollars(priceCents > 0 ? (priceCents / 100).toFixed(2) : '')
+          setSaleEnabled(p.sale_enabled ?? false)
+          setSalePriceDollars(
+            p.sale_price_cents != null && p.sale_price_cents > 0
+              ? (p.sale_price_cents / 100).toFixed(2)
+              : '',
+          )
+          setSaleEndsAt(toDatetimeLocalValue(p.sale_ends_at))
           setIsLive(p.is_live)
           setCoverImageUrl(p.cover_image_url ?? p.image_url ?? null)
           setCategory(p.category ?? '')
@@ -170,6 +189,17 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
       return toast.error('Price must be at least $0.50 for paid products.')
     }
 
+    const salePriceCents =
+      !isFree && saleEnabled && salePriceDollars.trim()
+        ? Math.round(parseFloat(salePriceDollars) * 100)
+        : null
+    const saleError = validateSalePricingForSave({
+      price_cents: priceCents,
+      sale_enabled: !isFree && saleEnabled,
+      sale_price_cents: salePriceCents,
+    })
+    if (saleError) return toast.error(saleError)
+
     setSaving(true)
     try {
       const res = await fetch(`/api/products/${productId}`, {
@@ -180,6 +210,9 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
           slug: slug.trim(),
           description: description.trim() || null,
           price_cents: priceCents,
+          sale_enabled: !isFree && saleEnabled,
+          sale_price_cents: salePriceCents,
+          sale_ends_at: !isFree && saleEnabled ? datetimeLocalToIso(saleEndsAt) : null,
           cover_image_url: coverImageUrl,
           is_live: isLive,
           category: category || null,
@@ -309,23 +342,19 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
         </Card>
         <Card>
           <CardHeader><CardTitle>Pricing</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" checked={isFree} onChange={e => setIsFree(e.target.checked)} className="w-4 h-4 rounded" />
-              <span className="text-sm font-medium text-neutral-700">Free product</span>
-            </label>
-            {!isFree && (
-              <Input
-                label="Price (USD) *"
-                type="number"
-                min="0.50"
-                step="0.01"
-                value={priceDollars}
-                onChange={e => setPriceDollars(e.target.value)}
-                placeholder="29.00"
-                required={!isFree}
-              />
-            )}
+          <CardContent>
+            <ProductPricingSection
+              isFree={isFree}
+              onIsFreeChange={setIsFree}
+              priceDollars={priceDollars}
+              onPriceDollarsChange={setPriceDollars}
+              saleEnabled={saleEnabled}
+              onSaleEnabledChange={setSaleEnabled}
+              salePriceDollars={salePriceDollars}
+              onSalePriceDollarsChange={setSalePriceDollars}
+              saleEndsAt={saleEndsAt}
+              onSaleEndsAtChange={setSaleEndsAt}
+            />
           </CardContent>
         </Card>
 

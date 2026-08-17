@@ -13,6 +13,8 @@ import { uploadFile, buildStoragePath } from '@/lib/supabase/storage'
 import { useAuth } from '@/context/auth-context'
 import { MAX_PRODUCT_FILE_SIZE_BYTES, MAX_COVER_IMAGE_SIZE_BYTES } from '@/lib/platform-config'
 import { CoverImageCreationShortcuts, ProductFileCreationShortcuts } from '@/components/dashboard/product-creation-shortcuts'
+import { ProductPricingSection } from '@/components/dashboard/product-pricing-section'
+import { datetimeLocalToIso, validateSalePricingForSave } from '@/lib/pricing/product-price'
 
 const CATEGORIES = ['Business', 'Money', 'Templates', 'Education', 'Real Estate', 'Faith', 'Fitness', 'Design', 'Other']
 const COMMISSION_PRESETS = [10, 20, 30, 40, 50]
@@ -25,6 +27,9 @@ export default function NewProductPage() {
   const [description, setDescription] = useState('')
   const [priceDollars, setPriceDollars] = useState('')
   const [isFree, setIsFree] = useState(false)
+  const [saleEnabled, setSaleEnabled] = useState(false)
+  const [salePriceDollars, setSalePriceDollars] = useState('')
+  const [saleEndsAt, setSaleEndsAt] = useState('')
   const [category, setCategory] = useState('')
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null)
   const [coverUploading, setCoverUploading] = useState(false)
@@ -96,6 +101,17 @@ export default function NewProductPage() {
       return toast.error('Price must be at least $0.50 for paid products.')
     }
 
+    const salePriceCents =
+      !isFree && saleEnabled && salePriceDollars.trim()
+        ? Math.round(parseFloat(salePriceDollars) * 100)
+        : null
+    const saleError = validateSalePricingForSave({
+      price_cents: priceCents,
+      sale_enabled: !isFree && saleEnabled,
+      sale_price_cents: salePriceCents,
+    })
+    if (saleError) return toast.error(saleError)
+
     setSaving(true)
     const finalCommPercent = affiliateEnabled
       ? (customCommission ? parseInt(customCommission) || 0 : affiliateCommission)
@@ -109,6 +125,9 @@ export default function NewProductPage() {
           slug: slug.trim(),
           description: description.trim() || null,
           price_cents: priceCents,
+          sale_enabled: !isFree && saleEnabled,
+          sale_price_cents: salePriceCents,
+          sale_ends_at: !isFree && saleEnabled ? datetimeLocalToIso(saleEndsAt) : null,
           cover_image_url: coverImageUrl,
           is_live: isLive,
           category: category || null,
@@ -222,35 +241,19 @@ export default function NewProductPage() {
         </Card>
         <Card>
           <CardHeader><CardTitle>Pricing</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-3">
-              <label className="flex items-center gap-2 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={isFree}
-                  onChange={e => setIsFree(e.target.checked)}
-                  className="w-4 h-4 rounded border-neutral-300"
-                />
-                <span className="text-sm font-medium text-neutral-700">Free product</span>
-              </label>
-            </div>
-            {!isFree && (
-              <Input
-                label="Price (USD) *"
-                type="number"
-                min="0.50"
-                step="0.01"
-                value={priceDollars}
-                onChange={e => setPriceDollars(e.target.value)}
-                placeholder="29.00"
-                required={!isFree}
-              />
-            )}
-            {isFree && (
-              <p className="text-xs text-neutral-500 bg-neutral-50 rounded-lg px-3 py-2">
-                Free products let customers get your product without paying — great for lead magnets.
-              </p>
-            )}
+          <CardContent>
+            <ProductPricingSection
+              isFree={isFree}
+              onIsFreeChange={setIsFree}
+              priceDollars={priceDollars}
+              onPriceDollarsChange={setPriceDollars}
+              saleEnabled={saleEnabled}
+              onSaleEnabledChange={setSaleEnabled}
+              salePriceDollars={salePriceDollars}
+              onSalePriceDollarsChange={setSalePriceDollars}
+              saleEndsAt={saleEndsAt}
+              onSaleEndsAtChange={setSaleEndsAt}
+            />
           </CardContent>
         </Card>
 

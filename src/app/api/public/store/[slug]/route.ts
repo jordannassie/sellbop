@@ -47,7 +47,7 @@ export async function GET(
     .from('products')
     .select(`
       id, title, slug, product_type, short_description,
-      cover_image_url, image_url, price_cents, is_live, created_at
+      cover_image_url, image_url, price_cents, sale_enabled, sale_price_cents, sale_ends_at, is_live, created_at
     `)
     .eq('store_id', store.id)
     .eq('is_live', true)

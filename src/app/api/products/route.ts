@@ -3,6 +3,10 @@ import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { isSupabaseAdminConfigured } from '@/lib/env'
 import { slugify } from '@/lib/utils'
+import {
+  normalizeSaleFieldsForSave,
+  validateSalePricingForSave,
+} from '@/lib/pricing/product-price'
 
 // GET /api/products — list the authenticated seller's products
 export async function GET() {
@@ -79,11 +83,26 @@ export async function POST(request: Request) {
   const {
     title, description, short_description, price_cents, cover_image_url, slug: rawSlug, is_live,
     category, marketplace_listing, affiliate_enabled, affiliate_commission_percent,
+    sale_enabled, sale_price_cents, sale_ends_at,
   } = body
 
   if (!title?.trim()) {
     return NextResponse.json({ error: 'Product title is required.' }, { status: 400 })
   }
+
+  const basePriceCents = price_cents ?? 0
+  const saleFields = normalizeSaleFieldsForSave({
+    price_cents: basePriceCents,
+    sale_enabled: sale_enabled ?? false,
+    sale_price_cents: sale_price_cents ?? null,
+    sale_ends_at: sale_ends_at ?? null,
+  })
+  const saleError = validateSalePricingForSave({
+    price_cents: basePriceCents,
+    sale_enabled: saleFields.sale_enabled,
+    sale_price_cents: saleFields.sale_price_cents,
+  })
+  if (saleError) return NextResponse.json({ error: saleError }, { status: 400 })
 
   const admin = getSupabaseAdminClient()
 
@@ -151,6 +170,9 @@ export async function POST(request: Request) {
       affiliate_enabled: affiliate_enabled ?? true,
       affiliate_commission_percent: (affiliate_enabled ?? true) ? (affiliate_commission_percent ?? 30) : null,
       affiliate_updated_at: (affiliate_enabled ?? true) ? new Date().toISOString() : null,
+      sale_enabled: saleFields.sale_enabled,
+      sale_price_cents: saleFields.sale_price_cents,
+      sale_ends_at: saleFields.sale_ends_at,
     })
     .select('*')
     .single()

@@ -2,7 +2,8 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { SellBopLogo } from '@/components/ui/sellbop-logo'
-import { formatCurrency } from '@/lib/utils'
+import { getEffectiveProductPrice } from '@/lib/pricing/product-price'
+import { ProductPriceDisplay } from '@/components/ui/product-price-display'
 import { User, Package } from 'lucide-react'
 import { isSupabaseConfigured } from '@/lib/env'
 
@@ -23,6 +24,9 @@ interface ProductCard {
   cover_image_url: string | null
   image_url: string | null
   price_cents: number | null
+  sale_enabled?: boolean
+  sale_price_cents?: number | null
+  sale_ends_at?: string | null
 }
 
 export function ClientStorefront({ slug }: { slug: string }) {
@@ -117,7 +121,7 @@ export function ClientStorefront({ slug }: { slug: string }) {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {products.map(p => {
                   const coverUrl = p.cover_image_url ?? p.image_url
-                  const isFree = (p.price_cents ?? 0) === 0
+                  const pricing = getEffectiveProductPrice(p)
                   return (
                     <Link key={p.id} href={`/p/${p.slug}`}>
                       <div className="group rounded-2xl border border-neutral-200 bg-white hover:shadow-md hover:border-neutral-300 transition-all overflow-hidden">
@@ -142,9 +146,7 @@ export function ClientStorefront({ slug }: { slug: string }) {
                           {p.short_description && (
                             <p className="text-xs text-neutral-500 mb-3 line-clamp-2">{p.short_description}</p>
                           )}
-                          <p className="text-sm font-bold text-black">
-                            {isFree ? 'Free' : formatCurrency(p.price_cents ?? 0)}
-                          </p>
+                          <ProductPriceDisplay pricing={pricing} size="sm" showBadge badgeVariant="sale" />
                         </div>
                       </div>
                     </Link>

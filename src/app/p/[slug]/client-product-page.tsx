@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input'
 import { Shield, Download, ArrowRight, User, TrendingUp, Check, Copy, Share2 } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { isSupabaseConfigured } from '@/lib/env'
+import { getEffectiveProductPrice } from '@/lib/pricing/product-price'
+import { ProductPriceDisplay } from '@/components/ui/product-price-display'
 
 interface ProductData {
   id: string
@@ -18,6 +20,9 @@ interface ProductData {
   cover_image_url: string | null
   image_url: string | null
   price_cents: number | null
+  sale_enabled?: boolean
+  sale_price_cents?: number | null
+  sale_ends_at?: string | null
   is_live: boolean
   affiliate_enabled?: boolean
   affiliate_commission_percent?: number | null
@@ -54,10 +59,13 @@ export function ClientProductPage({ slug }: { slug: string }) {
   const [affiliateUrl, setAffiliateUrl] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
 
-  const isFree = (product?.price_cents ?? 0) === 0
+  const pricing = product
+    ? getEffectiveProductPrice(product)
+    : getEffectiveProductPrice({ price_cents: 0 })
+  const isFree = pricing.effectivePriceCents === 0
   const affiliateEnabled = product?.affiliate_enabled ?? false
   const commPercent = product?.affiliate_commission_percent ?? 0
-  const commCents = Math.floor((product?.price_cents ?? 0) * (commPercent / 100))
+  const commCents = Math.floor(pricing.effectivePriceCents * (commPercent / 100))
 
   useEffect(() => {
     if (!isSupabaseConfigured()) {
@@ -395,9 +403,7 @@ export function ClientProductPage({ slug }: { slug: string }) {
             <div className="bg-white rounded-2xl border border-neutral-200 p-6 sticky top-6">
               {/* Price */}
               <div className="mb-5">
-                <p className="text-3xl font-bold text-black">
-                  {isFree ? 'Free' : formatCurrency(product?.price_cents ?? 0)}
-                </p>
+                <ProductPriceDisplay pricing={pricing} size="lg" showBadge />
                 {!isFree && (
                   <p className="text-xs text-neutral-400 mt-1">One-time payment</p>
                 )}
@@ -436,7 +442,7 @@ export function ClientProductPage({ slug }: { slug: string }) {
                     className="w-full"
                     loading={state === 'processing'}
                   >
-                    {isFree ? 'Get Free Download' : `Pay ${formatCurrency(product?.price_cents ?? 0)}`}
+                    {isFree ? 'Get Free Download' : `Pay ${formatCurrency(pricing.effectivePriceCents)}`}
                   </Button>
                   <button
                     type="button"

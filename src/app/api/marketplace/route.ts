@@ -18,7 +18,7 @@ export async function GET(request: Request) {
     .from('products')
     .select(`
       id, title, slug, short_description, description,
-      cover_image_url, image_url, price_cents, category,
+      cover_image_url, image_url, price_cents, sale_enabled, sale_price_cents, sale_ends_at, category,
       affiliate_enabled, affiliate_commission_percent,
       created_at,
       stores!inner(id, name, slug, avatar_url)
@@ -58,6 +58,9 @@ export async function GET(request: Request) {
       shortDescription: p.short_description ?? null,
       coverImage: p.cover_image_url ?? p.image_url ?? null,
       priceCents: p.price_cents ?? 0,
+      saleEnabled: p.sale_enabled ?? false,
+      salePriceCents: p.sale_price_cents ?? null,
+      saleEndsAt: p.sale_ends_at ?? null,
       category: p.category ?? null,
       affiliateEnabled: p.affiliate_enabled ?? false,
       affiliateCommissionPercent: p.affiliate_commission_percent ?? null,

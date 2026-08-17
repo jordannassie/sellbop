@@ -4,6 +4,7 @@ import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { isSupabaseAdminConfigured } from '@/lib/env'
 import { env } from '@/lib/env'
 import { calcPlatformFeeCents } from '@/lib/platform-config'
+import { getEffectiveProductPrice } from '@/lib/pricing/product-price'
 
 interface PaidCheckoutPayload {
   productSlug: string
@@ -44,14 +45,15 @@ export async function POST(request: Request) {
   // Load product — server-side price; NEVER trust client
   const { data: product } = await admin
     .from('products')
-    .select('id, store_id, title, price_cents, is_live, product_type, affiliate_enabled, affiliate_commission_percent')
+    .select('id, store_id, title, price_cents, sale_enabled, sale_price_cents, sale_ends_at, is_live, product_type, affiliate_enabled, affiliate_commission_percent')
     .eq('slug', productSlug.trim())
     .maybeSingle()
 
   if (!product) return NextResponse.json({ error: 'Product not found.' }, { status: 404 })
   if (!product.is_live) return NextResponse.json({ error: 'Product is not available.' }, { status: 400 })
 
-  const priceCents = product.price_cents ?? 0
+  const pricing = getEffectiveProductPrice(product)
+  const priceCents = pricing.effectivePriceCents
   if (priceCents <= 0) {
     return NextResponse.json({ error: 'Use /api/checkout/free for free products.' }, { status: 400 })
   }
@@ -161,6 +163,7 @@ export async function POST(request: Request) {
       buyer_name: buyerName ?? '',
       discount_code_id: discountCodeId ?? '',
       discount_cents: String(discountCents),
+      subtotal_cents: String(priceCents),
       affiliate_relationship_id: affiliateRelationshipId ?? '',
       affiliate_commission_percent: affiliateCommissionPercent !== null ? String(affiliateCommissionPercent) : '',
     },

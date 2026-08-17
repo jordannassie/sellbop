@@ -120,6 +120,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const buyerEmail = meta.buyer_email ?? session.customer_email
   const buyerName = meta.buyer_name ?? null
   const discountCents = parseInt(meta.discount_cents ?? '0')
+  const subtotalCents = parseInt(meta.subtotal_cents ?? '0')
   const affiliateRelationshipId = meta.affiliate_relationship_id || null
   const affiliateCommissionPercent = meta.affiliate_commission_percent
     ? parseInt(meta.affiliate_commission_percent)
@@ -152,9 +153,10 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 
   if (!store) return
 
-  const totalCents = session.amount_total ?? product.price_cents ?? 0
+  const totalCents = session.amount_total ?? subtotalCents ?? product.price_cents ?? 0
   const platformFeeCents = calcPlatformFeeCents(totalCents)
   const paymentIntentId = typeof session.payment_intent === 'string' ? session.payment_intent : null
+  const orderSubtotalCents = subtotalCents > 0 ? subtotalCents : totalCents + discountCents
 
   const { data: order } = await admin
     .from('orders')
@@ -163,7 +165,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
       seller_user_id: store.owner_user_id,
       buyer_email: buyerEmail.toLowerCase(),
       buyer_name: buyerName,
-      subtotal_cents: (product.price_cents ?? 0),
+      subtotal_cents: orderSubtotalCents,
       shipping_cents: 0,
       total_cents: totalCents,
       discount_cents: discountCents,
@@ -189,7 +191,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     product_id: productId,
     title: product.title,
     quantity: 1,
-    unit_price_cents: product.price_cents ?? 0,
+    unit_price_cents: orderSubtotalCents,
     line_total_cents: totalCents,
   })
 

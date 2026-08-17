@@ -4,6 +4,10 @@ import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { isSupabaseAdminConfigured } from '@/lib/env'
 import { slugify } from '@/lib/utils'
 import type { Database } from '@/lib/supabase/types'
+import {
+  normalizeSaleFieldsForSave,
+  validateSalePricingForSave,
+} from '@/lib/pricing/product-price'
 
 async function getSellerStore(userId: string) {
   const admin = getSupabaseAdminClient()
@@ -133,6 +137,48 @@ export async function PATCH(
   }
   if ('affiliate_commission_percent' in body) {
     update.affiliate_commission_percent = body.affiliate_commission_percent as number | null
+  }
+
+  const nextPriceCents =
+    'price_cents' in body ? (body.price_cents as number | null) ?? 0 : undefined
+  const hasSalePatch =
+    'sale_enabled' in body ||
+    'sale_price_cents' in body ||
+    'sale_ends_at' in body ||
+    nextPriceCents !== undefined
+
+  if (hasSalePatch) {
+    const { data: current } = await admin
+      .from('products')
+      .select('price_cents, sale_enabled, sale_price_cents, sale_ends_at')
+      .eq('id', id)
+      .single()
+
+    const priceCents = nextPriceCents ?? current?.price_cents ?? 0
+    const saleFields = normalizeSaleFieldsForSave({
+      price_cents: priceCents,
+      sale_enabled:
+        'sale_enabled' in body ? (body.sale_enabled as boolean) : (current?.sale_enabled ?? false),
+      sale_price_cents:
+        'sale_price_cents' in body
+          ? (body.sale_price_cents as number | null)
+          : (current?.sale_price_cents ?? null),
+      sale_ends_at:
+        'sale_ends_at' in body
+          ? (body.sale_ends_at as string | null)
+          : (current?.sale_ends_at ?? null),
+    })
+
+    const saleError = validateSalePricingForSave({
+      price_cents: priceCents,
+      sale_enabled: saleFields.sale_enabled,
+      sale_price_cents: saleFields.sale_price_cents,
+    })
+    if (saleError) return NextResponse.json({ error: saleError }, { status: 400 })
+
+    update.sale_enabled = saleFields.sale_enabled
+    update.sale_price_cents = saleFields.sale_price_cents
+    update.sale_ends_at = saleFields.sale_ends_at
   }
 
   const { data: product, error } = await admin

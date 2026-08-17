@@ -6,6 +6,8 @@ import { Search, X, TrendingUp, ArrowRight } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { PublicHeader } from '@/components/marketing/public-header'
 import { ProductImage } from '@/components/ui/product-image'
+import { ProductPriceDisplay } from '@/components/ui/product-price-display'
+import { getEffectiveProductPrice } from '@/lib/pricing/product-price'
 
 const CATEGORIES = ['All', 'Business', 'Money', 'Templates', 'Education', 'Real Estate', 'Faith', 'Fitness', 'Design', 'Other']
 
@@ -16,6 +18,9 @@ interface MarketplaceProduct {
   shortDescription: string | null
   coverImage: string | null
   priceCents: number
+  saleEnabled: boolean
+  salePriceCents: number | null
+  saleEndsAt: string | null
   category: string | null
   affiliateEnabled: boolean
   affiliateCommissionPercent: number | null
@@ -24,8 +29,14 @@ interface MarketplaceProduct {
 }
 
 function ProductCard({ product }: { product: MarketplaceProduct }) {
+  const pricing = getEffectiveProductPrice({
+    price_cents: product.priceCents,
+    sale_enabled: product.saleEnabled,
+    sale_price_cents: product.salePriceCents,
+    sale_ends_at: product.saleEndsAt,
+  })
   const commPercent = product.affiliateCommissionPercent ?? 0
-  const commCents = Math.floor(product.priceCents * (commPercent / 100))
+  const commCents = Math.floor(pricing.effectivePriceCents * (commPercent / 100))
 
   return (
     <div className="group relative overflow-hidden rounded-2xl border border-neutral-200 bg-white hover:border-neutral-300 hover:shadow-md transition-all duration-200">
@@ -43,6 +54,13 @@ function ProductCard({ product }: { product: MarketplaceProduct }) {
             <div className="absolute top-3 left-3">
               <span className="inline-flex items-center rounded-full bg-white/90 backdrop-blur-sm px-2.5 py-1 text-[10px] font-bold text-neutral-700 shadow-sm">
                 {product.category}
+              </span>
+            </div>
+          )}
+          {pricing.isOnSale && (
+            <div className="absolute top-3 right-3">
+              <span className="inline-flex items-center rounded-full bg-emerald-500 px-2.5 py-1 text-[10px] font-bold text-white shadow-sm">
+                {pricing.discountPercent}% OFF
               </span>
             </div>
           )}
@@ -73,9 +91,7 @@ function ProductCard({ product }: { product: MarketplaceProduct }) {
 
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div>
-            <span className="text-base font-bold text-black">
-              {product.priceCents === 0 ? 'Free' : formatCurrency(product.priceCents)}
-            </span>
+            <ProductPriceDisplay pricing={pricing} size="sm" showBadge badgeVariant="sale" />
           </div>
 
           {product.affiliateEnabled && commPercent > 0 && (
