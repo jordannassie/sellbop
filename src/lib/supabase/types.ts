@@ -605,6 +605,68 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['seller_onboarding']['Insert']>
         Relationships: []
       }
+
+      agent_connections: {
+        Row: {
+          id: string
+          user_id: string
+          store_id: string | null
+          provider: string
+          name: string
+          token_hash: string
+          token_prefix: string
+          scopes: string[]
+          created_at: string
+          last_used_at: string | null
+          revoked_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          store_id?: string | null
+          provider?: string
+          name: string
+          token_hash: string
+          token_prefix: string
+          scopes?: string[]
+          created_at?: string
+          last_used_at?: string | null
+          revoked_at?: string | null
+        }
+        Update: Partial<Database['public']['Tables']['agent_connections']['Insert']>
+        Relationships: []
+      }
+
+      agent_activity_log: {
+        Row: {
+          id: string
+          connection_id: string | null
+          user_id: string
+          action: string
+          target_type: string | null
+          target_id: string | null
+          before: Record<string, unknown> | null
+          after: Record<string, unknown> | null
+          status: string
+          error_message: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          connection_id?: string | null
+          user_id: string
+          action: string
+          target_type?: string | null
+          target_id?: string | null
+          before?: Record<string, unknown> | null
+          after?: Record<string, unknown> | null
+          status?: string
+          error_message?: string | null
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['agent_activity_log']['Insert']>
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: Record<string, never>

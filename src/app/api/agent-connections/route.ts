@@ -1,0 +1,78 @@
+import { NextResponse } from 'next/server'
+import { getSupabaseAdminClient } from '@/lib/supabase/admin'
+import { getSupabaseServerClient } from '@/lib/supabase/server'
+import { isSupabaseAdminConfigured } from '@/lib/env'
+import { generateAgentToken, ALL_AGENT_SCOPES, type AgentProvider, type AgentScope } from '@/lib/agent/auth'
+
+// GET /api/agent-connections — list the current user's AI agent connections (no token hashes returned)
+export async function GET() {
+  if (!isSupabaseAdminConfigured()) {
+    return NextResponse.json({ error: 'Database not configured.' }, { status: 503 })
+  }
+
+  const userClient = await getSupabaseServerClient()
+  const { data: { user } } = await userClient.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 })
+
+  const admin = getSupabaseAdminClient()
+  const { data: connections, error } = await admin
+    .from('agent_connections')
+    .select('id, provider, name, token_prefix, scopes, created_at, last_used_at, revoked_at')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false })
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ connections: connections ?? [] })
+}
+
+// POST /api/agent-connections — create a new connection. Returns the raw token ONCE.
+export async function POST(request: Request) {
+  if (!isSupabaseAdminConfigured()) {
+    return NextResponse.json({ error: 'Database not configured.' }, { status: 503 })
+  }
+
+  const userClient = await getSupabaseServerClient()
+  const { data: { user } } = await userClient.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 })
+
+  const body = await request.json()
+  const { name, provider, scopes } = body as { name?: string; provider?: AgentProvider; scopes?: AgentScope[] }
+
+  if (!name?.trim()) {
+    return NextResponse.json({ error: 'A connection name is required.' }, { status: 400 })
+  }
+
+  const requestedScopes = (scopes ?? []).filter((s): s is AgentScope => ALL_AGENT_SCOPES.includes(s))
+  if (requestedScopes.length === 0) {
+    return NextResponse.json({ error: 'Select at least one permission.' }, { status: 400 })
+  }
+
+  const admin = getSupabaseAdminClient()
+
+  const { data: store } = await admin
+    .from('stores')
+    .select('id')
+    .eq('owner_user_id', user.id)
+    .maybeSingle()
+
+  const { token, hash, prefix } = generateAgentToken()
+
+  const { data: connection, error } = await admin
+    .from('agent_connections')
+    .insert({
+      user_id: user.id,
+      store_id: store?.id ?? null,
+      provider: provider ?? 'custom',
+      name: name.trim(),
+      token_hash: hash,
+      token_prefix: prefix,
+      scopes: requestedScopes,
+    })
+    .select('id, provider, name, token_prefix, scopes, created_at, last_used_at, revoked_at')
+    .single()
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // The raw token is only ever returned here — it cannot be retrieved again.
+  return NextResponse.json({ connection, token }, { status: 201 })
+}

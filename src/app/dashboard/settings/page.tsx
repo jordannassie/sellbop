@@ -443,6 +443,21 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
+        {/* AI & Integrations */}
+        <Card>
+          <CardHeader>
+            <CardTitle>AI & Integrations</CardTitle>
+          </CardHeader>
+          <CardContent className="flex items-center justify-between">
+            <p className="text-sm text-neutral-600">
+              Let Claude and other AI tools create and manage products in your store.
+            </p>
+            <Button size="sm" variant="secondary" onClick={() => router.push('/dashboard/settings/ai-integrations')}>
+              Manage
+            </Button>
+          </CardContent>
+        </Card>
+
         {/* Danger zone */}
         <Card>
           <CardHeader>
