@@ -16,6 +16,7 @@ import { ensureUserStore } from '@/lib/supabase/ensure-user-store'
 import type { StoreRow } from '@/lib/supabase/ensure-user-store'
 import type { Database } from '@/lib/supabase/types'
 import { DEMO_SELLER_PROFILE, DEMO_STOREFRONT } from '@/lib/demo-data/seed'
+import { DEFAULT_STORE_BANNER_URL } from '@/lib/store-defaults'
 
 export type { StoreRow }
 
@@ -28,7 +29,7 @@ const DEMO_STORE_ROW: StoreRow = {
   headline: DEMO_STOREFRONT.headline ?? null,
   bio: DEMO_STOREFRONT.bio ?? null,
   avatar_url: DEMO_STOREFRONT.avatarUrl ?? null,
-  banner_url: DEMO_STOREFRONT.bannerUrl ?? null,
+  banner_url: DEMO_STOREFRONT.bannerUrl ?? DEFAULT_STORE_BANNER_URL,
   social_links: null,
   header_layout: null,
   layout_mode: null,

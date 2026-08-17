@@ -6,6 +6,7 @@ import { getEffectiveProductPrice } from '@/lib/pricing/product-price'
 import { ProductPriceDisplay } from '@/components/ui/product-price-display'
 import { User, Package } from 'lucide-react'
 import { isSupabaseConfigured } from '@/lib/env'
+import { resolveStoreBannerUrl } from '@/lib/store-defaults'
 
 interface StoreData {
   slug: string
@@ -83,12 +84,10 @@ export function ClientStorefront({ slug }: { slug: string }) {
       </div>
 
       {/* Banner */}
-      {store.banner_url && (
-        <div className="w-full h-40 sm:h-56 overflow-hidden bg-neutral-100">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={store.banner_url} alt="" className="w-full h-full object-cover" />
-        </div>
-      )}
+      <div className="w-full h-40 sm:h-56 overflow-hidden bg-neutral-100">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={resolveStoreBannerUrl(store.banner_url)} alt="" className="w-full h-full object-cover" />
+      </div>
 
       {/* Creator header */}
       <div className="max-w-5xl mx-auto px-4 sm:px-6">

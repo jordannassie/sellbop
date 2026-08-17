@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { slugify } from '@/lib/utils'
+import { DEFAULT_STORE_BANNER_URL } from '@/lib/store-defaults'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 
@@ -58,6 +59,7 @@ export async function POST(request: Request) {
       owner_user_id: user.id,
       slug,
       name,
+      banner_url: DEFAULT_STORE_BANNER_URL,
       avatar_url: user.user_metadata?.avatar_url ?? user.user_metadata?.picture ?? null,
     })
     .select('id')

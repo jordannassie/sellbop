@@ -9,8 +9,12 @@ import { useAuth } from '@/context/auth-context'
 import { useUserStore } from '@/hooks/use-user-store'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { uploadFile, buildStoragePath } from '@/lib/supabase/storage'
-import { Upload, User, Loader2, ExternalLink, Image as ImageIcon, X } from 'lucide-react'
+import { Upload, User, Loader2, ExternalLink, X } from 'lucide-react'
 import { SOCIAL_PLATFORMS, SocialIcon, normalizeSocialUrl } from '@/components/ui/social-icons'
+import {
+  isCustomStoreBanner,
+  resolveStoreBannerUrl,
+} from '@/lib/store-defaults'
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -59,7 +63,7 @@ export default function SettingsPage() {
       setBio(store.bio ?? '')
       setSupportEmail(store.support_email ?? session?.email ?? '')
       if (store.avatar_url) setProfileAvatar(store.avatar_url)
-      if (store.banner_url) setBannerUrl(store.banner_url)
+      setBannerUrl(store.banner_url ?? null)
       if (store.social_links) setSocialLinks(store.social_links as Record<string, string>)
     }
   }, [store, session?.email])
@@ -137,16 +141,20 @@ export default function SettingsPage() {
     if (bannerInputRef.current) bannerInputRef.current.value = ''
   }
 
-  async function handleRemoveBanner() {
+  async function handleUseDefaultBanner() {
     setBannerUrl(null)
     const err = await saveStore({ banner_url: null })
     if (err) {
-      toast.error('Could not remove banner: ' + err)
+      toast.error('Could not reset banner: ' + err)
     } else {
-      toast.success('Banner removed.')
+      toast.success('Default banner restored.')
       refetch()
       router.refresh()
     }
+  }
+
+  async function handleRemoveBanner() {
+    await handleUseDefaultBanner()
   }
 
   function setSocialLink(key: string, value: string) {
@@ -236,6 +244,8 @@ export default function SettingsPage() {
   }
 
   const storeUrl = store?.slug ? `/${store.slug}` : null
+  const displayBannerUrl = resolveStoreBannerUrl(bannerUrl)
+  const usingCustomBanner = isCustomStoreBanner(bannerUrl)
 
   return (
     <div className="max-w-2xl">
@@ -322,26 +332,19 @@ export default function SettingsPage() {
                 className="relative w-full rounded-xl overflow-hidden border border-neutral-200 bg-neutral-100 mb-2"
                 style={{ aspectRatio: '4/1' }}
               >
-                {bannerUrl ? (
-                  <>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={bannerUrl} alt="Store banner" className="w-full h-full object-cover" />
-                    <button
-                      onClick={handleRemoveBanner}
-                      className="absolute top-2 right-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors"
-                      aria-label="Remove banner"
-                    >
-                      <X size={12} />
-                    </button>
-                  </>
-                ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center gap-1">
-                    <ImageIcon size={20} className="text-neutral-300" />
-                    <p className="text-xs text-neutral-400">No banner uploaded</p>
-                  </div>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={displayBannerUrl} alt="Store banner" className="w-full h-full object-cover" />
+                {usingCustomBanner && (
+                  <button
+                    onClick={handleRemoveBanner}
+                    className="absolute top-2 right-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors"
+                    aria-label="Remove custom banner"
+                  >
+                    <X size={12} />
+                  </button>
                 )}
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <Button
                   size="sm"
                   variant="secondary"
@@ -349,8 +352,18 @@ export default function SettingsPage() {
                   disabled={uploadingBanner}
                 >
                   {uploadingBanner ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
-                  {uploadingBanner ? 'Uploading…' : bannerUrl ? 'Change Banner' : 'Upload Banner'}
+                  {uploadingBanner ? 'Uploading…' : usingCustomBanner ? 'Change Banner' : 'Upload Custom Banner'}
                 </Button>
+                {usingCustomBanner && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={handleUseDefaultBanner}
+                    disabled={uploadingBanner}
+                  >
+                    Use default banner
+                  </Button>
+                )}
                 <p className="text-xs text-neutral-400">1920 × 600 recommended · JPG, PNG · Max 10 MB</p>
               </div>
               <input

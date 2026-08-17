@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { isSupabaseAdminConfigured } from '@/lib/env'
+import { resolveStoreBannerUrl } from '@/lib/store-defaults'
 
 // GET /api/public/store/[slug] — publicly fetch a store and its live products
 export async function GET(
@@ -37,7 +38,9 @@ export async function GET(
   }
 
   // Extract banner and social links from the single query result
-  const bannerUrl: string | null = (store as Record<string, unknown>).banner_url as string | null ?? null
+  const bannerUrl = resolveStoreBannerUrl(
+    (store as Record<string, unknown>).banner_url as string | null | undefined,
+  )
   const rawSl = (store as Record<string, unknown>).social_links
   const socialLinks: Record<string, string> =
     rawSl && typeof rawSl === 'object' ? rawSl as Record<string, string> : {}

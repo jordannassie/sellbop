@@ -10,6 +10,7 @@
  */
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from './types'
+import { DEFAULT_STORE_BANNER_URL } from '@/lib/store-defaults'
 
 export type StoreRow = Database['public']['Tables']['stores']['Row']
 
@@ -79,7 +80,7 @@ export async function ensureUserStore(
   const storeName = name ?? email.split('@')[0]
   const { data: created, error: createErr } = await supabase
     .from('stores')
-    .insert({ owner_user_id: userId, slug, name: storeName })
+    .insert({ owner_user_id: userId, slug, name: storeName, banner_url: DEFAULT_STORE_BANNER_URL })
     .select('*')
     .single()
 

@@ -9,6 +9,7 @@ import {
   User, Package, Share2, Check, TrendingUp, ArrowRight, Copy, ChevronDown,
 } from 'lucide-react'
 import { isSupabaseConfigured } from '@/lib/env'
+import { resolveStoreBannerUrl } from '@/lib/store-defaults'
 import { SocialIcon, SOCIAL_PLATFORMS } from '@/components/ui/social-icons'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -281,20 +282,12 @@ export function ClientStorefront({ slug }: { slug: string }) {
       <div className="relative">
         {/* Banner image */}
         <div className="w-full overflow-hidden h-[160px] sm:h-[200px] md:h-[240px]">
-          {store.banner_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={store.banner_url}
-              alt=""
-              className="w-full h-full object-cover object-center"
-            />
-          ) : (
-            <div className="w-full h-full" style={{
-              background: '#111111',
-              backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px)',
-              backgroundSize: '24px 24px',
-            }} />
-          )}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={resolveStoreBannerUrl(store.banner_url)}
+            alt=""
+            className="w-full h-full object-cover object-center"
+          />
         </div>
 
         {/* Avatar — absolutely positioned over banner, 75% inside / 25% below */}

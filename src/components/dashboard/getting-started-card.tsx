@@ -9,7 +9,6 @@ import { startStripeConnect } from '@/components/dashboard/stripe-payments-card'
 import type { OnboardingStatus } from '@/app/api/onboarding/route'
 
 const STORAGE_EXPANDED = 'sellbop_onboarding_expanded'
-const STORAGE_SEEN = 'sellbop_onboarding_seen'
 
 const STEPS = [
   {
@@ -57,13 +56,9 @@ function isStepComplete(
 }
 
 function readExpandedPreference(allComplete: boolean): boolean {
-  if (typeof window === 'undefined') return !allComplete
+  if (typeof window === 'undefined') return false
   if (allComplete) return false
-  const seen = localStorage.getItem(STORAGE_SEEN)
-  const pref = localStorage.getItem(STORAGE_EXPANDED)
-  if (pref === 'false') return false
-  if (pref === 'true') return true
-  return !seen
+  return localStorage.getItem(STORAGE_EXPANDED) === 'true'
 }
 
 export function GettingStartedCard() {
@@ -83,9 +78,6 @@ export function GettingStartedCard() {
         if (data) {
           const complete = data.completed_count >= data.total_steps
           setExpanded(readExpandedPreference(complete))
-          if (!localStorage.getItem(STORAGE_SEEN)) {
-            localStorage.setItem(STORAGE_SEEN, '1')
-          }
         }
       })
   }
