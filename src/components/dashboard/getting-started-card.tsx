@@ -21,8 +21,8 @@ const STEPS = [
     title: 'Connect Claude',
     desc: 'Let AI help build and manage your products.',
     cta: 'Connect Claude',
-    href: '/dashboard/resources/connect-ai#claude',
-    manualKey: 'claude' as const,
+    href: '/dashboard/settings/ai-integrations',
+    autoKey: 'claude' as const,
   },
   {
     id: 'higgsfield',

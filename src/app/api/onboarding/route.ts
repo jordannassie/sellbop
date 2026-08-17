@@ -8,6 +8,7 @@ export interface OnboardingStatus {
   manual_steps: Record<string, boolean>
   auto: {
     create_product: boolean
+    claude: boolean
     affiliates: boolean
   }
   completed_count: number
@@ -32,17 +33,28 @@ async function computeAutoSteps(userId: string) {
     .maybeSingle()
 
   if (!store) {
-    return { create_product: false, affiliates: false }
+    return { create_product: false, claude: false, affiliates: false }
   }
 
-  const { data: products } = await admin
-    .from('products')
-    .select('id, affiliate_enabled')
-    .eq('store_id', store.id)
+  const [{ data: products }, { data: connections }] = await Promise.all([
+    admin
+      .from('products')
+      .select('id, affiliate_enabled')
+      .eq('store_id', store.id),
+    admin
+      .from('agent_connections')
+      .select('id, provider, revoked_at')
+      .eq('user_id', userId),
+  ])
 
   const list = products ?? []
+  const activeClaude = (connections ?? []).some(
+    c => c.provider === 'claude' && !c.revoked_at,
+  )
+
   return {
     create_product: list.length >= 1,
+    claude: activeClaude,
     affiliates: list.some(p => p.affiliate_enabled === true),
   }
 }
@@ -52,7 +64,7 @@ export async function GET() {
     return NextResponse.json({
       dismissed: false,
       manual_steps: {},
-      auto: { create_product: false, affiliates: false },
+      auto: { create_product: false, claude: false, affiliates: false },
       completed_count: 0,
       total_steps: TOTAL_STEPS,
     } satisfies OnboardingStatus)
@@ -77,7 +89,7 @@ export async function GET() {
 
   const steps = [
     auto.create_product,
-    manual.claude === true,
+    auto.claude || manual.claude === true,
     manual.higgsfield === true,
     auto.affiliates,
     manual.share_store === true,

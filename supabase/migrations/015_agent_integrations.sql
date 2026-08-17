@@ -1,5 +1,5 @@
 -- ============================================================
--- 013 — AI Agent Integrations
+-- 015 — AI Agent Integrations
 -- ============================================================
 -- Adds scoped API-token connections for external AI agents
 -- (Claude, Higgsfield, ChatGPT, custom) plus an activity log

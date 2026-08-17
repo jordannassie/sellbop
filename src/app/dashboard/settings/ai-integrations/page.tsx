@@ -7,6 +7,11 @@ import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { Bot, Copy, Loader2, Plus, ShieldCheck, Sparkles, Trash2 } from 'lucide-react'
 
+const MCP_URL =
+  typeof window !== 'undefined'
+    ? `${window.location.origin}/api/mcp`
+    : 'https://sellbop.com/api/mcp'
+
 type Provider = 'claude' | 'higgsfield' | 'chatgpt' | 'custom'
 
 interface Connection {
@@ -126,6 +131,11 @@ export default function AiIntegrationsPage() {
     toast.success('Token copied.')
   }
 
+  function copyMcpUrl() {
+    navigator.clipboard.writeText(MCP_URL)
+    toast.success('MCP URL copied.')
+  }
+
   return (
     <div className="max-w-2xl">
       <div className="mb-6">
@@ -139,6 +149,25 @@ export default function AiIntegrationsPage() {
       </div>
 
       <div className="space-y-5">
+        <Card>
+          <CardHeader>
+            <CardTitle>Connect Claude</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm text-neutral-600">
+            <ol className="list-decimal list-inside space-y-1.5">
+              <li>Create a Claude connection below and copy your token.</li>
+              <li>Open Claude → Customize → Connectors → Add SellBop.</li>
+              <li>Paste the MCP URL and your token when prompted.</li>
+              <li>Ask Claude to create products in your SellBop store.</li>
+            </ol>
+            <div className="flex items-center gap-2 pt-1">
+              <code className="flex-1 rounded-lg bg-neutral-100 px-3 py-2 text-xs font-mono break-all">{MCP_URL}</code>
+              <Button size="sm" variant="secondary" onClick={copyMcpUrl}><Copy size={13} /></Button>
+            </div>
+            <p className="text-xs text-neutral-400">Powered by MCP · See AGENT-API.md for full REST API docs.</p>
+          </CardContent>
+        </Card>
+
         {/* New-token reveal (shown once) */}
         {newToken && (
           <Card className="border-black">
