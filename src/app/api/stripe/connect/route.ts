@@ -60,12 +60,14 @@ export async function POST() {
         },
       },
       defaults: {
-        // Stripe monitors risk and is responsible for negative balances on
-        // this recipient account (Stripe-managed risk). Required whenever a
-        // recipient requests the stripe_transfers capability.
+        // This platform account's Connect pricing model requires the
+        // platform (not Stripe) to be the fees/losses collector for
+        // recipient accounts — Stripe rejects 'stripe' here with
+        // "can only be 'application' for the set of configurations this
+        // account has."
         responsibilities: {
-          fees_collector: 'stripe',
-          losses_collector: 'stripe',
+          fees_collector: 'application',
+          losses_collector: 'application',
         },
       },
     })
