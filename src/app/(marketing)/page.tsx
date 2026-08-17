@@ -22,9 +22,10 @@ import {
   Camera,
   Code2,
   Music2,
-  ListChecks,
   Plus,
   Zap,
+  Sparkles,
+  ArrowUpRight,
 } from 'lucide-react'
 
 // Avatar positions for the affiliate creator cloud
@@ -125,39 +126,60 @@ export default async function HomePage() {
       </section>
 
       {/* ── How it works ─────────────────────────────────────────── */}
-      <section className="border-t border-neutral-100 py-20 bg-neutral-50">
+      <section className="border-t border-neutral-100 py-24 bg-white">
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-14">
-            <p className="text-xs font-bold uppercase tracking-[0.25em] text-neutral-400 mb-3">How it works</p>
-            <h2 className="text-3xl sm:text-4xl font-bold text-black tracking-tight">
+          <div className="text-center mb-16">
+            <p className="text-xs font-bold uppercase tracking-[0.25em] mb-3" style={{ color: '#00E676' }}>
+              How it works
+            </p>
+            <h2 className="text-4xl sm:text-5xl font-black text-black tracking-tight">
               Upload it. Price it. Sell it.
             </h2>
-            <p className="text-neutral-500 mt-3 text-base">
+            <p className="text-neutral-500 mt-4 text-base sm:text-lg">
               Then Sellbop Share helps everyone sell it with you.
             </p>
           </div>
 
-          <div className="grid gap-6 sm:grid-cols-4">
+          <div className="grid gap-10 sm:grid-cols-4 sm:gap-4">
             {[
               { step: '1', icon: Upload, title: 'Upload your product', desc: 'Add your PDF, ZIP, template, or any digital file.' },
               { step: '2', icon: CreditCard, title: 'Set your price', desc: 'Choose any price — or make it free for lead magnets.' },
               { step: '3', icon: Link2, title: 'Share your link', desc: 'Post your Sellbop product link anywhere.' },
               { step: '4', icon: Download, title: 'Get paid', desc: 'Buyers checkout and receive their download instantly.' },
             ].map((item, i) => (
-              <div key={item.step} className="relative">
+              <div key={item.step} className="relative flex flex-col items-center text-center">
                 {i < 3 && (
-                  <div className="hidden sm:block absolute top-8 left-full w-full h-px bg-neutral-200 -translate-y-px z-0" style={{ width: 'calc(100% - 2rem)', left: '75%' }} />
-                )}
-                <div className="relative z-10 flex flex-col items-center text-center">
-                  <div className="w-16 h-16 rounded-2xl bg-white border border-neutral-200 flex items-center justify-center mb-4 shadow-sm">
-                    <item.icon size={22} className="text-neutral-700" />
+                  <div
+                    className="hidden sm:flex absolute top-10 left-[calc(50%+3.5rem)] w-[calc(100%-3.5rem)] items-center z-0"
+                    aria-hidden="true"
+                  >
+                    <div className="flex-1 border-t-2 border-dashed border-neutral-200" />
+                    <div className="w-2.5 h-2.5 rounded-full flex-shrink-0 mx-0.5" style={{ background: '#00E676' }} />
+                    <div className="flex-1 border-t-2 border-dashed border-neutral-200" />
                   </div>
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">Step {item.step}</span>
-                  <p className="font-bold text-sm text-black mb-2">{item.title}</p>
-                  <p className="text-xs text-neutral-500 leading-relaxed max-w-[160px]">{item.desc}</p>
+                )}
+                <div className="relative z-10 w-full">
+                  <div className="relative mx-auto w-full max-w-[168px] aspect-square rounded-3xl bg-white border border-neutral-100 shadow-[0_8px_30px_rgba(0,0,0,0.06)] flex items-center justify-center mb-5">
+                    <span
+                      className="absolute top-3 left-3 w-7 h-7 rounded-full flex items-center justify-center text-xs font-black text-white"
+                      style={{ background: '#00E676' }}
+                    >
+                      {item.step}
+                    </span>
+                    <item.icon size={36} strokeWidth={1.75} style={{ color: '#00E676' }} />
+                  </div>
+                  <p className="font-bold text-base text-black mb-2">{item.title}</p>
+                  <p className="text-sm text-neutral-500 leading-relaxed max-w-[200px] mx-auto">{item.desc}</p>
                 </div>
               </div>
             ))}
+          </div>
+
+          <div className="mt-14 flex justify-center">
+            <div className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-5 py-2.5 shadow-sm">
+              <Sparkles size={14} style={{ color: '#00E676' }} />
+              <span className="text-sm font-medium text-neutral-600">Simple for you. Powerful for everyone.</span>
+            </div>
           </div>
         </div>
       </section>
@@ -431,38 +453,120 @@ export default async function HomePage() {
       </section>
 
       {/* ── What you can sell ─────────────────────────────────────── */}
-      <section className="border-t border-neutral-100 py-20 bg-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-12">
-            <p className="text-xs font-bold uppercase tracking-[0.25em] text-neutral-400 mb-3">What you can sell</p>
-            <h2 className="text-3xl sm:text-4xl font-bold text-black tracking-tight mb-3">
+      <section className="border-t border-neutral-100 py-24 bg-neutral-50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-14">
+            <p className="text-xs font-bold uppercase tracking-[0.25em] mb-3" style={{ color: '#00E676' }}>
+              What you can sell
+            </p>
+            <h2 className="text-4xl sm:text-5xl font-black text-black tracking-tight mb-3">
               Any digital product
             </h2>
-            <p className="text-neutral-500 max-w-sm mx-auto text-base">
+            <p className="text-neutral-500 max-w-md mx-auto text-base sm:text-lg">
               If you can put it in a file, you can sell it on Sellbop.
             </p>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 sm:grid-rows-4 gap-4">
+
+            {/* Center hero — first on mobile */}
+            <div className="order-first sm:order-none sm:col-start-2 sm:row-start-1 sm:row-span-3 rounded-3xl bg-black p-8 flex flex-col items-center justify-center text-center min-h-[300px]">
+              <div className="relative mb-8 w-28 h-24">
+                <div className="absolute inset-x-2 top-0 h-16 rounded-xl bg-neutral-800/80 border border-neutral-700" />
+                <div className="absolute inset-x-4 top-3 h-16 rounded-xl bg-neutral-700/80 border border-neutral-600" />
+                <div
+                  className="absolute inset-x-6 top-6 h-16 rounded-xl flex items-center justify-center border"
+                  style={{ background: 'rgba(0,230,118,0.15)', borderColor: 'rgba(0,230,118,0.3)' }}
+                >
+                  <Upload size={28} style={{ color: '#00E676' }} />
+                </div>
+              </div>
+              <h3 className="text-2xl sm:text-3xl font-black text-white mb-2">All digital. All yours.</h3>
+              <p className="text-neutral-400 text-sm mb-8">Upload once. Sell unlimited.</p>
+              <Link href="/signup">
+                <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center hover:scale-105 transition-transform">
+                  <ArrowRight size={18} className="text-black" />
+                </div>
+              </Link>
+            </div>
+
+            {/* Left column */}
             {[
-              { label: 'eBooks & PDFs',            Icon: BookOpen },
-              { label: 'Templates & Spreadsheets', Icon: Table2 },
-              { label: 'Presets & Filters',        Icon: SlidersHorizontal },
-              { label: 'Design Assets',            Icon: Palette },
-              { label: 'Photography',              Icon: Camera },
-              { label: 'Software & Scripts',       Icon: Code2 },
-              { label: 'Audio & Music',            Icon: Music2 },
-              { label: 'Guides & Checklists',      Icon: ListChecks },
-              { label: 'And more…',               Icon: Plus },
-            ].map(({ label, Icon }) => (
+              { label: 'eBooks & PDFs', desc: 'Write it. Export it. Sell it everywhere.', Icon: BookOpen, grid: 'sm:col-start-1 sm:row-start-1' },
+              { label: 'Audio & Music', desc: 'Beats, tracks, and sound packs.', Icon: Music2, grid: 'sm:col-start-1 sm:row-start-2' },
+              { label: 'Presets & Filters', desc: 'Photo, video, and creative presets.', Icon: SlidersHorizontal, grid: 'sm:col-start-1 sm:row-start-3' },
+            ].map(({ label, desc, Icon, grid }) => (
               <div
                 key={label}
-                className="group flex items-center gap-3 rounded-xl border border-neutral-200 bg-white px-4 py-3.5 hover:border-neutral-300 hover:shadow-sm transition-all duration-150"
+                className={`group relative rounded-3xl border border-neutral-200 bg-white p-6 flex flex-col justify-between min-h-[160px] hover:border-neutral-300 hover:shadow-md transition-all duration-200 ${grid}`}
               >
-                <Icon size={16} style={{ color: '#00E676' }} className="flex-shrink-0" />
-                <span className="text-sm font-medium text-neutral-700">{label}</span>
+                <div>
+                  <div
+                    className="w-11 h-11 rounded-2xl flex items-center justify-center mb-4"
+                    style={{ background: 'rgba(0,230,118,0.12)' }}
+                  >
+                    <Icon size={20} style={{ color: '#00E676' }} />
+                  </div>
+                  <p className="font-bold text-black text-base mb-1">{label}</p>
+                  <p className="text-sm text-neutral-500 leading-relaxed">{desc}</p>
+                </div>
+                <div className="absolute right-5 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full border border-neutral-200 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <ArrowUpRight size={16} className="text-neutral-400" />
+                </div>
               </div>
             ))}
+
+            {/* Right column */}
+            {[
+              { label: 'Design Assets', desc: 'Graphics, mockups, icons & more.', Icon: Palette, grid: 'sm:col-start-3 sm:row-start-1' },
+              { label: 'Templates & Spreadsheets', desc: 'Docs, sheets, and ready-to-use kits.', Icon: Table2, grid: 'sm:col-start-3 sm:row-start-2' },
+              { label: 'Photography', desc: 'Photos, stock, and bundles.', Icon: Camera, grid: 'sm:col-start-3 sm:row-start-3' },
+              { label: 'Software & Scripts', desc: 'Tools, plugins, and code.', Icon: Code2, grid: 'sm:col-start-3 sm:row-start-4' },
+            ].map(({ label, desc, Icon, grid }) => (
+              <div
+                key={label}
+                className={`group relative rounded-3xl border border-neutral-200 bg-white p-6 flex flex-col justify-between min-h-[160px] hover:border-neutral-300 hover:shadow-md transition-all duration-200 ${grid}`}
+              >
+                <div>
+                  <div
+                    className="w-11 h-11 rounded-2xl flex items-center justify-center mb-4"
+                    style={{ background: 'rgba(0,230,118,0.12)' }}
+                  >
+                    <Icon size={20} style={{ color: '#00E676' }} />
+                  </div>
+                  <p className="font-bold text-black text-base mb-1">{label}</p>
+                  <p className="text-sm text-neutral-500 leading-relaxed pr-8">{desc}</p>
+                </div>
+                <div className="absolute right-5 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full border border-neutral-200 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <ArrowUpRight size={16} className="text-neutral-400" />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* And more bar */}
+          <div className="mt-4 rounded-full border border-neutral-200 bg-white px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
+            <div className="flex items-center gap-3 flex-shrink-0">
+              <div
+                className="w-9 h-9 rounded-full flex items-center justify-center"
+                style={{ background: 'rgba(0,230,118,0.12)' }}
+              >
+                <Plus size={16} style={{ color: '#00E676' }} />
+              </div>
+              <span className="font-bold text-black text-sm">And more...</span>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {['Courses & Lessons', 'Printables', 'Notion Templates', 'Data & Reports', 'Stock Media', 'Fonts & Typography'].map(tag => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1.5 text-xs font-medium text-neutral-600"
+                >
+                  <Check size={11} style={{ color: '#00E676' }} />
+                  {tag}
+                </span>
+              ))}
+              <span className="text-xs text-neutral-400 pl-1">and more</span>
+            </div>
           </div>
         </div>
       </section>
