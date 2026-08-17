@@ -104,7 +104,11 @@ export default function DashboardOverview() {
         </div>
         {storeSlug && (
           <Link href={`/store/${storeSlug}`} target="_blank">
-            <Button size="sm" variant="secondary">
+            <Button
+              size="sm"
+              className="font-bold"
+              style={{ background: '#00E676', color: '#000', borderColor: '#00E676' }}
+            >
               <ExternalLink size={13} /> View Store
             </Button>
           </Link>

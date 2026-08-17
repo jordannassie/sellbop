@@ -19,6 +19,7 @@ import {
   Plus,
   TrendingUp,
   Grid3x3,
+  ExternalLink,
 } from 'lucide-react'
 import { useAuth } from '@/context/auth-context'
 import { useUserStore } from '@/hooks/use-user-store'
@@ -178,8 +179,10 @@ export function DashboardSidebar() {
     </div>
   )
 
+  const storeHref = store?.slug ? `/store/${store.slug}` : null
+
   const createBtn = (onNavigate?: () => void) => (
-    <div className="px-2 pt-3 pb-2">
+    <div className="px-2 pt-3 pb-2 space-y-2">
       {hasStore ? (
         <Link
           href="/dashboard/products/new"
@@ -196,6 +199,18 @@ export function DashboardSidebar() {
         >
           <Store size={15} /> Start Selling
         </Link>
+      )}
+      {storeHref && (
+        <a
+          href={storeHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={onNavigate}
+          className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-colors hover:opacity-90"
+          style={{ background: '#00E676', color: '#000' }}
+        >
+          <ExternalLink size={14} /> View Store
+        </a>
       )}
     </div>
   )
