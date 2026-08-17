@@ -31,7 +31,10 @@ export async function POST(request: Request) {
     return Response.json({ error: 'unsupported_grant_type' }, { status: 400 })
   }
   if (!code || !redirect_uri || !code_verifier || !client_id) {
-    return Response.json({ error: 'invalid_request' }, { status: 400 })
+    return Response.json({
+      error: 'invalid_request',
+      error_description: `Missing required param(s). Received keys: ${Object.keys(params).join(', ') || '(none)'}; content-type: ${contentType}`,
+    }, { status: 400 })
   }
 
   const admin = getSupabaseAdminClient()
@@ -42,14 +45,26 @@ export async function POST(request: Request) {
     .eq('code', code)
     .maybeSingle()
 
-  if (!authCode || authCode.used || authCode.client_id !== client_id || authCode.redirect_uri !== redirect_uri) {
-    return Response.json({ error: 'invalid_grant' }, { status: 400 })
+  if (!authCode) {
+    return Response.json({ error: 'invalid_grant', error_description: 'Unknown or already-consumed code.' }, { status: 400 })
+  }
+  if (authCode.used) {
+    return Response.json({ error: 'invalid_grant', error_description: 'Code already used.' }, { status: 400 })
+  }
+  if (authCode.client_id !== client_id) {
+    return Response.json({ error: 'invalid_grant', error_description: `client_id mismatch (expected ${authCode.client_id}).` }, { status: 400 })
+  }
+  if (authCode.redirect_uri !== redirect_uri) {
+    return Response.json({ error: 'invalid_grant', error_description: `redirect_uri mismatch (expected ${authCode.redirect_uri}, got ${redirect_uri}).` }, { status: 400 })
   }
   if (new Date(authCode.expires_at).getTime() < Date.now()) {
     return Response.json({ error: 'invalid_grant', error_description: 'Code expired.' }, { status: 400 })
   }
   if (!verifyPkceS256(code_verifier, authCode.code_challenge)) {
-    return Response.json({ error: 'invalid_grant', error_description: 'PKCE verification failed.' }, { status: 400 })
+    return Response.json({
+      error: 'invalid_grant',
+      error_description: `PKCE verification failed. verifier_len=${code_verifier.length} challenge=${authCode.code_challenge}`,
+    }, { status: 400 })
   }
 
   // Single-use — mark consumed before minting the token.
