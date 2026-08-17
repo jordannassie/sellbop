@@ -6,7 +6,7 @@ import { getEffectiveProductPrice } from '@/lib/pricing/product-price'
 import { ProductPriceDisplay } from '@/components/ui/product-price-display'
 import { User, Package } from 'lucide-react'
 import { isSupabaseConfigured } from '@/lib/env'
-import { resolveStoreBannerUrl } from '@/lib/store-defaults'
+import { resolveStoreBannerUrl, STORE_BANNER_BG_CLASS } from '@/lib/store-defaults'
 
 interface StoreData {
   slug: string
@@ -84,7 +84,7 @@ export function ClientStorefront({ slug }: { slug: string }) {
       </div>
 
       {/* Banner */}
-      <div className="w-full h-40 sm:h-56 overflow-hidden bg-neutral-100">
+      <div className={`w-full h-40 sm:h-56 overflow-hidden ${STORE_BANNER_BG_CLASS}`}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={resolveStoreBannerUrl(store.banner_url)} alt="" className="w-full h-full object-cover" />
       </div>

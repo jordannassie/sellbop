@@ -14,6 +14,7 @@ import { SOCIAL_PLATFORMS, SocialIcon, normalizeSocialUrl } from '@/components/u
 import {
   isCustomStoreBanner,
   resolveStoreBannerUrl,
+  STORE_BANNER_BG_CLASS,
 } from '@/lib/store-defaults'
 
 export default function SettingsPage() {
@@ -329,7 +330,7 @@ export default function SettingsPage() {
             <div>
               <label className="block text-xs font-medium text-neutral-500 mb-2">Store Banner</label>
               <div
-                className="relative w-full rounded-xl overflow-hidden border border-neutral-200 bg-neutral-100 mb-2"
+                className={`relative w-full rounded-xl overflow-hidden border border-neutral-200 mb-2 ${STORE_BANNER_BG_CLASS}`}
                 style={{ aspectRatio: '4/1' }}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}

@@ -2,6 +2,9 @@
 export const DEFAULT_STORE_BANNER_URL =
   'https://qsvmgzdaashfsavmfjuz.supabase.co/storage/v1/object/public/SELL/images/banners/Sell.png'
 
+/** Placeholder behind banners while images load. */
+export const STORE_BANNER_BG_CLASS = 'bg-neutral-50'
+
 export function resolveStoreBannerUrl(bannerUrl: string | null | undefined): string {
   const trimmed = bannerUrl?.trim()
   if (trimmed) return trimmed
