@@ -25,10 +25,6 @@ import {
   ListChecks,
   Plus,
   Zap,
-  FileText,
-  ImageIcon,
-  Layers,
-  Tag,
 } from 'lucide-react'
 
 // Avatar positions for the affiliate creator cloud
@@ -434,24 +430,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── Marketplace ───────────────────────────────────────────── */}
-      <section className="border-t border-neutral-100 py-20 bg-neutral-50">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 text-center">
-          <p className="text-xs font-bold uppercase tracking-[0.25em] text-neutral-400 mb-3">Marketplace</p>
-          <h2 className="text-3xl sm:text-4xl font-bold text-black tracking-tight mb-3">
-            Discover what&apos;s selling.
-          </h2>
-          <p className="text-neutral-500 max-w-sm mx-auto text-base mb-8">
-            Browse digital products from independent creators. Buy, download, or share and earn.
-          </p>
-          <Link href="/marketplace">
-            <Button size="lg" variant="secondary">
-              Explore Marketplace <ArrowRight size={16} />
-            </Button>
-          </Link>
-        </div>
-      </section>
-
       {/* ── What you can sell ─────────────────────────────────────── */}
       <section className="border-t border-neutral-100 py-20 bg-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6">
@@ -507,7 +485,7 @@ export default async function HomePage() {
           </div>
 
           {/* ── Two integration cards ── */}
-          <div className="grid sm:grid-cols-2 gap-5 mb-14">
+          <div className="grid sm:grid-cols-2 gap-5">
 
             {/* Claude */}
             <div className="group rounded-3xl border border-neutral-200 bg-neutral-50 p-7 flex flex-col hover:border-neutral-300 hover:shadow-md transition-all duration-200">
@@ -610,129 +588,6 @@ export default async function HomePage() {
                 </button>
               </Link>
             </div>
-          </div>
-
-          {/* ── Workflow strip ── */}
-          <div className="rounded-3xl border border-neutral-100 bg-neutral-50 p-8 mb-12">
-            <h3 className="text-2xl sm:text-3xl font-black text-black text-center mb-8">
-              One Prompt. Complete Product.
-            </h3>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-2 flex-wrap">
-              {[
-                { label: '1. Tell Claude what to build',   Icon: Zap },
-                { label: '2. Claude creates the product',  Icon: FileText },
-                { label: '3. Higgsfield generates visuals', Icon: ImageIcon },
-                { label: '4. SellBop builds the listing',  Icon: Layers },
-                { label: '5. Turn on affiliates',          Icon: TrendingUp },
-                { label: '6. Publish & Sell',              Icon: Tag },
-              ].map(({ label, Icon }, i, arr) => (
-                <div key={label} className="flex flex-col sm:flex-row items-center gap-2">
-                  <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-neutral-200 text-xs font-bold text-neutral-700 whitespace-nowrap shadow-sm">
-                    <Icon size={12} className="text-neutral-400 flex-shrink-0" />
-                    {label}
-                  </div>
-                  {i < arr.length - 1 && (
-                    <ArrowRight
-                      size={13}
-                      className="text-neutral-300 flex-shrink-0 rotate-90 sm:rotate-0"
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* ── Example result ── */}
-          <div className="rounded-3xl border border-neutral-200 bg-neutral-50 p-6 sm:p-8 mb-14">
-            <div className="flex items-center gap-3 mb-5 pb-5 border-b border-neutral-200">
-              <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center flex-shrink-0">
-                <span className="text-white text-xs font-black">You</span>
-              </div>
-              <p className="text-sm text-neutral-600 leading-relaxed italic">
-                &ldquo;Create a digital product for real estate agents.&rdquo;
-              </p>
-            </div>
-
-            {/* AI result card */}
-            <div className="flex flex-col sm:flex-row gap-5 items-start">
-              <div className="w-full sm:max-w-sm rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <span className="inline-flex items-center gap-1 text-[10px] font-black text-[#00A854] uppercase tracking-widest mb-1.5 bg-emerald-50 px-2 py-0.5 rounded-full">
-                      <Zap size={8} /> AI Generated
-                    </span>
-                    <h4 className="text-xl font-black text-black leading-snug">Open House Lead Kit</h4>
-                  </div>
-                  <span className="text-2xl font-black text-black ml-3">$39</span>
-                </div>
-
-                <div className="space-y-1.5 mb-4">
-                  {[
-                    'Lead Capture Checklist',
-                    'Follow-Up Scripts',
-                    'Lead Tracking Sheet',
-                    '3 Promotional Graphics',
-                  ].map(item => (
-                    <div key={item} className="flex items-center gap-2 text-sm text-neutral-600">
-                      <Check size={13} className="text-emerald-500 flex-shrink-0" />
-                      {item}
-                    </div>
-                  ))}
-                </div>
-
-                <div className="flex items-center justify-between border-t border-neutral-100 pt-3 mb-4">
-                  <span className="text-xs text-neutral-500">Affiliate Commission</span>
-                  <span className="text-sm font-black" style={{ color: '#00E676' }}>30%</span>
-                </div>
-
-                <div className="mb-4">
-                  <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-700">
-                    Draft Ready
-                  </span>
-                </div>
-
-                <div className="flex gap-2">
-                  <button className="flex-1 rounded-xl border border-neutral-200 py-2.5 text-xs font-bold text-neutral-700 hover:bg-neutral-50 transition-colors">
-                    Preview
-                  </button>
-                  <button className="flex-1 rounded-xl bg-black py-2.5 text-xs font-bold text-white hover:bg-neutral-800 transition-colors">
-                    Publish
-                  </button>
-                </div>
-              </div>
-
-              <div className="hidden sm:flex flex-col justify-center gap-4 pt-2">
-                {[
-                  'Product page built',
-                  'Files attached',
-                  'Affiliate link ready',
-                  'Visuals generated',
-                ].map(s => (
-                  <div key={s} className="flex items-center gap-2 text-sm text-neutral-500">
-                    <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                      <Check size={11} className="text-emerald-600" />
-                    </div>
-                    {s}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* ── Final statement ── */}
-          <div className="text-center">
-            <h2 className="text-4xl sm:text-5xl font-black text-black tracking-tight leading-tight mb-4">
-              Your AI Creates It.<br />
-              <span style={{ color: '#00E676' }}>SellBop Sells It.</span>
-            </h2>
-            <p className="text-neutral-500 text-base max-w-xl mx-auto mb-8 leading-relaxed">
-              Connect the tools you already use and turn AI-generated ideas, files, images, videos, and digital products into something people can actually buy.
-            </p>
-            <Link href="/signup">
-              <button className="inline-flex items-center gap-2 bg-black text-white text-sm font-bold px-8 py-3.5 rounded-xl hover:bg-neutral-800 transition-colors">
-                Start Building <ArrowRight size={14} />
-              </button>
-            </Link>
           </div>
         </div>
       </section>
