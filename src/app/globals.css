@@ -30,3 +30,15 @@ body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; 
   --shadow-card-hover: 0 8px 28px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.03);
   --shadow-float: 0 4px 20px rgba(0,0,0,0.08);
 }
+
+@keyframes smile-wiggle {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(-10deg) scale(1.12); }
+  75% { transform: rotate(10deg) scale(1.12); }
+}
+
+.animate-smile-wiggle {
+  animation: smile-wiggle 2s ease-in-out infinite;
+  display: inline-block;
+  transform-origin: center;
+}

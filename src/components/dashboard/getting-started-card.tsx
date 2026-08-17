@@ -61,6 +61,14 @@ function readExpandedPreference(allComplete: boolean): boolean {
   return localStorage.getItem(STORAGE_EXPANDED) === 'true'
 }
 
+function AnimatedSmile() {
+  return (
+    <span className="animate-smile-wiggle text-base leading-none" role="img" aria-label="Smile">
+      😊
+    </span>
+  )
+}
+
 export function GettingStartedCard() {
   const { store } = useUserStore()
   const [status, setStatus] = useState<OnboardingStatus | null>(null)
@@ -226,19 +234,27 @@ export function GettingStartedCard() {
               {STEPS.map(step => {
                 const done = isStepComplete(step, status)
                 const href = step.id === 'share_store' ? storeUrl : step.href
+                const highlighted = step.id === 'create_product' && !done
 
                 return (
                   <div
                     key={step.id}
                     className={`flex items-start gap-3 rounded-xl border p-3 sm:p-4 ${
-                      done ? 'border-emerald-100 bg-emerald-50/50' : 'border-neutral-100'
+                      done
+                        ? 'border-emerald-100 bg-emerald-50/50'
+                        : highlighted
+                          ? 'border-emerald-200 bg-emerald-50 shadow-[0_0_0_1px_rgba(0,230,118,0.15)]'
+                          : 'border-neutral-100'
                     }`}
                   >
                     <div className={`mt-0.5 flex-shrink-0 ${done ? 'text-emerald-500' : 'text-neutral-300'}`}>
                       {done ? <Check size={16} /> : <Circle size={16} />}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm text-black">{step.title}</p>
+                      <p className="font-semibold text-sm text-black flex items-center gap-2">
+                        {step.title}
+                        {highlighted && <AnimatedSmile />}
+                      </p>
                       <p className="text-xs text-neutral-500 mt-0.5">
                         {done && 'descComplete' in step && step.descComplete
                           ? step.descComplete
