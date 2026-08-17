@@ -13,6 +13,11 @@ const SIZE_CLASSES = {
     was: 'text-sm text-neutral-400 line-through',
     badge: 'text-[11px] font-bold uppercase tracking-wide',
   },
+  sticky: {
+    current: 'text-xl font-bold text-black leading-none',
+    was: 'text-sm text-neutral-400 line-through',
+    badge: 'text-xs font-bold uppercase tracking-wide',
+  },
   lg: {
     current: 'text-3xl sm:text-4xl font-black text-black tracking-tight',
     was: 'text-lg text-neutral-400 line-through',
@@ -60,7 +65,8 @@ export function ProductPriceDisplay({
         <span
           className={cn(
             styles.badge,
-            'inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-emerald-700',
+            'inline-flex items-center rounded-full bg-emerald-50 text-emerald-700',
+            size === 'sticky' ? 'px-2.5 py-1' : 'px-2 py-0.5',
           )}
         >
           {badgeLabel}

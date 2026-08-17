@@ -504,7 +504,7 @@ export function CanonicalProductPage({ sellerSlug, productSlug }: { sellerSlug: 
   }
 
   return (
-    <div className="min-h-screen bg-white pb-[calc(4.25rem+env(safe-area-inset-bottom,0px))] lg:pb-0">
+    <div className="min-h-screen bg-white pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] lg:pb-0">
       <PublicHeader />
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10 sm:py-14">

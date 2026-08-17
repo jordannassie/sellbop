@@ -31,9 +31,9 @@ export function MobileStickyCheckoutBar({
       className="fixed inset-x-0 bottom-0 z-40 border-t border-neutral-200 bg-white shadow-[0_-4px_24px_rgba(0,0,0,0.08)] lg:hidden"
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
-      <div className="flex items-center justify-between gap-3 px-4 py-3 min-h-[3.5rem]">
+      <div className="flex items-center justify-between gap-3 px-4 py-3.5 min-h-[4rem]">
         <div className="min-w-0 flex-1" aria-label={priceLabel}>
-          <ProductPriceDisplay pricing={pricing} size="sm" showBadge className="gap-1.5" />
+          <ProductPriceDisplay pricing={pricing} size="sticky" showBadge className="gap-2" />
         </div>
         <Button
           size="lg"
