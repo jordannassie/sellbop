@@ -31,7 +31,7 @@ interface ProductCard {
   affiliate_commission_percent: number | null
 }
 
-// ── Share Store button ────────────────────────────────────────────────────────
+// ── Share Store button (hero variant — white/translucent) ─────────────────────
 
 function ShareStoreButton({ slug, name }: { slug: string; name: string }) {
   const [copied, setCopied] = useState(false)
@@ -49,15 +49,15 @@ function ShareStoreButton({ slug, name }: { slug: string; name: string }) {
   return (
     <button
       onClick={handleShare}
-      className="inline-flex items-center gap-1.5 rounded-full border border-neutral-300 bg-white/90 px-4 py-1.5 text-sm font-medium text-neutral-700 hover:border-neutral-500 hover:text-black backdrop-blur-sm transition-all"
+      className="inline-flex items-center gap-1.5 rounded-full border border-white/40 bg-white/15 px-5 py-2 text-sm font-medium text-white backdrop-blur-sm hover:bg-white/25 hover:border-white/60 transition-all"
     >
-      {copied ? <Check size={13} className="text-emerald-500" /> : <Share2 size={13} />}
+      {copied ? <Check size={13} style={{ color: '#00E676' }} /> : <Share2 size={13} />}
       {copied ? 'Copied!' : 'Share Store'}
     </button>
   )
 }
 
-// ── Affiliate panel for store-level promote ───────────────────────────────────
+// ── Affiliate panel (below hero, white bg) ────────────────────────────────────
 
 function AffiliatePanel({
   products,
@@ -76,7 +76,6 @@ function AffiliatePanel({
   const eligibleProducts = products.filter(p => p.affiliate_enabled && (p.price_cents ?? 0) > 0)
   if (eligibleProducts.length === 0) return null
 
-  // Max commission across all products
   const maxComm = Math.max(...eligibleProducts.map(p => p.affiliate_commission_percent ?? 0))
 
   async function handleGetLink(product: ProductCard) {
@@ -109,16 +108,14 @@ function AffiliatePanel({
   }
 
   return (
-    <div className="border-t border-neutral-100">
-      {/* Toggle bar */}
+    <div className="border-b border-neutral-100">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4">
         <button
           onClick={() => setOpen(v => !v)}
-          className="flex w-full items-center justify-between gap-3 group"
+          className="flex w-full items-center justify-between gap-3"
         >
           <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full"
-              style={{ background: '#ecfff6' }}>
+            <div className="flex h-8 w-8 items-center justify-center rounded-full" style={{ background: '#ecfff6' }}>
               <TrendingUp size={14} style={{ color: '#00E676' }} />
             </div>
             <div className="text-left">
@@ -131,7 +128,7 @@ function AffiliatePanel({
             </div>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <span className="hidden sm:block text-xs font-bold px-3 py-1.5 rounded-full border transition-colors"
+            <span className="hidden sm:block text-xs font-bold px-3 py-1.5 rounded-full border"
               style={{ color: '#00A854', borderColor: '#a8ffd6', background: '#ecfff6' }}>
               Promote &amp; Earn
             </span>
@@ -146,38 +143,24 @@ function AffiliatePanel({
               const hasLink = !!linkMap[product.id]
               const isLoading = loadingId === product.id
               const isCopied = copiedId === product.id
-
               return (
                 <div key={product.id} className="flex items-center gap-4 rounded-xl border border-neutral-200 bg-white p-4">
-                  {/* Product info */}
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <div className="w-10 h-10 rounded-lg overflow-hidden bg-neutral-100 flex-shrink-0">
                       {(product.cover_image_url ?? product.image_url) ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={product.cover_image_url ?? product.image_url ?? ''}
-                          alt={product.title}
-                          className="w-full h-full object-cover"
-                        />
+                        <img src={product.cover_image_url ?? product.image_url ?? ''} alt={product.title} className="w-full h-full object-cover" />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Package size={14} className="text-neutral-300" />
-                        </div>
+                        <div className="w-full h-full flex items-center justify-center"><Package size={14} className="text-neutral-300" /></div>
                       )}
                     </div>
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-black truncate">{product.title}</p>
                       <p className="text-xs text-neutral-400">
-                        Earn{' '}
-                        <span className="font-bold" style={{ color: '#00E676' }}>
-                          {formatCurrency(commCents)}/sale
-                        </span>
-                        {' '}· {product.affiliate_commission_percent}%
+                        Earn <span className="font-bold" style={{ color: '#00E676' }}>{formatCurrency(commCents)}/sale</span> · {product.affiliate_commission_percent}%
                       </p>
                     </div>
                   </div>
-
-                  {/* Action */}
                   <button
                     onClick={() => handleGetLink(product)}
                     disabled={isLoading}
@@ -192,10 +175,8 @@ function AffiliatePanel({
                   >
                     {isLoading
                       ? <div className="h-3 w-3 animate-spin rounded-full border-2 border-neutral-300 border-t-black" />
-                      : isCopied
-                      ? <><Check size={12} /> Copied!</>
-                      : hasLink
-                      ? <><Copy size={12} /> Copy Link</>
+                      : isCopied ? <><Check size={12} /> Copied!</>
+                      : hasLink ? <><Copy size={12} /> Copy Link</>
                       : <><TrendingUp size={12} /> Get My Link</>}
                   </button>
                 </div>
@@ -223,7 +204,6 @@ export function ClientStorefront({ slug }: { slug: string }) {
 
   useEffect(() => {
     if (!isSupabaseConfigured()) { setNotFound(true); setLoading(false); return }
-
     fetch(`/api/public/store/${slug}`)
       .then(r => r.ok ? r.json() : null)
       .then(data => {
@@ -257,81 +237,102 @@ export function ClientStorefront({ slug }: { slug: string }) {
   }
 
   const singleProduct = products.length === 1
+  const hasBio = !!(store.headline || store.bio)
 
   return (
     <div className="min-h-screen bg-white">
       <PublicHeader />
 
-      {/* ── Hero / Store Banner ───────────────────────────────────── */}
-      <div className="relative">
-        {/* Banner background */}
-        <div className="relative w-full overflow-hidden h-[180px] sm:h-[240px] md:h-[320px]">
-          {store.banner_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={store.banner_url}
-              alt=""
-              className="w-full h-full object-cover object-center"
-            />
-          ) : (
-            /* Subtle branded fallback — charcoal with micro-dot pattern */
-            <div className="w-full h-full" style={{
-              background: '#111111',
-              backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px)',
-              backgroundSize: '24px 24px',
-            }} />
-          )}
-          {/* Subtle dark overlay so any photo looks polished */}
-          <div className="absolute inset-0 bg-black/[0.07]" />
-        </div>
+      {/* ── Full-bleed Hero — banner is the background ────────────────── */}
+      <div
+        className="relative w-full overflow-hidden flex flex-col items-center justify-center text-center px-4"
+        style={{
+          minHeight: 'clamp(340px, 46vw, 500px)',
+          ...(store.banner_url
+            ? {
+                backgroundImage: `url(${store.banner_url})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center center',
+              }
+            : {
+                background: '#111111',
+                backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px)',
+                backgroundSize: '24px 24px',
+              }),
+        }}
+      >
+        {/* Gradient overlay — lighter at top, darker toward bottom for text contrast */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: 'linear-gradient(to bottom, rgba(0,0,0,0.18) 0%, rgba(0,0,0,0.52) 100%)',
+          }}
+        />
 
-        {/* Creator card — overlaps banner bottom */}
-        <div className="max-w-3xl mx-auto px-4 sm:px-6">
-          <div className="flex flex-col items-center text-center -mt-[84px] sm:-mt-[98px] md:-mt-28 pb-8">
-            {/* Avatar */}
-            <div className="w-[120px] h-[120px] sm:w-[140px] sm:h-[140px] md:w-40 md:h-40 rounded-full overflow-hidden bg-white border-[6px] border-white shadow-md flex items-center justify-center mb-4">
-              {store.avatar_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                    <img src={store.avatar_url} alt={store.name} className="w-full h-full object-cover object-center" />
-              ) : (
-                <div className="w-full h-full bg-neutral-100 flex items-center justify-center">
-                  <User size={32} className="text-neutral-400" />
-                </div>
-              )}
-            </div>
-
-            {/* Name */}
-            <h1 className="text-2xl sm:text-3xl font-bold text-black tracking-tight mb-1">
-              {store.name}
-            </h1>
-
-            {/* Handle */}
-            <p className="text-sm text-neutral-400 mb-3">@{store.slug}</p>
-
-            {/* Bio */}
-            {(store.headline || store.bio) && (
-              <p className="text-sm text-neutral-500 max-w-sm leading-relaxed mb-5">
-                {store.headline ?? store.bio}
-              </p>
+        {/* Hero content */}
+        <div className="relative z-10 flex flex-col items-center py-16 sm:py-20 gap-0">
+          {/* Avatar */}
+          <div
+            className="rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center"
+            style={{
+              width: 'clamp(120px, 14vw, 160px)',
+              height: 'clamp(120px, 14vw, 160px)',
+              border: '5px solid rgba(255,255,255,0.95)',
+              boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
+              marginBottom: '20px',
+            }}
+          >
+            {store.avatar_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={store.avatar_url}
+                alt={store.name}
+                className="w-full h-full object-cover object-center"
+              />
+            ) : (
+              <div className="w-full h-full bg-neutral-700 flex items-center justify-center">
+                <User size={40} className="text-white/50" />
+              </div>
             )}
+          </div>
 
-            {/* Actions */}
-            <div className="flex flex-wrap items-center justify-center gap-2">
-              <ShareStoreButton slug={slug} name={store.name} />
-              {products.length > 0 && (
-                <button
-                  onClick={() => productsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-black px-4 py-1.5 text-sm font-semibold text-white hover:bg-neutral-800 transition-colors"
-                >
-                  Browse Products <ArrowRight size={13} />
-                </button>
-              )}
-            </div>
+          {/* Name */}
+          <h1
+            className="font-bold text-white tracking-tight"
+            style={{ fontSize: 'clamp(1.5rem, 4vw, 2.25rem)', lineHeight: 1.1, marginBottom: '6px' }}
+          >
+            {store.name}
+          </h1>
+
+          {/* Handle */}
+          <p className="text-white/60 text-sm mb-4">@{store.slug}</p>
+
+          {/* Bio */}
+          {hasBio && (
+            <p
+              className="text-white/80 leading-relaxed max-w-sm mb-6"
+              style={{ fontSize: 'clamp(0.8rem, 1.8vw, 0.9rem)' }}
+            >
+              {store.headline ?? store.bio}
+            </p>
+          )}
+
+          {/* Action buttons */}
+          <div className={`flex flex-wrap items-center justify-center gap-3 ${!hasBio ? 'mt-2' : ''}`}>
+            <ShareStoreButton slug={slug} name={store.name} />
+            {products.length > 0 && (
+              <button
+                onClick={() => productsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                className="inline-flex items-center gap-1.5 rounded-full bg-white px-5 py-2 text-sm font-semibold text-black hover:bg-neutral-100 transition-colors"
+              >
+                Browse Products <ArrowRight size={13} />
+              </button>
+            )}
           </div>
         </div>
       </div>
 
-      {/* ── Affiliate Recruitment Strip ───────────────────────────── */}
+      {/* ── Affiliate Recruitment Strip ───────────────────────────────── */}
       {hasAffiliateProducts && (
         <AffiliatePanel
           products={products}
@@ -340,8 +341,8 @@ export function ClientStorefront({ slug }: { slug: string }) {
         />
       )}
 
-      {/* ── Products ─────────────────────────────────────────────── */}
-      <div ref={productsRef} className="max-w-5xl mx-auto px-4 sm:px-6 py-10 border-t border-neutral-100">
+      {/* ── Products — clean white section ───────────────────────────── */}
+      <div ref={productsRef} className="max-w-5xl mx-auto px-4 sm:px-6 py-12">
         {products.length === 0 ? (
           <div className="text-center py-20">
             <Package size={40} className="mx-auto mb-4 text-neutral-200" />
@@ -388,8 +389,6 @@ export function ClientStorefront({ slug }: { slug: string }) {
                             <Package size={28} className="text-neutral-300" />
                           </div>
                         )}
-
-                        {/* Affiliate badge — overlay */}
                         {showAffiliate && (
                           <div className="absolute top-2.5 right-2.5">
                             <span
@@ -408,7 +407,6 @@ export function ClientStorefront({ slug }: { slug: string }) {
                         <p className="font-semibold text-black text-sm leading-snug mb-1 group-hover:underline underline-offset-2 line-clamp-2">
                           {p.title}
                         </p>
-
                         <div className="flex items-center justify-between gap-2 mt-2">
                           <p className="text-sm font-bold text-black">
                             {isFree ? 'Free' : formatCurrency(p.price_cents ?? 0)}
