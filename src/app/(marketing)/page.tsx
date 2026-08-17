@@ -55,26 +55,13 @@ const AVATAR_SLOTS: [number, number, number, string | null, number, string, bool
 
 export default async function HomePage() {
   let isAuthenticated = false
-  let creatorAvatarUrls: string[] = []
 
   if (isSupabaseConfigured()) {
     try {
       const supabase = await getSupabaseServerClient()
-      const [{ data: { user } }, { data: storeData }] = await Promise.all([
-        supabase.auth.getUser(),
-        supabase
-          .from('stores')
-          .select('avatar_url')
-          .not('avatar_url', 'is', null)
-          .limit(20),
-      ])
+      const { data: { user } } = await supabase.auth.getUser()
       isAuthenticated = !!user
-      if (storeData) {
-        creatorAvatarUrls = storeData
-          .map(s => s.avatar_url as string)
-          .filter(Boolean)
-      }
-    } catch { /* session or DB unavailable — show homepage with placeholders */ }
+    } catch { /* session unavailable — show homepage */ }
   }
 
   // redirect() must be called outside the try/catch so Next.js can intercept it
@@ -320,7 +307,7 @@ export default async function HomePage() {
               />
 
               {AVATAR_SLOTS.map(([xPct, yPct, size, badge, delay], i) => {
-                const avatarUrl = creatorAvatarUrls[i] ?? AFFILIATE_CLOUD_PHOTOS[i % AFFILIATE_CLOUD_PHOTOS.length]
+                const avatarUrl = AFFILIATE_CLOUD_PHOTOS[i % AFFILIATE_CLOUD_PHOTOS.length]
                 const isMobileVisible = AVATAR_SLOTS[i][6]
 
                 return (
