@@ -6,7 +6,7 @@ import { env, isSupabaseAdminConfigured } from '@/lib/env'
 
 // GET /api/stripe/connect/refresh — the onboarding link Stripe generated
 // expired (they're only valid for a few minutes) or the seller navigated
-// away and back. Generate a fresh account link and send them right back
+// away and back. Generate a fresh v2 Account Link and send them right back
 // into onboarding.
 export async function GET(request: NextRequest) {
   const dashboardUrl = new URL('/dashboard/payouts', request.url)
@@ -32,11 +32,16 @@ export async function GET(request: NextRequest) {
 
   try {
     const stripe = new Stripe(env.stripe.secretKey)
-    const accountLink = await stripe.accountLinks.create({
+    const accountLink = await stripe.v2.core.accountLinks.create({
       account: store.stripe_account_id,
-      refresh_url: `${env.app.url}/api/stripe/connect/refresh`,
-      return_url: `${env.app.url}/api/stripe/connect/return`,
-      type: 'account_onboarding',
+      use_case: {
+        type: 'account_onboarding',
+        account_onboarding: {
+          configurations: ['recipient'],
+          refresh_url: `${env.app.url}/api/stripe/connect/refresh`,
+          return_url: `${env.app.url}/api/stripe/connect/return`,
+        },
+      },
     })
     return NextResponse.redirect(accountLink.url)
   } catch {
