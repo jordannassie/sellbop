@@ -15,14 +15,26 @@ export async function GET(
 
   const admin = getSupabaseAdminClient()
 
+  // Select only columns guaranteed to exist in production schema
   const { data: store, error } = await admin
     .from('stores')
-    .select('id, slug, name, headline, bio, avatar_url, banner_url')
+    .select('id, slug, name, headline, bio, avatar_url, owner_user_id')
     .eq('slug', slug)
     .maybeSingle()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   if (!store) return NextResponse.json({ error: 'Store not found.' }, { status: 404 })
+
+  // Fallback: resolve creator avatar from profiles if store.avatar_url is null
+  let avatarUrl = store.avatar_url
+  if (!avatarUrl && store.owner_user_id) {
+    const { data: profile } = await admin
+      .from('profiles')
+      .select('avatar_url')
+      .eq('user_id', store.owner_user_id)
+      .maybeSingle()
+    avatarUrl = profile?.avatar_url ?? null
+  }
 
   const { data: products } = await admin
     .from('products')
@@ -35,5 +47,8 @@ export async function GET(
     .is('external_source', null)
     .order('created_at', { ascending: false })
 
-  return NextResponse.json({ store, products: products ?? [] })
+  return NextResponse.json({
+    store: { ...store, avatar_url: avatarUrl },
+    products: products ?? [],
+  })
 }

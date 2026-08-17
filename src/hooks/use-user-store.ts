@@ -97,20 +97,34 @@ export function useUserStore(): UseUserStoreResult {
     async (patch: Database['public']['Tables']['stores']['Update']): Promise<string | null> => {
       if (!supabase || !session) return null // demo mode — no-op
 
-      const doUpdate = async () =>
+      const doUpdate = async (p: typeof patch) =>
         supabase
           .from('stores')
-          .update({ ...patch, updated_at: new Date().toISOString() })
+          .update({ ...p, updated_at: new Date().toISOString() })
           .eq('owner_user_id', session.userId)
           .select('*')
           .single()
 
-      let { data, error } = await doUpdate()
+      let { data, error } = await doUpdate(patch)
 
       // PGRST116 = no rows matched → store may not exist yet; create it and retry
       if (error?.code === 'PGRST116' || (!data && !error)) {
         await ensureUserStore(supabase, session.userId, session.name, session.email)
-        const retry = await doUpdate()
+        const retry = await doUpdate(patch)
+        data = retry.data
+        error = retry.error
+      }
+
+      // If a column doesn't exist yet (migration pending), retry without unknown columns
+      if (error?.message?.includes('column') && error.message.includes('does not exist')) {
+        const safePatch: Database['public']['Tables']['stores']['Update'] = {}
+        const knownCols = ['name', 'headline', 'bio', 'avatar_url', 'header_layout']
+        for (const k of knownCols) {
+          if (k in patch) {
+            (safePatch as Record<string, unknown>)[k] = (patch as Record<string, unknown>)[k]
+          }
+        }
+        const retry = await doUpdate(safePatch)
         data = retry.data
         error = retry.error
       }

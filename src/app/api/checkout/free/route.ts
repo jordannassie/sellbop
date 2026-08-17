@@ -50,7 +50,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'This product requires payment.' }, { status: 400 })
   }
 
-  // Find the store/seller
+  // Find the store/seller through the product's store_id
   const { data: store } = await admin
     .from('stores')
     .select('id, owner_user_id')
@@ -65,37 +65,79 @@ export async function POST(request: Request) {
     .select('id')
     .eq('buyer_email', buyerEmail.toLowerCase())
     .eq('product_id', product.id)
-    .eq('status', 'active')
     .maybeSingle()
 
   if (existing) {
     return NextResponse.json({ already_acquired: true, purchase_id: existing.id })
   }
 
-  // Create order
-  const { data: order, error: orderErr } = await admin
+  // Determine which columns orders table supports (resilient to unapplied migrations)
+  type OrderInsert = {
+    store_id: string
+    seller_user_id: string
+    buyer_email: string
+    buyer_name: string | null
+    subtotal_cents: number
+    shipping_cents: number
+    total_cents: number
+    status: string
+    payment_status: string
+    product_id?: string
+    product_title_snapshot?: string
+    discount_cents?: number
+    platform_fee_cents?: number
+    currency?: string
+    refund_status?: string
+  }
+
+  const orderInsert: OrderInsert = {
+    store_id: store.id,
+    seller_user_id: store.owner_user_id,
+    buyer_email: buyerEmail.toLowerCase().trim(),
+    buyer_name: buyerName?.trim() ?? null,
+    subtotal_cents: 0,
+    shipping_cents: 0,
+    total_cents: 0,
+    status: 'completed',
+    payment_status: 'paid',
+  }
+
+  // Try to insert with extended columns (available after migration 011)
+  let order: { id: string } | null = null
+  const extendedInsert = {
+    ...orderInsert,
+    product_id: product.id,
+    product_title_snapshot: product.title,
+    discount_cents: 0,
+    platform_fee_cents: 0,
+    currency: 'usd',
+    refund_status: 'none',
+  }
+
+  const { data: orderData, error: orderErr } = await admin
     .from('orders')
-    .insert({
-      store_id: store.id,
-      seller_user_id: store.owner_user_id,
-      buyer_email: buyerEmail.toLowerCase().trim(),
-      buyer_name: buyerName?.trim() ?? null,
-      subtotal_cents: 0,
-      shipping_cents: 0,
-      total_cents: 0,
-      discount_cents: 0,
-      platform_fee_cents: 0,
-      currency: 'usd',
-      status: 'completed',
-      payment_status: 'paid',
-      refund_status: 'none',
-      product_id: product.id,
-      product_title_snapshot: product.title,
-    })
+    .insert(extendedInsert)
     .select('id')
     .single()
 
-  if (orderErr) return NextResponse.json({ error: orderErr.message }, { status: 500 })
+  if (orderErr) {
+    // If extended columns don't exist yet, fall back to minimal insert
+    if (orderErr.message.includes('column') && orderErr.message.includes('does not exist')) {
+      const { data: fallback, error: fallbackErr } = await admin
+        .from('orders')
+        .insert(orderInsert)
+        .select('id')
+        .single()
+      if (fallbackErr) return NextResponse.json({ error: fallbackErr.message }, { status: 500 })
+      order = fallback
+    } else {
+      return NextResponse.json({ error: orderErr.message }, { status: 500 })
+    }
+  } else {
+    order = orderData
+  }
+
+  if (!order) return NextResponse.json({ error: 'Failed to create order.' }, { status: 500 })
 
   // Create order item
   await admin.from('order_items').insert({
@@ -107,19 +149,44 @@ export async function POST(request: Request) {
     line_total_cents: 0,
   })
 
-  // Create purchase entitlement
-  const { data: purchase, error: purchaseErr } = await admin
+  // Create purchase entitlement — resilient to missing 'status' column
+  type PurchaseInsert = {
+    buyer_email: string
+    product_id: string
+    order_id: string
+    status?: string
+  }
+  const purchaseInsert: PurchaseInsert = {
+    buyer_email: buyerEmail.toLowerCase().trim(),
+    product_id: product.id,
+    order_id: order.id,
+    status: 'active',
+  }
+
+  let purchase: { id: string } | null = null
+  const { data: purchaseData, error: purchaseErr } = await admin
     .from('purchases')
-    .insert({
-      buyer_email: buyerEmail.toLowerCase().trim(),
-      product_id: product.id,
-      order_id: order.id,
-      status: 'active',
-    })
+    .insert(purchaseInsert)
     .select('id')
     .single()
 
-  if (purchaseErr) return NextResponse.json({ error: purchaseErr.message }, { status: 500 })
+  if (purchaseErr) {
+    if (purchaseErr.message.includes('column') && purchaseErr.message.includes('does not exist')) {
+      const { data: pFallback, error: pFallbackErr } = await admin
+        .from('purchases')
+        .insert({ buyer_email: buyerEmail.toLowerCase().trim(), product_id: product.id, order_id: order.id })
+        .select('id')
+        .single()
+      if (pFallbackErr) return NextResponse.json({ error: pFallbackErr.message }, { status: 500 })
+      purchase = pFallback
+    } else {
+      return NextResponse.json({ error: purchaseErr.message }, { status: 500 })
+    }
+  } else {
+    purchase = purchaseData
+  }
+
+  if (!purchase) return NextResponse.json({ error: 'Failed to create purchase.' }, { status: 500 })
 
   return NextResponse.json({
     order_id: order.id,

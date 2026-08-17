@@ -39,7 +39,13 @@ interface SuccessData {
   email: string
 }
 
-export function ClientProductPage({ slug }: { slug: string }) {
+export function CanonicalProductPage({
+  sellerSlug,
+  productSlug,
+}: {
+  sellerSlug: string
+  productSlug: string
+}) {
   const searchParams = useSearchParams()
   const refCode = searchParams.get('ref')
   const [state, setState] = useState<State>('loading')
@@ -60,12 +66,10 @@ export function ClientProductPage({ slug }: { slug: string }) {
   const commCents = Math.floor((product?.price_cents ?? 0) * (commPercent / 100))
 
   useEffect(() => {
-    if (!isSupabaseConfigured()) {
-      setState('notfound')
-      return
-    }
+    if (!isSupabaseConfigured()) { setState('notfound'); return }
 
-    fetch(`/api/public/products/${slug}`)
+    // Load product scoped to the seller
+    fetch(`/api/public/products/${productSlug}?sellerSlug=${sellerSlug}`)
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         if (!data) { setState('notfound'); return }
@@ -73,68 +77,23 @@ export function ClientProductPage({ slug }: { slug: string }) {
         setStore(data.store)
         setState('ready')
 
-        // Record affiliate click server-side (fire and forget)
+        // Record affiliate click
         if (refCode) {
           fetch('/api/affiliates/click', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              referralCode: refCode,
-              landingUrl: window.location.href,
-            }),
-          }).catch(() => {/* best effort */})
+            body: JSON.stringify({ referralCode: refCode, landingUrl: window.location.href }),
+          }).catch(() => {})
         }
       })
       .catch(() => setState('notfound'))
-  }, [slug, refCode])
-
-  async function handlePromoteEarn() {
-    if (promoteExpanded) { setPromoteExpanded(false); return }
-    setPromoteExpanded(true)
-    if (affiliateUrl || !product) return
-    setPromoteLoading(true)
-    try {
-      const res = await fetch('/api/affiliates/join', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId: product.id }),
-      })
-      if (res.status === 401) {
-        // Not logged in — redirect to login then back
-        window.location.href = `/login?next=/p/${slug}`
-        return
-      }
-      const data = await res.json()
-      if (data.relationship) {
-        setAffiliateUrl(`${window.location.origin}/p/${product.slug}?ref=${data.relationship.referral_code}`)
-      }
-    } catch { /* noop */ } finally {
-      setPromoteLoading(false)
-    }
-  }
-
-  async function handleCopyAffiliateLink() {
-    if (!affiliateUrl) return
-    await navigator.clipboard.writeText(affiliateUrl)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2500)
-  }
-
-  async function handleShareAffiliateLink() {
-    if (!affiliateUrl) return
-    if (navigator.share) {
-      try { await navigator.share({ url: affiliateUrl }) } catch { /* cancelled */ }
-    } else {
-      handleCopyAffiliateLink()
-    }
-  }
+  }, [sellerSlug, productSlug, refCode])
 
   async function handleFreeCheckout(e: React.FormEvent) {
     e.preventDefault()
     if (!product || !buyerEmail.trim()) return
     setState('processing')
     setError('')
-
     try {
       const res = await fetch('/api/checkout/free', {
         method: 'POST',
@@ -147,13 +106,7 @@ export function ClientProductPage({ slug }: { slug: string }) {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Checkout failed.')
-
-      setSuccess({
-        orderId: data.order_id,
-        productId: product.id,
-        productSlug: product.slug,
-        email: buyerEmail,
-      })
+      setSuccess({ orderId: data.order_id, productId: product.id, productSlug: product.slug, email: buyerEmail })
       setState('success')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong.')
@@ -166,7 +119,6 @@ export function ClientProductPage({ slug }: { slug: string }) {
     if (!product || !buyerEmail.trim()) return
     setState('processing')
     setError('')
-
     try {
       const res = await fetch('/api/checkout/paid', {
         method: 'POST',
@@ -178,15 +130,8 @@ export function ClientProductPage({ slug }: { slug: string }) {
         }),
       })
       const data = await res.json()
-
-      if (data.stripe_required) {
-        setState('stripe_required')
-        return
-      }
-      if (data.checkout_url) {
-        window.location.href = data.checkout_url
-        return
-      }
+      if (data.stripe_required) { setState('stripe_required'); return }
+      if (data.checkout_url) { window.location.href = data.checkout_url; return }
       throw new Error(data.error ?? 'Checkout unavailable.')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong.')
@@ -208,6 +153,41 @@ export function ClientProductPage({ slug }: { slug: string }) {
     }
   }
 
+  async function handlePromoteEarn() {
+    if (promoteExpanded) { setPromoteExpanded(false); return }
+    setPromoteExpanded(true)
+    if (affiliateUrl || !product) return
+    setPromoteLoading(true)
+    try {
+      const res = await fetch('/api/affiliates/join', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: product.id }),
+      })
+      if (res.status === 401) { window.location.href = `/login?next=/${sellerSlug}/${productSlug}`; return }
+      const data = await res.json()
+      if (data.relationship) {
+        setAffiliateUrl(`${window.location.origin}/${sellerSlug}/${productSlug}?ref=${data.relationship.referral_code}`)
+      }
+    } catch { /* noop */ } finally { setPromoteLoading(false) }
+  }
+
+  async function handleCopyAffiliateLink() {
+    if (!affiliateUrl) return
+    await navigator.clipboard.writeText(affiliateUrl)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2500)
+  }
+
+  async function handleShareAffiliateLink() {
+    if (!affiliateUrl) return
+    if (navigator.share) {
+      try { await navigator.share({ url: affiliateUrl }) } catch { /* cancelled */ }
+    } else {
+      handleCopyAffiliateLink()
+    }
+  }
+
   const coverUrl = product?.cover_image_url ?? product?.image_url
 
   if (state === 'loading') {
@@ -223,20 +203,17 @@ export function ClientProductPage({ slug }: { slug: string }) {
       <div className="min-h-screen flex flex-col items-center justify-center bg-neutral-50 px-4">
         <h1 className="text-2xl font-bold text-black mb-2">Product not found</h1>
         <p className="text-neutral-500 mb-6">This product doesn&apos;t exist or isn&apos;t available.</p>
-        <Link href="/"><Button variant="secondary">Go Home</Button></Link>
+        <Link href={`/${sellerSlug}`}><Button variant="secondary">View Store</Button></Link>
       </div>
     )
   }
 
   if (state === 'success' && success) {
     const showShareEarn = affiliateEnabled && commPercent > 0 && !isFree
-
     return (
       <div className="min-h-screen bg-neutral-50 flex flex-col">
         <div className="bg-white border-b border-neutral-100">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center">
-            <SellBopLogo size="lg" />
-          </div>
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center"><SellBopLogo size="lg" /></div>
         </div>
         <div className="flex-1 flex items-center justify-center px-4 py-16">
           <div className="max-w-md w-full">
@@ -245,16 +222,12 @@ export function ClientProductPage({ slug }: { slug: string }) {
                 <Download size={24} className="text-emerald-600" />
               </div>
               <h1 className="text-2xl font-bold text-black mb-2">Your purchase is ready.</h1>
-              <p className="text-neutral-500">
-                {product?.title} is ready to download.
-              </p>
+              <p className="text-neutral-500">{product?.title} is ready to download.</p>
             </div>
-
             <Button onClick={handleDownload} className="w-full mb-4" size="lg">
               <Download size={16} /> Download Product
             </Button>
             {error && <p className="text-xs text-red-500 mb-4 text-center">{error}</p>}
-
             {showShareEarn && (
               <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-center">
                 <TrendingUp size={20} className="mx-auto mb-2 text-emerald-600" />
@@ -271,9 +244,7 @@ export function ClientProductPage({ slug }: { slug: string }) {
                     </div>
                     <button
                       onClick={handleCopyAffiliateLink}
-                      className={`flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold transition-all ${
-                        copied ? 'bg-emerald-500 text-white' : 'bg-emerald-600 text-white hover:bg-emerald-700'
-                      }`}
+                      className={`flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold transition-all ${copied ? 'bg-emerald-500 text-white' : 'bg-emerald-600 text-white hover:bg-emerald-700'}`}
                     >
                       {copied ? <Check size={14} /> : <Copy size={14} />}
                       {copied ? 'Copied!' : 'COPY MY LINK'}
@@ -283,19 +254,14 @@ export function ClientProductPage({ slug }: { slug: string }) {
                   <button
                     onClick={handlePromoteEarn}
                     disabled={promoteLoading}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 py-2.5 text-sm font-bold text-white hover:bg-emerald-700 transition-colors disabled:opacity-50"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 py-2.5 text-sm font-bold text-white hover:bg-emerald-700 disabled:opacity-50"
                   >
-                    {promoteLoading ? (
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    ) : (
-                      <TrendingUp size={14} />
-                    )}
+                    {promoteLoading ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : <TrendingUp size={14} />}
                     Get My Affiliate Link
                   </button>
                 )}
               </div>
             )}
-
             {store && (
               <div className="mt-4 text-center">
                 <Link href={`/${store.slug}`} className="text-sm text-neutral-500 hover:text-black transition-colors">
@@ -313,9 +279,7 @@ export function ClientProductPage({ slug }: { slug: string }) {
     return (
       <div className="min-h-screen bg-neutral-50 flex flex-col">
         <div className="bg-white border-b border-neutral-100">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center">
-            <SellBopLogo size="lg" />
-          </div>
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center"><SellBopLogo size="lg" /></div>
         </div>
         <div className="flex-1 flex items-center justify-center px-4 py-16">
           <div className="max-w-md w-full text-center">
@@ -323,12 +287,8 @@ export function ClientProductPage({ slug }: { slug: string }) {
               <Shield size={24} className="text-amber-600" />
             </div>
             <h1 className="text-xl font-bold text-black mb-2">Payments coming soon</h1>
-            <p className="text-neutral-500 mb-6">
-              This seller hasn&apos;t set up Stripe payments yet. Check back soon!
-            </p>
-            <Button variant="secondary" onClick={() => setState('ready')}>
-              Go Back
-            </Button>
+            <p className="text-neutral-500 mb-6">This seller hasn&apos;t set up Stripe payments yet.</p>
+            <Button variant="secondary" onClick={() => setState('ready')}>Go Back</Button>
           </div>
         </div>
       </div>
@@ -337,7 +297,6 @@ export function ClientProductPage({ slug }: { slug: string }) {
 
   return (
     <div className="min-h-screen bg-neutral-50">
-      {/* Nav */}
       <div className="bg-white border-b border-neutral-100">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <SellBopLogo size="lg" />
@@ -353,10 +312,9 @@ export function ClientProductPage({ slug }: { slug: string }) {
         <div className="grid lg:grid-cols-5 gap-10">
           {/* Left: product info */}
           <div className="lg:col-span-3 order-2 lg:order-1">
-            {/* Creator */}
             {store && (
-              <Link href={`/${store.slug}`} className="flex items-center gap-2 mb-6 group">
-                <div className="w-8 h-8 rounded-full bg-neutral-200 overflow-hidden flex-shrink-0">
+              <Link href={`/${store.slug}`} className="flex items-center gap-2.5 mb-6 group">
+                <div className="w-9 h-9 rounded-full bg-neutral-200 overflow-hidden flex-shrink-0 ring-2 ring-white shadow-sm">
                   {store.avatar_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={store.avatar_url} alt={store.name} className="w-full h-full object-cover" />
@@ -366,11 +324,13 @@ export function ClientProductPage({ slug }: { slug: string }) {
                     </div>
                   )}
                 </div>
-                <span className="text-sm text-neutral-600 group-hover:text-black transition-colors">{store.name}</span>
+                <div>
+                  <p className="text-sm font-semibold text-neutral-800 group-hover:text-black transition-colors">{store.name}</p>
+                  <p className="text-xs text-neutral-400">sellbop.com/{store.slug}</p>
+                </div>
               </Link>
             )}
 
-            {/* Cover image */}
             {coverUrl && (
               <div className="aspect-video rounded-2xl overflow-hidden bg-neutral-100 mb-6">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -378,7 +338,6 @@ export function ClientProductPage({ slug }: { slug: string }) {
               </div>
             )}
 
-            {/* Title & description */}
             <h1 className="text-3xl font-bold text-black mb-4">{product?.title}</h1>
             {product?.description && (
               <div className="prose prose-sm max-w-none text-neutral-600">
@@ -392,56 +351,26 @@ export function ClientProductPage({ slug }: { slug: string }) {
           {/* Right: buy box */}
           <div className="lg:col-span-2 order-1 lg:order-2">
             <div className="bg-white rounded-2xl border border-neutral-200 p-6 sticky top-6">
-              {/* Price */}
               <div className="mb-5">
                 <p className="text-3xl font-bold text-black">
-                  {isFree ? 'Free' : formatCurrency((product?.price_cents ?? 0) / 100)}
+                  {isFree ? 'Free' : formatCurrency(product?.price_cents ?? 0)}
                 </p>
-                {!isFree && (
-                  <p className="text-xs text-neutral-400 mt-1">One-time payment</p>
-                )}
+                {!isFree && <p className="text-xs text-neutral-400 mt-1">One-time payment</p>}
               </div>
 
               {state === 'ready' ? (
-                <Button
-                  size="lg"
-                  className="w-full"
-                  onClick={() => setState('entering_email')}
-                >
+                <Button size="lg" className="w-full" onClick={() => setState('entering_email')}>
                   {isFree ? 'Get for Free' : 'Buy Now'} <ArrowRight size={16} />
                 </Button>
               ) : (state === 'entering_email' || state === 'processing') ? (
                 <form onSubmit={isFree ? handleFreeCheckout : handlePaidCheckout} className="space-y-3">
-                  <Input
-                    label="Your name"
-                    value={buyerName}
-                    onChange={e => setBuyerName(e.target.value)}
-                    placeholder="Alex Johnson"
-                    autoComplete="name"
-                  />
-                  <Input
-                    label="Email address *"
-                    type="email"
-                    value={buyerEmail}
-                    onChange={e => setBuyerEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    required
-                    autoComplete="email"
-                  />
+                  <Input label="Your name" value={buyerName} onChange={e => setBuyerName(e.target.value)} placeholder="Alex Johnson" autoComplete="name" />
+                  <Input label="Email address *" type="email" value={buyerEmail} onChange={e => setBuyerEmail(e.target.value)} placeholder="you@example.com" required autoComplete="email" />
                   {error && <p className="text-xs text-red-500">{error}</p>}
-                  <Button
-                    type="submit"
-                    size="lg"
-                    className="w-full"
-                    loading={state === 'processing'}
-                  >
-                    {isFree ? 'Get Free Download' : `Pay ${formatCurrency((product?.price_cents ?? 0) / 100)}`}
+                  <Button type="submit" size="lg" className="w-full" loading={state === 'processing'}>
+                    {isFree ? 'Get Free Download' : `Pay ${formatCurrency(product?.price_cents ?? 0)}`}
                   </Button>
-                  <button
-                    type="button"
-                    onClick={() => setState('ready')}
-                    className="w-full text-xs text-neutral-400 hover:text-neutral-600 transition-colors"
-                  >
+                  <button type="button" onClick={() => setState('ready')} className="w-full text-xs text-neutral-400 hover:text-neutral-600 transition-colors">
                     Cancel
                   </button>
                 </form>
@@ -461,9 +390,7 @@ export function ClientProductPage({ slug }: { slug: string }) {
                   >
                     <div className="flex items-center gap-2">
                       <TrendingUp size={14} className="text-emerald-600" />
-                      <span className="font-semibold text-emerald-800">
-                        Earn {commPercent}% · {formatCurrency(commCents)}/sale
-                      </span>
+                      <span className="font-semibold text-emerald-800">Earn {commPercent}% · {formatCurrency(commCents)}/sale</span>
                     </div>
                     <span className="text-xs font-bold text-emerald-600">Promote &amp; Earn</span>
                   </button>
@@ -482,9 +409,7 @@ export function ClientProductPage({ slug }: { slug: string }) {
                           <div className="flex gap-2">
                             <button
                               onClick={handleCopyAffiliateLink}
-                              className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold transition-all ${
-                                copied ? 'bg-emerald-500 text-white' : 'bg-black text-white hover:bg-neutral-800'
-                              }`}
+                              className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold transition-all ${copied ? 'bg-emerald-500 text-white' : 'bg-black text-white hover:bg-neutral-800'}`}
                             >
                               {copied ? <Check size={14} /> : <Copy size={14} />}
                               {copied ? `Copied! Earn ${formatCurrency(commCents)}/sale` : 'COPY LINK'}
@@ -500,7 +425,7 @@ export function ClientProductPage({ slug }: { slug: string }) {
                         </>
                       ) : (
                         <p className="text-xs text-neutral-500 text-center">
-                          <Link href={`/login?next=/p/${slug}`} className="font-medium underline hover:text-black">Log in</Link> to get your affiliate link.
+                          <Link href={`/login?next=/${sellerSlug}/${productSlug}`} className="font-medium underline hover:text-black">Log in</Link> to get your affiliate link.
                         </p>
                       )}
                     </div>

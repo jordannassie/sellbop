@@ -133,7 +133,7 @@ export default function ProductsPage() {
     setProducts(prev => prev.filter(p => p.id !== id))
   }
 
-  const storeUrl = store?.slug ? `/store/${store.slug}` : null
+  const storeUrl = store?.slug ? `/${store.slug}` : null
 
   return (
     <div>

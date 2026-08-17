@@ -136,7 +136,7 @@ export default function SettingsPage() {
     router.push('/')
   }
 
-  const storeUrl = store?.slug ? `/store/${store.slug}` : null
+  const storeUrl = store?.slug ? `/${store.slug}` : null
 
   return (
     <div className="max-w-2xl">
@@ -227,11 +227,11 @@ export default function SettingsPage() {
                 <label className="block text-xs font-medium text-neutral-500 mb-1">Store URL</label>
                 <div className="flex items-center rounded-xl border border-neutral-200 overflow-hidden">
                   <span className="px-3 py-2.5 text-sm text-neutral-500 bg-neutral-50 border-r border-neutral-200 shrink-0">
-                    sellbop.com/store/
+                    sellbop.com/
                   </span>
                   <span className="px-3 py-2.5 text-sm font-mono text-neutral-700">{storeSlug || '—'}</span>
                 </div>
-                <p className="text-xs text-neutral-400 mt-1">Store slug is set automatically and cannot be changed here yet.</p>
+                <p className="text-xs text-neutral-400 mt-1">Your store URL. Slug is set during setup.</p>
               </div>
               {storeUrl && (
                 <a href={storeUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-neutral-600 hover:text-black transition-colors">

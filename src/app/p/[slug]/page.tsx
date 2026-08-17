@@ -1,37 +1,27 @@
-import { Suspense } from 'react'
-import { notFound } from 'next/navigation'
-import { MarketingFooter } from '@/components/marketing/footer'
-import { ClientProductPage } from './client-product-page'
+import { redirect } from 'next/navigation'
 import { isSupabaseAdminConfigured } from '@/lib/env'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
-import type { Metadata } from 'next'
+import { Suspense } from 'react'
+import { ClientProductPage } from './client-product-page'
+import { MarketingFooter } from '@/components/marketing/footer'
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+/**
+ * /p/[slug] — legacy product URL.
+ *
+ * If the product can be unambiguously resolved to a store,
+ * redirect permanently to the canonical /[sellerSlug]/[productSlug].
+ *
+ * If Supabase is not configured (local dev), fall back to the old client component.
+ */
+export default async function LegacyProductPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>
+  searchParams: Promise<Record<string, string>>
+}) {
   const { slug } = await params
-
-  if (!isSupabaseAdminConfigured()) {
-    return { title: 'Product — Sellbop', description: 'View this product on Sellbop.' }
-  }
-
-  const admin = getSupabaseAdminClient()
-  const { data: product } = await admin
-    .from('products')
-    .select('title, description, short_description, cover_image_url')
-    .eq('slug', slug)
-    .eq('is_live', true)
-    .maybeSingle()
-
-  if (!product) return { title: 'Product — Sellbop' }
-
-  return {
-    title: product.title + ' — Sellbop',
-    description: product.short_description ?? product.description?.slice(0, 160) ?? 'View this product on Sellbop.',
-    openGraph: product.cover_image_url ? { images: [product.cover_image_url] } : undefined,
-  }
-}
-
-export default async function SellPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params
+  const sp = await searchParams
 
   if (!isSupabaseAdminConfigured()) {
     return (
@@ -44,17 +34,32 @@ export default async function SellPage({ params }: { params: Promise<{ slug: str
     )
   }
 
-  // Verify product exists server-side for proper 404
   const admin = getSupabaseAdminClient()
+
+  // Find the product and its store
   const { data: product } = await admin
     .from('products')
-    .select('id')
+    .select('id, slug, store_id')
     .eq('slug', slug)
     .eq('is_live', true)
     .maybeSingle()
 
-  if (!product) notFound()
+  if (product?.store_id) {
+    const { data: store } = await admin
+      .from('stores')
+      .select('slug')
+      .eq('id', product.store_id)
+      .maybeSingle()
 
+    if (store?.slug) {
+      // Build canonical URL preserving query params (e.g. ?ref=)
+      const qp = new URLSearchParams(sp).toString()
+      const canonical = `/${store.slug}/${slug}${qp ? `?${qp}` : ''}`
+      redirect(canonical)
+    }
+  }
+
+  // Fallback: serve old product page if store can't be resolved
   return (
     <>
       <Suspense>
