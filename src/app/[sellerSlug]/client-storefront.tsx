@@ -243,36 +243,42 @@ export function ClientStorefront({ slug }: { slug: string }) {
     <div className="min-h-screen bg-white">
       <PublicHeader />
 
-      {/* ── Banner strip ──────────────────────────────────────────────── */}
-      <div className="relative w-full overflow-hidden h-[160px] sm:h-[200px] md:h-[240px]">
-        {store.banner_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={store.banner_url}
-            alt=""
-            className="w-full h-full object-cover object-center"
-          />
-        ) : (
-          <div className="w-full h-full" style={{
-            background: '#111111',
-            backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px)',
-            backgroundSize: '24px 24px',
-          }} />
-        )}
-      </div>
+      {/* ── Banner — relative container so avatar can be absolutely layered over it ── */}
+      <div className="relative">
+        {/* Banner image */}
+        <div className="w-full overflow-hidden h-[160px] sm:h-[200px] md:h-[240px]">
+          {store.banner_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={store.banner_url}
+              alt=""
+              className="w-full h-full object-cover object-center"
+            />
+          ) : (
+            <div className="w-full h-full" style={{
+              background: '#111111',
+              backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px)',
+              backgroundSize: '24px 24px',
+            }} />
+          )}
+        </div>
 
-      {/* ── Creator info — white section, avatar overlaps banner ──────── */}
-      <div className="flex flex-col items-center text-center px-4 pb-8">
-        {/* Avatar — pulled up into banner by ~50% of its height */}
+        {/* Avatar — absolutely positioned over banner, 75% inside / 25% below */}
         <div
-          className="rounded-full overflow-hidden flex-shrink-0 bg-white"
           style={{
-            width: 'clamp(112px, 13vw, 140px)',
-            height: 'clamp(112px, 13vw, 140px)',
+            position: 'absolute',
+            bottom: 0,
+            left: '50%',
+            transform: 'translate(-50%, 25%)',
+            zIndex: 20,
+            width: 'clamp(120px, 14vw, 152px)',
+            height: 'clamp(120px, 14vw, 152px)',
+            borderRadius: '50%',
+            overflow: 'hidden',
             border: '5px solid white',
-            boxShadow: '0 2px 16px rgba(0,0,0,0.12)',
-            marginTop: 'calc(clamp(112px, 13vw, 140px) * -0.5)',
-            marginBottom: '16px',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+            background: '#f0f0f0',
+            flexShrink: 0,
           }}
         >
           {store.avatar_url ? (
@@ -280,15 +286,22 @@ export function ClientStorefront({ slug }: { slug: string }) {
             <img
               src={store.avatar_url}
               alt={store.name}
-              className="w-full h-full object-cover object-center"
+              style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
             />
           ) : (
-            <div className="w-full h-full bg-neutral-100 flex items-center justify-center">
-              <User size={36} className="text-neutral-400" />
+            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#e5e5e5' }}>
+              <User size={40} className="text-neutral-400" />
             </div>
           )}
         </div>
+      </div>
 
+      {/* ── Creator info — white section below banner ─────────────────── */}
+      {/* padding-top = 25% of avatar height + gap before name */}
+      <div
+        className="flex flex-col items-center text-center px-4 pb-8"
+        style={{ paddingTop: 'calc(clamp(120px, 14vw, 152px) * 0.25 + 20px)' }}
+      >
         {/* Name */}
         <h1 className="text-2xl sm:text-3xl font-bold text-black tracking-tight mb-1">
           {store.name}
@@ -305,7 +318,7 @@ export function ClientStorefront({ slug }: { slug: string }) {
         )}
 
         {/* Buttons */}
-        <div className={`flex flex-wrap items-center justify-center gap-2 ${!hasBio ? 'mt-1' : ''}`}>
+        <div className="flex flex-wrap items-center justify-center gap-2">
           <ShareStoreButton slug={slug} name={store.name} />
           {products.length > 0 && (
             <button
