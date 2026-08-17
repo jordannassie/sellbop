@@ -3,12 +3,13 @@ import { Check } from 'lucide-react'
 import { SellBopLogo } from '@/components/ui/sellbop-logo'
 import { HERO_FACEPILE_PHOTOS } from '@/lib/demo-avatars'
 
+// No Founder badge — practical creator benefits only
 const BENEFITS = [
-  'No monthly fee',
-  'No credit card required to start',
-  'Create your first product with AI',
+  '$0 SellBop platform fees during beta',
+  'Standard Stripe/payment processing fees apply',
+  'Early access to new features',
   'Community access',
-  'Vote on what we build next',
+  'Vote on what gets built next',
 ]
 
 const PROMO_PHOTO = 'https://qsvmgzdaashfsavmfjuz.supabase.co/storage/v1/object/public/SELL/images/0_3.jpg'
@@ -55,17 +56,17 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
               {/* Eyebrow */}
               <div className="inline-flex items-center gap-2 bg-white/10 text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full mb-5 self-start">
                 <span className="w-1.5 h-1.5 bg-green-400 rounded-full flex-shrink-0" />
-                Creator Program
+                Beta Program
               </div>
 
               {/* Headline */}
               <h2 className="text-2xl sm:text-[28px] font-black text-white leading-tight mb-2">
-                Join the Creator Program
+                Founder Creators Program
               </h2>
 
               {/* Subheadline */}
               <p className="text-neutral-400 text-sm leading-relaxed mb-6">
-                Start your first online business with AI. Create your product, launch your page, and only pay when you sell.
+                Be one of the first creators on SellBop. Launch early, pay $0 SellBop platform fees during beta, and help shape what we build next. Standard Stripe/payment processing fees still apply.
               </p>
 
               {/* Benefits — no Founder badge */}
@@ -97,8 +98,8 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
                 ))}
               </div>
               <p className="text-xs text-neutral-400 leading-snug">
-                <span className="text-white font-semibold">Creators already building</span>
-                {' '}— start your first online business today
+                <span className="text-white font-semibold">Creators already joining beta</span>
+                {' '}— be part of the first wave
               </p>
             </div>
           </div>

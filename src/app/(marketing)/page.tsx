@@ -1,314 +1,720 @@
+import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { ProductImage } from '@/components/ui/product-image'
 import { MissionSection } from '@/components/marketing/mission-section'
-import { AIPromptBar } from '@/components/marketing/ai-prompt-bar'
-import { RotatingWord } from '@/components/marketing/rotating-word'
-import { AuthRedirect } from '@/components/marketing/auth-redirect'
+import { HeroBanner } from '@/components/marketing/hero-banner'
+import { isSupabaseConfigured } from '@/lib/env'
+import { getSupabaseServerClient } from '@/lib/supabase/server'
 import {
   ArrowRight,
   Check,
-  Package,
-  Sparkles,
-  Tag,
-  ThumbsUp,
-  Users2,
-  Wand2,
-  Bell,
+  Download,
+  Link2,
+  CreditCard,
+  Upload,
+  TrendingUp,
+  Users,
+  DollarSign,
+  BookOpen,
+  Table2,
+  SlidersHorizontal,
+  Palette,
+  Camera,
+  Code2,
+  Music2,
+  Plus,
   Zap,
+  Sparkles,
+  ArrowUpRight,
 } from 'lucide-react'
-import { DEMO_PRODUCTS, DEMO_STOREFRONT, DEMO_SELLER_PROFILE } from '@/lib/demo-data/seed'
-import { formatCurrency } from '@/lib/utils'
-import { HERO_FACEPILE_PHOTOS } from '@/lib/demo-avatars'
-import { getDemoMode } from '@/lib/server/demo-mode'
+
+// Avatar positions for the affiliate creator cloud
+// [xPct, yPct, sizePx, badge | null, animDelayS, fallbackHex, mobileVisible]
+const AVATAR_SLOTS: [number, number, number, string | null, number, string, boolean][] = [
+  [45, 2,  82, '30%',        0.0, '#4F46E5', true ],
+  [8,  16, 72, null,         1.5, '#0EA5E9', true ],
+  [72, 8,  78, '40%',        0.8, '#F59E0B', true ],
+  [28, 54, 70, '$14 / sale', 2.0, '#10B981', true ],
+  [62, 50, 74, null,         0.4, '#EC4899', true ],
+  [20, 4,  58, null,         1.2, '#8B5CF6', true ],
+  [80, 36, 54, '$9 / sale',  1.8, '#EF4444', true ],
+  [50, 28, 58, null,         0.6, '#6366F1', true ],
+  [4,  54, 54, null,         2.2, '#14B8A6', true ],
+  [86, 64, 58, '25%',        1.0, '#F97316', true ],
+  [38, 76, 54, null,         0.3, '#06B6D4', true ],
+  [66, 74, 58, null,         1.7, '#A855F7', true ],
+  [34, 14, 42, null,         2.5, '#475569', false],
+  [88, 7,  42, null,         0.9, '#52525B', false],
+  [56, 66, 42, null,         1.4, '#57534E', false],
+  [14, 77, 42, null,         2.1, '#525252', false],
+  [82, 82, 38, null,         0.7, '#6B7280', false],
+  [24, 38, 42, null,         3.0, '#71717A', false],
+  [93, 44, 38, null,         1.1, '#64748B', false],
+  [11, 44, 38, null,         2.8, '#78716C', false],
+]
 
 export default async function HomePage() {
-  const [featured, demoEnabled] = [
-    DEMO_PRODUCTS.filter(p => p.status === 'published').slice(0, 3),
-    await getDemoMode(),
-  ]
+  let isAuthenticated = false
+  let creatorAvatarUrls: string[] = []
 
+  if (isSupabaseConfigured()) {
+    try {
+      const supabase = await getSupabaseServerClient()
+      const [{ data: { user } }, { data: storeData }] = await Promise.all([
+        supabase.auth.getUser(),
+        supabase
+          .from('stores')
+          .select('avatar_url')
+          .not('avatar_url', 'is', null)
+          .limit(20),
+      ])
+      isAuthenticated = !!user
+      if (storeData) {
+        creatorAvatarUrls = storeData
+          .map(s => s.avatar_url as string)
+          .filter(Boolean)
+      }
+    } catch { /* session or DB unavailable — show homepage with placeholders */ }
+  }
+
+  // redirect() must be called outside the try/catch so Next.js can intercept it
+  if (isAuthenticated) redirect('/dashboard')
   return (
     <>
-      <AuthRedirect />
       {/* ── Hero ─────────────────────────────────────────────────── */}
-      <section className="max-w-4xl mx-auto px-4 sm:px-6 pt-16 pb-20 text-center">
-
-        {/* 1. Rotating teaser — leads into the headline */}
-        <p className="text-base sm:text-xl font-bold text-black mb-3">
-          Turn what you know into <RotatingWord />
-        </p>
-
-        {/* 2. Main headline */}
-        <h1 className="text-4xl sm:text-6xl font-black text-black tracking-tight leading-[1.1] mb-5">
-          Launch your store with AI in minutes.
-        </h1>
-
-        {/* 3. Subheadline */}
-        <p className="text-base sm:text-lg text-neutral-500 max-w-xl mx-auto mb-8 leading-relaxed">
-          SellBop gives you an AI Launch Coach and the tools to turn your knowledge, skills, templates, guides, coaching, or ideas into a digital product you can sell.
-        </p>
-
-        {/* 4. Hero AI prompt — the primary conversion action */}
-        <AIPromptBar />
-
-        {/* 5. Social proof */}
-        <div className="flex flex-col items-center gap-3 mt-8">
-          <div className="flex items-center -space-x-2.5">
-            {HERO_FACEPILE_PHOTOS.map((url, i) => (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                key={i}
-                src={url}
-                alt="Creator"
-                width={36}
-                height={36}
-                className="w-9 h-9 rounded-full border-2 border-white object-cover shadow-sm"
-              />
-            ))}
-            <div className="w-9 h-9 rounded-full border-2 border-white bg-neutral-100 flex items-center justify-center text-[10px] font-bold text-neutral-500 shadow-sm">
-              +99
-            </div>
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 pt-16 pb-20">
+        {/* Text block */}
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold px-3 py-1.5 rounded-full mb-6">
+            <TrendingUp size={11} />
+            Introducing Sellbop Share
           </div>
-          <p className="text-sm text-neutral-500">
-            <span className="font-semibold text-black">142 creators</span> building their first online business this week
+
+          <h1 className="text-5xl sm:text-7xl font-black text-black tracking-tight leading-[1.05] mb-5">
+            Sell digital products.<br className="hidden sm:block" />
+            <span className="text-emerald-600">Let everyone sell them.</span>
+          </h1>
+
+          <p className="text-lg sm:text-xl text-neutral-500 max-w-lg mx-auto mb-8 leading-relaxed">
+            Upload your product, choose what affiliates earn, and build your own sales network.
           </p>
-        </div>
 
-        {/* 7. Secondary CTAs */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-6">
-          <Link href="/signup"><Button size="lg">Start Free</Button></Link>
-          {demoEnabled && (
-            <Link href="/store/alexjohnson" target="_blank">
-              <Button size="lg" variant="secondary">View Demo Store</Button>
-            </Link>
-          )}
-        </div>
-        <p className="text-xs text-neutral-400 mt-4">No credit card required · No monthly fee</p>
-
-      </section>
-
-      {/* ── Mission / Founder ────────────────────────────────────── */}
-      <MissionSection />
-
-      {/* ── Three pillars ─────────────────────────────────────────── */}
-      <section className="border-t border-neutral-100 py-16 sm:py-20 bg-white">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-10">
-            <p className="text-xs font-bold uppercase tracking-[0.25em] text-neutral-400 mb-3">The full picture</p>
-            <h2 className="text-3xl sm:text-4xl font-bold text-black tracking-tight mb-3">
-              Create, sell, and launch — all in one place.
-            </h2>
-            <p className="text-neutral-500 text-base max-w-md mx-auto">
-              Everything you need to turn what you know into a digital product that sells.
-            </p>
-          </div>
-
-          {/* Three pillars */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-12">
-            {[
-              { icon: Wand2,   label: 'Create your product',     desc: 'AI helps with product ideas, naming, offer building, pricing, product page copy, FAQ, checkout copy, and mockup ideas.',                                                                         color: 'bg-blue-50 text-blue-600' },
-              { icon: Package, label: 'Sell from your store',    desc: 'Use creator storefronts, Stripe checkout, digital delivery, orders, customers, coupons, analytics, and buyer library.',                                                                          color: 'bg-violet-50 text-violet-600' },
-              { icon: Zap,     label: 'Launch with confidence',  desc: 'Get Launch Kits, Instagram captions, TikTok/Reels ideas, DM scripts, email copy, a 7-day launch plan, and a first 10 sales strategy.',                                                         color: 'bg-emerald-50 text-emerald-600' },
-            ].map(t => (
-              <div key={t.label} className="rounded-2xl border border-neutral-100 bg-white p-5 hover:border-neutral-200 hover:shadow-sm transition-all">
-                <div className={`inline-flex h-10 w-10 items-center justify-center rounded-xl mb-3 ${t.color}`}>
-                  <t.icon size={18} />
-                </div>
-                <p className="font-semibold text-sm text-black mb-1">{t.label}</p>
-                <p className="text-xs text-neutral-500 leading-relaxed">{t.desc}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Live product cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {featured.map(p => (
-              <Link key={p.id} href={`/p/${p.slug}`}>
-                <div className="bg-white border border-neutral-200 rounded-xl p-5 hover:shadow-md transition-shadow group">
-                  <div className="aspect-video rounded-lg mb-4 overflow-hidden relative">
-                    <ProductImage src={p.thumbnailUrl} alt={p.name} productType={p.productType} fill iconSize="md" />
-                  </div>
-                  <p className="text-xs text-neutral-400 mb-1 capitalize">{p.productType.replace('_', ' ')}</p>
-                  <p className="font-semibold text-black text-sm mb-2 group-hover:underline underline-offset-2">{p.name}</p>
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-bold text-black">{formatCurrency(p.price, p.currency)}</span>
-                    {p.compareAtPrice && (
-                      <span className="text-xs text-neutral-400 line-through">{formatCurrency(p.compareAtPrice)}</span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 pt-3 border-t border-neutral-100">
-                    <div
-                      className="rounded-lg flex-shrink-0 flex items-center justify-center text-white font-black"
-                      style={{ width: 24, height: 24, fontSize: 10, backgroundColor: DEMO_STOREFRONT.themeColor }}
-                    >
-                      {DEMO_SELLER_PROFILE.displayName.charAt(0)}
-                    </div>
-                    <span className="text-xs text-neutral-500 truncate">{DEMO_SELLER_PROFILE.displayName}</span>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-          {demoEnabled && (
-            <p className="text-center text-xs text-neutral-400 mt-4">
-              <Link href="/store/alexjohnson" className="hover:text-neutral-700 underline underline-offset-2">
-                View the full demo store →
-              </Link>
-            </p>
-          )}
-        </div>
-      </section>
-
-      {/* ── How it works ─────────────────────────────────────────── */}
-      <section className="border-t border-neutral-100 py-16 sm:py-24 bg-neutral-50">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-12">
-            <p className="text-xs font-bold uppercase tracking-[0.25em] text-neutral-400 mb-3">Simple by design</p>
-            <h2 className="text-3xl sm:text-4xl font-bold text-black tracking-tight mb-3">
-              From idea to first product in minutes.
-            </h2>
-            <p className="text-neutral-500 text-base max-w-sm mx-auto">
-              Your AI Launch Coach handles the heavy lifting.
-            </p>
-          </div>
-
-          <div className="grid gap-6 sm:grid-cols-3">
-            {[
-              {
-                step: '01',
-                icon: Wand2,
-                title: 'Tell your AI Launch Coach what you know',
-                desc: 'Describe your skill, idea, process, guide, template, coaching offer, course, or digital product.',
-                color: 'bg-black text-white',
-                iconColor: 'text-white',
-              },
-              {
-                step: '02',
-                icon: Sparkles,
-                title: 'SellBop builds your product launch',
-                desc: 'Get help with the name, price, product page, FAQ, checkout copy, and launch content.',
-                color: 'bg-white border border-neutral-200',
-                iconColor: 'text-neutral-600',
-              },
-              {
-                step: '03',
-                icon: ArrowRight,
-                title: 'Publish, share, and get paid',
-                desc: 'Publish your product, share your SellBop link, and start selling online.',
-                color: 'bg-white border border-neutral-200',
-                iconColor: 'text-neutral-600',
-              },
-            ].map((item, i) => (
-              <div
-                key={item.step}
-                className={`relative rounded-2xl p-6 ${item.color}`}
-              >
-                <div className={`flex h-10 w-10 items-center justify-center rounded-xl mb-4 ${i === 0 ? 'bg-white/10' : 'bg-neutral-100'}`}>
-                  <item.icon size={18} className={item.iconColor} />
-                </div>
-                <p className={`text-[10px] font-bold uppercase tracking-widest mb-2 ${i === 0 ? 'text-white/50' : 'text-neutral-400'}`}>
-                  Step {item.step}
-                </p>
-                <p className={`font-bold text-base mb-2 ${i === 0 ? 'text-white' : 'text-black'}`}>
-                  {item.title}
-                </p>
-                <p className={`text-sm leading-relaxed ${i === 0 ? 'text-white/70' : 'text-neutral-500'}`}>
-                  {item.desc}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-10 text-center">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-6">
             <Link href="/signup">
-              <Button size="lg">
-                <Wand2 size={16} /> Start creating with AI
+              <Button size="lg" className="w-full sm:w-auto">
+                Start Selling <ArrowRight size={16} />
+              </Button>
+            </Link>
+            <Link href="/marketplace">
+              <Button size="lg" variant="secondary" className="w-full sm:w-auto">
+                Explore Marketplace
               </Button>
             </Link>
           </div>
-        </div>
-      </section>
 
-      {/* ── Creator Program ────────────────────────────────────────── */}
-      <section className="py-20 sm:py-28 bg-black">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
-          <p className="text-xs font-bold uppercase tracking-[0.3em] text-neutral-500 mb-4">
-            Creator Program
-          </p>
-          <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight leading-tight mb-4">
-            Join the Creator Program.<br />
-            <span className="text-green-400">Only pay when you sell.</span>
-          </h2>
-          <p className="text-neutral-400 text-base leading-relaxed mb-8 max-w-md mx-auto">
-            Join the Creator Program and start building your first online business with AI. SellBop helps you turn what you know into a product you can sell — with no monthly fee and no credit card required to start.
-          </p>
-
-          {/* Benefit pills */}
-          <div className="flex flex-wrap justify-center gap-2.5 mb-8">
-            {[
-              { Icon: Tag,     label: 'No monthly fee' },
-              { Icon: Users2,  label: 'Community access' },
-              { Icon: ThumbsUp,label: 'Vote on features' },
-              { Icon: Bell,    label: 'Only pay when you sell' },
-            ].map(({ Icon, label }) => (
-              <span
-                key={label}
-                className="inline-flex items-center gap-2 bg-white/5 border border-white/10 text-white text-xs font-medium px-4 py-2 rounded-full"
-              >
-                <Icon size={12} className="text-green-400" />
-                {label}
+          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+            {['Free to start', 'No monthly fees', 'Instant delivery'].map(text => (
+              <span key={text} className="flex items-center gap-1.5 text-sm text-neutral-500">
+                <Check size={13} className="text-emerald-500" /> {text}
               </span>
             ))}
           </div>
-
-          <Link href="/login?mode=signup">
-            <button className="inline-flex items-center gap-2 bg-white text-black text-sm font-bold px-8 py-3.5 rounded-xl hover:bg-neutral-100 transition-colors">
-              Join the Creator Program <ArrowRight size={14} />
-            </button>
-          </Link>
-          <p className="text-xs text-neutral-600 mt-4">No credit card required · Free to start</p>
         </div>
+
+        {/* Rotating banner showcase */}
+        <HeroBanner />
       </section>
 
-      {/* ── Final CTA ─────────────────────────────────────────────── */}
-      <section className="border-t border-neutral-100 py-24 sm:py-32 text-center bg-white">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-center gap-1.5 mb-6">
-            {[
-              'No credit card required',
-              'Free to start',
-              'AI Launch Coach included',
-            ].map(pill => (
-              <span key={pill} className="hidden sm:inline-flex items-center gap-1 text-xs text-neutral-500 border border-neutral-200 rounded-full px-3 py-1">
-                <Check size={10} className="text-emerald-500" /> {pill}
-              </span>
-            ))}
-          </div>
-
-          <h2 className="text-4xl sm:text-6xl font-black text-black tracking-tight leading-tight mb-4">
-            Ready to start your<br />first online business?
-          </h2>
-          <p className="text-neutral-500 text-base sm:text-lg mb-8 max-w-sm mx-auto leading-relaxed">
-            Use AI to turn what you know into a product people can buy.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-10">
-            <Link href="/signup">
-              <Button size="lg">Start Free</Button>
-            </Link>
-            <Link href="/signup">
-              <Button size="lg" variant="secondary">Join the Creator Program</Button>
-            </Link>
-          </div>
-
-          {/* Trust block */}
-          <div className="inline-block bg-neutral-50 border border-neutral-200 rounded-2xl px-6 py-5 text-center max-w-sm mx-auto">
-            <p className="text-sm font-bold text-black mb-1">Start free. Launch when you&apos;re ready.</p>
-            <p className="text-xs text-neutral-500 leading-relaxed">
-              Use your AI Launch Coach to create your first product, build your page, and get a launch plan. No monthly fee. Only pay when you sell.
+      {/* ── How it works ─────────────────────────────────────────── */}
+      <section className="border-t border-neutral-100 py-24 bg-white">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-16">
+            <p className="text-xs font-bold uppercase tracking-[0.25em] mb-3" style={{ color: '#00E676' }}>
+              How it works
+            </p>
+            <h2 className="text-4xl sm:text-5xl font-black text-black tracking-tight">
+              Upload it. Price it. Sell it.
+            </h2>
+            <p className="text-neutral-500 mt-4 text-base sm:text-lg">
+              Then Sellbop Share helps everyone sell it with you.
             </p>
           </div>
+
+          <div className="grid gap-10 sm:grid-cols-4 sm:gap-4">
+            {[
+              { step: '1', icon: Upload, title: 'Upload your product', desc: 'Add your PDF, ZIP, template, or any digital file.' },
+              { step: '2', icon: CreditCard, title: 'Set your price', desc: 'Choose any price — or make it free for lead magnets.' },
+              { step: '3', icon: Link2, title: 'Share your link', desc: 'Post your Sellbop product link anywhere.' },
+              { step: '4', icon: Download, title: 'Get paid', desc: 'Buyers checkout and receive their download instantly.' },
+            ].map((item, i) => (
+              <div key={item.step} className="relative flex flex-col items-center text-center">
+                {i < 3 && (
+                  <div
+                    className="hidden sm:flex absolute top-10 left-[calc(50%+3.5rem)] w-[calc(100%-3.5rem)] items-center z-0"
+                    aria-hidden="true"
+                  >
+                    <div className="flex-1 border-t-2 border-dashed border-neutral-200" />
+                    <div className="w-2.5 h-2.5 rounded-full flex-shrink-0 mx-0.5" style={{ background: '#00E676' }} />
+                    <div className="flex-1 border-t-2 border-dashed border-neutral-200" />
+                  </div>
+                )}
+                <div className="relative z-10 w-full">
+                  <div className="relative mx-auto w-full max-w-[168px] aspect-square rounded-3xl bg-white border border-neutral-100 shadow-[0_8px_30px_rgba(0,0,0,0.06)] flex items-center justify-center mb-5">
+                    <span
+                      className="absolute top-3 left-3 w-7 h-7 rounded-full flex items-center justify-center text-xs font-black text-white"
+                      style={{ background: '#00E676' }}
+                    >
+                      {item.step}
+                    </span>
+                    <item.icon size={36} strokeWidth={1.75} style={{ color: '#00E676' }} />
+                  </div>
+                  <p className="font-bold text-base text-black mb-2">{item.title}</p>
+                  <p className="text-sm text-neutral-500 leading-relaxed max-w-[200px] mx-auto">{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-14 flex justify-center">
+            <div className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-5 py-2.5 shadow-sm">
+              <Sparkles size={14} style={{ color: '#00E676' }} />
+              <span className="text-sm font-medium text-neutral-600">Simple for you. Powerful for everyone.</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Sellbop Share / Affiliate Network ─────────────────────── */}
+      <section className="border-t border-neutral-100 py-24 bg-white">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold px-3 py-1.5 rounded-full mb-5">
+                <TrendingUp size={11} />
+                Sellbop Share
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-black text-black tracking-tight leading-tight mb-4">
+                Build your own affiliate network.
+              </h2>
+              <p className="text-neutral-500 text-base leading-relaxed mb-6">
+                Stop being the only person selling your product. Set the commission. Sellbop handles the links, tracking, sales, and commissions.
+              </p>
+              <div className="space-y-3 mb-8">
+                {[
+                  { icon: Users, text: 'Customers and fans become your salespeople' },
+                  { icon: DollarSign, text: 'You only pay when they actually make a sale' },
+                  { icon: TrendingUp, text: 'Real-time tracking for every click and conversion' },
+                ].map(({ icon: Icon, text }) => (
+                  <div key={text} className="flex items-center gap-3">
+                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-100">
+                      <Icon size={14} className="text-emerald-600" />
+                    </div>
+                    <p className="text-sm text-neutral-700">{text}</p>
+                  </div>
+                ))}
+              </div>
+              <Link href="/signup">
+                <Button size="lg">
+                  Build Your Network <ArrowRight size={16} />
+                </Button>
+              </Link>
+            </div>
+
+            {/* Visual mockup */}
+            <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-6 shadow-sm">
+              <div className="rounded-xl border border-neutral-200 bg-white overflow-hidden mb-4">
+                {/* Product cover image */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="https://qsvmgzdaashfsavmfjuz.supabase.co/storage/v1/object/public/SELL/images/HOLD.png"
+                  alt="Digital Product"
+                  className="w-full object-cover rounded-t-xl"
+                  style={{ aspectRatio: '16/7', objectFit: 'cover' }}
+                />
+                <div className="p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">Digital Product</p>
+                      <p className="text-2xl font-black text-black">$49</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-neutral-400">Sellbop Share</p>
+                      <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-bold" style={{ background: '#ecfff6', color: '#00A854' }}>ON · 30%</span>
+                    </div>
+                  </div>
+                  <div className="border-t border-neutral-100 pt-3">
+                    <div className="flex justify-between text-sm items-baseline">
+                      <span className="text-neutral-500">Affiliate earns per sale</span>
+                      <span className="text-2xl font-black" style={{ color: '#00E676' }}>$14.70</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { label: 'Affiliates', value: '47' },
+                  { label: 'Affiliate Sales', value: '312' },
+                  { label: 'Revenue', value: '$15,288' },
+                ].map(s => (
+                  <div key={s.label} className="rounded-xl border border-neutral-200 bg-white p-3 text-center">
+                    <p className="text-lg font-black text-black">{s.value}</p>
+                    <p className="text-[10px] text-neutral-400 mt-0.5">{s.label}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-4 rounded-xl bg-black p-4">
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <p className="text-xs font-mono text-neutral-400 truncate">sellbop.com/creator/product?ref=ABC12345</p>
+                </div>
+                <div className="flex w-full items-center justify-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-black text-black">
+                  COPY LINK
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Become an Affiliate ───────────────────────────────────── */}
+      <section className="border-t border-neutral-900 py-28 bg-[#080808] overflow-hidden">
+        <style>{`
+          @keyframes avatarFloat {
+            0%,100% { transform: translateY(0px) scale(1); }
+            50%      { transform: translateY(-9px) scale(1.01); }
+          }
+        `}</style>
+
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          {/* Headline block */}
+          <div className="text-center mb-16">
+            <span className="inline-flex items-center gap-1.5 border border-[#00E676]/40 text-[#00E676] text-xs font-bold tracking-[0.2em] uppercase px-3 py-1.5 rounded-full mb-6">
+              <DollarSign size={10} aria-hidden="true" />
+              For Affiliates
+            </span>
+            <h2 className="text-5xl sm:text-6xl lg:text-7xl font-black text-white tracking-tight leading-[1.05] mb-5">
+              Become an affiliate<br />
+              <span style={{ color: '#00E676' }}>of your favorite creators.</span>
+            </h2>
+            <p className="text-neutral-400 text-lg sm:text-xl max-w-2xl mx-auto leading-relaxed">
+              Share digital products you believe in. Earn commission every time someone buys through your link.
+            </p>
+          </div>
+
+          {/* Two-column: avatar cloud + steps */}
+          <div className="grid lg:grid-cols-[1.15fr_1fr] gap-10 lg:gap-20 items-center mb-20">
+
+            {/* ── Avatar Cloud ── */}
+            <div
+              aria-hidden="true"
+              className="relative order-1 w-full overflow-hidden rounded-3xl"
+              style={{ height: 'clamp(300px, 55vw, 490px)' }}
+            >
+              {/* subtle radial glow in background */}
+              <div
+                className="pointer-events-none absolute inset-0 rounded-3xl"
+                style={{
+                  background: 'radial-gradient(ellipse 70% 60% at 50% 50%, rgba(0,230,118,0.06) 0%, transparent 70%)',
+                }}
+              />
+
+              {AVATAR_SLOTS.map(([xPct, yPct, size, badge, delay, color], i) => {
+                const avatarUrl = creatorAvatarUrls[i] ?? null
+                const isMobileVisible = AVATAR_SLOTS[i][6]
+
+                return (
+                  <div
+                    key={i}
+                    className={isMobileVisible ? 'absolute' : 'absolute hidden sm:block'}
+                    style={{
+                      left: `${xPct}%`,
+                      top:  `${yPct}%`,
+                      width:  size,
+                      height: size,
+                      animation: `avatarFloat ${3 + (delay % 1.5)}s ease-in-out ${delay}s infinite`,
+                    }}
+                  >
+                    {/* Avatar circle */}
+                    <div
+                      className="relative w-full h-full rounded-full ring-2 ring-white/10 overflow-hidden flex items-center justify-center"
+                      style={{ background: color }}
+                    >
+                      {avatarUrl ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img
+                          src={avatarUrl}
+                          alt=""
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <svg
+                          width={Math.round(size * 0.5)}
+                          height={Math.round(size * 0.5)}
+                          viewBox="0 0 24 24"
+                          fill="rgba(255,255,255,0.35)"
+                        >
+                          <circle cx="12" cy="8" r="4" />
+                          <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+                        </svg>
+                      )}
+                    </div>
+
+                    {/* Commission badge */}
+                    {badge && (
+                      <span
+                        className="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded-full text-[10px] font-black text-black leading-none shadow-md whitespace-nowrap"
+                        style={{ background: '#00E676', fontSize: size < 56 ? '9px' : '10px' }}
+                      >
+                        {badge}
+                      </span>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* ── Steps + CTA ── */}
+            <div className="order-2">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-neutral-500 mb-7">
+                How it works
+              </p>
+
+              <div className="space-y-7 mb-10">
+                {[
+                  {
+                    n: '1',
+                    title: 'Find a product',
+                    desc:  'Browse the Sellbop Marketplace for digital products and creators you want to promote.',
+                  },
+                  {
+                    n: '2',
+                    title: 'Copy your link',
+                    desc:  'Sellbop instantly generates your unique affiliate link — no setup, no code.',
+                  },
+                  {
+                    n: '3',
+                    title: 'Earn when it sells',
+                    desc:  'Every time someone buys through your link, the commission goes directly to you.',
+                  },
+                ].map(s => (
+                  <div key={s.n} className="flex gap-4 items-start">
+                    <div
+                      className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-black font-black text-sm"
+                      style={{ background: '#00E676' }}
+                    >
+                      {s.n}
+                    </div>
+                    <div>
+                      <p className="text-white font-bold mb-1">{s.title}</p>
+                      <p className="text-neutral-400 text-sm leading-relaxed">{s.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* CTA */}
+              <div className="flex flex-col sm:flex-row gap-3 mb-8">
+                <Link href="/marketplace">
+                  <Button
+                    size="lg"
+                    className="w-full sm:w-auto font-black"
+                    style={{ background: '#00E676', color: '#000', borderColor: '#00E676' }}
+                  >
+                    Explore Products to Promote <ArrowRight size={16} />
+                  </Button>
+                </Link>
+              </div>
+
+              {/* Key differentiator */}
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                <p className="text-white font-black text-lg leading-snug mb-1.5">
+                  You don&apos;t need your own product to earn on Sellbop.
+                </p>
+                <p className="text-neutral-400 text-sm leading-relaxed">
+                  Anyone with a Sellbop account can promote affiliate-enabled products and keep their commission.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom: network flow */}
+          <div className="border-t border-white/10 pt-10 flex items-center justify-center gap-3 flex-wrap">
+            {['Find it', 'Copy it', 'Share it', 'Earn'].map((step, i, arr) => (
+              <span key={step} className="flex items-center gap-3">
+                <span className="text-sm font-bold text-neutral-400">{step}</span>
+                {i < arr.length - 1 && (
+                  <ArrowRight size={13} className="text-neutral-600 flex-shrink-0" />
+                )}
+              </span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── What you can sell ─────────────────────────────────────── */}
+      <section className="border-t border-neutral-100 py-24 bg-neutral-50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-14">
+            <p className="text-xs font-bold uppercase tracking-[0.25em] mb-3" style={{ color: '#00E676' }}>
+              What you can sell
+            </p>
+            <h2 className="text-4xl sm:text-5xl font-black text-black tracking-tight mb-3">
+              Any digital product
+            </h2>
+            <p className="text-neutral-500 max-w-md mx-auto text-base sm:text-lg">
+              If you can put it in a file, you can sell it on Sellbop.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 sm:grid-rows-4 gap-4">
+
+            {/* Center hero — first on mobile */}
+            <div className="order-first sm:order-none sm:col-start-2 sm:row-start-1 sm:row-span-3 rounded-3xl bg-black p-8 flex flex-col items-center justify-center text-center min-h-[300px]">
+              <div className="relative mb-8 w-28 h-24">
+                <div className="absolute inset-x-2 top-0 h-16 rounded-xl bg-neutral-800/80 border border-neutral-700" />
+                <div className="absolute inset-x-4 top-3 h-16 rounded-xl bg-neutral-700/80 border border-neutral-600" />
+                <div
+                  className="absolute inset-x-6 top-6 h-16 rounded-xl flex items-center justify-center border"
+                  style={{ background: 'rgba(0,230,118,0.15)', borderColor: 'rgba(0,230,118,0.3)' }}
+                >
+                  <Upload size={28} style={{ color: '#00E676' }} />
+                </div>
+              </div>
+              <h3 className="text-2xl sm:text-3xl font-black text-white mb-2">All digital. All yours.</h3>
+              <p className="text-neutral-400 text-sm mb-8">Upload once. Sell unlimited.</p>
+              <Link href="/signup">
+                <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center hover:scale-105 transition-transform">
+                  <ArrowRight size={18} className="text-black" />
+                </div>
+              </Link>
+            </div>
+
+            {/* Left column */}
+            {[
+              { label: 'eBooks & PDFs', desc: 'Write it. Export it. Sell it everywhere.', Icon: BookOpen, grid: 'sm:col-start-1 sm:row-start-1' },
+              { label: 'Audio & Music', desc: 'Beats, tracks, and sound packs.', Icon: Music2, grid: 'sm:col-start-1 sm:row-start-2' },
+              { label: 'Presets & Filters', desc: 'Photo, video, and creative presets.', Icon: SlidersHorizontal, grid: 'sm:col-start-1 sm:row-start-3' },
+            ].map(({ label, desc, Icon, grid }) => (
+              <div
+                key={label}
+                className={`group relative rounded-3xl border border-neutral-200 bg-white p-6 flex flex-col justify-between min-h-[160px] hover:border-neutral-300 hover:shadow-md transition-all duration-200 ${grid}`}
+              >
+                <div>
+                  <div
+                    className="w-11 h-11 rounded-2xl flex items-center justify-center mb-4"
+                    style={{ background: 'rgba(0,230,118,0.12)' }}
+                  >
+                    <Icon size={20} style={{ color: '#00E676' }} />
+                  </div>
+                  <p className="font-bold text-black text-base mb-1">{label}</p>
+                  <p className="text-sm text-neutral-500 leading-relaxed">{desc}</p>
+                </div>
+                <div className="absolute right-5 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full border border-neutral-200 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <ArrowUpRight size={16} className="text-neutral-400" />
+                </div>
+              </div>
+            ))}
+
+            {/* Right column */}
+            {[
+              { label: 'Design Assets', desc: 'Graphics, mockups, icons & more.', Icon: Palette, grid: 'sm:col-start-3 sm:row-start-1' },
+              { label: 'Templates & Spreadsheets', desc: 'Docs, sheets, and ready-to-use kits.', Icon: Table2, grid: 'sm:col-start-3 sm:row-start-2' },
+              { label: 'Photography', desc: 'Photos, stock, and bundles.', Icon: Camera, grid: 'sm:col-start-3 sm:row-start-3' },
+              { label: 'Software & Scripts', desc: 'Tools, plugins, and code.', Icon: Code2, grid: 'sm:col-start-3 sm:row-start-4' },
+            ].map(({ label, desc, Icon, grid }) => (
+              <div
+                key={label}
+                className={`group relative rounded-3xl border border-neutral-200 bg-white p-6 flex flex-col justify-between min-h-[160px] hover:border-neutral-300 hover:shadow-md transition-all duration-200 ${grid}`}
+              >
+                <div>
+                  <div
+                    className="w-11 h-11 rounded-2xl flex items-center justify-center mb-4"
+                    style={{ background: 'rgba(0,230,118,0.12)' }}
+                  >
+                    <Icon size={20} style={{ color: '#00E676' }} />
+                  </div>
+                  <p className="font-bold text-black text-base mb-1">{label}</p>
+                  <p className="text-sm text-neutral-500 leading-relaxed pr-8">{desc}</p>
+                </div>
+                <div className="absolute right-5 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full border border-neutral-200 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <ArrowUpRight size={16} className="text-neutral-400" />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* And more bar */}
+          <div className="mt-4 rounded-full border border-neutral-200 bg-white px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
+            <div className="flex items-center gap-3 flex-shrink-0">
+              <div
+                className="w-9 h-9 rounded-full flex items-center justify-center"
+                style={{ background: 'rgba(0,230,118,0.12)' }}
+              >
+                <Plus size={16} style={{ color: '#00E676' }} />
+              </div>
+              <span className="font-bold text-black text-sm">And more...</span>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {['Courses & Lessons', 'Printables', 'Notion Templates', 'Data & Reports', 'Stock Media', 'Fonts & Typography'].map(tag => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1.5 text-xs font-medium text-neutral-600"
+                >
+                  <Check size={11} style={{ color: '#00E676' }} />
+                  {tag}
+                </span>
+              ))}
+              <span className="text-xs text-neutral-400 pl-1">and more</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── AI Tools / MCP ────────────────────────────────────────── */}
+      <section className="border-t border-neutral-100 py-24 bg-white overflow-hidden">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+
+          {/* Header */}
+          <div className="text-center mb-14">
+            <span className="inline-flex items-center gap-1.5 bg-neutral-900 text-[#00E676] text-[11px] font-black tracking-[0.2em] uppercase px-3 py-1.5 rounded-full mb-5">
+              <Zap size={10} aria-hidden="true" /> MCP Powered
+            </span>
+            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black text-black tracking-tight leading-tight mb-4">
+              Build Products With Your AI
+            </h2>
+            <p className="text-neutral-500 text-lg max-w-2xl mx-auto leading-relaxed">
+              Connect Claude, Higgsfield, and other AI tools to create digital products, generate images, build product pages, and sell everything through SellBop.
+            </p>
+          </div>
+
+          {/* ── Two integration cards ── */}
+          <div className="grid sm:grid-cols-2 gap-5">
+
+            {/* Claude */}
+            <div className="group rounded-3xl border border-neutral-200 bg-neutral-50 p-7 flex flex-col hover:border-neutral-300 hover:shadow-md transition-all duration-200">
+              <div className="flex items-start justify-between mb-5">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="https://qsvmgzdaashfsavmfjuz.supabase.co/storage/v1/object/public/SELL/images/Tools/claude-ai-logo-rounded-hd-free-png.webp"
+                  alt="Claude"
+                  className="w-16 h-16 rounded-2xl object-cover shadow-sm"
+                />
+                <span className="rounded-full bg-orange-100 text-orange-700 text-[11px] font-black px-2.5 py-1 tracking-wide">
+                  AI Agent
+                </span>
+              </div>
+              <h3 className="text-2xl font-black text-black mb-2">Claude</h3>
+              <p className="text-neutral-500 text-sm leading-relaxed mb-5">
+                Tell Claude what you want to sell and let it help build the entire product.
+              </p>
+
+              <div className="grid grid-cols-2 gap-y-2 gap-x-3 mb-6">
+                {[
+                  'Research product ideas',
+                  'Write product content',
+                  'Create guides & files',
+                  'Write descriptions',
+                  'Set pricing',
+                  'Configure affiliates',
+                  'Upload assets',
+                  'Publish products',
+                ].map(c => (
+                  <div key={c} className="flex items-start gap-1.5 text-xs text-neutral-600">
+                    <Check size={11} className="text-emerald-500 flex-shrink-0 mt-0.5" />
+                    <span>{c}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Prompt box */}
+              <div className="rounded-2xl bg-neutral-900 p-4 mb-6 flex-1">
+                <p className="text-[10px] font-mono text-neutral-500 mb-2 uppercase tracking-widest">Prompt</p>
+                <p className="text-sm text-white leading-relaxed">
+                  &ldquo;Create me a $49 digital product for Airbnb hosts, build the files, add the listing, turn affiliates on at 30%, and save it as a draft.&rdquo;
+                </p>
+              </div>
+
+              <Link href="/dashboard/settings">
+                <button className="w-full flex items-center justify-center gap-2 rounded-xl bg-black text-white text-sm font-bold px-4 py-3 hover:bg-neutral-800 transition-colors">
+                  Connect Claude <ArrowRight size={14} />
+                </button>
+              </Link>
+            </div>
+
+            {/* Higgsfield */}
+            <div className="group rounded-3xl border border-neutral-200 bg-neutral-50 p-7 flex flex-col hover:border-neutral-300 hover:shadow-md transition-all duration-200">
+              <div className="flex items-start justify-between mb-5">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="https://qsvmgzdaashfsavmfjuz.supabase.co/storage/v1/object/public/SELL/images/Tools/output.webp"
+                  alt="Higgsfield"
+                  className="w-16 h-16 rounded-2xl object-cover shadow-sm"
+                />
+                <span className="rounded-full bg-violet-100 text-violet-700 text-[11px] font-black px-2.5 py-1 tracking-wide">
+                  Images + Video
+                </span>
+              </div>
+              <h3 className="text-2xl font-black text-black mb-2">Higgsfield</h3>
+              <p className="text-neutral-500 text-sm leading-relaxed mb-5">
+                Let your AI generate professional product visuals without leaving the workflow.
+              </p>
+
+              <div className="grid grid-cols-2 gap-y-2 gap-x-3 mb-6">
+                {[
+                  'Product cover images',
+                  'Marketplace thumbnails',
+                  'Product mockups',
+                  'Promo graphics',
+                  'Social media creatives',
+                  'Lifestyle images',
+                  'Product videos',
+                  'Ad creatives',
+                ].map(c => (
+                  <div key={c} className="flex items-start gap-1.5 text-xs text-neutral-600">
+                    <Check size={11} className="text-violet-500 flex-shrink-0 mt-0.5" />
+                    <span>{c}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* How it works */}
+              <div className="rounded-2xl bg-neutral-900 p-4 mb-6 flex-1">
+                <p className="text-[10px] font-mono text-neutral-500 mb-2 uppercase tracking-widest">How it works</p>
+                <p className="text-sm text-white leading-relaxed">
+                  Claude can use Higgsfield MCP to generate the visuals, then upload them directly into your SellBop product.
+                </p>
+              </div>
+
+              <Link href="/dashboard/settings">
+                <button className="w-full flex items-center justify-center gap-2 rounded-xl border border-neutral-200 bg-white text-black text-sm font-bold px-4 py-3 hover:border-neutral-300 hover:shadow-sm transition-all">
+                  Connect Higgsfield <ArrowRight size={14} />
+                </button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Mission ───────────────────────────────────────────────── */}
+      <MissionSection />
+
+      {/* ── Final CTA ─────────────────────────────────────────────── */}
+      <section className="border-t border-neutral-100 py-24 bg-black">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 text-center">
+          <h2 className="text-4xl sm:text-5xl font-black text-white tracking-tight leading-tight mb-4">
+            Start selling.
+          </h2>
+          <p className="text-neutral-400 text-base mb-8 max-w-sm mx-auto leading-relaxed">
+            Create your product and let your network help sell it.
+          </p>
+
+          <Link href="/signup">
+            <button className="inline-flex items-center gap-2 bg-white text-black text-sm font-bold px-8 py-3.5 rounded-xl hover:bg-neutral-100 transition-colors">
+              Start Selling <ArrowRight size={14} />
+            </button>
+          </Link>
+          <p className="text-xs text-neutral-600 mt-4">Free to start · No credit card required</p>
         </div>
       </section>
     </>

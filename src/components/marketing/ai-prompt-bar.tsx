@@ -8,12 +8,12 @@ import { saveLaunchIdea } from '@/lib/launch-idea'
 import { cn } from '@/lib/utils'
 
 const CHIPS = [
+  'Clothing and merch',
   'A $29 Notion template',
-  'A budgeting guide',
   'Coaching calls',
-  'A fitness meal plan',
-  'An online course',
-  'A digital bundle',
+  'Monthly membership',
+  'Digital bundle',
+  'Online course',
 ]
 
 export function AIPromptBar() {
@@ -63,7 +63,7 @@ export function AIPromptBar() {
           value={prompt}
           onChange={e => { setPrompt(e.target.value); setError('') }}
           onKeyDown={e => e.key === 'Enter' && handleBuild()}
-          placeholder="What do you know, teach, or want to sell?"
+          placeholder="What do you want to sell?"
           className="flex-1 bg-transparent text-base text-black placeholder:text-neutral-400 focus:outline-none py-2 min-w-0"
         />
         {/* Button */}
@@ -72,7 +72,7 @@ export function AIPromptBar() {
           className="flex items-center gap-2 bg-black text-white text-sm font-bold px-5 py-2.5 rounded-xl hover:bg-neutral-800 active:scale-95 transition-all shrink-0"
         >
           <Sparkles size={13} />
-          Create My Product
+          Build My Store
         </button>
       </div>
 
@@ -87,7 +87,7 @@ export function AIPromptBar() {
             value={prompt}
             onChange={e => { setPrompt(e.target.value); setError('') }}
             onKeyDown={e => e.key === 'Enter' && handleBuild()}
-            placeholder="What do you know, teach, or want to sell?"
+            placeholder="What do you want to sell?"
             className="flex-1 bg-transparent text-sm text-black placeholder:text-neutral-400 focus:outline-none"
           />
         </div>
@@ -96,7 +96,7 @@ export function AIPromptBar() {
           className="w-full flex items-center justify-center gap-2 bg-black text-white text-sm font-bold px-4 py-3.5 rounded-2xl hover:bg-neutral-800 active:scale-95 transition-all"
         >
           <Sparkles size={13} />
-          Create My Product
+          Build My Store
         </button>
       </div>
 
@@ -126,7 +126,8 @@ export function AIPromptBar() {
         </p>
       ) : (
         <p className="text-xs text-neutral-400 text-center mt-2.5">
-          Choose an idea or type your own. SellBop will help create the offer, page, price, checkout copy, and launch plan.
+          Click a chip above or type your own idea, then click{' '}
+          <span className="font-medium text-neutral-500">Build My Store</span>.
         </p>
       )}
 
