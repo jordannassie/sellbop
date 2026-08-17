@@ -49,7 +49,7 @@ function ShareStoreButton({ slug, name }: { slug: string; name: string }) {
   return (
     <button
       onClick={handleShare}
-      className="inline-flex items-center gap-1.5 rounded-full border border-white/40 bg-white/15 px-5 py-2 text-sm font-medium text-white backdrop-blur-sm hover:bg-white/25 hover:border-white/60 transition-all"
+      className="inline-flex items-center gap-1.5 rounded-full border border-neutral-300 bg-white px-5 py-2 text-sm font-medium text-neutral-700 hover:border-neutral-500 hover:text-black transition-all"
     >
       {copied ? <Check size={13} style={{ color: '#00E676' }} /> : <Share2 size={13} />}
       {copied ? 'Copied!' : 'Share Store'}
@@ -243,92 +243,78 @@ export function ClientStorefront({ slug }: { slug: string }) {
     <div className="min-h-screen bg-white">
       <PublicHeader />
 
-      {/* ── Full-bleed Hero — banner is the background ────────────────── */}
-      <div
-        className="relative w-full overflow-hidden flex flex-col items-center justify-center text-center px-4"
-        style={{
-          minHeight: 'clamp(340px, 46vw, 500px)',
-          ...(store.banner_url
-            ? {
-                backgroundImage: `url(${store.banner_url})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center center',
-              }
-            : {
-                background: '#111111',
-                backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px)',
-                backgroundSize: '24px 24px',
-              }),
-        }}
-      >
-        {/* Gradient overlay — lighter at top, darker toward bottom for text contrast */}
+      {/* ── Banner strip ──────────────────────────────────────────────── */}
+      <div className="relative w-full overflow-hidden h-[160px] sm:h-[200px] md:h-[240px]">
+        {store.banner_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={store.banner_url}
+            alt=""
+            className="w-full h-full object-cover object-center"
+          />
+        ) : (
+          <div className="w-full h-full" style={{
+            background: '#111111',
+            backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px)',
+            backgroundSize: '24px 24px',
+          }} />
+        )}
+      </div>
+
+      {/* ── Creator info — white section, avatar overlaps banner ──────── */}
+      <div className="flex flex-col items-center text-center px-4 pb-8">
+        {/* Avatar — pulled up into banner by ~50% of its height */}
         <div
-          className="absolute inset-0"
+          className="rounded-full overflow-hidden flex-shrink-0 bg-white"
           style={{
-            background: 'linear-gradient(to bottom, rgba(0,0,0,0.18) 0%, rgba(0,0,0,0.52) 100%)',
+            width: 'clamp(112px, 13vw, 140px)',
+            height: 'clamp(112px, 13vw, 140px)',
+            border: '5px solid white',
+            boxShadow: '0 2px 16px rgba(0,0,0,0.12)',
+            marginTop: 'calc(clamp(112px, 13vw, 140px) * -0.5)',
+            marginBottom: '16px',
           }}
-        />
-
-        {/* Hero content */}
-        <div className="relative z-10 flex flex-col items-center py-16 sm:py-20 gap-0">
-          {/* Avatar */}
-          <div
-            className="rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center"
-            style={{
-              width: 'clamp(120px, 14vw, 160px)',
-              height: 'clamp(120px, 14vw, 160px)',
-              border: '5px solid rgba(255,255,255,0.95)',
-              boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
-              marginBottom: '20px',
-            }}
-          >
-            {store.avatar_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={store.avatar_url}
-                alt={store.name}
-                className="w-full h-full object-cover object-center"
-              />
-            ) : (
-              <div className="w-full h-full bg-neutral-700 flex items-center justify-center">
-                <User size={40} className="text-white/50" />
-              </div>
-            )}
-          </div>
-
-          {/* Name */}
-          <h1
-            className="font-bold text-white tracking-tight"
-            style={{ fontSize: 'clamp(1.5rem, 4vw, 2.25rem)', lineHeight: 1.1, marginBottom: '6px' }}
-          >
-            {store.name}
-          </h1>
-
-          {/* Handle */}
-          <p className="text-white/60 text-sm mb-4">@{store.slug}</p>
-
-          {/* Bio */}
-          {hasBio && (
-            <p
-              className="text-white/80 leading-relaxed max-w-sm mb-6"
-              style={{ fontSize: 'clamp(0.8rem, 1.8vw, 0.9rem)' }}
-            >
-              {store.headline ?? store.bio}
-            </p>
+        >
+          {store.avatar_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={store.avatar_url}
+              alt={store.name}
+              className="w-full h-full object-cover object-center"
+            />
+          ) : (
+            <div className="w-full h-full bg-neutral-100 flex items-center justify-center">
+              <User size={36} className="text-neutral-400" />
+            </div>
           )}
+        </div>
 
-          {/* Action buttons */}
-          <div className={`flex flex-wrap items-center justify-center gap-3 ${!hasBio ? 'mt-2' : ''}`}>
-            <ShareStoreButton slug={slug} name={store.name} />
-            {products.length > 0 && (
-              <button
-                onClick={() => productsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                className="inline-flex items-center gap-1.5 rounded-full bg-white px-5 py-2 text-sm font-semibold text-black hover:bg-neutral-100 transition-colors"
-              >
-                Browse Products <ArrowRight size={13} />
-              </button>
-            )}
-          </div>
+        {/* Name */}
+        <h1 className="text-2xl sm:text-3xl font-bold text-black tracking-tight mb-1">
+          {store.name}
+        </h1>
+
+        {/* Handle */}
+        <p className="text-sm text-neutral-400 mb-3">@{store.slug}</p>
+
+        {/* Bio */}
+        {hasBio && (
+          <p className="text-sm text-neutral-500 max-w-sm leading-relaxed mb-5">
+            {store.headline ?? store.bio}
+          </p>
+        )}
+
+        {/* Buttons */}
+        <div className={`flex flex-wrap items-center justify-center gap-2 ${!hasBio ? 'mt-1' : ''}`}>
+          <ShareStoreButton slug={slug} name={store.name} />
+          {products.length > 0 && (
+            <button
+              onClick={() => productsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              className="inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white hover:bg-neutral-800 transition-colors"
+            >
+              Browse Products <ArrowRight size={13} />
+            </button>
+          )}
         </div>
       </div>
 
