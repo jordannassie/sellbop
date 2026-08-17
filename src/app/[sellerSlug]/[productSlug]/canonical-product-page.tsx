@@ -14,6 +14,7 @@ import { isSupabaseConfigured } from '@/lib/env'
 import { getEffectiveProductPrice } from '@/lib/pricing/product-price'
 import { ProductPriceDisplay } from '@/components/ui/product-price-display'
 import { ProductMediaGalleryViewer } from '@/components/product-media/product-media-gallery-viewer'
+import { MobileCheckoutSheet, MobileStickyCheckoutBar } from '@/components/product/mobile-checkout-bar'
 import type { ProductMediaItem } from '@/lib/product-media/types'
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -99,6 +100,112 @@ function CreatorRow({ store }: { store: StoreData }) {
       </div>
       <ChevronRight size={14} className="text-neutral-300 group-hover:text-neutral-500 transition-colors flex-shrink-0" />
     </Link>
+  )
+}
+
+// ── Affiliate promote card ──────────────────────────────────────────────────
+
+interface AffiliatePromoteCardProps {
+  commCents: number
+  commPercent: number
+  promoteExpanded: boolean
+  promoteLoading: boolean
+  affiliateUrl: string | null
+  copied: boolean
+  sellerSlug: string
+  productSlug: string
+  onPromoteEarn: () => void
+  onCopyAffiliateLink: () => void
+  onShareAffiliateLink: () => void
+  onClose: () => void
+}
+
+function AffiliatePromoteCard({
+  commCents,
+  commPercent,
+  promoteExpanded,
+  promoteLoading,
+  affiliateUrl,
+  copied,
+  sellerSlug,
+  productSlug,
+  onPromoteEarn,
+  onCopyAffiliateLink,
+  onShareAffiliateLink,
+  onClose,
+}: AffiliatePromoteCardProps) {
+  return (
+    <div className="rounded-2xl border border-neutral-200 bg-white p-5">
+      <div className="flex items-center gap-2 mb-2">
+        <TrendingUp size={15} style={{ color: '#00E676' }} />
+        <p className="text-sm font-bold text-black">
+          Earn{' '}
+          <span style={{ color: '#00E676' }}>{formatCurrency(commCents)}</span>
+          {' '}per sale
+        </p>
+      </div>
+      <p className="text-xs text-neutral-500 mb-4 leading-relaxed">
+        Share this product and earn {commPercent}% of every sale through your link.
+      </p>
+
+      {!promoteExpanded ? (
+        <button
+          onClick={onPromoteEarn}
+          className="flex w-full items-center justify-center gap-2 rounded-xl border border-neutral-200 py-2.5 text-sm font-semibold text-neutral-700 hover:border-neutral-400 hover:text-black transition-all"
+        >
+          <TrendingUp size={14} />
+          Promote &amp; Earn
+        </button>
+      ) : (
+        <div className="space-y-2">
+          {promoteLoading ? (
+            <div className="flex items-center justify-center py-4">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-200 border-t-black" />
+            </div>
+          ) : affiliateUrl ? (
+            <>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-400 mb-1">
+                Your Affiliate Link
+              </p>
+              <div className="rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2">
+                <p className="truncate text-[11px] font-mono text-neutral-400">{affiliateUrl}</p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={onCopyAffiliateLink}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold text-white transition-all"
+                  style={{ background: copied ? '#00A854' : '#000' }}
+                >
+                  {copied ? <Check size={13} /> : <Copy size={13} />}
+                  {copied ? 'Copied!' : 'COPY LINK'}
+                </button>
+                <button
+                  onClick={onShareAffiliateLink}
+                  className="flex items-center justify-center rounded-xl border border-neutral-200 px-3.5 text-neutral-600 hover:bg-neutral-50 transition-colors"
+                >
+                  <Share2 size={14} />
+                </button>
+              </div>
+            </>
+          ) : (
+            <p className="text-xs text-neutral-500 text-center py-2">
+              <Link
+                href={`/login?next=/${sellerSlug}/${productSlug}`}
+                className="font-semibold underline hover:text-black transition-colors"
+              >
+                Log in
+              </Link>{' '}to get your affiliate link.
+            </p>
+          )}
+          <button
+            onClick={onClose}
+            className="w-full text-xs text-neutral-400 hover:text-neutral-600 transition-colors pt-1"
+          >
+            Close
+          </button>
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -375,19 +482,40 @@ export function CanonicalProductPage({ sellerSlug, productSlug }: { sellerSlug: 
     ? `${window.location.origin}/${sellerSlug}/${productSlug}`
     : `https://sellbop.com/${sellerSlug}/${productSlug}`
 
+  const showAffiliateCard = affiliateEnabled && commPercent > 0 && !isFree
+  const affiliateCardProps = {
+    commCents,
+    commPercent,
+    promoteExpanded,
+    promoteLoading,
+    affiliateUrl,
+    copied,
+    sellerSlug,
+    productSlug,
+    onPromoteEarn: handlePromoteEarn,
+    onCopyAffiliateLink: handleCopyAffiliateLink,
+    onShareAffiliateLink: handleShareAffiliateLink,
+    onClose: () => setPromoteExpanded(false),
+  }
+
+  const cancelCheckout = () => {
+    setState('ready')
+    setError('')
+  }
+
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white pb-[calc(4.25rem+env(safe-area-inset-bottom,0px))] lg:pb-0">
       <PublicHeader />
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
         <div className="grid lg:grid-cols-5 gap-10 lg:gap-14">
 
           {/* ── Left column: product content ─────────────────────── */}
-          <div className="lg:col-span-3 order-2 lg:order-1">
+          <div className="lg:col-span-3">
             {/* Creator identity */}
             {store && <CreatorRow store={store} />}
 
-            {/* Cover image */}
+            {/* Cover image / gallery */}
             {media.length > 0 ? (
               <ProductMediaGalleryViewer
                 items={media}
@@ -430,7 +558,7 @@ export function CanonicalProductPage({ sellerSlug, productSlug }: { sellerSlug: 
             )}
 
             {/* Product details */}
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 mb-8">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 px-3 py-1 text-xs font-medium text-neutral-500">
                 <Package size={11} /> Digital download
               </span>
@@ -438,10 +566,35 @@ export function CanonicalProductPage({ sellerSlug, productSlug }: { sellerSlug: 
                 <Zap size={11} /> Instant delivery
               </span>
             </div>
+
+            {/* Affiliate — mobile content flow */}
+            {showAffiliateCard && (
+              <div className="mb-8 lg:hidden">
+                <AffiliatePromoteCard {...affiliateCardProps} />
+              </div>
+            )}
+
+            {/* More from seller — mobile */}
+            {store && (
+              <Link
+                href={`/${store.slug}`}
+                className="lg:hidden flex items-center gap-2 px-1 text-sm text-neutral-400 hover:text-black transition-colors"
+              >
+                <div className="w-5 h-5 rounded-full overflow-hidden bg-neutral-200 flex-shrink-0">
+                  {store.avatar_url
+                    // eslint-disable-next-line @next/next/no-img-element
+                    ? <img src={store.avatar_url} alt={store.name} className="w-full h-full object-cover" />
+                    : <User size={10} className="text-neutral-400 m-auto" />
+                  }
+                </div>
+                <span>More from {store.name}</span>
+                <ChevronRight size={13} className="ml-auto" />
+              </Link>
+            )}
           </div>
 
-          {/* ── Right column: buy box ────────────────────────────── */}
-          <div className="lg:col-span-2 order-1 lg:order-2">
+          {/* ── Right column: desktop buy box (unchanged on lg+) ── */}
+          <div className="hidden lg:block lg:col-span-2">
             <div className="sticky top-6 space-y-3">
 
               {/* Buy card */}
@@ -485,7 +638,7 @@ export function CanonicalProductPage({ sellerSlug, productSlug }: { sellerSlug: 
                     </Button>
                     <button
                       type="button"
-                      onClick={() => { setState('ready'); setError('') }}
+                      onClick={cancelCheckout}
                       className="w-full text-xs text-neutral-400 hover:text-neutral-600 transition-colors py-1"
                     >
                       Cancel
@@ -500,82 +653,12 @@ export function CanonicalProductPage({ sellerSlug, productSlug }: { sellerSlug: 
                 </div>
               </div>
 
-              {/* Affiliate card — below buy card, secondary */}
-              {affiliateEnabled && commPercent > 0 && !isFree && (
-                <div className="rounded-2xl border border-neutral-200 bg-white p-5">
-                  <div className="flex items-center gap-2 mb-2">
-                    <TrendingUp size={15} style={{ color: '#00E676' }} />
-                    <p className="text-sm font-bold text-black">
-                      Earn{' '}
-                      <span style={{ color: '#00E676' }}>{formatCurrency(commCents)}</span>
-                      {' '}per sale
-                    </p>
-                  </div>
-                  <p className="text-xs text-neutral-500 mb-4 leading-relaxed">
-                    Share this product and earn {commPercent}% of every sale through your link.
-                  </p>
-
-                  {!promoteExpanded ? (
-                    <button
-                      onClick={handlePromoteEarn}
-                      className="flex w-full items-center justify-center gap-2 rounded-xl border border-neutral-200 py-2.5 text-sm font-semibold text-neutral-700 hover:border-neutral-400 hover:text-black transition-all"
-                    >
-                      <TrendingUp size={14} />
-                      Promote &amp; Earn
-                    </button>
-                  ) : (
-                    <div className="space-y-2">
-                      {promoteLoading ? (
-                        <div className="flex items-center justify-center py-4">
-                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-200 border-t-black" />
-                        </div>
-                      ) : affiliateUrl ? (
-                        <>
-                          <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-400 mb-1">
-                            Your Affiliate Link
-                          </p>
-                          <div className="rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2">
-                            <p className="truncate text-[11px] font-mono text-neutral-400">{affiliateUrl}</p>
-                          </div>
-                          <div className="flex gap-2">
-                            <button
-                              onClick={handleCopyAffiliateLink}
-                              className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold text-white transition-all"
-                              style={{ background: copied ? '#00A854' : '#000' }}
-                            >
-                              {copied ? <Check size={13} /> : <Copy size={13} />}
-                              {copied ? 'Copied!' : 'COPY LINK'}
-                            </button>
-                            <button
-                              onClick={handleShareAffiliateLink}
-                              className="flex items-center justify-center rounded-xl border border-neutral-200 px-3.5 text-neutral-600 hover:bg-neutral-50 transition-colors"
-                            >
-                              <Share2 size={14} />
-                            </button>
-                          </div>
-                        </>
-                      ) : (
-                        <p className="text-xs text-neutral-500 text-center py-2">
-                          <Link
-                            href={`/login?next=/${sellerSlug}/${productSlug}`}
-                            className="font-semibold underline hover:text-black transition-colors"
-                          >
-                            Log in
-                          </Link>{' '}to get your affiliate link.
-                        </p>
-                      )}
-                      <button
-                        onClick={() => setPromoteExpanded(false)}
-                        className="w-full text-xs text-neutral-400 hover:text-neutral-600 transition-colors pt-1"
-                      >
-                        Close
-                      </button>
-                    </div>
-                  )}
-                </div>
+              {/* Affiliate card — desktop sidebar */}
+              {showAffiliateCard && (
+                <AffiliatePromoteCard {...affiliateCardProps} />
               )}
 
-              {/* Store link */}
+              {/* Store link — desktop */}
               {store && (
                 <Link
                   href={`/${store.slug}`}
@@ -597,6 +680,31 @@ export function CanonicalProductPage({ sellerSlug, productSlug }: { sellerSlug: 
 
         </div>
       </div>
+
+      {/* Mobile sticky checkout bar */}
+      {state === 'ready' && (
+        <MobileStickyCheckoutBar
+          pricing={pricing}
+          isFree={isFree}
+          onBuyClick={() => setState('entering_email')}
+        />
+      )}
+
+      {/* Mobile checkout sheet — same handlers as desktop */}
+      {(state === 'entering_email' || state === 'processing') && (
+        <MobileCheckoutSheet
+          isFree={isFree}
+          pricing={pricing}
+          state={state}
+          buyerName={buyerName}
+          buyerEmail={buyerEmail}
+          error={error}
+          onBuyerNameChange={setBuyerName}
+          onBuyerEmailChange={setBuyerEmail}
+          onSubmit={isFree ? handleFreeCheckout : handlePaidCheckout}
+          onCancel={cancelCheckout}
+        />
+      )}
     </div>
   )
 }
