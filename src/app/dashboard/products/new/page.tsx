@@ -41,7 +41,13 @@ export default function NewProductPage() {
   const [category, setCategory] = useState('')
   const [mediaItems, setMediaItems] = useState<GalleryMediaItem[]>([])
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null)
-  const [productFile, setProductFile] = useState<{ name: string; path: string; size: number; type: string } | null>(null)
+  const [productFile, setProductFile] = useState<{
+    name: string
+    path: string
+    size: number
+    type: string
+    previewUrl: string | null
+  } | null>(null)
   const [fileUploading, setFileUploading] = useState(false)
   const [isLive, setIsLive] = useState(false)
   const [marketplaceListing, setMarketplaceListing] = useState(true)
@@ -93,7 +99,17 @@ export default function NewProductPage() {
     if (result.error) {
       toast.error('Upload failed: ' + result.error)
     } else if (result.path) {
-      setProductFile({ name: file.name, path: result.path, size: file.size, type: file.type })
+      const previewUrl =
+        file.type.startsWith('image/') || file.type === 'application/pdf'
+          ? URL.createObjectURL(file)
+          : null
+      setProductFile({
+        name: file.name,
+        path: result.path,
+        size: file.size,
+        type: file.type,
+        previewUrl,
+      })
       toast.success('File uploaded.')
     }
     setFileUploading(false)
@@ -256,7 +272,11 @@ export default function NewProductPage() {
                 fileSize={productFile.size}
                 fileType={productFile.type}
                 storagePath={productFile.path}
-                onRemove={() => setProductFile(null)}
+                previewUrl={productFile.previewUrl}
+                onRemove={() => {
+                  if (productFile.previewUrl) URL.revokeObjectURL(productFile.previewUrl)
+                  setProductFile(null)
+                }}
               />
             ) : (
               <DropUploadZone
