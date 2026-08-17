@@ -176,6 +176,13 @@ export function DashboardSidebar() {
       <p className="text-[11px] text-neutral-400 text-center truncate max-w-[168px] mt-0.5">
         {session.email}
       </p>
+      <button
+        type="button"
+        onClick={handleLogout}
+        className="mt-3 flex items-center gap-1.5 text-xs font-medium text-neutral-400 transition-colors hover:text-red-600 lg:hidden"
+      >
+        <LogOut size={12} /> Log out
+      </button>
     </div>
   )
 
@@ -275,7 +282,7 @@ export function DashboardSidebar() {
       {/* Mobile slide-in drawer */}
       <aside
         className={cn(
-          'fixed bottom-14 right-0 top-14 z-40 flex w-72 translate-x-full flex-col overflow-y-auto border-l border-neutral-100 bg-white shadow-xl transition-transform duration-200 ease-out lg:hidden',
+          'fixed bottom-0 right-0 top-14 z-40 flex w-72 translate-x-full flex-col overflow-y-auto border-l border-neutral-100 bg-white shadow-xl transition-transform duration-200 ease-out pb-16 lg:hidden',
           mobileOpen && 'translate-x-0',
         )}
         aria-hidden={!mobileOpen}
@@ -283,7 +290,6 @@ export function DashboardSidebar() {
         {userBlock}
         {createBtn(() => setMobileOpen(false))}
         {navLinks(() => setMobileOpen(false))}
-        {logoutBtn}
       </aside>
 
       {/* Desktop sidebar */}
