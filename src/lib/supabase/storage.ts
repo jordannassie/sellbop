@@ -69,7 +69,6 @@ export async function getSignedUrl(
 
 /** Build a unique storage path from an owner ID and filename. */
 export function buildStoragePath(ownerId: string, fileName: string): string {
-  const ext = fileName.split('.').pop() ?? 'bin'
   const safe = fileName.replace(/[^a-zA-Z0-9._-]/g, '-').slice(0, 80)
-  return `${ownerId}/${Date.now()}-${safe}.${ext}`.replace(/\.+$/, '')
+  return `${ownerId}/${Date.now()}-${safe}`
 }

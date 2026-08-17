@@ -370,6 +370,8 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                     fileSize={f.file_size}
                     fileType={f.file_type}
                     storagePath={f.storage_path}
+                    productId={productId}
+                    fileId={f.id}
                     onRemove={() => handleDeleteFile(f.id)}
                   />
                 ))}

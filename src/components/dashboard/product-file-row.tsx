@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { Download, X } from 'lucide-react'
-import { getSignedUrl } from '@/lib/supabase/storage'
 import { toast } from 'sonner'
 
 interface ProductFileRowProps {
@@ -10,6 +9,8 @@ interface ProductFileRowProps {
   fileSize?: number | null
   fileType?: string | null
   storagePath: string | null
+  productId?: string | null
+  fileId?: string | null
   onRemove?: () => void
 }
 
@@ -25,6 +26,8 @@ export function ProductFileRow({
   fileSize,
   fileType,
   storagePath,
+  productId,
+  fileId,
   onRemove,
 }: ProductFileRowProps) {
   const [loading, setLoading] = useState(false)
@@ -37,18 +40,26 @@ export function ProductFileRow({
 
     setLoading(true)
     try {
-      const preview = isPreviewable(fileType, fileName)
-      const url = await getSignedUrl(
-        'product-files',
-        storagePath,
-        3600,
-        preview ? undefined : { download: fileName },
-      )
+      let url: string | null = null
+
+      if (productId && fileId) {
+        const res = await fetch(
+          `/api/products/${productId}/files/download?fileId=${encodeURIComponent(fileId)}`,
+        )
+        const data = await res.json()
+        if (!res.ok) {
+          toast.error(data.error ?? 'Could not open file.')
+          return
+        }
+        url = data.download_url ?? null
+      }
+
       if (!url) {
         toast.error('Could not open file.')
         return
       }
 
+      const preview = isPreviewable(fileType, fileName)
       if (preview) {
         window.open(url, '_blank', 'noopener,noreferrer')
       } else {

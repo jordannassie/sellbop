@@ -1,0 +1,74 @@
+import { NextResponse } from 'next/server'
+import { getSupabaseAdminClient } from '@/lib/supabase/admin'
+import { getSupabaseServerClient } from '@/lib/supabase/server'
+import { isSupabaseAdminConfigured } from '@/lib/env'
+import { DOWNLOAD_URL_EXPIRY_SECONDS } from '@/lib/platform-config'
+
+async function verifyProductOwnership(productId: string, userId: string) {
+  const admin = getSupabaseAdminClient()
+  const { data: product } = await admin
+    .from('products')
+    .select('id, store_id')
+    .eq('id', productId)
+    .maybeSingle()
+  if (!product) return null
+
+  const { data: store } = await admin
+    .from('stores')
+    .select('id, owner_user_id')
+    .eq('id', product.store_id)
+    .maybeSingle()
+
+  if (!store || store.owner_user_id !== userId) return null
+  return { product, store }
+}
+
+// GET /api/products/[id]/files/download?fileId=xxx — seller preview/download
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  if (!isSupabaseAdminConfigured()) {
+    return NextResponse.json({ error: 'Database not configured.' }, { status: 503 })
+  }
+
+  const { id: productId } = await params
+  const userClient = await getSupabaseServerClient()
+  const { data: { user } } = await userClient.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 })
+
+  const ownership = await verifyProductOwnership(productId, user.id)
+  if (!ownership) return NextResponse.json({ error: 'Product not found.' }, { status: 404 })
+
+  const fileId = new URL(request.url).searchParams.get('fileId')
+  if (!fileId) return NextResponse.json({ error: 'fileId required.' }, { status: 400 })
+
+  const admin = getSupabaseAdminClient()
+  const { data: file } = await admin
+    .from('product_files')
+    .select('id, file_name, file_type, storage_path')
+    .eq('id', fileId)
+    .eq('product_id', productId)
+    .eq('seller_id', user.id)
+    .maybeSingle()
+
+  if (!file?.storage_path) {
+    return NextResponse.json({ error: 'File not available.' }, { status: 404 })
+  }
+
+  const { data: signedData, error: signedErr } = await admin.storage
+    .from('product-files')
+    .createSignedUrl(file.storage_path, DOWNLOAD_URL_EXPIRY_SECONDS, {
+      download: file.file_name,
+    })
+
+  if (signedErr || !signedData?.signedUrl) {
+    return NextResponse.json({ error: 'Could not generate download link.' }, { status: 500 })
+  }
+
+  return NextResponse.json({
+    download_url: signedData.signedUrl,
+    file_name: file.file_name,
+    file_type: file.file_type,
+  })
+}
