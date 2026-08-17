@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
-import { Bot, Copy, Loader2, Plus, ShieldCheck, Sparkles, Trash2 } from 'lucide-react'
+import { Bot, ChevronDown, Copy, ExternalLink, Loader2, MessageSquare, Plus, ShieldCheck, Sparkles, Trash2, Zap } from 'lucide-react'
 
 const MCP_URL =
   typeof window !== 'undefined'
@@ -63,6 +63,11 @@ export default function AiIntegrationsPage() {
   const [scopes, setScopes] = useState<string[]>(['products:read', 'products:write', 'files:write', 'affiliates:write'])
   const [creating, setCreating] = useState(false)
   const [newToken, setNewToken] = useState<string | null>(null)
+
+  // One-message quick setup
+  const [quickConnecting, setQuickConnecting] = useState(false)
+  const [quickToken, setQuickToken] = useState<string | null>(null)
+  const [showManual, setShowManual] = useState(false)
 
   async function load() {
     setLoading(true)
@@ -143,6 +148,48 @@ export default function AiIntegrationsPage() {
     toast.success('Higgsfield MCP URL copied.')
   }
 
+  async function handleQuickConnect() {
+    setQuickConnecting(true)
+    try {
+      const res = await fetch('/api/agent-connections', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: `Claude — one-message setup (${new Date().toLocaleDateString()})`,
+          provider: 'claude',
+          scopes: ['products:read', 'products:write', 'files:write', 'affiliates:write'],
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? 'Failed to create connection.')
+      setQuickToken(data.token)
+      load()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to create connection.')
+    } finally {
+      setQuickConnecting(false)
+    }
+  }
+
+  function setupMessage(token: string) {
+    return [
+      'Please connect two tools for me, then help me build a SellBop product:',
+      '',
+      `1. SellBop — MCP URL: ${MCP_URL}`,
+      `   Auth: Bearer ${token}`,
+      `2. Higgsfield — MCP URL: ${HIGGSFIELD_MCP_URL}`,
+      '   (sign me into Higgsfield when prompted)',
+      '',
+      'Add both as connectors, then help me research a product idea, write the description, set a price, generate a cover image with Higgsfield, upload everything to SellBop, and save it as a draft for me to review.',
+    ].join('\n')
+  }
+
+  function copySetupMessage() {
+    if (!quickToken) return
+    navigator.clipboard.writeText(setupMessage(quickToken))
+    toast.success('Setup message copied — paste it into Claude.')
+  }
+
   return (
     <div className="max-w-2xl">
       <div className="mb-6">
@@ -156,47 +203,109 @@ export default function AiIntegrationsPage() {
       </div>
 
       <div className="space-y-5">
-        <Card>
+        {/* One-message setup */}
+        <Card className="border-black">
           <CardHeader>
-            <CardTitle>Connect Claude</CardTitle>
+            <CardTitle className="flex items-center gap-2"><Zap size={16} /> Set up in one message</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3 text-sm text-neutral-600">
-            <ol className="list-decimal list-inside space-y-1.5">
-              <li>Create a Claude connection below and copy your token.</li>
-              <li>Open Claude → Customize → Connectors → Add SellBop.</li>
-              <li>Paste the MCP URL and your token when prompted.</li>
-              <li>Ask Claude to create products in your SellBop store.</li>
-            </ol>
-            <div className="flex items-center gap-2 pt-1">
-              <code className="flex-1 rounded-lg bg-neutral-100 px-3 py-2 text-xs font-mono break-all">{MCP_URL}</code>
-              <Button size="sm" variant="secondary" onClick={copyMcpUrl}><Copy size={13} /></Button>
-            </div>
-            <p className="text-xs text-neutral-400">Powered by MCP · See AGENT-API.md for full REST API docs.</p>
+          <CardContent className="space-y-4 text-sm text-neutral-600">
+            <p>
+              Generate a setup message, paste it into Claude, and Claude connects both SellBop and Higgsfield
+              for you — no manual URL copying back and forth.
+            </p>
+
+            {!quickToken ? (
+              <Button onClick={handleQuickConnect} loading={quickConnecting} className="font-bold">
+                <Sparkles size={14} /> Generate my setup message
+              </Button>
+            ) : (
+              <>
+                <div className="rounded-xl bg-neutral-900 p-4">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">
+                    Paste this into Claude
+                  </p>
+                  <pre className="whitespace-pre-wrap text-xs text-white leading-relaxed font-mono">
+                    {setupMessage(quickToken)}
+                  </pre>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button size="sm" onClick={copySetupMessage} className="font-bold">
+                    <Copy size={13} /> Copy setup message
+                  </Button>
+                  <a href="https://claude.ai/new" target="_blank" rel="noopener noreferrer">
+                    <Button size="sm" variant="secondary">
+                      <MessageSquare size={13} /> Open Claude <ExternalLink size={12} />
+                    </Button>
+                  </a>
+                </div>
+                <p className="text-xs text-neutral-400">
+                  This token is shown once — the message above is your only copy of it. If Claude in that
+                  conversation has browser access enabled, just say &ldquo;set this up for me&rdquo; and it will
+                  add both connectors on its own. Otherwise it'll walk you through adding them in
+                  Claude → Customize → Connectors. Either way, you'll still need to sign in to Higgsfield
+                  yourself when prompted.
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Connect Higgsfield</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm text-neutral-600">
-            <ol className="list-decimal list-inside space-y-1.5">
-              <li>Copy the Higgsfield MCP URL below.</li>
-              <li>Open Claude → Customize → Connectors → Add Higgsfield.</li>
-              <li>Paste the URL when prompted.</li>
-              <li>Sign in to Higgsfield, then ask Claude to generate product images or videos.</li>
-            </ol>
-            <div className="flex items-center gap-2 pt-1">
-              <code className="flex-1 rounded-lg bg-neutral-100 px-3 py-2 text-xs font-mono break-all">{HIGGSFIELD_MCP_URL}</code>
-              <Button size="sm" variant="secondary" onClick={copyHiggsfieldUrl}><Copy size={13} /></Button>
+        {/* Manual / advanced fallback */}
+        <div className="rounded-2xl border border-neutral-200 bg-white overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setShowManual(v => !v)}
+            className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-neutral-50 transition-colors"
+          >
+            <span className="text-sm font-bold text-black">Prefer to connect manually?</span>
+            <ChevronDown size={16} className={`text-neutral-400 transition-transform ${showManual ? 'rotate-180' : ''}`} />
+          </button>
+          {showManual && (
+            <div className="px-5 pb-5 pt-0 border-t border-neutral-100 space-y-5">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Connect Claude</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm text-neutral-600">
+                  <ol className="list-decimal list-inside space-y-1.5">
+                    <li>Create a Claude connection below and copy your token.</li>
+                    <li>Open Claude → Customize → Connectors → Add SellBop.</li>
+                    <li>Paste the MCP URL and your token when prompted.</li>
+                    <li>Ask Claude to create products in your SellBop store.</li>
+                  </ol>
+                  <div className="flex items-center gap-2 pt-1">
+                    <code className="flex-1 rounded-lg bg-neutral-100 px-3 py-2 text-xs font-mono break-all">{MCP_URL}</code>
+                    <Button size="sm" variant="secondary" onClick={copyMcpUrl}><Copy size={13} /></Button>
+                  </div>
+                  <p className="text-xs text-neutral-400">Powered by MCP · See AGENT-API.md for full REST API docs.</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Connect Higgsfield</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm text-neutral-600">
+                  <ol className="list-decimal list-inside space-y-1.5">
+                    <li>Copy the Higgsfield MCP URL below.</li>
+                    <li>Open Claude → Customize → Connectors → Add Higgsfield.</li>
+                    <li>Paste the URL when prompted.</li>
+                    <li>Sign in to Higgsfield, then ask Claude to generate product images or videos.</li>
+                  </ol>
+                  <div className="flex items-center gap-2 pt-1">
+                    <code className="flex-1 rounded-lg bg-neutral-100 px-3 py-2 text-xs font-mono break-all">{HIGGSFIELD_MCP_URL}</code>
+                    <Button size="sm" variant="secondary" onClick={copyHiggsfieldUrl}><Copy size={13} /></Button>
+                  </div>
+                  <p className="text-xs text-neutral-400">
+                    Powered by MCP · Higgsfield connects directly to Claude — once both Claude and Higgsfield are
+                    connected, Claude can generate a product image or video and upload it straight into your SellBop
+                    product draft.
+                  </p>
+                </CardContent>
+              </Card>
             </div>
-            <p className="text-xs text-neutral-400">
-              Powered by MCP · Higgsfield connects directly to Claude — once both Claude and Higgsfield are
-              connected, Claude can generate a product image or video and upload it straight into your SellBop
-              product draft.
-            </p>
-          </CardContent>
-        </Card>
+          )}
+        </div>
 
         {/* New-token reveal (shown once) */}
         {newToken && (
