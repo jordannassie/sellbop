@@ -85,7 +85,19 @@ export default function SettingsPage() {
           email: session.email,
           avatar_url: result.url,
         })
+        // Also persist into the auth user's own metadata. The sidebar/menu
+        // avatar is derived from session data, and the session gets rebuilt
+        // from this metadata on every auth refresh (tab focus, token
+        // refresh, etc). Without this, those rebuilds fall back to the old/
+        // missing avatar_url and the sidebar reverts to the old photo a few
+        // seconds after upload.
+        await supabase.auth.updateUser({ data: { avatar_url: result.url } })
       }
+      // Force any independently-fetched store state (e.g. the sidebar's own
+      // useUserStore instance, or server-rendered pages) to pick up the
+      // change immediately rather than waiting for their next natural fetch.
+      refetch()
+      router.refresh()
       toast.success('Profile photo updated.')
     }
     setUploadingPhoto(false)
