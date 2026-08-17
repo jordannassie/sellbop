@@ -121,8 +121,11 @@ function StatusBadge({ connected, setupGuide }: { connected?: boolean; setupGuid
   )
 }
 
+const HIGGSFIELD_CONNECTED_KEY = 'sellbop-higgsfield-connected'
+
 export function ConnectAiPage() {
   const [claudeConnected, setClaudeConnected] = useState(false)
+  const [higgsfieldConnected, setHiggsfieldConnected] = useState(false)
   const [advancedOpen, setAdvancedOpen] = useState(false)
   const mcpUrl =
     typeof window !== 'undefined' ? `${window.location.origin}/api/mcp` : 'https://sellbop.com/api/mcp'
@@ -138,7 +141,20 @@ export function ConnectAiPage() {
         setClaudeConnected(active)
       })
       .catch(() => {})
+
+    // Self-reported — SellBop has no way to verify a Higgsfield-to-Claude
+    // connection since that link lives entirely between the user's Claude
+    // account and Higgsfield's own servers. We flip this once the user
+    // clicks through to Claude's connector settings.
+    if (typeof window !== 'undefined' && window.localStorage.getItem(HIGGSFIELD_CONNECTED_KEY) === 'true') {
+      setHiggsfieldConnected(true)
+    }
   }, [])
+
+  function markHiggsfieldConnected() {
+    setHiggsfieldConnected(true)
+    if (typeof window !== 'undefined') window.localStorage.setItem(HIGGSFIELD_CONNECTED_KEY, 'true')
+  }
 
   return (
     <div className="max-w-3xl">
@@ -198,13 +214,23 @@ export function ConnectAiPage() {
                     </li>
                   ))}
                 </ol>
-                <div className="grid sm:grid-cols-2 gap-1.5">
+                <div className="grid sm:grid-cols-2 gap-1.5 mb-4">
                   {CLAUDE.features.slice(0, 6).map(f => (
                     <div key={f} className="flex items-center gap-1.5 text-xs text-neutral-500">
                       <Check size={12} className="text-emerald-500 flex-shrink-0" />
                       {f}
                     </div>
                   ))}
+                </div>
+                <div className="rounded-lg bg-neutral-50 border border-neutral-100 p-3">
+                  <p className="text-xs font-semibold text-black mb-1">What you'll be asked to do</p>
+                  <p className="text-xs text-neutral-500 leading-relaxed">
+                    You create a token in SellBop (below) and paste it into Claude&apos;s connector settings
+                    along with the MCP URL — no separate sign-in screen, since the token itself is what
+                    proves it&apos;s you. Claude can then read/create/edit products, upload files and images,
+                    and manage affiliates. It can never delete products, issue refunds, view payouts, or
+                    change your Stripe settings — those stay out of reach on purpose.
+                  </p>
                 </div>
               </ExpandableHelp>
             </div>
@@ -223,7 +249,7 @@ export function ConnectAiPage() {
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-2 mb-1">
                 <h2 className="text-lg font-bold text-black">2. Higgsfield</h2>
-                <StatusBadge setupGuide />
+                {higgsfieldConnected ? <StatusBadge connected /> : <StatusBadge setupGuide />}
               </div>
               <p className="text-sm text-neutral-500 mb-4">
                 Generate product images and videos with Claude.
@@ -242,7 +268,7 @@ export function ConnectAiPage() {
               </div>
 
               <div className="flex flex-wrap gap-2 mb-4">
-                <a href={CLAUDE_CONNECTORS_URL} target="_blank" rel="noopener noreferrer">
+                <a href={CLAUDE_CONNECTORS_URL} target="_blank" rel="noopener noreferrer" onClick={markHiggsfieldConnected}>
                   <Button variant="secondary" className="font-bold">
                     Open Claude Connectors <ExternalLink size={14} />
                   </Button>
@@ -257,6 +283,16 @@ export function ConnectAiPage() {
                   </li>
                 ))}
               </ol>
+
+              <div className="rounded-lg bg-neutral-50 border border-neutral-100 p-3 mb-4">
+                <p className="text-xs font-semibold text-black mb-1">What you'll be asked to do</p>
+                <p className="text-xs text-neutral-500 leading-relaxed">
+                  After you paste the URL into Claude, Higgsfield will show its own sign-in screen, then a
+                  screen asking you to let Claude verify your identity, see your email address, and stay
+                  signed in for later. That&apos;s Higgsfield and Claude talking directly to each other —
+                  SellBop never sees your Higgsfield login. Click Allow and you&apos;re connected.
+                </p>
+              </div>
               <p className="text-[10px] text-neutral-400 mb-4">{HIGGSFIELD.powered_by}</p>
 
               <div className="rounded-xl bg-neutral-900 p-3.5">

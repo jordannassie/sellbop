@@ -68,6 +68,7 @@ export default function AiIntegrationsPage() {
   const [quickConnecting, setQuickConnecting] = useState(false)
   const [quickToken, setQuickToken] = useState<string | null>(null)
   const [showManual, setShowManual] = useState(false)
+  const [higgsfieldConnected, setHiggsfieldConnected] = useState(false)
 
   async function load() {
     setLoading(true)
@@ -90,7 +91,20 @@ export default function AiIntegrationsPage() {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     load()
+    // Self-reported — SellBop can't verify a Higgsfield-to-Claude connection,
+    // since that link lives entirely between the user's Claude account and
+    // Higgsfield's own servers. We flip this once they click through to
+    // Claude's connector settings from here.
+    if (typeof window !== 'undefined' && window.localStorage.getItem('sellbop-higgsfield-connected') === 'true') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setHiggsfieldConnected(true)
+    }
   }, [])
+
+  function markHiggsfieldConnected() {
+    setHiggsfieldConnected(true)
+    if (typeof window !== 'undefined') window.localStorage.setItem('sellbop-higgsfield-connected', 'true')
+  }
 
   function toggleScope(key: string) {
     setScopes(prev => (prev.includes(key) ? prev.filter(s => s !== key) : [...prev, key]))
@@ -263,8 +277,11 @@ export default function AiIntegrationsPage() {
           {showManual && (
             <div className="px-5 pb-5 pt-0 border-t border-neutral-100 space-y-5">
               <Card>
-                <CardHeader>
+                <CardHeader className="flex flex-row items-center gap-2">
                   <CardTitle>Connect Claude</CardTitle>
+                  {connections.some(c => c.provider === 'claude' && !c.revoked_at) && (
+                    <Badge variant="success">Connected</Badge>
+                  )}
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm text-neutral-600">
                   <ol className="list-decimal list-inside space-y-1.5">
@@ -277,13 +294,22 @@ export default function AiIntegrationsPage() {
                     <code className="flex-1 rounded-lg bg-neutral-100 px-3 py-2 text-xs font-mono break-all">{MCP_URL}</code>
                     <Button size="sm" variant="secondary" onClick={copyMcpUrl}><Copy size={13} /></Button>
                   </div>
+                  <div className="rounded-lg bg-neutral-50 border border-neutral-100 p-3">
+                    <p className="text-xs font-semibold text-black mb-1">What you'll be asked to do</p>
+                    <p className="text-xs text-neutral-500 leading-relaxed">
+                      No separate sign-in — pasting the token itself is what proves it&apos;s you. Claude can
+                      then read/create/edit products, upload files and images, and manage affiliates. It can
+                      never delete products, issue refunds, view payouts, or touch Stripe settings.
+                    </p>
+                  </div>
                   <p className="text-xs text-neutral-400">Powered by MCP · See AGENT-API.md for full REST API docs.</p>
                 </CardContent>
               </Card>
 
               <Card>
-                <CardHeader>
+                <CardHeader className="flex flex-row items-center gap-2">
                   <CardTitle>Connect Higgsfield</CardTitle>
+                  {higgsfieldConnected && <Badge variant="success">Connected</Badge>}
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm text-neutral-600">
                   <ol className="list-decimal list-inside space-y-1.5">
@@ -295,6 +321,20 @@ export default function AiIntegrationsPage() {
                   <div className="flex items-center gap-2 pt-1">
                     <code className="flex-1 rounded-lg bg-neutral-100 px-3 py-2 text-xs font-mono break-all">{HIGGSFIELD_MCP_URL}</code>
                     <Button size="sm" variant="secondary" onClick={copyHiggsfieldUrl}><Copy size={13} /></Button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <a href="https://claude.ai/settings/connectors" target="_blank" rel="noopener noreferrer" onClick={markHiggsfieldConnected}>
+                      <Button size="sm" variant="secondary">Open Claude Connectors</Button>
+                    </a>
+                  </div>
+                  <div className="rounded-lg bg-neutral-50 border border-neutral-100 p-3">
+                    <p className="text-xs font-semibold text-black mb-1">What you'll be asked to do</p>
+                    <p className="text-xs text-neutral-500 leading-relaxed">
+                      After pasting the URL into Claude, Higgsfield shows its own sign-in screen, then asks
+                      you to let Claude verify your identity, see your email address, and stay signed in for
+                      later. That&apos;s Higgsfield and Claude talking directly — SellBop never sees your
+                      Higgsfield login. Click Allow and you&apos;re connected.
+                    </p>
                   </div>
                   <p className="text-xs text-neutral-400">
                     Powered by MCP · Higgsfield connects directly to Claude — once both Claude and Higgsfield are
