@@ -12,6 +12,7 @@ import { slugify, formatCurrency } from '@/lib/utils'
 import { uploadFile, buildStoragePath } from '@/lib/supabase/storage'
 import { useAuth } from '@/context/auth-context'
 import { MAX_PRODUCT_FILE_SIZE_BYTES, MAX_COVER_IMAGE_SIZE_BYTES } from '@/lib/platform-config'
+import { CoverImageCreationShortcuts, ProductFileCreationShortcuts } from '@/components/dashboard/product-creation-shortcuts'
 
 const CATEGORIES = ['Business', 'Money', 'Templates', 'Education', 'Real Estate', 'Faith', 'Fitness', 'Design', 'Other']
 const COMMISSION_PRESETS = [10, 20, 30, 40, 50]
@@ -216,10 +217,9 @@ export default function NewProductPage() {
                 />
               </label>
             )}
+            <CoverImageCreationShortcuts />
           </CardContent>
         </Card>
-
-        {/* Price */}
         <Card>
           <CardHeader><CardTitle>Pricing</CardTitle></CardHeader>
           <CardContent className="space-y-4">
@@ -291,6 +291,7 @@ export default function NewProductPage() {
                 />
               </label>
             )}
+            <ProductFileCreationShortcuts />
           </CardContent>
         </Card>
 

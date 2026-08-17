@@ -13,6 +13,7 @@ import { slugify, formatCurrency } from '@/lib/utils'
 import { uploadFile, buildStoragePath } from '@/lib/supabase/storage'
 import { useAuth } from '@/context/auth-context'
 import { MAX_PRODUCT_FILE_SIZE_BYTES, MAX_COVER_IMAGE_SIZE_BYTES } from '@/lib/platform-config'
+import { CoverImageCreationShortcuts, ProductFileCreationShortcuts } from '@/components/dashboard/product-creation-shortcuts'
 
 const CATEGORIES = ['Business', 'Money', 'Templates', 'Education', 'Real Estate', 'Faith', 'Fitness', 'Design', 'Other']
 const COMMISSION_PRESETS = [10, 20, 30, 40, 50]
@@ -303,10 +304,9 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                 <input type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} disabled={coverUploading} />
               </label>
             )}
+            <CoverImageCreationShortcuts />
           </CardContent>
         </Card>
-
-        {/* Price */}
         <Card>
           <CardHeader><CardTitle>Pricing</CardTitle></CardHeader>
           <CardContent className="space-y-4">
@@ -357,6 +357,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
               {fileUploading ? 'Uploading…' : files.length > 0 ? 'Add another file' : 'Upload product file'}
               <input type="file" className="hidden" onChange={handleFileUpload} disabled={fileUploading} />
             </label>
+            <ProductFileCreationShortcuts />
             <p className="text-xs text-neutral-400">Files are stored privately and delivered securely after purchase.</p>
           </CardContent>
         </Card>
