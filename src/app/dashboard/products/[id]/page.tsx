@@ -251,7 +251,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
               <Badge variant={product.is_live ? 'success' : 'neutral'}>
                 {product.is_live ? 'Live' : 'Draft'}
               </Badge>
-              <span className="text-xs text-neutral-400">{salesCount} sales · {(product.price_cents ?? 0) === 0 ? 'Free' : formatCurrency((product.price_cents ?? 0) / 100)}</span>
+              <span className="text-xs text-neutral-400">{salesCount} sales · {(product.price_cents ?? 0) === 0 ? 'Free' : formatCurrency(product.price_cents ?? 0)}</span>
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">

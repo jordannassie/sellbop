@@ -197,7 +197,7 @@ export default function DiscountsPage() {
                     <p className="text-xs text-neutral-500 mt-0.5">
                       {c.discount_type === 'percent'
                         ? `${c.discount_value}% off`
-                        : `${formatCurrency(c.discount_value / 100)} off`}
+                        : `${formatCurrency(c.discount_value)} off`}
                       {' · '}{c.used_count} uses{c.max_uses ? ` / ${c.max_uses}` : ''}
                       {c.expires_at ? ` · Expires ${new Date(c.expires_at).toLocaleDateString()}` : ''}
                     </p>

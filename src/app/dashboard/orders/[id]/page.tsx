@@ -108,7 +108,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           </div>
         </div>
         <p className="text-2xl font-bold text-black shrink-0">
-          {formatCurrency(order.total_cents / 100)}
+          {formatCurrency(order.total_cents)}
         </p>
       </div>
 
@@ -134,17 +134,17 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           <CardContent className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-neutral-500">Subtotal</span>
-              <span>{formatCurrency(order.subtotal_cents / 100)}</span>
+              <span>{formatCurrency(order.subtotal_cents)}</span>
             </div>
             {order.discount_cents > 0 && (
               <div className="flex justify-between text-sm text-green-600">
                 <span>Discount</span>
-                <span>−{formatCurrency(order.discount_cents / 100)}</span>
+                <span>−{formatCurrency(order.discount_cents)}</span>
               </div>
             )}
             <div className="flex justify-between text-sm">
               <span className="text-neutral-500">Sellbop fee</span>
-              <span>−{formatCurrency(order.platform_fee_cents / 100)}</span>
+              <span>−{formatCurrency(order.platform_fee_cents)}</span>
             </div>
             <div className="flex justify-between text-sm font-bold pt-2 border-t border-neutral-100">
               <span>Your net</span>

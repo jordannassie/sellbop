@@ -105,6 +105,7 @@ export interface Database {
           affiliate_enabled: boolean
           affiliate_commission_percent: number | null
           affiliate_updated_at: string | null
+          sort_order: number
           created_at: string
           updated_at: string
         }
@@ -135,6 +136,7 @@ export interface Database {
           affiliate_enabled?: boolean
           affiliate_commission_percent?: number | null
           affiliate_updated_at?: string | null
+          sort_order?: number
           created_at?: string
           updated_at?: string
         }

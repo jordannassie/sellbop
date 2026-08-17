@@ -52,6 +52,7 @@ export async function GET(
     .eq('store_id', store.id)
     .eq('is_live', true)
     .is('external_source', null)
+    .order('sort_order', { ascending: true })
     .order('created_at', { ascending: false })
 
   const products = rawProducts ?? []

@@ -114,7 +114,7 @@ export default function CustomersPage() {
                       <p className="text-sm text-neutral-600">{c.purchase_count}</p>
                     </div>
                     <div className="sm:col-span-3 shrink-0">
-                      <p className="text-sm font-semibold text-black">{formatCurrency(c.total_spend_cents / 100)}</p>
+                      <p className="text-sm font-semibold text-black">{formatCurrency(c.total_spend_cents)}</p>
                     </div>
                     <div className="sm:col-span-3 hidden sm:block">
                       <p className="text-xs text-neutral-400">{timeAgo(c.last_purchase_at)}</p>

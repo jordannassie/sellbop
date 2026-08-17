@@ -126,6 +126,7 @@ export async function PATCH(
   if ('checkout_copy' in body) update.checkout_copy = body.checkout_copy as string | null
   if ('category' in body) update.category = body.category as string | null
   if ('marketplace_listing' in body) update.marketplace_listing = body.marketplace_listing as boolean
+  if ('sort_order' in body) update.sort_order = body.sort_order as number
   if ('affiliate_enabled' in body) {
     update.affiliate_enabled = body.affiliate_enabled as boolean
     update.affiliate_updated_at = new Date().toISOString()

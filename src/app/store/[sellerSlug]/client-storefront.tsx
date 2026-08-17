@@ -143,7 +143,7 @@ export function ClientStorefront({ slug }: { slug: string }) {
                             <p className="text-xs text-neutral-500 mb-3 line-clamp-2">{p.short_description}</p>
                           )}
                           <p className="text-sm font-bold text-black">
-                            {isFree ? 'Free' : formatCurrency((p.price_cents ?? 0) / 100)}
+                            {isFree ? 'Free' : formatCurrency(p.price_cents ?? 0)}
                           </p>
                         </div>
                       </div>

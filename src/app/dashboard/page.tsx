@@ -216,7 +216,7 @@ export default function DashboardOverview() {
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <Badge variant={statusVariant(order.payment_status)}>{order.payment_status}</Badge>
-                        <span className="text-sm font-semibold text-black">{formatCurrency((order.total_cents ?? 0) / 100)}</span>
+                        <span className="text-sm font-semibold text-black">{formatCurrency(order.total_cents ?? 0)}</span>
                       </div>
                     </div>
                   </Link>
@@ -252,7 +252,7 @@ export default function DashboardOverview() {
                     <div className="px-6 py-3 flex items-center gap-4 hover:bg-neutral-50 transition-colors">
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-neutral-900 truncate">{p.title}</p>
-                        <p className="text-xs text-neutral-400">{formatCurrency((p.price_cents ?? 0) / 100)} · {p.sales_count ?? 0} sales</p>
+                        <p className="text-xs text-neutral-400">{formatCurrency(p.price_cents ?? 0)} · {p.sales_count ?? 0} sales</p>
                       </div>
                       <Badge variant={p.is_live ? 'success' : 'neutral'}>
                         {p.is_live ? 'Live' : 'Draft'}

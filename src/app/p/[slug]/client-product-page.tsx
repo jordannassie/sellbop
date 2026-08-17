@@ -395,7 +395,7 @@ export function ClientProductPage({ slug }: { slug: string }) {
               {/* Price */}
               <div className="mb-5">
                 <p className="text-3xl font-bold text-black">
-                  {isFree ? 'Free' : formatCurrency((product?.price_cents ?? 0) / 100)}
+                  {isFree ? 'Free' : formatCurrency(product?.price_cents ?? 0)}
                 </p>
                 {!isFree && (
                   <p className="text-xs text-neutral-400 mt-1">One-time payment</p>
@@ -435,7 +435,7 @@ export function ClientProductPage({ slug }: { slug: string }) {
                     className="w-full"
                     loading={state === 'processing'}
                   >
-                    {isFree ? 'Get Free Download' : `Pay ${formatCurrency((product?.price_cents ?? 0) / 100)}`}
+                    {isFree ? 'Get Free Download' : `Pay ${formatCurrency(product?.price_cents ?? 0)}`}
                   </Button>
                   <button
                     type="button"

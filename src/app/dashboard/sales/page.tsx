@@ -121,7 +121,7 @@ export default function SalesPage() {
                         <p className="text-sm text-neutral-600 truncate">{order.product_title_snapshot ?? '—'}</p>
                       </div>
                       <div className="sm:col-span-2 shrink-0">
-                        <p className="text-sm font-semibold text-black">{formatCurrency((order.total_cents ?? 0) / 100)}</p>
+                        <p className="text-sm font-semibold text-black">{formatCurrency(order.total_cents ?? 0)}</p>
                       </div>
                       <div className="sm:col-span-2 shrink-0">
                         <Badge variant={statusVariant(order.payment_status)}>{order.payment_status}</Badge>

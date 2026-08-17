@@ -29,12 +29,13 @@ export async function GET() {
     .from('products')
     .select(`
       id, title, slug, product_type, description, short_description,
-      cover_image_url, image_url, price_cents, is_live,
+      cover_image_url, image_url, price_cents, is_live, sort_order,
       marketplace_listing, affiliate_enabled, affiliate_commission_percent,
       created_at, updated_at, store_id
     `)
     .eq('store_id', store.id)
     .is('external_source', null)
+    .order('sort_order', { ascending: true })
     .order('created_at', { ascending: false })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -108,6 +109,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Could not create seller store.' }, { status: 500 })
   }
 
+  // New products are placed first in manual display order.
+  const { data: topRow } = await admin
+    .from('products')
+    .select('sort_order')
+    .eq('store_id', store.id)
+    .order('sort_order', { ascending: true })
+    .limit(1)
+    .maybeSingle()
+  const nextSortOrder = (topRow?.sort_order ?? 1) - 1
+
   // Generate a unique slug
   const baseSlug = rawSlug?.trim() ? slugify(rawSlug) : slugify(title)
   let slug = baseSlug
@@ -134,6 +145,7 @@ export async function POST(request: Request) {
       cover_image_url: cover_image_url ?? null,
       is_live: is_live ?? false,
       category: category ?? null,
+      sort_order: nextSortOrder,
       // Default ON: every new product is Marketplace-listed and affiliate-enabled at 30%
       marketplace_listing: marketplace_listing ?? true,
       affiliate_enabled: affiliate_enabled ?? true,
