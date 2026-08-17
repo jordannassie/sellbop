@@ -20,9 +20,9 @@ const BOTTOM_NAV = [
     id: 'store',
     label: 'Store',
     Icon: Store,
-    href: '/dashboard/store',
+    href: '/dashboard/settings',
     exact: false,
-    activePaths: ['/dashboard/storefront', '/dashboard/store-editor'],
+    activePaths: [] as string[],
   },
   {
     id: 'products',
