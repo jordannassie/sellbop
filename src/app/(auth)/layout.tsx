@@ -3,13 +3,13 @@ import { Check } from 'lucide-react'
 import { SellBopLogo } from '@/components/ui/sellbop-logo'
 import { HERO_FACEPILE_PHOTOS } from '@/lib/demo-avatars'
 
-// No Founder badge — practical creator benefits only
+// AI-powered selling promo — practical creator benefits
 const BENEFITS = [
-  '$0 SellBop platform fees during beta',
-  'Standard Stripe/payment processing fees apply',
-  'Early access to new features',
-  'Community access',
-  'Vote on what gets built next',
+  'Build digital products faster with Claude',
+  'Create product images and content with Higgsfield',
+  'Launch your store with no monthly fee',
+  'Sell digital products directly to buyers',
+  'Let affiliates help promote your products',
 ]
 
 const PROMO_PHOTO = 'https://qsvmgzdaashfsavmfjuz.supabase.co/storage/v1/object/public/SELL/images/0_3.jpg'
@@ -47,7 +47,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
               sizes="460px"
               priority
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-neutral-950/20 to-neutral-950" />
+            <div className="absolute inset-0 bg-gradient-to-b from-neutral-950/30 via-neutral-950/50 to-neutral-950" />
           </div>
 
           {/* Copy */}
@@ -56,17 +56,15 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
               {/* Eyebrow */}
               <div className="inline-flex items-center gap-2 bg-white/10 text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full mb-5 self-start">
                 <span className="w-1.5 h-1.5 bg-green-400 rounded-full flex-shrink-0" />
-                Beta Program
+                AI-Powered Selling
               </div>
 
-              {/* Headline */}
               <h2 className="text-2xl sm:text-[28px] font-black text-white leading-tight mb-2">
-                Founder Creators Program
+                Use Claude + Higgsfield to build your digital store
               </h2>
 
-              {/* Subheadline */}
               <p className="text-neutral-400 text-sm leading-relaxed mb-6">
-                Be one of the first creators on SellBop. Launch early, pay $0 SellBop platform fees during beta, and help shape what we build next. Standard Stripe/payment processing fees still apply.
+                Create digital products with Claude, generate creative assets with Higgsfield, and use SellBop to launch your store, sell your products, and grow with affiliates.
               </p>
 
               {/* Benefits — no Founder badge */}
@@ -98,8 +96,8 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
                 ))}
               </div>
               <p className="text-xs text-neutral-400 leading-snug">
-                <span className="text-white font-semibold">Creators already joining beta</span>
-                {' '}— be part of the first wave
+                <span className="text-white font-semibold">Creators are already building with AI</span>
+                {' '}— launch your store and start selling
               </p>
             </div>
           </div>

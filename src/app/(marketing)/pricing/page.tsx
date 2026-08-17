@@ -1,251 +1,278 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { Check, ArrowRight, Zap } from 'lucide-react'
+import {
+  ArrowRight,
+  Check,
+  Store,
+  ShoppingBag,
+  TrendingUp,
+} from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { PricingFaq } from '@/components/marketing/pricing-faq'
 
 export const metadata: Metadata = {
   title: 'Pricing — SellBop',
-  description: 'Free to start. No monthly fee. Only pay when you sell. Standard Stripe/payment processing fees apply.',
+  description: 'Free to start. Only pay when you sell. No monthly subscription — SellBop earns when you make sales.',
 }
 
-// ─── Data ────────────────────────────────────────────────────────────────────
-
-const CREATOR_PROGRAM_BULLETS = [
-  'No monthly fee',
-  'No credit card required to start',
-  'Create your first product with AI',
-  'Use your AI Launch Coach to build your offer, price, page, and launch plan',
-  'Only pay when you sell',
-  'Community access',
-  'Vote on what we build next',
+const DIRECT_FEATURES = [
+  '$0 monthly fee',
+  '$0 setup fee',
+  'Unlimited product listings',
+  'Digital product delivery',
+  'Seller storefront',
+  'Affiliate selling',
+  'Sales analytics',
 ]
 
-const DIRECT_BENEFITS = [
-  'No monthly fee',
-  'No credit card required to start',
-  'Only pay when you sell',
-  'Keep control of your audience',
-  'Great for creators who bring their own buyers',
+const MARKETPLACE_FEATURES = [
+  'Marketplace exposure',
+  'Product discovery',
+  'New customer acquisition',
+  'Digital product delivery',
+  'Affiliate-ready products',
+  'Seller analytics',
 ]
-
-const MARKETPLACE_BENEFITS = [
-  'SellBop helps bring new buyers',
-  'Built-in marketplace discovery',
-  'Only charged when SellBop sends the sale',
-  'Great for creators who want more reach',
-]
-
-const FAQ = [
-  {
-    q: 'Is there a monthly fee to use SellBop?',
-    a: 'No. SellBop does not charge a monthly platform fee. You start free, create your product, and only pay a platform fee when you make a sale.',
-  },
-  {
-    q: 'When do I get charged?',
-    a: 'Only when you make a sale. Direct sales are charged 10% + $0.50 per transaction. Marketplace sales are charged 30% per transaction when SellBop brings you the buyer.',
-  },
-  {
-    q: 'Do I still pay payment processing fees?',
-    a: 'Yes. Standard Stripe/payment processing fees still apply to every transaction. SellBop does not collect these — they go directly to the payment processor.',
-  },
-  {
-    q: 'What is the difference between direct sales and marketplace sales?',
-    a: 'Direct sales are when your own customers buy from your store link or product page. Marketplace sales are when new customers discover and buy from you through the SellBop marketplace.',
-  },
-  {
-    q: 'Do I need a credit card to get started?',
-    a: 'No. You can sign up, create your product, and set up your store for free. Payment information is only needed when you connect Stripe to start accepting purchases.',
-  },
-  {
-    q: 'Why join the Creator Program?',
-    a: 'You get an AI Launch Coach to help build your first product, a storefront, digital delivery, analytics, community access, and the ability to vote on what SellBop builds next — all with no monthly fee.',
-  },
-]
-
-// ─── Page ────────────────────────────────────────────────────────────────────
 
 export default function PricingPage() {
   return (
-    <main className="bg-white">
-
-      {/* ── Hero ─────────────────────────────────────────────────────────── */}
-      <section className="pt-24 pb-16 sm:pt-32 sm:pb-20 text-center px-4">
-        <p className="text-xs font-bold uppercase tracking-[0.3em] text-neutral-400 mb-5">Pricing</p>
-        <h1 className="text-4xl sm:text-6xl font-black text-black tracking-tight leading-tight mb-5">
-          Free to start.<br className="hidden sm:block" /> Only pay when you sell.
-        </h1>
-        <p className="text-neutral-500 text-base sm:text-lg max-w-xl mx-auto mb-3">
-          No monthly fee. No credit card required to start. SellBop platform fees are only charged when you make a sale.
+    <div className="bg-white">
+      {/* Hero */}
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 pt-16 sm:pt-24 pb-14 text-center">
+        <p className="text-xs font-bold uppercase tracking-[0.25em] mb-4" style={{ color: '#00E676' }}>
+          Simple Pricing
         </p>
-        <p className="text-sm text-neutral-400">Standard Stripe/payment processing fees still apply.</p>
+        <h1 className="text-4xl sm:text-6xl font-black text-black tracking-tight leading-[1.08] mb-5">
+          Free to start. Only pay when you sell.
+        </h1>
+        <p className="text-neutral-500 text-base sm:text-lg max-w-2xl mx-auto mb-8 leading-relaxed">
+          Create your store, list digital products, and start selling without a monthly subscription.
+          SellBop makes money when you make money.
+        </p>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <Link href="/signup">
+            <Button size="lg">Start Selling Free <ArrowRight size={16} /></Button>
+          </Link>
+          <Link href="/marketplace">
+            <Button size="lg" variant="secondary">Explore Products</Button>
+          </Link>
+        </div>
       </section>
 
-      {/* ── Creator Program callout ────────────────────────────────────────── */}
-      <section className="px-4 pb-16 sm:pb-20">
-        <div className="max-w-3xl mx-auto bg-black rounded-3xl p-8 sm:p-12 text-white">
-          <div className="flex items-center gap-2 mb-5">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <p className="text-xs font-bold uppercase tracking-[0.3em] text-emerald-400">
-              Creator Program
+      {/* Pricing cards */}
+      <section className="max-w-5xl mx-auto px-4 sm:px-6 pb-8">
+        <div className="grid md:grid-cols-2 gap-5">
+          {/* Direct Sales — primary */}
+          <div className="rounded-3xl border-2 border-black bg-white p-8 shadow-sm">
+            <p className="text-xs font-bold uppercase tracking-widest text-neutral-500 mb-4">Direct Sales</p>
+            <p className="text-4xl sm:text-5xl font-black text-black leading-none">10% + $0.50</p>
+            <p className="text-sm text-neutral-400 mt-1 mb-5">per transaction</p>
+            <p className="text-sm text-neutral-600 leading-relaxed mb-6">
+              For purchases made through your SellBop store, profile, or direct product links.
+            </p>
+            <ul className="space-y-2.5 mb-8">
+              {DIRECT_FEATURES.map(item => (
+                <li key={item} className="flex items-center gap-2.5 text-sm text-neutral-700">
+                  <Check size={14} className="text-emerald-500 shrink-0" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+            <Link href="/signup" className="block">
+              <Button className="w-full" size="lg">Start Selling Free</Button>
+            </Link>
+          </div>
+
+          {/* Marketplace */}
+          <div className="rounded-3xl border border-neutral-200 bg-white p-8 shadow-sm">
+            <p className="text-xs font-bold uppercase tracking-widest text-neutral-500 mb-4">Marketplace Sales</p>
+            <p className="text-4xl sm:text-5xl font-black text-black leading-none">30%</p>
+            <p className="text-sm text-neutral-400 mt-1 mb-5">per transaction</p>
+            <p className="text-sm text-neutral-600 leading-relaxed mb-6">
+              For customers SellBop brings to your product through marketplace discovery.
+            </p>
+            <ul className="space-y-2.5 mb-8">
+              {MARKETPLACE_FEATURES.map(item => (
+                <li key={item} className="flex items-center gap-2.5 text-sm text-neutral-700">
+                  <Check size={14} className="text-emerald-500 shrink-0" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+            <Link href="/signup" className="block">
+              <Button className="w-full" size="lg" variant="secondary">List Your Product</Button>
+            </Link>
+          </div>
+        </div>
+
+        <p className="text-sm text-neutral-600 text-center max-w-2xl mx-auto mt-8 leading-relaxed">
+          Standard payment processing fees may apply separately. Affiliate commissions are deducted when an affiliate generates the sale.
+        </p>
+      </section>
+
+      {/* Affiliate pricing */}
+      <section className="border-t border-neutral-100 bg-neutral-50 py-20 sm:py-24">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-12">
+            <p className="text-xs font-bold uppercase tracking-[0.25em] mb-3" style={{ color: '#00E676' }}>
+              Affiliate Selling
+            </p>
+            <h2 className="text-3xl sm:text-5xl font-black text-black tracking-tight mb-4">
+              You choose what affiliates earn.
+            </h2>
+            <p className="text-neutral-500 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
+              Turn customers and creators into your sales team. Enable affiliates on any eligible product
+              and choose the commission percentage you want to offer.
             </p>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-black leading-tight mb-4">
-            Join the Creator Program.<br className="hidden sm:block" />
-            <span className="text-emerald-400">Start building for free.</span>
-          </h2>
-          <p className="text-neutral-400 text-sm sm:text-base leading-relaxed mb-8 max-w-lg">
-            Join the Creator Program and start building your first online business with AI. SellBop helps you turn what you know into a product you can sell — with no monthly fee and no credit card required to start.
+
+          <div className="max-w-lg mx-auto rounded-3xl border border-neutral-200 bg-white p-8 mb-8">
+            <p className="text-xs font-bold uppercase tracking-widest text-neutral-400 mb-6">Example</p>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-neutral-500">Product Price</span>
+                <span className="font-bold text-black">$50</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-neutral-500">Affiliate Commission</span>
+                <span className="font-bold text-black">40%</span>
+              </div>
+              <div className="flex items-center justify-between text-sm border-t border-neutral-100 pt-4">
+                <span className="text-neutral-500">Affiliate Earns</span>
+                <span className="font-black text-lg" style={{ color: '#00E676' }}>$20</span>
+              </div>
+              <p className="text-xs text-neutral-500 leading-relaxed pt-2">
+                Seller receives the remaining proceeds after SellBop and payment processing fees.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 mb-6 text-sm font-semibold text-neutral-600">
+            <span className="rounded-full border border-neutral-200 bg-white px-4 py-2">Seller</span>
+            <ArrowRight size={14} className="text-neutral-400" />
+            <span className="rounded-full border border-neutral-200 bg-white px-4 py-2">Affiliate</span>
+            <ArrowRight size={14} className="text-neutral-400" />
+            <span className="rounded-full border border-neutral-200 bg-white px-4 py-2">Buyer</span>
+          </div>
+
+          <p className="text-sm text-neutral-500 text-center max-w-xl mx-auto mb-8 leading-relaxed">
+            Affiliates earn when they generate a sale. Sellers only pay affiliate commissions when a sale actually happens.
           </p>
 
-          <ul className="space-y-3 mb-10">
-            {CREATOR_PROGRAM_BULLETS.map(b => (
-              <li key={b} className="flex items-center gap-3 text-sm text-neutral-300">
-                <div className="w-5 h-5 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center flex-shrink-0">
-                  <Check size={10} className="text-emerald-400" />
-                </div>
-                {b}
-              </li>
-            ))}
-          </ul>
-
-          <Link href="/signup">
-            <button className="inline-flex items-center gap-2 bg-white text-black text-sm font-bold px-6 py-3 rounded-xl hover:bg-neutral-100 transition-colors">
-              Join the Creator Program <ArrowRight size={14} />
-            </button>
-          </Link>
-        </div>
-      </section>
-
-      {/* ── Pricing cards ─────────────────────────────────────────────────── */}
-      <section className="px-4 pb-6 sm:pb-8">
-        <div className="max-w-3xl mx-auto">
-          <p className="text-xs font-bold uppercase tracking-[0.3em] text-neutral-400 mb-6 text-center">
-            How SellBop fees work
-          </p>
-
-          <div className="grid sm:grid-cols-2 gap-4">
-
-            {/* Card A — Direct Sales */}
-            <div className="bg-white border border-neutral-200 rounded-2xl p-8 text-left shadow-sm">
-              <div className="flex items-center gap-2 mb-5">
-                <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">Direct Sales</p>
-              </div>
-
-              <p className="text-3xl font-black text-black leading-none mb-1">
-                10% + $0.50
-              </p>
-              <p className="text-xs text-neutral-400 mb-4">per transaction</p>
-
-              <div className="inline-flex items-center gap-2 bg-neutral-50 border border-neutral-200 rounded-xl px-3 py-1.5 mb-4">
-                <Zap size={12} className="text-neutral-500" />
-                <span className="text-sm font-semibold text-neutral-700">Only when you sell</span>
-              </div>
-
-              <p className="text-sm text-neutral-500 leading-relaxed mb-5">
-                Per transaction for all sales through your profile, product page, or direct links to your customers.
-              </p>
-
-              <div className="space-y-2">
-                {DIRECT_BENEFITS.map(t => (
-                  <div key={t} className="flex items-center gap-2 text-sm text-neutral-600">
-                    <Check size={12} className="text-emerald-500 flex-shrink-0" /> {t}
-                  </div>
-                ))}
-              </div>
-
-              <Link href="/signup" className="block mt-6">
-                <button className="w-full flex items-center justify-center gap-2 bg-black text-white text-sm font-semibold py-2.5 rounded-xl hover:bg-neutral-800 transition-colors">
-                  Start Free <ArrowRight size={13} />
-                </button>
-              </Link>
-            </div>
-
-            {/* Card B — Marketplace Sales */}
-            <div className="bg-white border border-neutral-200 rounded-2xl p-8 text-left shadow-sm">
-              <div className="flex items-center gap-2 mb-5">
-                <div className="w-2 h-2 rounded-full bg-violet-500" />
-                <p className="text-xs font-bold uppercase tracking-widest text-neutral-500">Marketplace Sales</p>
-              </div>
-
-              <p className="text-3xl font-black text-black leading-none mb-1">
-                30%
-              </p>
-              <p className="text-xs text-neutral-400 mb-4">per transaction</p>
-
-              <div className="inline-flex items-center gap-2 bg-neutral-50 border border-neutral-200 rounded-xl px-3 py-1.5 mb-4">
-                <Zap size={12} className="text-violet-500" />
-                <span className="text-sm font-semibold text-neutral-700">Only when SellBop sends the sale</span>
-              </div>
-
-              <p className="text-sm text-neutral-500 leading-relaxed mb-5">
-                Per transaction when new customers find and buy from you through the SellBop marketplace or discovery channels.
-              </p>
-
-              <div className="space-y-2">
-                {MARKETPLACE_BENEFITS.map(t => (
-                  <div key={t} className="flex items-center gap-2 text-sm text-neutral-600">
-                    <Check size={12} className="text-violet-500 flex-shrink-0" /> {t}
-                  </div>
-                ))}
-              </div>
-
-              <Link href="/signup" className="block mt-6">
-                <button className="w-full flex items-center justify-center gap-2 bg-black text-white text-sm font-semibold py-2.5 rounded-xl hover:bg-neutral-800 transition-colors">
-                  Join the Creator Program <ArrowRight size={13} />
-                </button>
-              </Link>
-            </div>
+          <div className="text-center">
+            <Link href="/signup">
+              <Button size="lg">Start Selling With Affiliates <ArrowRight size={16} /></Button>
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* ── Pricing note ──────────────────────────────────────────────────── */}
-      <section className="px-4 pt-6 pb-14 sm:pb-16">
-        <div className="max-w-3xl mx-auto text-center">
-          <p className="text-xs text-neutral-400">
-            Standard Stripe/payment processing fees still apply. SellBop platform fees are charged only when you make a sale.
-          </p>
-        </div>
-      </section>
-
-      {/* ── CTA row ───────────────────────────────────────────────────────── */}
-      <section className="px-4 pb-20 sm:pb-24">
-        <div className="max-w-3xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-3">
-          <Link href="/signup">
-            <button className="inline-flex items-center gap-2 bg-black text-white text-sm font-bold px-7 py-3.5 rounded-xl hover:bg-neutral-800 transition-colors">
-              Join the Creator Program <ArrowRight size={14} />
-            </button>
-          </Link>
-          <Link href="/signup">
-            <button className="inline-flex items-center gap-2 border border-neutral-200 text-neutral-600 text-sm font-semibold px-7 py-3.5 rounded-xl hover:border-neutral-400 hover:bg-neutral-50 transition-colors">
-              Start Free
-            </button>
-          </Link>
-        </div>
-      </section>
-
-      {/* ── FAQ ───────────────────────────────────────────────────────────── */}
-      <section className="px-4 pb-24 sm:pb-32 border-t border-neutral-100 pt-16 sm:pt-20">
-        <div className="max-w-2xl mx-auto">
-          <p className="text-xs font-bold uppercase tracking-[0.3em] text-neutral-400 mb-4 text-center">FAQ</p>
-          <h2 className="text-2xl sm:text-3xl font-black text-black text-center mb-12">
-            Common questions
+      {/* Three-sided marketplace */}
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 py-20 sm:py-24">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl sm:text-5xl font-black text-black tracking-tight">
+            Everyone has a way to earn.
           </h2>
+        </div>
 
-          <div className="space-y-3">
-            {FAQ.map(({ q, a }) => (
+        <div className="grid md:grid-cols-3 gap-5">
+          {[
+            {
+              icon: Store,
+              title: 'Sellers',
+              headline: 'Create products and grow distribution.',
+              body: 'Create your own digital products, build your storefront, set your price, and allow affiliates to help sell them.',
+              cta: 'Become a Seller',
+              href: '/signup',
+            },
+            {
+              icon: ShoppingBag,
+              title: 'Buyers',
+              headline: 'Discover useful digital products.',
+              body: 'Find products, tools, templates, downloads, guides, and resources created by SellBop sellers.',
+              cta: 'Explore Products',
+              href: '/marketplace',
+            },
+            {
+              icon: TrendingUp,
+              title: 'Affiliates',
+              headline: 'Sell products without creating your own.',
+              body: 'Find products you believe in, get your unique affiliate link, promote them, and earn commission from qualifying sales.',
+              cta: 'Become an Affiliate',
+              href: '/marketplace',
+            },
+          ].map(card => (
+            <div key={card.title} className="rounded-3xl border border-neutral-200 bg-white p-7 flex flex-col">
               <div
-                key={q}
-                className="bg-neutral-50 border border-neutral-200 rounded-2xl px-6 py-5"
+                className="w-11 h-11 rounded-2xl flex items-center justify-center mb-5"
+                style={{ background: 'rgba(0,230,118,0.12)' }}
               >
-                <p className="text-sm font-bold text-black mb-2">{q}</p>
-                <p className="text-sm text-neutral-500 leading-relaxed">{a}</p>
+                <card.icon size={20} style={{ color: '#00E676' }} />
+              </div>
+              <p className="text-xs font-bold uppercase tracking-widest text-neutral-400 mb-2">{card.title}</p>
+              <p className="text-lg font-bold text-black mb-3">{card.headline}</p>
+              <p className="text-sm text-neutral-500 leading-relaxed mb-6 flex-1">{card.body}</p>
+              <Link href={card.href}>
+                <Button variant="secondary" className="w-full">{card.cta}</Button>
+              </Link>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Comparison */}
+      <section className="border-t border-neutral-100 bg-neutral-50 py-16 sm:py-20">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
+          <h2 className="text-2xl sm:text-4xl font-black text-black mb-10">
+            No monthly subscription required.
+          </h2>
+          <div className="grid sm:grid-cols-3 gap-4">
+            {[
+              { label: 'Create your SellBop account', value: '$0' },
+              { label: 'List digital products', value: '$0' },
+              { label: 'Pay SellBop', value: 'Only when a sale happens' },
+            ].map(row => (
+              <div key={row.label} className="rounded-2xl border border-neutral-200 bg-white px-5 py-6">
+                <p className="text-sm text-neutral-500 mb-2">{row.label}</p>
+                <p className="text-xl font-black text-black">{row.value}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-    </main>
+      {/* FAQ */}
+      <section className="max-w-2xl mx-auto px-4 sm:px-6 py-20 sm:py-24">
+        <p className="text-xs font-bold uppercase tracking-[0.25em] text-neutral-400 mb-4 text-center">FAQ</p>
+        <h2 className="text-2xl sm:text-3xl font-black text-black text-center mb-10">
+          Common questions
+        </h2>
+        <PricingFaq />
+      </section>
+
+      {/* Final CTA */}
+      <section className="border-t border-neutral-100 bg-black text-white py-20 sm:py-24">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
+          <h2 className="text-3xl sm:text-5xl font-black tracking-tight mb-4">
+            Create it. Sell it. Let everyone sell it.
+          </h2>
+          <p className="text-neutral-400 text-base sm:text-lg mb-8 leading-relaxed">
+            Start your SellBop store for free and only pay when you make a sale.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link href="/signup">
+              <Button size="lg" className="bg-white text-black hover:bg-neutral-100">
+                Start Selling Free <ArrowRight size={16} />
+              </Button>
+            </Link>
+            <Link href="/">
+              <Button size="lg" variant="secondary" className="border-white/20 bg-transparent text-white hover:bg-white/10">
+                Explore SellBop
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+    </div>
   )
 }
