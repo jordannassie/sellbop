@@ -215,8 +215,8 @@ export default async function HomePage() {
                 <img
                   src="https://qsvmgzdaashfsavmfjuz.supabase.co/storage/v1/object/public/SELL/images/HOLD.png"
                   alt="Digital Product"
-                  className="w-full object-cover rounded-t-xl"
-                  style={{ aspectRatio: '16/7', objectFit: 'cover' }}
+                  className="w-full object-cover object-center rounded-t-xl"
+                  style={{ aspectRatio: '1 / 1' }}
                 />
                 <div className="p-5">
                   <div className="flex items-center justify-between mb-3">

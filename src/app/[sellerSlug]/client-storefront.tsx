@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { PublicHeader } from '@/components/marketing/public-header'
 import { formatCurrency } from '@/lib/utils'
 import { getEffectiveProductPrice } from '@/lib/pricing/product-price'
+import { ProductCardImage } from '@/components/product/product-card-image'
 import { ProductPriceDisplay } from '@/components/ui/product-price-display'
 import {
   User, Package, Share2, Check, TrendingUp, ArrowRight, Copy, ChevronDown,
@@ -407,29 +408,16 @@ export function ClientStorefront({ slug }: { slug: string }) {
                 return (
                   <Link key={p.id} href={`/${slug}/${p.slug}`}>
                     <div className="group rounded-2xl border border-neutral-200 bg-white hover:border-neutral-300 hover:shadow-sm transition-all duration-200 overflow-hidden">
-                      {/* Image — 1:1 square */}
-                      <div className="relative w-full overflow-hidden bg-neutral-100 aspect-square">
-                        {coverUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={coverUrl}
-                            alt={p.title}
-                            className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <Package size={28} className="text-neutral-300" />
-                          </div>
-                        )}
+                      <ProductCardImage src={coverUrl} alt={p.title} hoverScale>
                         {pricing.isOnSale && (
-                          <div className="absolute top-2.5 left-2.5">
+                          <div className="absolute top-2.5 left-2.5 z-10">
                             <span className="inline-flex items-center rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">
                               {pricing.discountPercent}% OFF
                             </span>
                           </div>
                         )}
                         {showAffiliate && (
-                          <div className="absolute top-2.5 right-2.5">
+                          <div className="absolute top-2.5 right-2.5 z-10">
                             <span
                               className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold shadow-sm"
                               style={{ background: '#000', color: '#00E676' }}
@@ -439,7 +427,7 @@ export function ClientStorefront({ slug }: { slug: string }) {
                             </span>
                           </div>
                         )}
-                      </div>
+                      </ProductCardImage>
 
                       {/* Card body */}
                       <div className="p-4">

@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { Search, X, TrendingUp, ArrowRight } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { PublicHeader } from '@/components/marketing/public-header'
-import { ProductImage } from '@/components/ui/product-image'
+import { ProductCardImage } from '@/components/product/product-card-image'
 import { ProductPriceDisplay } from '@/components/ui/product-price-display'
 import { getEffectiveProductPrice } from '@/lib/pricing/product-price'
 import {
@@ -46,29 +46,22 @@ function ProductCard({ product }: { product: MarketplaceProduct }) {
     <div className="group relative overflow-hidden rounded-2xl border border-neutral-200 bg-white hover:border-neutral-300 hover:shadow-md transition-all duration-200">
       {/* Cover image */}
       <Link href={`/p/${product.slug}`}>
-        <div className="relative aspect-square bg-gradient-to-br from-neutral-100 to-neutral-200 overflow-hidden">
-          <ProductImage
-            src={product.coverImage}
-            alt=""
-            fill
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
-            iconSize="lg"
-          />
+        <ProductCardImage src={product.coverImage} alt={product.title} hoverScale imageClassName="group-hover:scale-105">
           {displayCategory && (
-            <div className="absolute top-3 left-3 max-w-[calc(100%-1.5rem)]">
+            <div className="absolute top-3 left-3 z-10 max-w-[calc(100%-1.5rem)]">
               <span className="inline-flex items-center rounded-full bg-white/90 backdrop-blur-sm px-2.5 py-1 text-[10px] font-bold text-neutral-700 shadow-sm whitespace-nowrap">
                 {displayCategory}
               </span>
             </div>
           )}
           {pricing.isOnSale && (
-            <div className="absolute top-3 right-3">
+            <div className="absolute top-3 right-3 z-10">
               <span className="inline-flex items-center rounded-full bg-emerald-500 px-2.5 py-1 text-[10px] font-bold text-white shadow-sm">
                 {pricing.discountPercent}% OFF
               </span>
             </div>
           )}
-        </div>
+        </ProductCardImage>
       </Link>
 
       <div className="p-4">

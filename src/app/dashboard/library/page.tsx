@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { BookOpen, Check, Copy, Download, ExternalLink, Loader2, Share2, TrendingUp } from 'lucide-react'
 import { useAuth } from '@/context/auth-context'
+import { ProductCardImage } from '@/components/product/product-card-image'
 import { formatCurrency, formatDate } from '@/lib/utils'
 
 interface LibraryItem {
@@ -225,21 +225,7 @@ export default function LibraryPage() {
                 className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm hover:shadow-md transition-shadow"
               >
                 {/* Cover image */}
-                <div className="relative h-44 bg-neutral-100">
-                  {item.coverImage ? (
-                    <Image
-                      src={item.coverImage}
-                      alt={item.productTitle}
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center">
-                      <BookOpen size={40} className="text-neutral-300" />
-                    </div>
-                  )}
-                </div>
+                <ProductCardImage src={item.coverImage} alt={item.productTitle} />
 
                 {/* Content */}
                 <div className="p-4">

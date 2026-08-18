@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { Globe } from 'lucide-react'
-import { ProductImage } from '@/components/ui/product-image'
+import { ProductCardImage } from '@/components/product/product-card-image'
 import { SellBopLogo } from '@/components/ui/sellbop-logo'
 import { formatCurrency } from '@/lib/utils'
 import { cn } from '@/lib/utils'
@@ -66,9 +66,7 @@ function PreviewProductCard({
 
   return (
     <div className={cn(cardBase, cardBorder)}>
-      <div className="aspect-video relative overflow-hidden">
-        <ProductImage src={product.thumbnailUrl} alt={product.name} productType={product.productType} fill iconSize="sm" />
-      </div>
+      <ProductCardImage src={product.thumbnailUrl} alt={product.name} />
       <div className={pad}>
         <span className="text-[10px] font-medium text-neutral-400 uppercase tracking-wide">
           {TYPE_LABELS[product.productType]}

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { SellBopLogo } from '@/components/ui/sellbop-logo'
 import { getEffectiveProductPrice } from '@/lib/pricing/product-price'
+import { ProductCardImage } from '@/components/product/product-card-image'
 import { ProductPriceDisplay } from '@/components/ui/product-price-display'
 import { User, Package } from 'lucide-react'
 import { isSupabaseConfigured } from '@/lib/env'
@@ -124,20 +125,7 @@ export function ClientStorefront({ slug }: { slug: string }) {
                   return (
                     <Link key={p.id} href={`/p/${p.slug}`}>
                       <div className="group rounded-2xl border border-neutral-200 bg-white hover:shadow-md hover:border-neutral-300 transition-all overflow-hidden">
-                        <div className="aspect-square bg-neutral-100 overflow-hidden">
-                          {coverUrl ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={coverUrl}
-                              alt={p.title}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                              <Package size={28} className="text-neutral-300" />
-                            </div>
-                          )}
-                        </div>
+                        <ProductCardImage src={coverUrl} alt={p.title} hoverScale />
                         <div className="p-4">
                           <p className="font-semibold text-black text-sm mb-1 group-hover:underline underline-offset-2 truncate">
                             {p.title}
