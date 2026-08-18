@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { SellBopLogoStatic } from '@/components/ui/sellbop-logo'
 
 const LINKS = [
+  { href: '/school', label: 'School' },
   { href: '/marketplace', label: 'Marketplace' },
   { href: '/pricing', label: 'Pricing' },
   { href: '/terms', label: 'Terms' },
@@ -28,6 +29,9 @@ export function MarketingNav() {
           </Link>
 
           <div className="flex items-center gap-2 sm:gap-3">
+            <Link href="/school" className="hidden text-sm font-medium text-neutral-600 transition-colors hover:text-black sm:block">
+              School
+            </Link>
             <Link href="/marketplace" className="hidden text-sm font-medium text-neutral-600 transition-colors hover:text-black sm:block">
               Marketplace
             </Link>

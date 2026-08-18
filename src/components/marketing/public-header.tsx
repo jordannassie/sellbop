@@ -10,9 +10,11 @@ import { SellBopLogo } from '@/components/ui/sellbop-logo'
 interface PublicHeaderProps {
   /** Override the active link highlight (e.g. 'marketplace') */
   activeHref?: string
+  /** School page uses Sign Up Free / Log In CTAs when logged out */
+  ctaMode?: 'default' | 'school'
 }
 
-export function PublicHeader({ activeHref }: PublicHeaderProps) {
+export function PublicHeader({ activeHref, ctaMode = 'default' }: PublicHeaderProps) {
   const { session, signOut } = useAuth()
   const { store } = useUserStore()
   const router = useRouter()
@@ -51,6 +53,7 @@ export function PublicHeader({ activeHref }: PublicHeaderProps) {
 
           {/* Desktop nav */}
           <nav className="hidden items-center gap-5 sm:flex">
+            {navLink('/school', 'School')}
             {navLink('/marketplace', 'Marketplace')}
             {session && navLink('/dashboard/library', 'Library')}
             {session && navLink('/dashboard/affiliates', 'Affiliates')}
@@ -125,6 +128,18 @@ export function PublicHeader({ activeHref }: PublicHeaderProps) {
                   )}
                 </div>
               </>
+            ) : ctaMode === 'school' ? (
+              <>
+                <Link href="/login" className="hidden text-sm font-medium text-neutral-600 hover:text-black transition-colors sm:block">
+                  Log In
+                </Link>
+                <Link
+                  href="/signup"
+                  className="rounded-xl bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-800 transition-colors"
+                >
+                  Sign Up Free
+                </Link>
+              </>
             ) : (
               <>
                 <Link href="/login" className="hidden text-sm text-neutral-500 hover:text-black transition-colors sm:block">
@@ -157,6 +172,9 @@ export function PublicHeader({ activeHref }: PublicHeaderProps) {
           <div className="absolute inset-0 bg-black/20" />
           <div className="absolute left-0 right-0 top-14 border-b border-neutral-100 bg-white shadow-xl" onClick={e => e.stopPropagation()}>
             <nav className="space-y-0.5 px-4 py-3">
+              <Link href="/school" onClick={() => setMenuOpen(false)} className="flex h-11 items-center rounded-xl px-3 text-sm font-medium text-neutral-700 hover:bg-neutral-50 hover:text-black transition-colors">
+                School
+              </Link>
               <Link href="/marketplace" onClick={() => setMenuOpen(false)} className="flex h-11 items-center rounded-xl px-3 text-sm font-medium text-neutral-700 hover:bg-neutral-50 hover:text-black transition-colors">
                 Marketplace
               </Link>
@@ -188,6 +206,19 @@ export function PublicHeader({ activeHref }: PublicHeaderProps) {
                     <button onClick={handleSignOut} className="h-11 rounded-xl border border-neutral-200 text-sm font-medium text-neutral-700 hover:border-neutral-400 transition-colors w-full">
                       Sign out
                     </button>
+                  </>
+                ) : ctaMode === 'school' ? (
+                  <>
+                    <Link href="/login" onClick={() => setMenuOpen(false)}>
+                      <div className="h-11 flex items-center justify-center rounded-xl border border-neutral-200 text-sm font-medium text-neutral-700">
+                        Log In
+                      </div>
+                    </Link>
+                    <Link href="/signup" onClick={() => setMenuOpen(false)}>
+                      <div className="h-11 flex items-center justify-center rounded-xl bg-black text-sm font-semibold text-white">
+                        Sign Up Free
+                      </div>
+                    </Link>
                   </>
                 ) : (
                   <>

@@ -668,6 +668,64 @@ export interface Database {
         Relationships: []
       }
 
+      school_lessons: {
+        Row: {
+          id: string
+          title: string
+          original_video_title: string
+          creator: string
+          youtube_url: string
+          youtube_video_id: string
+          thumbnail_url: string | null
+          duration: string | null
+          categories: string[]
+          description: string
+          why_recommend: string
+          featured: boolean
+          sort_order: number
+          published: boolean
+          section_id: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          title: string
+          original_video_title: string
+          creator: string
+          youtube_url: string
+          youtube_video_id: string
+          thumbnail_url?: string | null
+          duration?: string | null
+          categories?: string[]
+          description?: string
+          why_recommend?: string
+          featured?: boolean
+          sort_order?: number
+          published?: boolean
+          section_id?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['school_lessons']['Insert']>
+        Relationships: []
+      }
+
+      school_saved_lessons: {
+        Row: {
+          user_id: string
+          lesson_id: string
+          created_at: string
+        }
+        Insert: {
+          user_id: string
+          lesson_id: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['school_saved_lessons']['Insert']>
+        Relationships: []
+      }
+
       agent_connections: {
         Row: {
           id: string
