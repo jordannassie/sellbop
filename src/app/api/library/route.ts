@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
+import { getPurchaseAccessUrl } from '@/lib/services/purchase-access'
 
 export async function GET() {
   const supabase = await getSupabaseServerClient()
@@ -19,18 +20,25 @@ export async function GET() {
   const [byUserId, byEmail] = await Promise.all([
     admin
       .from('purchases')
-      .select('id, product_id, order_id, created_at, status')
+      .select('id, product_id, order_id, created_at, status, access_token')
       .eq('buyer_user_id', user.id)
       .order('created_at', { ascending: false }),
     admin
       .from('purchases')
-      .select('id, product_id, order_id, created_at, status')
+      .select('id, product_id, order_id, created_at, status, access_token')
       .ilike('buyer_email', userEmail)
       .order('created_at', { ascending: false }),
   ])
 
   // Deduplicate
-  const purchaseMap = new Map<string, { id: string; product_id: string; order_id: string; created_at: string; status: string | null }>()
+  const purchaseMap = new Map<string, {
+    id: string
+    product_id: string
+    order_id: string
+    created_at: string
+    status: string | null
+    access_token: string | null
+  }>()
   for (const p of [...(byUserId.data ?? []), ...(byEmail.data ?? [])]) {
     if (!purchaseMap.has(p.id)) purchaseMap.set(p.id, p)
   }
@@ -83,6 +91,7 @@ export async function GET() {
         creatorName: store?.name ?? null,
         creatorSlug: store?.slug ?? null,
         purchasedAt: p.created_at,
+        accessUrl: p.access_token ? getPurchaseAccessUrl(p.access_token) : null,
         affiliateEnabled: (product as Record<string, unknown>)?.affiliate_enabled ?? false,
         affiliateCommissionPercent: (product as Record<string, unknown>)?.affiliate_commission_percent ?? null,
       }

@@ -5,6 +5,7 @@ import { isSupabaseAdminConfigured } from '@/lib/env'
 import { env } from '@/lib/env'
 import { calcPlatformFeeCents } from '@/lib/platform-config'
 import { getEffectiveProductPrice } from '@/lib/pricing/product-price'
+import { fulfillPurchase } from '@/lib/services/purchase-fulfillment'
 
 interface PaidCheckoutPayload {
   productSlug: string
@@ -104,10 +105,7 @@ export async function POST(request: Request) {
   const platformFeeCents = calcPlatformFeeCents(totalCents)
   const appUrl = env.app.url
 
-  // Resolve affiliate attribution — same-session only: the referral code
-  // must have been present in the URL for this exact checkout call. If it
-  // matches an active relationship for this product, we record it on the
-  // order and the webhook creates a pending commission for the affiliate.
+  // Resolve affiliate attribution before fulfillment / Stripe
   let affiliateRelationshipId: string | null = null
   let affiliateCommissionPercent: number | null = null
   if (refCode?.trim() && product.affiliate_enabled) {
@@ -123,6 +121,41 @@ export async function POST(request: Request) {
       affiliateRelationshipId = relationship.id
       affiliateCommissionPercent = product.affiliate_commission_percent ?? 0
     }
+  }
+
+  // 100% discount → free fulfillment path (no Stripe $0 line item)
+  if (totalCents === 0) {
+    const result = await fulfillPurchase({
+      productId: product.id,
+      storeId: store.id,
+      sellerUserId: store.owner_user_id,
+      productTitle: product.title,
+      buyerEmail: buyerEmail.trim(),
+      buyerName: buyerName?.trim() || null,
+      subtotalCents: priceCents,
+      discountCents,
+      totalCents: 0,
+      platformFeeCents: 0,
+      paymentStatus: 'paid',
+      affiliateRelationshipId,
+      affiliateCommissionPercent: affiliateCommissionPercent ?? 0,
+      discountCodeId,
+    })
+
+    if (!result) {
+      return NextResponse.json({ error: 'Checkout failed.' }, { status: 500 })
+    }
+
+    return NextResponse.json({
+      free_checkout: true,
+      order_id: result.orderId,
+      purchase_id: result.purchaseId,
+      product_id: product.id,
+      product_slug: productSlug,
+      access_url: result.accessUrl,
+      email_sent: !!result.emails.receipt?.sent || !!result.emails.receipt?.simulated,
+      email_accepted: !!result.emails.receipt?.accepted,
+    })
   }
 
   if (!env.stripe.secretKey) {

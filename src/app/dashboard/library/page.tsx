@@ -18,45 +18,24 @@ interface LibraryItem {
   creatorName: string | null
   creatorSlug: string | null
   purchasedAt: string
+  accessUrl: string | null
   affiliateEnabled?: boolean
   affiliateCommissionPercent?: number | null
 }
 
-function DownloadButton({ productId }: { productId: string }) {
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-
-  async function handleDownload() {
-    setLoading(true)
-    setError('')
-    try {
-      const res = await fetch(`/api/download?productId=${productId}`)
-      if (!res.ok) {
-        const data = await res.json()
-        setError(data.error ?? 'Download unavailable.')
-        return
-      }
-      const { url } = await res.json()
-      window.open(url, '_blank')
-    } catch {
-      setError('Download failed. Please try again.')
-    } finally {
-      setLoading(false)
-    }
+function AccessProductButton({ accessUrl }: { accessUrl: string | null }) {
+  if (!accessUrl) {
+    return <p className="text-xs text-neutral-400">Access link unavailable.</p>
   }
 
   return (
-    <div>
-      <button
-        onClick={handleDownload}
-        disabled={loading}
-        className="inline-flex items-center gap-1.5 rounded-lg bg-black px-3 py-1.5 text-xs font-semibold text-white hover:bg-neutral-800 transition-colors disabled:opacity-50"
-      >
-        {loading ? <Loader2 size={12} className="animate-spin" /> : <Download size={12} />}
-        Download
-      </button>
-      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
-    </div>
+    <Link
+      href={accessUrl}
+      className="inline-flex items-center gap-1.5 rounded-lg bg-black px-3 py-1.5 text-xs font-semibold text-white hover:bg-neutral-800 transition-colors"
+    >
+      <Download size={12} />
+      Access Product
+    </Link>
   )
 }
 
@@ -251,7 +230,7 @@ export default function LibraryPage() {
                   </div>
 
                   <div className="mt-4 flex items-center gap-2 flex-wrap">
-                    <DownloadButton productId={item.productId} />
+                    <AccessProductButton accessUrl={item.accessUrl} />
                     {item.productSlug && (
                       <Link
                         href={`/p/${item.productSlug}`}

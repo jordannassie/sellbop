@@ -18,6 +18,7 @@ export class DemoAuthAdapter implements IAuthProvider {
       email: user.email,
       name: user.name,
       avatarUrl: null,
+      emailVerified: true,
     }
 
     if (typeof window !== 'undefined') {
@@ -31,6 +32,7 @@ export class DemoAuthAdapter implements IAuthProvider {
       email,
       name,
       avatarUrl: null,
+      emailVerified: true,
     }
 
     if (typeof window !== 'undefined') {

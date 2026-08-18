@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { CreditCard, GraduationCap, LayoutDashboard, Package, ShoppingBag, Store, Users } from 'lucide-react'
+import { CreditCard, GraduationCap, LayoutDashboard, Mail, Package, ShoppingBag, Store, Users } from 'lucide-react'
 import { SellBopLogoStatic } from '@/components/ui/sellbop-logo'
 
 export type AdminSection =
@@ -10,6 +10,7 @@ export type AdminSection =
   | 'products'
   | 'orders'
   | 'resources'
+  | 'emails'
 
 const NAV: { id: AdminSection; label: string; icon: React.ReactNode }[] = [
   { id: 'overview', label: 'Overview', icon: <LayoutDashboard size={15} /> },
@@ -18,6 +19,7 @@ const NAV: { id: AdminSection; label: string; icon: React.ReactNode }[] = [
   { id: 'buyers', label: 'Buyers', icon: <ShoppingBag size={15} /> },
   { id: 'products', label: 'Products', icon: <Package size={15} /> },
   { id: 'orders', label: 'Orders', icon: <CreditCard size={15} /> },
+  { id: 'emails', label: 'Emails', icon: <Mail size={15} /> },
   { id: 'resources', label: 'Resources', icon: <GraduationCap size={15} /> },
 ]
 

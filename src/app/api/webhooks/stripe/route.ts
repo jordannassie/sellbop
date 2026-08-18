@@ -3,8 +3,8 @@ import Stripe from 'stripe'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { isSupabaseAdminConfigured } from '@/lib/env'
 import { env } from '@/lib/env'
-import { calcPlatformFeeCents } from '@/lib/platform-config'
-import { calcCommissionCents, calcAvailableAt } from '@/lib/affiliates'
+import { fulfillFromStripeSession } from '@/lib/services/purchase-fulfillment'
+import { sendRefundEmail } from '@/lib/email/service'
 
 // POST /api/webhooks/stripe — Stripe webhook endpoint
 export async function POST(request: Request) {
@@ -30,7 +30,27 @@ export async function POST(request: Request) {
   switch (event.type) {
     case 'checkout.session.completed': {
       const session = event.data.object as Stripe.Checkout.Session
-      await handleCheckoutCompleted(session)
+      if (session.payment_status === 'paid' || session.payment_status === 'no_payment_required') {
+        await fulfillFromStripeSession(session)
+      }
+      break
+    }
+
+    case 'checkout.session.async_payment_succeeded': {
+      const session = event.data.object as Stripe.Checkout.Session
+      await fulfillFromStripeSession(session)
+      break
+    }
+
+    case 'checkout.session.async_payment_failed': {
+      const session = event.data.object as Stripe.Checkout.Session
+      if (isSupabaseAdminConfigured()) {
+        const admin = getSupabaseAdminClient()
+        await admin
+          .from('orders')
+          .update({ payment_status: 'failed' })
+          .eq('stripe_session_id', session.id)
+      }
       break
     }
 
@@ -48,27 +68,7 @@ export async function POST(request: Request) {
 
     case 'charge.refunded': {
       const charge = event.data.object as Stripe.Charge
-      const paymentIntentId = typeof charge.payment_intent === 'string' ? charge.payment_intent : null
-      if (isSupabaseAdminConfigured() && paymentIntentId) {
-        const admin = getSupabaseAdminClient()
-        const { data: order } = await admin
-          .from('orders')
-          .update({ payment_status: 'refunded', refund_status: 'refunded' })
-          .eq('stripe_payment_intent_id', paymentIntentId)
-          .select('id, affiliate_commission_id')
-          .maybeSingle()
-
-        if (order) {
-          await admin.from('purchases').update({ status: 'revoked' }).eq('order_id', order.id)
-
-          if (order.affiliate_commission_id) {
-            await admin
-              .from('affiliate_commissions')
-              .update({ status: 'reversed', reversed_at: new Date().toISOString(), reversal_reason: 'order_refunded' })
-              .eq('id', order.affiliate_commission_id)
-          }
-        }
-      }
+      await handleChargeRefunded(charge)
       break
     }
 
@@ -105,148 +105,74 @@ export async function POST(request: Request) {
   return NextResponse.json({ received: true })
 }
 
-/**
- * Handle a completed Stripe Checkout Session.
- * Creates the order, order items, purchase entitlement, and — if the
- * checkout carried affiliate attribution — a pending affiliate commission.
- */
-async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
+async function handleChargeRefunded(charge: Stripe.Charge) {
   if (!isSupabaseAdminConfigured()) return
+  const paymentIntentId = typeof charge.payment_intent === 'string' ? charge.payment_intent : null
+  if (!paymentIntentId) return
 
   const admin = getSupabaseAdminClient()
-  const meta = session.metadata ?? {}
-  const productId = meta.sellbop_product_id
-  const storeId = meta.sellbop_store_id
-  const buyerEmail = meta.buyer_email ?? session.customer_email
-  const buyerName = meta.buyer_name ?? null
-  const discountCents = parseInt(meta.discount_cents ?? '0')
-  const subtotalCents = parseInt(meta.subtotal_cents ?? '0')
-  const affiliateRelationshipId = meta.affiliate_relationship_id || null
-  const affiliateCommissionPercent = meta.affiliate_commission_percent
-    ? parseInt(meta.affiliate_commission_percent)
-    : 0
-
-  if (!productId || !storeId || !buyerEmail) return
-
-  // Idempotency check
-  const { data: existingOrder } = await admin
-    .from('orders')
-    .select('id')
-    .eq('stripe_session_id', session.id)
-    .maybeSingle()
-
-  if (existingOrder) return  // Already processed
-
-  const { data: product } = await admin
-    .from('products')
-    .select('id, title, price_cents')
-    .eq('id', productId)
-    .maybeSingle()
-
-  if (!product) return
-
-  const { data: store } = await admin
-    .from('stores')
-    .select('id, owner_user_id')
-    .eq('id', storeId)
-    .maybeSingle()
-
-  if (!store) return
-
-  const totalCents = session.amount_total ?? subtotalCents ?? product.price_cents ?? 0
-  const platformFeeCents = calcPlatformFeeCents(totalCents)
-  const paymentIntentId = typeof session.payment_intent === 'string' ? session.payment_intent : null
-  const orderSubtotalCents = subtotalCents > 0 ? subtotalCents : totalCents + discountCents
+  const amountRefunded = charge.amount_refunded ?? 0
+  const totalAmount = charge.amount ?? 0
+  const isFullRefund = amountRefunded >= totalAmount && totalAmount > 0
 
   const { data: order } = await admin
     .from('orders')
-    .insert({
-      store_id: storeId,
-      seller_user_id: store.owner_user_id,
-      buyer_email: buyerEmail.toLowerCase(),
-      buyer_name: buyerName,
-      subtotal_cents: orderSubtotalCents,
-      shipping_cents: 0,
-      total_cents: totalCents,
-      discount_cents: discountCents,
-      platform_fee_cents: platformFeeCents,
-      currency: 'usd',
-      status: 'completed',
-      payment_status: 'paid',
-      refund_status: 'none',
-      stripe_session_id: session.id,
-      stripe_payment_intent_id: paymentIntentId,
-      product_id: productId,
-      product_title_snapshot: product.title,
-      affiliate_relationship_id: affiliateRelationshipId,
-    })
-    .select('id')
-    .single()
+    .select(`
+      id, buyer_email, buyer_name, total_cents, product_title_snapshot, product_id,
+      affiliate_commission_id, store_id
+    `)
+    .eq('stripe_payment_intent_id', paymentIntentId)
+    .maybeSingle()
 
   if (!order) return
 
-  // Order item
-  await admin.from('order_items').insert({
-    order_id: order.id,
-    product_id: productId,
-    title: product.title,
-    quantity: 1,
-    unit_price_cents: orderSubtotalCents,
-    line_total_cents: totalCents,
-  })
+  await admin.from('orders').update({
+    refunded_cents: amountRefunded,
+    payment_status: isFullRefund ? 'refunded' : 'paid',
+    refund_status: isFullRefund ? 'refunded' : 'partially_refunded',
+  }).eq('id', order.id)
 
-  // Purchase entitlement
-  await admin.from('purchases').insert({
-    buyer_email: buyerEmail.toLowerCase(),
-    product_id: productId,
-    order_id: order.id,
-    status: 'active',
-    affiliate_relationship_id: affiliateRelationshipId,
-  })
+  if (isFullRefund) {
+    await admin.from('purchases').update({ status: 'revoked' }).eq('order_id', order.id)
 
-  // Increment discount code usage if applicable
-  if (meta.discount_code_id) {
-    try {
-      await admin.rpc('increment_discount_code_usage' as never, {
-        code_id: meta.discount_code_id,
-      } as never)
-    } catch {
-      // Best-effort — non-blocking
+    if (order.affiliate_commission_id) {
+      await admin
+        .from('affiliate_commissions')
+        .update({
+          status: 'reversed',
+          reversed_at: new Date().toISOString(),
+          reversal_reason: 'order_refunded',
+        })
+        .eq('id', order.affiliate_commission_id)
     }
   }
 
-  // Affiliate commission — pending until the hold period elapses
-  if (affiliateRelationshipId && affiliateCommissionPercent > 0) {
-    const { data: relationship } = await admin
-      .from('affiliate_relationships')
-      .select('id, affiliate_user_id, seller_id, status')
-      .eq('id', affiliateRelationshipId)
-      .maybeSingle()
+  const { data: store } = await admin
+    .from('stores')
+    .select('name, support_email')
+    .eq('id', order.store_id)
+    .maybeSingle()
 
-    if (relationship && relationship.status === 'active') {
-      const commissionCents = calcCommissionCents(totalCents, affiliateCommissionPercent)
+  const { data: purchase } = await admin
+    .from('purchases')
+    .select('id')
+    .eq('order_id', order.id)
+    .maybeSingle()
 
-      const { data: commission } = await admin
-        .from('affiliate_commissions')
-        .insert({
-          relationship_id: relationship.id,
-          affiliate_user_id: relationship.affiliate_user_id,
-          seller_id: relationship.seller_id,
-          product_id: productId,
-          order_id: order.id,
-          gross_sale_cents: totalCents,
-          commission_percent: affiliateCommissionPercent,
-          commission_cents: commissionCents,
-          currency: 'usd',
-          status: 'pending',
-          available_at: calcAvailableAt().toISOString(),
-        })
-        .select('id')
-        .single()
-
-      if (commission) {
-        await admin.from('orders').update({ affiliate_commission_id: commission.id }).eq('id', order.id)
-      }
-    }
+  if (order.buyer_email) {
+    await sendRefundEmail({
+      to: order.buyer_email,
+      replyTo: store?.support_email ?? env.email.supportEmail,
+      orderId: order.id,
+      purchaseId: purchase?.id,
+      buyerName: order.buyer_name,
+      productTitle: order.product_title_snapshot ?? 'Product',
+      sellerName: store?.name ?? 'Seller',
+      refundCents: amountRefunded,
+      totalCents: order.total_cents ?? totalAmount,
+      isPartial: !isFullRefund,
+      supportEmail: store?.support_email ?? env.email.supportEmail,
+      refundId: charge.id,
+    })
   }
 }

@@ -2,8 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { env, isSupabaseConfigured } from '@/lib/env'
 import type { Database } from '@/lib/supabase/types'
-import { bootstrapAuthenticatedUser, resolvePostLoginDestination } from '@/lib/auth/post-login'
-import type { AuthSession } from '@/lib/domain/auth'
+import { bootstrapAuthenticatedUser, resolvePostLoginDestination, authSessionFromUser } from '@/lib/auth/post-login'
 
 /**
  * OAuth callback handler.
@@ -111,17 +110,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL('/login?error=missing-user-email', request.url))
   }
 
-  const session: AuthSession = {
-    userId: user.id,
-    email: user.email,
-    name:
-      (user.user_metadata?.full_name as string | undefined) ??
-      (user.user_metadata?.name as string | undefined) ??
-      null,
-    avatarUrl:
-      (user.user_metadata?.avatar_url as string | undefined) ??
-      (user.user_metadata?.picture as string | undefined) ??
-      null,
+  const session = authSessionFromUser(user)
+  if (!session) {
+    return NextResponse.redirect(new URL('/login?error=missing-user-email', request.url))
   }
 
   let destination = '/dashboard'

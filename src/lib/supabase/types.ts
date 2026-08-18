@@ -332,6 +332,7 @@ export interface Database {
           status: string
           payment_status: string
           refund_status: string
+          refunded_cents: number
           stripe_session_id: string | null
           stripe_payment_intent_id: string | null
           product_title_snapshot: string | null
@@ -367,6 +368,7 @@ export interface Database {
           status?: string
           payment_status?: string
           refund_status?: string
+          refunded_cents?: number
           stripe_session_id?: string | null
           stripe_payment_intent_id?: string | null
           product_title_snapshot?: string | null
@@ -418,6 +420,7 @@ export interface Database {
           order_id: string
           file_id: string | null
           status: string
+          access_token: string
           affiliate_relationship_id: string | null
           created_at: string
           updated_at: string
@@ -430,11 +433,55 @@ export interface Database {
           order_id: string
           file_id?: string | null
           status?: string
+          access_token?: string
           affiliate_relationship_id?: string | null
           created_at?: string
           updated_at?: string
         }
         Update: Partial<Database['public']['Tables']['purchases']['Insert']>
+        Relationships: []
+      }
+
+      transactional_email_deliveries: {
+        Row: {
+          id: string
+          event_key: string
+          email_type: string
+          recipient: string
+          order_id: string | null
+          purchase_id: string | null
+          seller_user_id: string | null
+          provider: string
+          provider_message_id: string | null
+          status: string
+          attempts: number
+          last_error: string | null
+          sent_at: string | null
+          delivered_at: string | null
+          metadata: Record<string, unknown>
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          event_key: string
+          email_type: string
+          recipient: string
+          order_id?: string | null
+          purchase_id?: string | null
+          seller_user_id?: string | null
+          provider?: string
+          provider_message_id?: string | null
+          status?: string
+          attempts?: number
+          last_error?: string | null
+          sent_at?: string | null
+          delivered_at?: string | null
+          metadata?: Record<string, unknown>
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['transactional_email_deliveries']['Insert']>
         Relationships: []
       }
 

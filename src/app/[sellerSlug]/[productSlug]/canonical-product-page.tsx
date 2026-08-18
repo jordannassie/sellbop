@@ -54,6 +54,8 @@ interface SuccessData {
   productId: string
   productSlug: string
   email: string
+  accessUrl: string
+  emailSent: boolean
 }
 
 // ── Share button ──────────────────────────────────────────────────────────────
@@ -279,8 +281,27 @@ export function CanonicalProductPage({ sellerSlug, productSlug }: { sellerSlug: 
         body: JSON.stringify({ productSlug: product.slug, buyerEmail: buyerEmail.trim(), buyerName: buyerName.trim() || undefined }),
       })
       const data = await res.json()
+      if (data.already_acquired && data.access_url) {
+        setSuccess({
+          orderId: data.order_id,
+          productId: product.id,
+          productSlug: product.slug,
+          email: buyerEmail,
+          accessUrl: data.access_url,
+          emailSent: false,
+        })
+        setState('success')
+        return
+      }
       if (!res.ok) throw new Error(data.error ?? 'Checkout failed.')
-      setSuccess({ orderId: data.order_id, productId: product.id, productSlug: product.slug, email: buyerEmail })
+      setSuccess({
+        orderId: data.order_id,
+        productId: product.id,
+        productSlug: product.slug,
+        email: buyerEmail,
+        accessUrl: data.access_url,
+        emailSent: !!data.email_sent,
+      })
       setState('success')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong.')
@@ -301,23 +322,23 @@ export function CanonicalProductPage({ sellerSlug, productSlug }: { sellerSlug: 
       })
       const data = await res.json()
       if (data.stripe_required) { setState('stripe_required'); return }
+      if (data.free_checkout && data.access_url) {
+        setSuccess({
+          orderId: data.order_id,
+          productId: product.id,
+          productSlug: product.slug,
+          email: buyerEmail,
+          accessUrl: data.access_url,
+          emailSent: !!data.email_sent,
+        })
+        setState('success')
+        return
+      }
       if (data.checkout_url) { window.location.href = data.checkout_url; return }
       throw new Error(data.error ?? 'Checkout unavailable.')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong.')
       setState('entering_email')
-    }
-  }
-
-  async function handleDownload() {
-    if (!success) return
-    try {
-      const res = await fetch(`/api/download?orderId=${success.orderId}&productId=${success.productId}&email=${encodeURIComponent(success.email)}`)
-      const data = await res.json()
-      if (!res.ok || !data.download_url) throw new Error(data.error ?? 'Download failed.')
-      window.location.href = data.download_url
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Download failed.')
     }
   }
 
@@ -390,13 +411,25 @@ export function CanonicalProductPage({ sellerSlug, productSlug }: { sellerSlug: 
                 style={{ background: '#ecfff6' }}>
                 <Download size={26} style={{ color: '#00A854' }} />
               </div>
-              <h1 className="text-2xl font-bold text-black mb-2">Your purchase is ready.</h1>
-              <p className="text-neutral-500 text-sm">{product?.title} — ready to download.</p>
+              <h1 className="text-2xl font-bold text-black mb-2">Purchase complete</h1>
+              <p className="text-neutral-500 text-sm mb-2">{product?.title}</p>
             </div>
 
-            <Button onClick={handleDownload} className="w-full mb-3" size="lg">
-              <Download size={16} /> Download Now
-            </Button>
+            <a href={success.accessUrl} className="block mb-3">
+              <Button className="w-full" size="lg">
+                Access Your Product <ArrowRight size={16} />
+              </Button>
+            </a>
+
+            <p className="text-xs text-neutral-500 text-center mb-3">
+              {success.emailSent
+                ? <>Your receipt and access link were sent to <strong>{success.email}</strong>.</>
+                : <>Your purchase is complete. Access your product above, or check <strong>{success.email}</strong> shortly.</>}
+            </p>
+
+            <Link href="/login?next=/dashboard/library" className="block text-center text-xs text-neutral-400 hover:text-black mb-3">
+              Sign in to save purchases in your Library
+            </Link>
             {error && <p className="text-xs text-red-500 mb-3 text-center">{error}</p>}
 
             {showShareEarn && (

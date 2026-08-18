@@ -48,6 +48,8 @@ interface SuccessData {
   productId: string
   productSlug: string
   email: string
+  accessUrl: string
+  emailSent: boolean
 }
 
 export function ClientProductPage({ slug }: { slug: string }) {
@@ -164,6 +166,18 @@ export function ClientProductPage({ slug }: { slug: string }) {
         }),
       })
       const data = await res.json()
+      if (data.already_acquired && data.access_url) {
+        setSuccess({
+          orderId: data.order_id,
+          productId: product.id,
+          productSlug: product.slug,
+          email: buyerEmail,
+          accessUrl: data.access_url,
+          emailSent: false,
+        })
+        setState('success')
+        return
+      }
       if (!res.ok) throw new Error(data.error ?? 'Checkout failed.')
 
       setSuccess({
@@ -171,6 +185,8 @@ export function ClientProductPage({ slug }: { slug: string }) {
         productId: product.id,
         productSlug: product.slug,
         email: buyerEmail,
+        accessUrl: data.access_url,
+        emailSent: !!data.email_sent,
       })
       setState('success')
     } catch (err) {
@@ -202,6 +218,18 @@ export function ClientProductPage({ slug }: { slug: string }) {
         setState('stripe_required')
         return
       }
+      if (data.free_checkout && data.access_url) {
+        setSuccess({
+          orderId: data.order_id,
+          productId: product.id,
+          productSlug: product.slug,
+          email: buyerEmail,
+          accessUrl: data.access_url,
+          emailSent: !!data.email_sent,
+        })
+        setState('success')
+        return
+      }
       if (data.checkout_url) {
         window.location.href = data.checkout_url
         return
@@ -210,20 +238,6 @@ export function ClientProductPage({ slug }: { slug: string }) {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong.')
       setState('entering_email')
-    }
-  }
-
-  async function handleDownload() {
-    if (!success) return
-    try {
-      const res = await fetch(
-        `/api/download?orderId=${success.orderId}&productId=${success.productId}&email=${encodeURIComponent(success.email)}`
-      )
-      const data = await res.json()
-      if (!res.ok || !data.download_url) throw new Error(data.error ?? 'Download failed.')
-      window.location.href = data.download_url
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Download failed.')
     }
   }
 
@@ -263,15 +277,23 @@ export function ClientProductPage({ slug }: { slug: string }) {
               <div className="w-14 h-14 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Download size={24} className="text-emerald-600" />
               </div>
-              <h1 className="text-2xl font-bold text-black mb-2">Your purchase is ready.</h1>
-              <p className="text-neutral-500">
-                {product?.title} is ready to download.
-              </p>
+              <h1 className="text-2xl font-bold text-black mb-2">Purchase complete</h1>
+              <p className="text-neutral-500">{product?.title}</p>
             </div>
 
-            <Button onClick={handleDownload} className="w-full mb-4" size="lg">
-              <Download size={16} /> Download Product
-            </Button>
+            <a href={success.accessUrl} className="block mb-4">
+              <Button className="w-full" size="lg">
+                Access Your Product <ArrowRight size={16} />
+              </Button>
+            </a>
+            <p className="text-xs text-neutral-500 text-center mb-4">
+              {success.emailSent
+                ? <>Your receipt and access link were sent to <strong>{success.email}</strong>.</>
+                : <>Your purchase is complete. Access your product above.</>}
+            </p>
+            <Link href="/login?next=/dashboard/library" className="block text-center text-xs text-neutral-400 hover:text-black mb-4">
+              Sign in to save purchases in your Library
+            </Link>
             {error && <p className="text-xs text-red-500 mb-4 text-center">{error}</p>}
 
             {showShareEarn && (

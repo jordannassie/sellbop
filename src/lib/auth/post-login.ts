@@ -2,7 +2,9 @@ import 'server-only'
 
 import { getAllowedAdminEmails } from '@/lib/env'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
+import { isAuthenticatedEmailVerified } from '@/lib/auth/email-verification'
 import type { AccountSummary, AuthSession } from '@/lib/domain/auth'
+import type { User } from '@supabase/supabase-js'
 
 function normalizeEmail(email: string) {
   return email.trim().toLowerCase()
@@ -65,8 +67,27 @@ export async function getAccountSummaryByUserId(userId: string): Promise<Account
 
 export async function bootstrapAuthenticatedUser(session: AuthSession) {
   await upsertProfile(session)
-  await linkGuestCommerceByEmail(session.userId, session.email)
+  if (session.emailVerified) {
+    await linkGuestCommerceByEmail(session.userId, session.email)
+  }
   return getAccountSummaryByUserId(session.userId)
+}
+
+export function authSessionFromUser(user: User): AuthSession | null {
+  if (!user.email) return null
+  return {
+    userId: user.id,
+    email: user.email,
+    name:
+      (user.user_metadata?.full_name as string | undefined) ??
+      (user.user_metadata?.name as string | undefined) ??
+      null,
+    avatarUrl:
+      (user.user_metadata?.avatar_url as string | undefined) ??
+      (user.user_metadata?.picture as string | undefined) ??
+      null,
+    emailVerified: isAuthenticatedEmailVerified(user),
+  }
 }
 
 export function resolvePostLoginDestination(

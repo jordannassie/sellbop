@@ -5,6 +5,7 @@ import { AdminOverview } from '@/components/admin/overview'
 import { UsersSection, SellersSection, BuyersSection, ProductsSection } from '@/components/admin/users-section'
 import { ResourcesAdminSection } from '@/components/admin/resources-section'
 import { OrdersSection } from '@/components/admin/orders-section'
+import { EmailDeliveriesSection } from '@/components/admin/email-deliveries-section'
 import { requireAdminUser } from '@/lib/admin/access'
 import { getAdminOrders, getAdminOverviewData, getAdminUsers } from '@/lib/admin/users'
 
@@ -16,6 +17,7 @@ function isAdminSection(value: string | undefined): value is AdminSection {
     || value === 'products'
     || value === 'orders'
     || value === 'resources'
+    || value === 'emails'
 }
 
 export default async function AdminPage({
@@ -61,6 +63,7 @@ export default async function AdminPage({
           {section === 'buyers' && <BuyersSection users={users} />}
           {section === 'products' && <ProductsSection />}
           {section === 'orders' && <OrdersSection orders={orders} />}
+          {section === 'emails' && <EmailDeliveriesSection />}
           {section === 'resources' && <ResourcesAdminSection />}
         </div>
       </main>

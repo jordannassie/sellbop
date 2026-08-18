@@ -12,6 +12,7 @@ import type { User } from '@supabase/supabase-js'
 import { getAuthCallbackUrl } from '@/lib/app-url'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import type { AccountSummary, AuthSession } from '@/lib/domain/auth'
+import { isAuthenticatedEmailVerified } from '@/lib/auth/email-verification'
 
 interface AuthContextValue {
   session: AuthSession | null
@@ -48,6 +49,7 @@ function toSession(user: User | null): AuthSession | null {
     email: user.email,
     name,
     avatarUrl,
+    emailVerified: isAuthenticatedEmailVerified(user),
   }
 }
 

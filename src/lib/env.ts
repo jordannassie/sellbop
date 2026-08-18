@@ -33,10 +33,16 @@ export const env = {
     proPriceId:       process.env.STRIPE_PRO_PRICE_ID                ?? null,
   },
 
-  // ── Email (future) ────────────────────────────────────────────────────────
+  // ── Transactional email (Resend) ─────────────────────────────────────────
   resend: {
-    apiKey:   process.env.RESEND_API_KEY   ?? null,
-    fromEmail: process.env.EMAIL_FROM      ?? 'noreply@sellbop.com',
+    apiKey: process.env.RESEND_API_KEY ?? null,
+    webhookSecret: process.env.RESEND_WEBHOOK_SECRET ?? null,
+  },
+
+  email: {
+    from: process.env.EMAIL_FROM ?? 'SellBop <orders@sellbop.com>',
+    replyTo: process.env.EMAIL_REPLY_TO ?? process.env.SELLBOP_SUPPORT_EMAIL ?? 'hello@sellbop.com',
+    supportEmail: process.env.SELLBOP_SUPPORT_EMAIL ?? process.env.EMAIL_REPLY_TO ?? 'hello@sellbop.com',
   },
 
   // ── Printify ─────────────────────────────────────────────────────────────

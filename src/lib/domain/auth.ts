@@ -3,6 +3,7 @@ export interface AuthSession {
   email: string
   name: string | null
   avatarUrl: string | null
+  emailVerified: boolean
 }
 
 export interface AccountSummary {

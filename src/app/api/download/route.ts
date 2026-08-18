@@ -1,82 +1,49 @@
 import { NextResponse } from 'next/server'
-import { getSupabaseAdminClient } from '@/lib/supabase/admin'
-import { isSupabaseAdminConfigured } from '@/lib/env'
-import { DOWNLOAD_URL_EXPIRY_SECONDS } from '@/lib/platform-config'
+import { getSupabaseServerClient } from '@/lib/supabase/server'
+import { getPurchaseAccessUrl } from '@/lib/services/purchase-access'
 
-// GET /api/download?orderId=xxx&productId=xxx&email=xxx
-// Secure download endpoint — verifies purchase entitlement then generates signed URL
+/**
+ * @deprecated Use /api/access/[token]/files/[fileId] instead.
+ * Supports authenticated library access by purchaseId only.
+ */
 export async function GET(request: Request) {
-  if (!isSupabaseAdminConfigured()) {
-    return NextResponse.json({ error: 'Database not configured.' }, { status: 503 })
-  }
-
   const { searchParams } = new URL(request.url)
-  const orderId = searchParams.get('orderId')
-  const productId = searchParams.get('productId')
-  const email = searchParams.get('email')?.toLowerCase()
+  const purchaseId = searchParams.get('purchaseId')
 
-  if (!orderId || !productId || !email) {
+  if (!purchaseId) {
     return NextResponse.json(
-      { error: 'orderId, productId, and email are required.' },
-      { status: 400 }
+      { error: 'This endpoint is deprecated. Use your purchase access link from email or Library.' },
+      { status: 410 },
     )
   }
 
-  const admin = getSupabaseAdminClient()
+  const supabase = await getSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user?.email) {
+    return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 })
+  }
 
-  // Verify purchase entitlement
+  const admin = (await import('@/lib/supabase/admin')).getSupabaseAdminClient()
   const { data: purchase } = await admin
     .from('purchases')
-    .select('id, status, file_id')
-    .eq('order_id', orderId)
-    .eq('product_id', productId)
-    .eq('buyer_email', email)
-    .eq('status', 'active')
+    .select('id, access_token, buyer_user_id, buyer_email, status')
+    .eq('id', purchaseId)
     .maybeSingle()
 
-  if (!purchase) {
-    return NextResponse.json({ error: 'No valid purchase found for this email.' }, { status: 403 })
+  if (!purchase?.access_token || purchase.status !== 'active') {
+    return NextResponse.json({ error: 'Access unavailable.' }, { status: 403 })
   }
 
-  // Get the product file
-  let fileQuery = admin
-    .from('product_files')
-    .select('id, file_name, storage_path, file_type, file_url')
-    .eq('product_id', productId)
+  const normalizedEmail = user.email.toLowerCase()
+  const ownsPurchase =
+    purchase.buyer_user_id === user.id ||
+    purchase.buyer_email?.toLowerCase() === normalizedEmail
 
-  if (purchase.file_id) {
-    fileQuery = fileQuery.eq('id', purchase.file_id)
-  }
-
-  const { data: files } = await fileQuery.order('sort_order', { ascending: true })
-  const file = files?.[0]
-
-  if (file?.file_type === 'link' && file.file_url) {
-    return NextResponse.json({
-      download_url: file.file_url,
-      file_name: file.file_name,
-      is_link: true,
-    })
-  }
-
-  if (!file?.storage_path) {
-    return NextResponse.json({ error: 'No file available for this product.' }, { status: 404 })
-  }
-
-  // Generate signed URL (expires in DOWNLOAD_URL_EXPIRY_SECONDS)
-  const { data: signedData, error: signedErr } = await admin.storage
-    .from('product-files')
-    .createSignedUrl(file.storage_path, DOWNLOAD_URL_EXPIRY_SECONDS, {
-      download: file.file_name,
-    })
-
-  if (signedErr || !signedData?.signedUrl) {
-    return NextResponse.json({ error: 'Could not generate download link.' }, { status: 500 })
+  if (!ownsPurchase) {
+    return NextResponse.json({ error: 'Access unavailable.' }, { status: 403 })
   }
 
   return NextResponse.json({
-    download_url: signedData.signedUrl,
-    file_name: file.file_name,
-    expires_in: DOWNLOAD_URL_EXPIRY_SECONDS,
+    access_url: getPurchaseAccessUrl(purchase.access_token),
   })
 }

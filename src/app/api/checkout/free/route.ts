@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { isSupabaseAdminConfigured } from '@/lib/env'
+import { fulfillPurchase } from '@/lib/services/purchase-fulfillment'
+import { getPurchaseAccessUrl } from '@/lib/services/purchase-access'
 
 interface FreeCheckoutPayload {
   productSlug: string
@@ -32,11 +34,11 @@ export async function POST(request: Request) {
   }
 
   const admin = getSupabaseAdminClient()
+  const normalizedEmail = buyerEmail.toLowerCase().trim()
 
-  // Load product — server-side; never trust client price
   const { data: product, error: productErr } = await admin
     .from('products')
-    .select('id, store_id, title, price_cents, is_live, product_type')
+    .select('id, store_id, title, price_cents, is_live')
     .eq('slug', productSlug.trim())
     .maybeSingle()
 
@@ -44,13 +46,11 @@ export async function POST(request: Request) {
   if (!product) return NextResponse.json({ error: 'Product not found.' }, { status: 404 })
   if (!product.is_live) return NextResponse.json({ error: 'Product is not available.' }, { status: 400 })
 
-  // Verify it's actually free (server enforced)
   const priceCents = product.price_cents ?? 0
   if (priceCents > 0) {
     return NextResponse.json({ error: 'This product requires payment.' }, { status: 400 })
   }
 
-  // Find the store/seller through the product's store_id
   const { data: store } = await admin
     .from('stores')
     .select('id, owner_user_id')
@@ -59,139 +59,51 @@ export async function POST(request: Request) {
 
   if (!store) return NextResponse.json({ error: 'Store not found.' }, { status: 500 })
 
-  // Check for duplicate acquisition
   const { data: existing } = await admin
     .from('purchases')
-    .select('id')
-    .eq('buyer_email', buyerEmail.toLowerCase())
+    .select('id, order_id, access_token')
+    .eq('buyer_email', normalizedEmail)
     .eq('product_id', product.id)
+    .eq('status', 'active')
     .maybeSingle()
 
-  if (existing) {
-    return NextResponse.json({ already_acquired: true, purchase_id: existing.id })
+  if (existing?.access_token) {
+    return NextResponse.json({
+      already_acquired: true,
+      order_id: existing.order_id,
+      purchase_id: existing.id,
+      product_id: product.id,
+      product_slug: productSlug,
+      access_url: getPurchaseAccessUrl(existing.access_token),
+      email_sent: false,
+    })
   }
 
-  // Determine which columns orders table supports (resilient to unapplied migrations)
-  type OrderInsert = {
-    store_id: string
-    seller_user_id: string
-    buyer_email: string
-    buyer_name: string | null
-    subtotal_cents: number
-    shipping_cents: number
-    total_cents: number
-    status: string
-    payment_status: string
-    product_id?: string
-    product_title_snapshot?: string
-    discount_cents?: number
-    platform_fee_cents?: number
-    currency?: string
-    refund_status?: string
-  }
-
-  const orderInsert: OrderInsert = {
-    store_id: store.id,
-    seller_user_id: store.owner_user_id,
-    buyer_email: buyerEmail.toLowerCase().trim(),
-    buyer_name: buyerName?.trim() ?? null,
-    subtotal_cents: 0,
-    shipping_cents: 0,
-    total_cents: 0,
-    status: 'completed',
-    payment_status: 'paid',
-  }
-
-  // Try to insert with extended columns (available after migration 011)
-  let order: { id: string } | null = null
-  const extendedInsert = {
-    ...orderInsert,
-    product_id: product.id,
-    product_title_snapshot: product.title,
-    discount_cents: 0,
-    platform_fee_cents: 0,
-    currency: 'usd',
-    refund_status: 'none',
-  }
-
-  const { data: orderData, error: orderErr } = await admin
-    .from('orders')
-    .insert(extendedInsert)
-    .select('id')
-    .single()
-
-  if (orderErr) {
-    // If extended columns don't exist yet, fall back to minimal insert
-    if (orderErr.message.includes('column') && orderErr.message.includes('does not exist')) {
-      const { data: fallback, error: fallbackErr } = await admin
-        .from('orders')
-        .insert(orderInsert)
-        .select('id')
-        .single()
-      if (fallbackErr) return NextResponse.json({ error: fallbackErr.message }, { status: 500 })
-      order = fallback
-    } else {
-      return NextResponse.json({ error: orderErr.message }, { status: 500 })
-    }
-  } else {
-    order = orderData
-  }
-
-  if (!order) return NextResponse.json({ error: 'Failed to create order.' }, { status: 500 })
-
-  // Create order item
-  await admin.from('order_items').insert({
-    order_id: order.id,
-    product_id: product.id,
-    title: product.title,
-    quantity: 1,
-    unit_price_cents: 0,
-    line_total_cents: 0,
+  const result = await fulfillPurchase({
+    productId: product.id,
+    storeId: store.id,
+    sellerUserId: store.owner_user_id,
+    productTitle: product.title,
+    buyerEmail: normalizedEmail,
+    buyerName: buyerName?.trim() || null,
+    subtotalCents: 0,
+    discountCents: 0,
+    totalCents: 0,
+    platformFeeCents: 0,
+    paymentStatus: 'paid',
   })
 
-  // Create purchase entitlement — resilient to missing 'status' column
-  type PurchaseInsert = {
-    buyer_email: string
-    product_id: string
-    order_id: string
-    status?: string
+  if (!result) {
+    return NextResponse.json({ error: 'Failed to complete acquisition.' }, { status: 500 })
   }
-  const purchaseInsert: PurchaseInsert = {
-    buyer_email: buyerEmail.toLowerCase().trim(),
-    product_id: product.id,
-    order_id: order.id,
-    status: 'active',
-  }
-
-  let purchase: { id: string } | null = null
-  const { data: purchaseData, error: purchaseErr } = await admin
-    .from('purchases')
-    .insert(purchaseInsert)
-    .select('id')
-    .single()
-
-  if (purchaseErr) {
-    if (purchaseErr.message.includes('column') && purchaseErr.message.includes('does not exist')) {
-      const { data: pFallback, error: pFallbackErr } = await admin
-        .from('purchases')
-        .insert({ buyer_email: buyerEmail.toLowerCase().trim(), product_id: product.id, order_id: order.id })
-        .select('id')
-        .single()
-      if (pFallbackErr) return NextResponse.json({ error: pFallbackErr.message }, { status: 500 })
-      purchase = pFallback
-    } else {
-      return NextResponse.json({ error: purchaseErr.message }, { status: 500 })
-    }
-  } else {
-    purchase = purchaseData
-  }
-
-  if (!purchase) return NextResponse.json({ error: 'Failed to create purchase.' }, { status: 500 })
 
   return NextResponse.json({
-    order_id: order.id,
-    purchase_id: purchase.id,
+    order_id: result.orderId,
+    purchase_id: result.purchaseId,
     product_id: product.id,
     product_slug: productSlug,
+    access_url: result.accessUrl,
+    email_sent: !!result.emails.receipt?.sent || !!result.emails.receipt?.simulated,
+    email_accepted: !!result.emails.receipt?.accepted,
   }, { status: 201 })
 }
