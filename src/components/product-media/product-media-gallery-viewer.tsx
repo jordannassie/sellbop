@@ -33,7 +33,7 @@ function getThumbUrl(item: GalleryMediaItem): string | null {
 
 export function ProductMediaGalleryViewer({
   items,
-  aspectClassName = 'aspect-video',
+  aspectClassName = 'aspect-square',
   aspectStyle,
   mainObjectFit = 'cover',
   enableLightbox = false,

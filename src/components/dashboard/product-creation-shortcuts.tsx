@@ -77,7 +77,7 @@ export function CoverImageCreationHeaderLink() {
 export function CoverImageCreationHelperText() {
   return (
     <p className="text-xs text-neutral-400 mt-3 leading-relaxed">
-      Need a cover? Create one with Higgsfield, then upload it here.
+      Need a cover? Create a 1080 × 1080 px square (1:1) image with Higgsfield, then upload it here.
     </p>
   )
 }

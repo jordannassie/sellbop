@@ -11,6 +11,8 @@ import { isSupabaseConfigured } from '@/lib/env'
 import { getEffectiveProductPrice } from '@/lib/pricing/product-price'
 import { ProductPriceDisplay } from '@/components/ui/product-price-display'
 import { ProductMediaGalleryViewer } from '@/components/product-media/product-media-gallery-viewer'
+import { ProductDescriptionMarkdown } from '@/components/product/product-description-markdown'
+import { PRODUCT_IMAGE_ASPECT_RATIO } from '@/lib/product-media/constants'
 import type { ProductMediaItem } from '@/lib/product-media/types'
 
 interface ProductData {
@@ -385,15 +387,19 @@ export function ClientProductPage({ slug }: { slug: string }) {
 
             {/* Cover image */}
             {media.length > 0 ? (
-              <ProductMediaGalleryViewer
-                items={media}
-                aspectClassName="aspect-video"
-                mainObjectFit="cover"
-                enableLightbox
-                className="mb-6"
-              />
+              <div className="max-w-lg w-full mb-6">
+                <ProductMediaGalleryViewer
+                  items={media}
+                  aspectStyle={{ aspectRatio: PRODUCT_IMAGE_ASPECT_RATIO }}
+                  mainObjectFit="cover"
+                  enableLightbox
+                />
+              </div>
             ) : coverUrl ? (
-              <div className="aspect-video rounded-2xl overflow-hidden bg-neutral-100 mb-6">
+              <div
+                className="max-w-lg w-full rounded-2xl overflow-hidden bg-neutral-100 mb-6"
+                style={{ aspectRatio: PRODUCT_IMAGE_ASPECT_RATIO }}
+              >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={coverUrl} alt={product?.title} className="w-full h-full object-cover" />
               </div>
@@ -402,11 +408,7 @@ export function ClientProductPage({ slug }: { slug: string }) {
             {/* Title & description */}
             <h1 className="text-3xl font-bold text-black mb-4">{product?.title}</h1>
             {product?.description && (
-              <div className="prose prose-sm max-w-none text-neutral-600">
-                {product.description.split('\n').map((line, i) => (
-                  <p key={i} className="mb-3 leading-relaxed">{line}</p>
-                ))}
-              </div>
+              <ProductDescriptionMarkdown content={product.description} />
             )}
           </div>
 

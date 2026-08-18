@@ -25,6 +25,7 @@ import { ProductFileRow } from '@/components/dashboard/product-file-row'
 import { AddProductLinkForm } from '@/components/dashboard/add-product-link-form'
 import { datetimeLocalToIso, validateSalePricingForSave } from '@/lib/pricing/product-price'
 import { PRODUCT_CATEGORIES } from '@/lib/product-categories'
+import { PRODUCT_IMAGE_RECOMMENDED_LABEL } from '@/lib/product-media/constants'
 
 const COMMISSION_PRESETS = [10, 20, 30, 40, 50]
 
@@ -237,7 +238,10 @@ export default function NewProductPage() {
               value={description}
               onChange={e => setDescription(e.target.value)}
               placeholder="What does your product include? Who is it for?"
-              rows={4}
+              rows={6}
+              resize="vertical"
+              className="min-h-[160px] max-h-[80vh]"
+              hint="Supports headings, bold text, lists, links, and paragraphs."
             />
           </CardContent>
         </Card>
@@ -249,9 +253,10 @@ export default function NewProductPage() {
             <CoverImageCreationHeaderLink />
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-neutral-600 mb-4">
+            <p className="text-sm text-neutral-600 mb-1">
               Add images and videos that show customers what they&apos;re buying.
             </p>
+            <p className="text-xs text-neutral-400 mb-4">{PRODUCT_IMAGE_RECOMMENDED_LABEL}</p>
             <ProductMediaSection items={mediaItems} onChange={handleMediaChange} />
           </CardContent>
         </Card>

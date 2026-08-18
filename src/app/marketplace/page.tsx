@@ -46,7 +46,7 @@ function ProductCard({ product }: { product: MarketplaceProduct }) {
     <div className="group relative overflow-hidden rounded-2xl border border-neutral-200 bg-white hover:border-neutral-300 hover:shadow-md transition-all duration-200">
       {/* Cover image */}
       <Link href={`/p/${product.slug}`}>
-        <div className="relative h-48 bg-gradient-to-br from-neutral-100 to-neutral-200 overflow-hidden">
+        <div className="relative aspect-square bg-gradient-to-br from-neutral-100 to-neutral-200 overflow-hidden">
           <ProductImage
             src={product.coverImage}
             alt=""

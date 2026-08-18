@@ -407,8 +407,8 @@ export function ClientStorefront({ slug }: { slug: string }) {
                 return (
                   <Link key={p.id} href={`/${slug}/${p.slug}`}>
                     <div className="group rounded-2xl border border-neutral-200 bg-white hover:border-neutral-300 hover:shadow-sm transition-all duration-200 overflow-hidden">
-                      {/* Image — 4:3 */}
-                      <div className="relative w-full overflow-hidden bg-neutral-100" style={{ aspectRatio: '4/3' }}>
+                      {/* Image — 1:1 square */}
+                      <div className="relative w-full overflow-hidden bg-neutral-100 aspect-square">
                         {coverUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img

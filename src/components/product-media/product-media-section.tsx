@@ -26,6 +26,11 @@ import { AddMediaModal, type GalleryMediaItem } from './add-media-modal'
 import { ProductMediaGalleryViewer } from './product-media-gallery-viewer'
 import type { PendingProductMediaItem, ProductMediaItem } from '@/lib/product-media/types'
 import { getPrimaryImageUrl } from '@/lib/product-media/utils'
+import {
+  PRODUCT_IMAGE_ASPECT_RATIO,
+  PRODUCT_IMAGE_RECOMMENDED_LABEL,
+  HIGGSFIELD_PRODUCT_IMAGE_HINT,
+} from '@/lib/product-media/constants'
 
 function tempId() {
   return `temp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
@@ -205,15 +210,17 @@ export function ProductMediaSection({ productId, items, onChange, onLegacyCoverC
     <div>
       {viewerItems.length > 0 ? (
         <>
-          <ProductMediaGalleryViewer
-            items={viewerItems}
-            aspectClassName="aspect-video"
-            mainObjectFit="cover"
-            showThumbnails={false}
-            selectedIndex={selectedIndex}
-            onSelectedIndexChange={setSelectedIndex}
-            className="mb-3"
-          />
+          <div className="max-w-md mx-auto w-full">
+            <ProductMediaGalleryViewer
+              items={viewerItems}
+              aspectStyle={{ aspectRatio: PRODUCT_IMAGE_ASPECT_RATIO }}
+              mainObjectFit="cover"
+              showThumbnails={false}
+              selectedIndex={selectedIndex}
+              onSelectedIndexChange={setSelectedIndex}
+              className="mb-3"
+            />
+          </div>
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={sorted.map(i => i.id)} strategy={horizontalListSortingStrategy}>
               <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide items-start">
@@ -242,7 +249,7 @@ export function ProductMediaSection({ productId, items, onChange, onLegacyCoverC
         <button
           type="button"
           onClick={() => setModalOpen(true)}
-          className="w-full aspect-video rounded-xl border-2 border-dashed border-neutral-200 bg-neutral-50 flex flex-col items-center justify-center text-neutral-500 hover:border-neutral-400 hover:bg-neutral-100 transition-colors"
+          className="w-full max-w-md mx-auto aspect-square rounded-xl border-2 border-dashed border-neutral-200 bg-neutral-50 flex flex-col items-center justify-center text-neutral-500 hover:border-neutral-400 hover:bg-neutral-100 transition-colors"
         >
           <Plus size={28} className="mb-2" />
           <span className="text-sm font-medium">Add product media</span>
@@ -252,11 +259,13 @@ export function ProductMediaSection({ productId, items, onChange, onLegacyCoverC
       <p className="text-xs text-neutral-500 mt-3">
         The first image is your primary product image. Drag media to reorder.
       </p>
+      <p className="text-xs text-neutral-400 mt-1">{PRODUCT_IMAGE_RECOMMENDED_LABEL}</p>
 
       <a
         href={HIGGSFIELD_URL}
         target="_blank"
         rel="noopener noreferrer"
+        title={HIGGSFIELD_PRODUCT_IMAGE_HINT}
         className="inline-flex items-center gap-2 mt-3 text-xs font-medium text-neutral-500 hover:text-black transition-colors"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}

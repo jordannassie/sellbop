@@ -30,6 +30,7 @@ import {
   validateSalePricingForSave,
 } from '@/lib/pricing/product-price'
 import { PRODUCT_CATEGORIES, normalizeProductCategory } from '@/lib/product-categories'
+import { PRODUCT_IMAGE_RECOMMENDED_LABEL } from '@/lib/product-media/constants'
 
 const COMMISSION_PRESETS = [10, 20, 30, 40, 50]
 
@@ -329,7 +330,16 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
           <CardHeader><CardTitle>Product Details</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <Input label="Product Name *" value={title} onChange={e => setTitle(e.target.value)} required />
-            <Textarea label="Description" value={description} onChange={e => setDescription(e.target.value)} rows={5} placeholder="What does your product include?" />
+            <Textarea
+              label="Description"
+              value={description}
+              onChange={e => setDescription(e.target.value)}
+              rows={6}
+              resize="vertical"
+              className="min-h-[160px] max-h-[80vh]"
+              placeholder="What does your product include?"
+              hint="Supports headings, bold text, lists, links, and paragraphs."
+            />
           </CardContent>
         </Card>
 
@@ -340,9 +350,10 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
             <CoverImageCreationHeaderLink />
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-neutral-600 mb-4">
+            <p className="text-sm text-neutral-600 mb-1">
               Add images and videos that show customers what they&apos;re buying.
             </p>
+            <p className="text-xs text-neutral-400 mb-4">{PRODUCT_IMAGE_RECOMMENDED_LABEL}</p>
             <ProductMediaSection
               productId={productId}
               items={mediaItems}

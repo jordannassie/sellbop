@@ -124,7 +124,7 @@ export function ClientStorefront({ slug }: { slug: string }) {
                   return (
                     <Link key={p.id} href={`/p/${p.slug}`}>
                       <div className="group rounded-2xl border border-neutral-200 bg-white hover:shadow-md hover:border-neutral-300 transition-all overflow-hidden">
-                        <div className="aspect-video bg-neutral-100 overflow-hidden">
+                        <div className="aspect-square bg-neutral-100 overflow-hidden">
                           {coverUrl ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img

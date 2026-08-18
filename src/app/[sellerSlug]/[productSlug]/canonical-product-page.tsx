@@ -15,6 +15,8 @@ import { getEffectiveProductPrice } from '@/lib/pricing/product-price'
 import { ProductPriceDisplay } from '@/components/ui/product-price-display'
 import { ProductMediaGalleryViewer } from '@/components/product-media/product-media-gallery-viewer'
 import { MobileCheckoutSheet, MobileStickyCheckoutBar } from '@/components/product/mobile-checkout-bar'
+import { ProductDescriptionMarkdown } from '@/components/product/product-description-markdown'
+import { PRODUCT_IMAGE_ASPECT_RATIO } from '@/lib/product-media/constants'
 import type { ProductMediaItem } from '@/lib/product-media/types'
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -517,17 +519,18 @@ export function CanonicalProductPage({ sellerSlug, productSlug }: { sellerSlug: 
 
             {/* Cover image / gallery */}
             {media.length > 0 ? (
-              <ProductMediaGalleryViewer
-                items={media}
-                aspectStyle={{ aspectRatio: '4/3' }}
-                mainObjectFit="cover"
-                enableLightbox
-                className="mb-7"
-              />
+              <div className="max-w-lg w-full mb-7">
+                <ProductMediaGalleryViewer
+                  items={media}
+                  aspectStyle={{ aspectRatio: PRODUCT_IMAGE_ASPECT_RATIO }}
+                  mainObjectFit="cover"
+                  enableLightbox
+                />
+              </div>
             ) : coverUrl ? (
               <div
-                className="relative w-full rounded-2xl overflow-hidden bg-neutral-100 mb-7"
-                style={{ aspectRatio: '4/3' }}
+                className="relative w-full max-w-lg rounded-2xl overflow-hidden bg-neutral-100 mb-7"
+                style={{ aspectRatio: PRODUCT_IMAGE_ASPECT_RATIO }}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -550,11 +553,7 @@ export function CanonicalProductPage({ sellerSlug, productSlug }: { sellerSlug: 
 
             {/* Description */}
             {product?.description && (
-              <div className="text-neutral-600 text-[15px] leading-relaxed space-y-3 mb-8">
-                {product.description.split('\n').filter(Boolean).map((line, i) => (
-                  <p key={i}>{line}</p>
-                ))}
-              </div>
+              <ProductDescriptionMarkdown content={product.description} className="mb-8" />
             )}
 
             {/* Product details */}
