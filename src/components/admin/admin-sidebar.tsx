@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { CreditCard, GraduationCap, LayoutDashboard, Mail, Package, ShoppingBag, Store, Users } from 'lucide-react'
+import { CreditCard, GraduationCap, LayoutDashboard, Mail, Package, ShoppingBag, Store, TrendingUp, ShoppingCart, Users } from 'lucide-react'
 import { SellBopLogoStatic } from '@/components/ui/sellbop-logo'
 
 export type AdminSection =
@@ -11,6 +11,9 @@ export type AdminSection =
   | 'orders'
   | 'resources'
   | 'emails'
+  | 'affiliates'
+  | 'marketplace'
+  | 'search'
 
 const NAV: { id: AdminSection; label: string; icon: React.ReactNode }[] = [
   { id: 'overview', label: 'Overview', icon: <LayoutDashboard size={15} /> },
@@ -18,7 +21,9 @@ const NAV: { id: AdminSection; label: string; icon: React.ReactNode }[] = [
   { id: 'sellers', label: 'Sellers', icon: <Store size={15} /> },
   { id: 'buyers', label: 'Buyers', icon: <ShoppingBag size={15} /> },
   { id: 'products', label: 'Products', icon: <Package size={15} /> },
+  { id: 'marketplace', label: 'Marketplace', icon: <ShoppingCart size={15} /> },
   { id: 'orders', label: 'Orders', icon: <CreditCard size={15} /> },
+  { id: 'affiliates', label: 'Affiliates', icon: <TrendingUp size={15} /> },
   { id: 'emails', label: 'Emails', icon: <Mail size={15} /> },
   { id: 'resources', label: 'Resources', icon: <GraduationCap size={15} /> },
 ]
@@ -37,7 +42,7 @@ export function AdminSidebar({ active }: AdminSidebarProps) {
         </span>
       </div>
 
-      <nav className="flex-1 space-y-0.5 px-2 py-3">
+      <nav className="flex-1 space-y-0.5 overflow-y-auto px-2 py-3">
         {NAV.map((item) => (
           <Link
             key={item.id}

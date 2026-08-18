@@ -2,12 +2,23 @@ import Link from 'next/link'
 import { LogOut } from 'lucide-react'
 import { AdminSidebar, type AdminSection } from '@/components/admin/admin-sidebar'
 import { AdminOverview } from '@/components/admin/overview'
-import { UsersSection, SellersSection, BuyersSection, ProductsSection } from '@/components/admin/users-section'
+import { UsersSection } from '@/components/admin/users-section'
+import { SellersSection } from '@/components/admin/sellers-section'
+import { BuyersSection } from '@/components/admin/buyers-section'
+import { ProductsSection, MarketplaceSection } from '@/components/admin/products-section'
+import { AffiliatesSection } from '@/components/admin/affiliates-section'
 import { ResourcesAdminSection } from '@/components/admin/resources-section'
 import { OrdersSection } from '@/components/admin/orders-section'
 import { EmailDeliveriesSection } from '@/components/admin/email-deliveries-section'
+import { AdminGlobalSearch } from '@/components/admin/admin-search'
 import { requireAdminUser } from '@/lib/admin/access'
-import { getAdminOrders, getAdminOverviewData, getAdminUsers } from '@/lib/admin/users'
+import { parseAdminPagination } from '@/lib/admin/helpers'
+import { getAdminOverviewData, getAdminUsers, adminGlobalSearch } from '@/lib/admin/users'
+import { getAdminOrders } from '@/lib/admin/orders'
+import { getAdminProducts } from '@/lib/admin/products'
+import { getAdminSellers } from '@/lib/admin/sellers'
+import { getAdminBuyers } from '@/lib/admin/buyers'
+import { getAdminAffiliates } from '@/lib/admin/affiliates'
 
 function isAdminSection(value: string | undefined): value is AdminSection {
   return value === 'overview'
@@ -18,23 +29,59 @@ function isAdminSection(value: string | undefined): value is AdminSection {
     || value === 'orders'
     || value === 'resources'
     || value === 'emails'
+    || value === 'affiliates'
+    || value === 'marketplace'
+    || value === 'search'
 }
 
 export default async function AdminPage({
   searchParams,
 }: {
-  searchParams: Promise<{ section?: string }>
+  searchParams: Promise<{ section?: string; page?: string; pageSize?: string; q?: string; filter?: string }>
 }) {
   await requireAdminUser()
 
   const params = await searchParams
   const section: AdminSection = isAdminSection(params.section) ? params.section : 'overview'
+  const pagination = parseAdminPagination(params)
 
-  const [users, overview, orders] = await Promise.all([
-    getAdminUsers(),
-    getAdminOverviewData(),
-    getAdminOrders(),
+  const [overview] = await Promise.all([
+    section === 'overview' ? getAdminOverviewData() : Promise.resolve(null),
   ])
+
+  let content: React.ReactNode = null
+
+  if (section === 'overview' && overview) {
+    content = <AdminOverview data={overview} />
+  } else if (section === 'users') {
+    const data = await getAdminUsers({ ...pagination, q: params.q, filter: params.filter })
+    content = <UsersSection users={data.users} page={data.page} totalPages={data.totalPages} total={data.total} q={params.q} filter={params.filter} />
+  } else if (section === 'sellers') {
+    const data = await getAdminSellers({ ...pagination, q: params.q, filter: params.filter })
+    content = <SellersSection sellers={data.sellers} page={data.page} totalPages={data.totalPages} total={data.total} q={params.q} filter={params.filter} />
+  } else if (section === 'buyers') {
+    const data = await getAdminBuyers({ ...pagination, q: params.q, filter: params.filter })
+    content = <BuyersSection buyers={data.buyers} page={data.page} totalPages={data.totalPages} total={data.total} q={params.q} filter={params.filter} />
+  } else if (section === 'products') {
+    const data = await getAdminProducts({ ...pagination, q: params.q, filter: params.filter })
+    content = <ProductsSection products={data.products} page={data.page} totalPages={data.totalPages} total={data.total} q={params.q} filter={params.filter} />
+  } else if (section === 'marketplace') {
+    const data = await getAdminProducts({ ...pagination, q: params.q, filter: 'marketplace', marketplaceOnly: true })
+    content = <MarketplaceSection products={data.products} page={data.page} totalPages={data.totalPages} total={data.total} q={params.q} />
+  } else if (section === 'orders') {
+    const data = await getAdminOrders({ ...pagination, q: params.q, filter: params.filter })
+    content = <OrdersSection orders={data.orders} page={data.page} totalPages={data.totalPages} total={data.total} q={params.q} filter={params.filter} />
+  } else if (section === 'affiliates') {
+    const data = await getAdminAffiliates({ ...pagination, q: params.q, filter: params.filter })
+    content = <AffiliatesSection affiliates={data.affiliates} page={data.page} totalPages={data.totalPages} total={data.total} q={params.q} filter={params.filter} />
+  } else if (section === 'emails') {
+    content = <EmailDeliveriesSection />
+  } else if (section === 'resources') {
+    content = <ResourcesAdminSection />
+  } else if (section === 'search' && params.q) {
+    const results = await adminGlobalSearch(params.q)
+    content = <AdminGlobalSearch query={params.q} results={results} />
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-neutral-50">
@@ -46,6 +93,15 @@ export default async function AdminPage({
             Admin <span className="mx-1 text-neutral-300">·</span> {section}
           </p>
           <div className="flex items-center gap-3">
+            <form method="GET" className="hidden md:flex items-center gap-2">
+              <input type="hidden" name="section" value="search" />
+              <input
+                name="q"
+                defaultValue={params.q ?? ''}
+                placeholder="Search admin…"
+                className="w-56 rounded-lg border border-neutral-200 px-3 py-1.5 text-xs focus:border-black focus:outline-none"
+              />
+            </form>
             <span className="rounded bg-neutral-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-neutral-500">
               Internal
             </span>
@@ -57,14 +113,7 @@ export default async function AdminPage({
         </div>
 
         <div className="max-w-6xl p-8">
-          {section === 'overview' && <AdminOverview data={overview} />}
-          {section === 'users' && <UsersSection users={users} />}
-          {section === 'sellers' && <SellersSection users={users} />}
-          {section === 'buyers' && <BuyersSection users={users} />}
-          {section === 'products' && <ProductsSection />}
-          {section === 'orders' && <OrdersSection orders={orders} />}
-          {section === 'emails' && <EmailDeliveriesSection />}
-          {section === 'resources' && <ResourcesAdminSection />}
+          {content}
         </div>
       </main>
     </div>

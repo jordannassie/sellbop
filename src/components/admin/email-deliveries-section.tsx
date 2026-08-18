@@ -42,7 +42,7 @@ export async function EmailDeliveriesSection() {
             {deliveries.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-4 py-8 text-center text-neutral-400">
-                  No email deliveries logged yet.
+                  No email deliveries logged yet. Apply migration 024 to enable the delivery log table.
                 </td>
               </tr>
             ) : deliveries.map(row => (

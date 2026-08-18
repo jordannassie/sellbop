@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowLeft, ExternalLink } from 'lucide-react'
 import { requireAdminUser } from '@/lib/admin/access'
-import { getAdminUserById } from '@/lib/admin/users'
+import { getAdminUserDetail } from '@/lib/admin/users'
 import { formatCurrency, formatDate } from '@/lib/utils'
 
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
@@ -28,55 +28,128 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 export default async function AdminUserDetailPage({ params }: { params: Promise<{ userId: string }> }) {
   await requireAdminUser()
   const { userId } = await params
-  const user = await getAdminUserById(userId)
+  const detail = await getAdminUserDetail(userId)
+  if (!detail) notFound()
 
-  if (!user) {
-    notFound()
-  }
+  const { user, products, purchases, ordersAsBuyer, ordersAsSeller, affiliateRelationships, affiliateCommissions } = detail
 
   return (
-    <div className="max-w-2xl">
-      <Link href="/internal/admin?section=users" className="mb-6 flex items-center gap-2 text-sm text-neutral-500 transition-colors hover:text-black">
+    <div className="max-w-3xl space-y-4">
+      <Link href="/internal/admin?section=users" className="flex items-center gap-2 text-sm text-neutral-500 hover:text-black">
         <ArrowLeft size={15} /> Back to Users
       </Link>
 
-      <div className="mb-6">
-        <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-widest text-neutral-400">Admin · User Detail</p>
-        <p className="mb-1 text-xs font-mono text-neutral-400">{user.userId}</p>
+      <div>
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-400">Admin · User Detail</p>
+        <p className="font-mono text-xs text-neutral-400">{user.userId}</p>
         <h1 className="text-2xl font-bold text-black">{user.fullName ?? user.email.split('@')[0]}</h1>
         <p className="mt-1 text-sm text-neutral-500">{user.email}</p>
       </div>
 
-      <div className="space-y-4">
-        <Section title="Profile">
-          <Row label="Full name" value={user.fullName ?? '—'} />
-          <Row label="Email" value={user.email} />
-          <Row label="Joined" value={formatDate(user.createdAt)} />
-        </Section>
+      <Section title="Profile">
+        <Row label="Full name" value={user.fullName ?? '—'} />
+        <Row label="Email" value={user.email} />
+        <Row label="Joined" value={formatDate(user.createdAt)} />
+        <Row label="Is seller" value={user.isSeller ? 'Yes' : 'No'} />
+        <Row label="Is buyer" value={user.isBuyer ? 'Yes' : 'No'} />
+        <Row label="Total spent" value={formatCurrency(user.totalSpentCents)} />
+        <Row label="Total sales" value={formatCurrency(user.totalSalesCents)} />
+      </Section>
 
-        <Section title="Roles">
-          <Row label="Is buyer" value={user.isBuyer ? 'Yes' : 'No'} />
-          <Row label="Is seller" value={user.isSeller ? 'Yes' : 'No'} />
-          <Row label="Purchase count" value={user.purchaseCount} />
-          <Row label="Order count" value={user.orderCount} />
-          <Row label="Subscription count" value={user.subscriptionCount} />
-          <Row label="Total spent" value={formatCurrency(user.totalSpentCents)} />
-          <Row label="Last purchase" value={user.lastPurchaseAt ? formatDate(user.lastPurchaseAt) : '—'} />
-        </Section>
-
+      {user.isSeller && (
         <Section title="Store">
-          <Row label="Owns store" value={user.isSeller ? 'Yes' : 'No'} />
           <Row label="Store name" value={user.storeName ?? '—'} />
           <Row
-            label="Store slug"
+            label="Store URL"
             value={user.storeSlug ? (
-              <Link href={`/store/${user.storeSlug}`} target="_blank" className="inline-flex items-center gap-1 underline underline-offset-2">
+              <Link href={`/${user.storeSlug}`} target="_blank" className="inline-flex items-center gap-1 underline">
                 /{user.storeSlug} <ExternalLink size={11} />
               </Link>
             ) : '—'}
           />
+          <Row label="Products" value={products.length} />
         </Section>
-      </div>
+      )}
+
+      {products.length > 0 && (
+        <Section title="Products">
+          {products.map((product) => (
+            <Row
+              key={product.id}
+              label={product.title}
+              value={
+                <Link href={`/internal/admin/products/${product.id}`} className="underline">
+                  {product.is_live ? 'Active' : 'Draft'} · {formatCurrency(product.price_cents ?? 0)}
+                </Link>
+              }
+            />
+          ))}
+        </Section>
+      )}
+
+      {purchases.length > 0 && (
+        <Section title="Purchases">
+          {purchases.map((purchase) => (
+            <Row key={purchase.id} label={formatDate(purchase.created_at)} value={`${purchase.status} · ${purchase.id.slice(0, 8)}…`} />
+          ))}
+        </Section>
+      )}
+
+      {ordersAsBuyer.length > 0 && (
+        <Section title="Orders as buyer">
+          {ordersAsBuyer.map((order) => (
+            <Row
+              key={order.id}
+              label={order.product_title_snapshot ?? 'Order'}
+              value={
+                <Link href={`/internal/admin/orders/${order.id}`} className="underline">
+                  {formatCurrency(order.total_cents)} · {order.payment_status}
+                </Link>
+              }
+            />
+          ))}
+        </Section>
+      )}
+
+      {ordersAsSeller.length > 0 && (
+        <Section title="Orders as seller">
+          {ordersAsSeller.map((order) => (
+            <Row
+              key={order.id}
+              label={order.product_title_snapshot ?? 'Order'}
+              value={
+                <Link href={`/internal/admin/orders/${order.id}`} className="underline">
+                  {formatCurrency(order.total_cents)} · {order.buyer_email}
+                </Link>
+              }
+            />
+          ))}
+        </Section>
+      )}
+
+      {affiliateRelationships.length > 0 && (
+        <Section title="Affiliate relationships">
+          {affiliateRelationships.map((rel) => (
+            <Row
+              key={rel.id}
+              label={rel.referral_code}
+              value={
+                <Link href={`/internal/admin/affiliates/${rel.id}`} className="underline capitalize">
+                  {rel.status}
+                </Link>
+              }
+            />
+          ))}
+        </Section>
+      )}
+
+      {affiliateCommissions.length > 0 && (
+        <Section title="Affiliate commissions">
+          {affiliateCommissions.map((c) => (
+            <Row key={c.id} label={formatDate(c.created_at)} value={`${formatCurrency(c.commission_cents)} · ${c.status}`} />
+          ))}
+        </Section>
+      )}
     </div>
   )
 }
