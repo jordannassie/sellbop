@@ -16,7 +16,9 @@ import { ProductPriceDisplay } from '@/components/ui/product-price-display'
 import { ProductMediaGalleryViewer } from '@/components/product-media/product-media-gallery-viewer'
 import { MobileCheckoutSheet, MobileStickyCheckoutBar } from '@/components/product/mobile-checkout-bar'
 import { ProductDescriptionMarkdown } from '@/components/product/product-description-markdown'
+import { ProductReviewsCard } from '@/components/product/product-reviews-card'
 import { PRODUCT_IMAGE_ASPECT_RATIO } from '@/lib/product-media/constants'
+import type { ProductReviewItem } from '@/lib/product-reviews/defaults'
 import type { ProductMediaItem } from '@/lib/product-media/types'
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -229,6 +231,7 @@ export function CanonicalProductPage({ sellerSlug, productSlug }: { sellerSlug: 
   const [affiliateUrl, setAffiliateUrl] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const [media, setMedia] = useState<ProductMediaItem[]>([])
+  const [reviews, setReviews] = useState<ProductReviewItem[]>([])
 
   const pricing = product
     ? getEffectiveProductPrice(product)
@@ -250,6 +253,7 @@ export function CanonicalProductPage({ sellerSlug, productSlug }: { sellerSlug: 
         setProduct(data.product)
         setStore(data.store)
         setMedia(data.media ?? [])
+        setReviews(data.reviews ?? [])
         setState('ready')
         if (refCode) {
           fetch('/api/affiliates/click', {
@@ -573,6 +577,10 @@ export function CanonicalProductPage({ sellerSlug, productSlug }: { sellerSlug: 
               </div>
             )}
 
+            <div className="mb-8 lg:hidden">
+              <ProductReviewsCard reviews={reviews} />
+            </div>
+
             {/* More from seller — mobile */}
             {store && (
               <Link
@@ -674,6 +682,8 @@ export function CanonicalProductPage({ sellerSlug, productSlug }: { sellerSlug: 
                   <ChevronRight size={13} className="ml-auto" />
                 </Link>
               )}
+
+              <ProductReviewsCard reviews={reviews} />
             </div>
           </div>
 

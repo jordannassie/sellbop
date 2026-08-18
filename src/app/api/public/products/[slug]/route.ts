@@ -104,6 +104,20 @@ export async function GET(
     media = withLegacyCoverMedia([], product.cover_image_url ?? product.image_url)
   }
 
+  let reviews: { customer_name: string; rating: number; message: string }[] = []
+  try {
+    const { data: reviewRows } = await admin
+      .from('product_reviews')
+      .select('customer_name, rating, message')
+      .eq('product_id', product.id)
+      .eq('approved', true)
+      .order('created_at', { ascending: false })
+      .limit(3)
+    reviews = reviewRows ?? []
+  } catch {
+    // table may not exist yet
+  }
+
   return NextResponse.json({
     product: {
       ...product,
@@ -113,5 +127,6 @@ export async function GET(
     store: store ? { ...store, avatar_url: avatarUrl } : null,
     sales_count: salesCount ?? 0,
     media,
+    reviews,
   })
 }

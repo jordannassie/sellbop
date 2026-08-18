@@ -37,6 +37,8 @@ interface ProductRow {
   price_cents: number | null
   is_live: boolean
   sales_count: number
+  cover_image_url: string | null
+  image_url: string | null
 }
 
 function statusVariant(status: string) {
@@ -251,9 +253,19 @@ export default function DashboardOverview() {
               </div>
             ) : (
               <div className="divide-y divide-neutral-50">
-                {topProducts.map(p => (
+                {topProducts.map(p => {
+                  const coverUrl = p.cover_image_url ?? p.image_url
+                  return (
                   <Link key={p.id} href={`/dashboard/products/${p.id}`}>
-                    <div className="px-6 py-3 flex items-center gap-4 hover:bg-neutral-50 transition-colors">
+                    <div className="px-6 py-3 flex items-center gap-3 hover:bg-neutral-50 transition-colors">
+                      <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-neutral-100 flex items-center justify-center">
+                        {coverUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={coverUrl} alt={p.title} className="w-full h-full object-cover" />
+                        ) : (
+                          <Package size={16} className="text-neutral-400" />
+                        )}
+                      </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-neutral-900 truncate">{p.title}</p>
                         <p className="text-xs text-neutral-400">{formatCurrency((p.price_cents ?? 0) / 100)} · {p.sales_count ?? 0} sales</p>
@@ -263,7 +275,8 @@ export default function DashboardOverview() {
                       </Badge>
                     </div>
                   </Link>
-                ))}
+                  )
+                })}
               </div>
             )}
           </CardContent>
