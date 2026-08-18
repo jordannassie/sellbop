@@ -16,8 +16,7 @@ export function AddProductLinkForm({ onAdd, disabled, hasFiles }: AddProductLink
   const [url, setUrl] = useState('')
   const [adding, setAdding] = useState(false)
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
+  async function handleAdd() {
     const normalized = normalizeProductLinkUrl(url)
     if (!normalized) {
       toast.error('Enter a valid URL (e.g. https://notion.so/your-page)')
@@ -42,7 +41,7 @@ export function AddProductLinkForm({ onAdd, disabled, hasFiles }: AddProductLink
   const canSubmit = !!normalized && !disabled && !adding
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-2">
+    <div className="space-y-2">
       <div className="flex items-center gap-2 text-xs font-medium text-neutral-500">
         <span className="h-px flex-1 bg-neutral-200" />
         <span className="inline-flex items-center gap-1.5 shrink-0">
@@ -58,11 +57,25 @@ export function AddProductLinkForm({ onAdd, disabled, hasFiles }: AddProductLink
           autoComplete="url"
           value={url}
           onChange={e => setUrl(e.target.value)}
+          onKeyDown={e => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              e.stopPropagation()
+              if (canSubmit) void handleAdd()
+            }
+          }}
           placeholder="https://notion.so/your-page"
           disabled={disabled || adding}
           className="flex-1 min-w-0 rounded-xl border border-neutral-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black/10 disabled:opacity-50"
         />
-        <Button type="submit" variant="secondary" disabled={!canSubmit} loading={adding} className="shrink-0">
+        <Button
+          type="button"
+          variant="secondary"
+          disabled={!canSubmit}
+          loading={adding}
+          className="shrink-0"
+          onClick={() => void handleAdd()}
+        >
           <Plus size={14} />
           Add Link
         </Button>
@@ -70,6 +83,6 @@ export function AddProductLinkForm({ onAdd, disabled, hasFiles }: AddProductLink
       <p className="text-xs text-neutral-400">
         Buyers get this link after purchase — great for Notion pages, Google Docs, course sites, and more.
       </p>
-    </form>
+    </div>
   )
 }
