@@ -31,6 +31,8 @@ export function AddProductLinkForm({ onAdd, disabled, hasFiles }: AddProductLink
         name: productLinkDisplayName(normalized),
       })
       setUrl('')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to add link.')
     } finally {
       setAdding(false)
     }
@@ -51,7 +53,9 @@ export function AddProductLinkForm({ onAdd, disabled, hasFiles }: AddProductLink
       </div>
       <div className="flex gap-2">
         <input
-          type="url"
+          type="text"
+          inputMode="url"
+          autoComplete="url"
           value={url}
           onChange={e => setUrl(e.target.value)}
           placeholder="https://notion.so/your-page"

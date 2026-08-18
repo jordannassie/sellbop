@@ -172,7 +172,10 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
   }
 
   async function addProductLink(link: { url: string; name: string }) {
-    if (!productId) return
+    if (!productId) {
+      toast.error('Save the product first, then add links.')
+      throw new Error('Product not ready.')
+    }
     const res = await fetch(`/api/products/${productId}/files`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -182,12 +185,14 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
         file_type: 'link',
       }),
     })
-    const data = await res.json()
+    const data = await res.json().catch(() => ({}))
     if (res.ok && data.file) {
       setFiles(prev => [...prev, data.file])
       toast.success('Link added.')
     } else {
-      toast.error(data.error ?? 'Failed to add link.')
+      const message = data.error ?? 'Failed to add link.'
+      toast.error(message)
+      throw new Error(message)
     }
   }
 

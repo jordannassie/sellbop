@@ -184,7 +184,7 @@ export default function NewProductPage() {
       }
 
       for (const link of productLinks) {
-        await fetch(`/api/products/${productId}/files`, {
+        const linkRes = await fetch(`/api/products/${productId}/files`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -193,6 +193,10 @@ export default function NewProductPage() {
             file_type: 'link',
           }),
         })
+        const linkData = await linkRes.json().catch(() => ({}))
+        if (!linkRes.ok) {
+          throw new Error(linkData.error ?? 'Failed to save product link.')
+        }
       }
 
       if (mediaItems.length > 0) {
