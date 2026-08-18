@@ -30,7 +30,15 @@ interface MarketplaceProduct {
   storeSlug: string | null
 }
 
+function marketplaceProductHref(product: MarketplaceProduct): string {
+  const base = product.storeSlug
+    ? `/${product.storeSlug}/${product.slug}`
+    : `/p/${product.slug}`
+  return `${base}?from=marketplace`
+}
+
 function ProductCard({ product }: { product: MarketplaceProduct }) {
+  const productHref = marketplaceProductHref(product)
   const pricing = getEffectiveProductPrice({
     price_cents: product.priceCents,
     sale_enabled: product.saleEnabled,
@@ -45,7 +53,7 @@ function ProductCard({ product }: { product: MarketplaceProduct }) {
   return (
     <div className="group relative overflow-hidden rounded-2xl border border-neutral-200 bg-white hover:border-neutral-300 hover:shadow-md transition-all duration-200">
       {/* Cover image */}
-      <Link href={`/p/${product.slug}`}>
+      <Link href={productHref}>
         <ProductCardImage src={product.coverImage} alt={product.title} hoverScale imageClassName="group-hover:scale-105">
           {displayCategory && (
             <div className="absolute top-3 left-3 z-10 max-w-[calc(100%-1.5rem)]">
@@ -65,7 +73,7 @@ function ProductCard({ product }: { product: MarketplaceProduct }) {
       </Link>
 
       <div className="p-4">
-        <Link href={product.storeSlug ? `/${product.storeSlug}/${product.slug}` : `/p/${product.slug}`}>
+        <Link href={productHref}>
           <h3 className="font-semibold text-neutral-900 leading-snug line-clamp-2 hover:text-black transition-colors mb-1">
             {product.title}
           </h3>
@@ -93,7 +101,7 @@ function ProductCard({ product }: { product: MarketplaceProduct }) {
 
           {product.affiliateEnabled && commPercent > 0 && (
             <Link
-              href={product.storeSlug ? `/${product.storeSlug}/${product.slug}` : `/p/${product.slug}`}
+              href={productHref}
               className="flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-1 text-[10px] font-bold text-emerald-700 hover:bg-emerald-100 transition-colors"
             >
               <TrendingUp size={9} />
@@ -103,7 +111,7 @@ function ProductCard({ product }: { product: MarketplaceProduct }) {
         </div>
 
         <Link
-          href={product.storeSlug ? `/${product.storeSlug}/${product.slug}` : `/p/${product.slug}`}
+          href={productHref}
           className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl bg-black py-2 text-sm font-semibold text-white hover:bg-neutral-800 transition-colors"
         >
           View Product <ArrowRight size={13} />

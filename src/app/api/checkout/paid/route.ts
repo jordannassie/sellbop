@@ -3,7 +3,8 @@ import Stripe from 'stripe'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { isSupabaseAdminConfigured } from '@/lib/env'
 import { env } from '@/lib/env'
-import { calcPlatformFeeCents } from '@/lib/platform-config'
+import { calculateTransactionFees } from '@/lib/platform-config'
+import { resolveSaleType } from '@/lib/checkout/sale-source'
 import { getEffectiveProductPrice } from '@/lib/pricing/product-price'
 import { fulfillPurchase } from '@/lib/services/purchase-fulfillment'
 
@@ -46,7 +47,7 @@ export async function POST(request: Request) {
   // Load product — server-side price; NEVER trust client
   const { data: product } = await admin
     .from('products')
-    .select('id, store_id, title, price_cents, sale_enabled, sale_price_cents, sale_ends_at, is_live, product_type, affiliate_enabled, affiliate_commission_percent')
+    .select('id, store_id, title, slug, price_cents, sale_enabled, sale_price_cents, sale_ends_at, is_live, product_type, affiliate_enabled, affiliate_commission_percent, marketplace_listing')
     .eq('slug', productSlug.trim())
     .maybeSingle()
 
@@ -102,10 +103,8 @@ export async function POST(request: Request) {
   }
 
   const totalCents = Math.max(0, priceCents - discountCents)
-  const platformFeeCents = calcPlatformFeeCents(totalCents)
-  const appUrl = env.app.url
 
-  // Resolve affiliate attribution before fulfillment / Stripe
+  // Resolve affiliate attribution before fee calculation / Stripe
   let affiliateRelationshipId: string | null = null
   let affiliateCommissionPercent: number | null = null
   if (refCode?.trim() && product.affiliate_enabled) {
@@ -123,6 +122,19 @@ export async function POST(request: Request) {
     }
   }
 
+  const saleType = resolveSaleType({
+    productSlug: product.slug ?? productSlug.trim(),
+    marketplaceListing: product.marketplace_listing ?? false,
+    request,
+  })
+  const fees = calculateTransactionFees({
+    grossAmountCents: totalCents,
+    saleType,
+    affiliateCommissionPercent: affiliateCommissionPercent ?? 0,
+  })
+  const platformFeeCents = fees.sellbopPlatformFeeCents
+  const appUrl = env.app.url
+
   // 100% discount → free fulfillment path (no Stripe $0 line item)
   if (totalCents === 0) {
     const result = await fulfillPurchase({
@@ -136,6 +148,7 @@ export async function POST(request: Request) {
       discountCents,
       totalCents: 0,
       platformFeeCents: 0,
+      saleType,
       paymentStatus: 'paid',
       affiliateRelationshipId,
       affiliateCommissionPercent: affiliateCommissionPercent ?? 0,
@@ -199,6 +212,8 @@ export async function POST(request: Request) {
       subtotal_cents: String(priceCents),
       affiliate_relationship_id: affiliateRelationshipId ?? '',
       affiliate_commission_percent: affiliateCommissionPercent !== null ? String(affiliateCommissionPercent) : '',
+      platform_fee_cents: String(platformFeeCents),
+      sale_source: saleType,
     },
     success_url: `${appUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${appUrl}/p/${productSlug}`,

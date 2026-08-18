@@ -2,7 +2,7 @@ import 'server-only'
 
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { env } from '@/lib/env'
-import { calcPlatformFeeCents } from '@/lib/platform-config'
+import { calculateTransactionFees, type SaleType } from '@/lib/platform-config'
 import { calcCommissionCents, calcAvailableAt } from '@/lib/affiliates'
 import { getPurchaseAccessUrl } from '@/lib/services/purchase-access'
 import {
@@ -23,6 +23,7 @@ export interface FulfillmentContext {
   discountCents?: number
   totalCents: number
   platformFeeCents?: number
+  saleType?: SaleType
   stripeSessionId?: string | null
   stripePaymentIntentId?: string | null
   paymentStatus?: string
@@ -90,7 +91,10 @@ export async function fulfillPurchase(ctx: FulfillmentContext): Promise<Fulfillm
   const totalCents = ctx.totalCents
   const subtotalCents = ctx.subtotalCents
   const discountCents = ctx.discountCents ?? 0
-  const platformFeeCents = ctx.platformFeeCents ?? calcPlatformFeeCents(totalCents)
+  const platformFeeCents = ctx.platformFeeCents ?? calculateTransactionFees({
+    grossAmountCents: totalCents,
+    saleType: ctx.saleType ?? 'direct',
+  }).sellbopPlatformFeeCents
 
   // Idempotency via stripe session
   if (ctx.stripeSessionId) {
@@ -342,6 +346,10 @@ export async function fulfillFromStripeSession(
   const discountCents = parseInt(meta.discount_cents ?? '0', 10)
   const subtotalCents = parseInt(meta.subtotal_cents ?? '0', 10)
   const totalCents = session.amount_total ?? subtotalCents ?? product.price_cents ?? 0
+  const storedPlatformFee = meta.platform_fee_cents
+    ? parseInt(meta.platform_fee_cents, 10)
+    : undefined
+  const saleType = (meta.sale_source === 'marketplace' ? 'marketplace' : 'direct') as SaleType
   const paymentIntentId = typeof session.payment_intent === 'string'
     ? session.payment_intent
     : session.payment_intent?.id ?? null
@@ -356,6 +364,8 @@ export async function fulfillFromStripeSession(
     subtotalCents: subtotalCents > 0 ? subtotalCents : totalCents + discountCents,
     discountCents,
     totalCents,
+    platformFeeCents: Number.isFinite(storedPlatformFee) ? storedPlatformFee : undefined,
+    saleType,
     stripeSessionId: session.id,
     stripePaymentIntentId: paymentIntentId,
     paymentStatus: 'paid',

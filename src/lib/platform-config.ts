@@ -1,22 +1,18 @@
 /**
  * Centralized Sellbop platform configuration.
- * All fee/limit values live here — never scattered throughout the code.
  */
 
-/** Platform fee as a percentage (e.g. 5 = 5%). Set via SELLBOP_PLATFORM_FEE_PERCENT env var. */
-export const SELLBOP_PLATFORM_FEE_PERCENT: number = parseFloat(
-  process.env.SELLBOP_PLATFORM_FEE_PERCENT ?? '5'
-)
-
-/** Calculate the platform fee in cents for a given total. */
-export function calcPlatformFeeCents(totalCents: number): number {
-  return Math.round(totalCents * (SELLBOP_PLATFORM_FEE_PERCENT / 100))
-}
-
-/** Calculate the seller net payout in cents. */
-export function calcSellerNetCents(totalCents: number): number {
-  return totalCents - calcPlatformFeeCents(totalCents)
-}
+export {
+  calcPlatformFeeCents,
+  calcSellerNetCents,
+  calculateTransactionFees,
+  DIRECT_FEE_FIXED_CENTS,
+  DIRECT_FEE_PERCENT,
+  MARKETPLACE_FEE_PERCENT,
+  type FeeCalculationInput,
+  type FeeCalculationResult,
+  type SaleType,
+} from '@/lib/pricing/fee-engine'
 
 /** Maximum file size for product downloads (100 MB). */
 export const MAX_PRODUCT_FILE_SIZE_BYTES = 100 * 1024 * 1024
