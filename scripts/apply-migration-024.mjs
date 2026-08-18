@@ -8,7 +8,7 @@
  *
  * Get DATABASE_URL from Supabase Dashboard → Project Settings → Database → Connection string (URI).
  */
-import { readFileSync } from 'fs'
+import { readFileSync, existsSync } from 'fs'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
 import pg from 'pg'
@@ -16,13 +16,67 @@ import pg from 'pg'
 const { Client } = pg
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const migrationFile = '024_purchase_delivery_and_email.sql'
+const EXPECTED_PROJECT_REF = 'qsvmgzdaashfsavmfjuz'
 
-const databaseUrl = process.env.DATABASE_URL
+function parseEnvFile(path) {
+  if (!existsSync(path)) return {}
+  const vars = {}
+  for (const line of readFileSync(path, 'utf8').split('\n')) {
+    const trimmed = line.trim()
+    if (!trimmed || trimmed.startsWith('#')) continue
+    const idx = trimmed.indexOf('=')
+    if (idx <= 0) continue
+    const key = trimmed.slice(0, idx).trim()
+    let value = trimmed.slice(idx + 1).trim()
+    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1)
+    }
+    vars[key] = value
+  }
+  return vars
+}
+
+function isValidDatabaseUrl(url) {
+  if (!url || typeof url !== 'string') return false
+  if (url.startsWith('No value set')) return false
+  return /^postgres(ql)?:\/\//.test(url) && url.includes('@')
+}
+
+function resolveDatabaseUrl() {
+  const fileVars = {
+    ...parseEnvFile(join(root, '.env')),
+    ...parseEnvFile(join(root, '.env.local')),
+    ...parseEnvFile(join(root, '.env.production')),
+  }
+  const candidates = [
+    process.env.DATABASE_URL,
+    process.env.POSTGRES_URL,
+    process.env.DIRECT_URL,
+    fileVars.DATABASE_URL,
+    fileVars.POSTGRES_URL,
+    fileVars.DIRECT_URL,
+  ].filter(Boolean)
+
+  for (const url of candidates) {
+    if (isValidDatabaseUrl(url)) return url
+  }
+  return null
+}
+
+const databaseUrl = resolveDatabaseUrl()
 if (!databaseUrl) {
-  console.error('Missing DATABASE_URL environment variable.')
-  console.error('Get it from Supabase → Project Settings → Database → Connection string (URI).')
+  console.error('Missing valid DATABASE_URL (postgresql://... with @host).')
+  console.error('Set it in the environment or in .env.local, then run: npm run db:apply-024')
   process.exit(1)
 }
+
+if (!databaseUrl.includes(EXPECTED_PROJECT_REF)) {
+  console.error(`DATABASE_URL does not reference production project ref ${EXPECTED_PROJECT_REF}.`)
+  console.error('Refusing to apply migration to a non-production database.')
+  process.exit(1)
+}
+
+console.log(`Target verified: ${EXPECTED_PROJECT_REF}`)
 
 const sql = readFileSync(join(root, 'supabase/migrations', migrationFile), 'utf8')
 
