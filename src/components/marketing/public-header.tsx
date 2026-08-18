@@ -45,22 +45,23 @@ export function PublicHeader({ activeHref, ctaMode = 'default' }: PublicHeaderPr
   return (
     <>
       <header className="sticky top-0 z-40 border-b border-neutral-100 bg-white/95 backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
+        <div className="mx-auto flex h-14 max-w-7xl items-center px-4 sm:px-6">
           {/* Logo */}
-          <Link href="/" onClick={() => setMenuOpen(false)}>
-            <SellBopLogo size="lg" />
-          </Link>
+          <div className="flex flex-1 items-center">
+            <Link href="/" onClick={() => setMenuOpen(false)}>
+              <SellBopLogo size="lg" />
+            </Link>
+          </div>
 
-          {/* Desktop nav */}
-          <nav className="hidden items-center gap-5 sm:flex">
+          {/* Desktop nav — centered */}
+          <nav className="hidden sm:flex flex-1 items-center justify-center gap-6">
             {navLink('/school', 'School')}
             {navLink('/marketplace', 'Marketplace')}
-            {session && navLink('/dashboard/library', 'Library')}
-            {session && navLink('/dashboard/affiliates', 'Affiliates')}
+            {navLink('/pricing', 'Pricing')}
           </nav>
 
           {/* Right side */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex flex-1 items-center justify-end gap-2 sm:gap-3">
             {session ? (
               <>
                 {hasSeller && (
@@ -177,6 +178,9 @@ export function PublicHeader({ activeHref, ctaMode = 'default' }: PublicHeaderPr
               </Link>
               <Link href="/marketplace" onClick={() => setMenuOpen(false)} className="flex h-11 items-center rounded-xl px-3 text-sm font-medium text-neutral-700 hover:bg-neutral-50 hover:text-black transition-colors">
                 Marketplace
+              </Link>
+              <Link href="/pricing" onClick={() => setMenuOpen(false)} className="flex h-11 items-center rounded-xl px-3 text-sm font-medium text-neutral-700 hover:bg-neutral-50 hover:text-black transition-colors">
+                Pricing
               </Link>
               {session && (
                 <>

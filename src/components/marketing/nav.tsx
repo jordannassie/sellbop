@@ -7,10 +7,14 @@ import { useAuth } from '@/context/auth-context'
 import { Button } from '@/components/ui/button'
 import { SellBopLogoStatic } from '@/components/ui/sellbop-logo'
 
-const LINKS = [
+const CENTER_LINKS = [
   { href: '/school', label: 'School' },
   { href: '/marketplace', label: 'Marketplace' },
   { href: '/pricing', label: 'Pricing' },
+]
+
+const LINKS = [
+  ...CENTER_LINKS,
   { href: '/terms', label: 'Terms' },
   { href: '/privacy', label: 'Privacy' },
   { href: '/support', label: 'Support' },
@@ -23,21 +27,26 @@ export function MarketingNav() {
   return (
     <>
       <header className="fixed top-0 left-0 right-0 z-50 border-b border-neutral-100 bg-white/95 backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
-          <Link href="/" onClick={() => setOpen(false)}>
-            <SellBopLogoStatic size="lg" />
-          </Link>
+        <div className="mx-auto flex h-14 max-w-6xl items-center px-4 sm:px-6">
+          <div className="flex flex-1 items-center">
+            <Link href="/" onClick={() => setOpen(false)}>
+              <SellBopLogoStatic size="lg" />
+            </Link>
+          </div>
 
-          <div className="flex items-center gap-2 sm:gap-3">
-            <Link href="/school" className="hidden text-sm font-medium text-neutral-600 transition-colors hover:text-black sm:block">
-              School
-            </Link>
-            <Link href="/marketplace" className="hidden text-sm font-medium text-neutral-600 transition-colors hover:text-black sm:block">
-              Marketplace
-            </Link>
-            <Link href="/pricing" className="hidden text-sm font-medium text-neutral-600 transition-colors hover:text-black sm:block">
-              Pricing
-            </Link>
+          <nav className="hidden sm:flex flex-1 items-center justify-center gap-6">
+            {CENTER_LINKS.map(link => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="text-sm font-medium text-neutral-600 transition-colors hover:text-black"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+
+          <div className="flex flex-1 items-center justify-end gap-2 sm:gap-3">
             {session ? (
               <Link href="/dashboard">
                 <Button size="sm">Dashboard</Button>
