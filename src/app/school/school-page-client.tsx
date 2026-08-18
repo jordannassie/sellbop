@@ -7,7 +7,7 @@ import { Search, X, GraduationCap, ArrowRight } from 'lucide-react'
 import { PublicHeader } from '@/components/marketing/public-header'
 import { SchoolHero } from '@/components/school/school-hero'
 import { SchoolVideoRow } from '@/components/school/school-video-card'
-import { LaunchOnSellbopSection, ProductVaultSection, AffiliateSection } from '@/components/school/school-native-sections'
+import { LaunchOnSellbopSection } from '@/components/school/school-native-sections'
 import { MyListLink } from '@/components/school/save-lesson-button'
 import { SCHOOL_SECTIONS } from '@/lib/school/defaults'
 import type { SchoolCategory, SchoolLesson } from '@/lib/school/types'
@@ -201,8 +201,6 @@ export default function SchoolPageClient() {
                   })}
 
                   <LaunchOnSellbopSection />
-                  <ProductVaultSection />
-                  <AffiliateSection />
                 </>
               )
             )}

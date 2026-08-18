@@ -203,42 +203,6 @@ export const SCHOOL_SECTIONS: SchoolSection[] = [
   },
 ]
 
-export const AFFILIATE_PLACEHOLDER_LESSONS = [
-  {
-    id: 'affiliate-how-it-works',
-    title: 'How Affiliate Selling Works',
-    description: 'Learn how creators earn commissions by promoting products they believe in.',
-  },
-  {
-    id: 'affiliate-recruit',
-    title: 'How to Recruit Affiliates',
-    description: 'Set a commission, share your link, and let other creators help you sell.',
-  },
-  {
-    id: 'affiliate-promote',
-    title: 'How to Promote Products as an Affiliate',
-    description: 'Find products worth promoting and earn when your audience buys.',
-  },
-]
-
-export const PRODUCT_PLACEHOLDER_CARDS = [
-  {
-    id: 'guide-pdf',
-    title: 'Simple Guide / PDF',
-    description: 'Customize it and make it yours.',
-  },
-  {
-    id: 'workbook-checklist',
-    title: 'Workbook / Checklist',
-    description: 'Turn a useful process into something people can follow.',
-  },
-  {
-    id: 'calculator-template',
-    title: 'Calculator / Template',
-    description: 'Give customers a tool that produces an outcome.',
-  },
-]
-
 export function getFeaturedLesson(lessonsList: SchoolLesson[] = DEFAULT_SCHOOL_LESSONS): SchoolLesson {
   return (
     lessonsList.find(l => l.featured && l.published) ??
