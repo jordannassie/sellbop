@@ -40,7 +40,9 @@ export async function GET(
   const ownership = await verifyProductOwnership(productId, user.id)
   if (!ownership) return NextResponse.json({ error: 'Product not found.' }, { status: 404 })
 
-  const fileId = new URL(request.url).searchParams.get('fileId')
+  const { searchParams } = new URL(request.url)
+  const fileId = searchParams.get('fileId')
+  const preview = searchParams.get('preview') === '1'
   if (!fileId) return NextResponse.json({ error: 'fileId required.' }, { status: 400 })
 
   const admin = getSupabaseAdminClient()
@@ -65,11 +67,10 @@ export async function GET(
     return NextResponse.json({ error: 'File not available.' }, { status: 404 })
   }
 
+  const signedUrlOptions = preview ? undefined : { download: file.file_name }
   const { data: signedData, error: signedErr } = await admin.storage
     .from('product-files')
-    .createSignedUrl(file.storage_path, DOWNLOAD_URL_EXPIRY_SECONDS, {
-      download: file.file_name,
-    })
+    .createSignedUrl(file.storage_path, DOWNLOAD_URL_EXPIRY_SECONDS, signedUrlOptions)
 
   if (signedErr || !signedData?.signedUrl) {
     return NextResponse.json({ error: 'Could not generate download link.' }, { status: 500 })

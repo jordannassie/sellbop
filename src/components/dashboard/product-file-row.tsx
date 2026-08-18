@@ -191,12 +191,23 @@ export function ProductFileRow({
     : null
 
   useEffect(() => {
-    if (localPreviewUrl || isLink || !productId || !fileId || !storagePath) return
+    if (
+      localPreviewUrl ||
+      isLink ||
+      !productId ||
+      !fileId ||
+      !storagePath ||
+      !isPreviewable(fileType, fileName)
+    ) {
+      return
+    }
 
     let cancelled = false
     setPreviewLoading(true)
 
-    fetch(`/api/products/${productId}/files/download?fileId=${encodeURIComponent(fileId)}`)
+    fetch(
+      `/api/products/${productId}/files/download?fileId=${encodeURIComponent(fileId)}&preview=1`,
+    )
       .then(r => (r.ok ? r.json() : null))
       .then(data => {
         if (!cancelled && data?.download_url) setRemotePreviewUrl(data.download_url)
@@ -208,7 +219,7 @@ export function ProductFileRow({
     return () => {
       cancelled = true
     }
-  }, [localPreviewUrl, isLink, productId, fileId, storagePath])
+  }, [localPreviewUrl, isLink, productId, fileId, storagePath, fileType, fileName])
 
   async function handleOpen() {
     if (isLink && fileUrl) {

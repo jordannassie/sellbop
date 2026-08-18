@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
 import { useUserStore } from '@/hooks/use-user-store'
 import { formatCurrency, timeAgo } from '@/lib/utils'
@@ -40,6 +41,7 @@ function ProductRow({
   isFirst: boolean
   isLast: boolean
 }) {
+  const router = useRouter()
   const [deleting, setDeleting] = useState(false)
   const [publishing, setPublishing] = useState(false)
 
@@ -148,17 +150,26 @@ function ProductRow({
       <div className="flex items-center gap-1 sm:gap-3 shrink-0">
         <Toggle checked={p.is_live} onChange={handleTogglePublish} disabled={publishing} />
         {p.is_live && (
-          <Link href={`/p/${p.slug}`} target="_blank" className="hidden sm:block">
-            <Button size="sm" variant="ghost"><ExternalLink size={13} />View</Button>
-          </Link>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="hidden sm:inline-flex"
+            onClick={() => window.open(`/p/${p.slug}`, '_blank', 'noopener,noreferrer')}
+          >
+            <ExternalLink size={13} />View
+          </Button>
         )}
         <Button size="sm" variant="ghost" onClick={handleCopyLink}>
           <Copy size={13} />
           <span className="hidden sm:inline">Copy Link</span>
         </Button>
-        <Link href={`/dashboard/products/${p.id}`}>
-          <Button size="sm" variant="secondary"><Pencil size={13} /><span className="hidden sm:inline">Edit</span></Button>
-        </Link>
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={() => router.push(`/dashboard/products/${p.id}`)}
+        >
+          <Pencil size={13} /><span className="hidden sm:inline">Edit</span>
+        </Button>
         <Button
           size="sm"
           variant="ghost"
