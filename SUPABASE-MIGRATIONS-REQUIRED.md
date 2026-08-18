@@ -22,6 +22,24 @@ Copy and paste the contents of each file into the SQL Editor and click **Run**:
 
 ---
 
+## Step 2 — Purchase delivery (required for access links + email logging)
+
+6. `supabase/migrations/024_purchase_delivery_and_email.sql`
+
+Adds purchase access tokens, refund tracking, and transactional email delivery logging.
+
+**Apply via script (recommended):**
+
+```bash
+DATABASE_URL="postgresql://..." npm run db:apply-024
+```
+
+Get `DATABASE_URL` from Supabase → Project Settings → Database → Connection string (URI, pooler port 6543).
+
+Or paste the file into Supabase SQL Editor and click **Run** (idempotent).
+
+---
+
 ## Required Storage Buckets
 
 After running migration 006, these buckets must exist in **Storage**:
