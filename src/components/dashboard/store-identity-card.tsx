@@ -2,7 +2,6 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { ExternalLink, Layers } from 'lucide-react'
-import { useAuth } from '@/context/auth-context'
 import { useUserStore } from '@/hooks/use-user-store'
 import { cn } from '@/lib/utils'
 
@@ -28,14 +27,13 @@ export function StoreIdentityCard({
   showEditorLink = true,
   className,
 }: StoreIdentityCardProps) {
-  const { session } = useAuth()
   const { store } = useUserStore()
   const [imgError, setImgError] = useState(false)
 
-  const displayName = store?.name ?? session?.name ?? 'My Store'
+  const displayName = store?.name ?? 'My Shop'
   const storeSlug   = store?.slug ?? null
-  const storeUrl    = storeSlug ? `/store/${storeSlug}` : '/dashboard/store'
-  const avatarUrl   = session?.avatarUrl ?? null
+  const storeUrl    = storeSlug ? `/store/${storeSlug}` : '/dashboard/storefront'
+  const avatarUrl   = store?.avatar_url ?? null
   const initial     = displayName.charAt(0).toUpperCase()
   const showActions = showViewStore || showEditorLink
 

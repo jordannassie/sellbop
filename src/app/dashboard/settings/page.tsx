@@ -12,7 +12,7 @@ import { useAuth } from '@/context/auth-context'
 import { useUserStore } from '@/hooks/use-user-store'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { uploadFile, buildStoragePath } from '@/lib/supabase/storage'
-import { Upload, User, Loader2, ExternalLink, X } from 'lucide-react'
+import { Upload, Store, Loader2, ExternalLink, X } from 'lucide-react'
 import { SOCIAL_PLATFORMS, SocialIcon, normalizeSocialUrl } from '@/components/ui/social-icons'
 import {
   isCustomStoreBanner,
@@ -23,21 +23,23 @@ import { PARTNER_SOCIAL_IS_KEY, PARTNER_SOCIAL_SHOW_KEY, partnerFromSocialLinks,
 
 export default function SettingsPage() {
   const router = useRouter()
-  const { session, signOut, updateAvatarUrl } = useAuth()
+  const { session, signOut } = useAuth()
   const { store, saveStore, refetch } = useUserStore()
 
-  // Profile form
-  const [displayName, setDisplayName] = useState('')
-  const [bio, setBio] = useState('')
-  const [supportEmail, setSupportEmail] = useState('')
+  // Shop profile form (active shop only)
   const [storeName, setStoreName] = useState('')
   const [storeSlug, setStoreSlug] = useState('')
-  const [saving, setSaving] = useState(false)
+  const [bio, setBio] = useState('')
+  const [supportEmail, setSupportEmail] = useState('')
+  const [savingShop, setSavingShop] = useState(false)
 
-  // Avatar
-  const [profileAvatar, setProfileAvatar] = useState<string | null>(null)
+  // Shop avatar (stores.avatar_url — independent from account)
+  const [shopAvatar, setShopAvatar] = useState<string | null>(null)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const photoInputRef = useRef<HTMLInputElement>(null)
+
+  // Account identity (read-only display)
+  const [accountName, setAccountName] = useState('')
 
   // Banner
   const [bannerUrl, setBannerUrl] = useState<string | null>(null)
@@ -67,23 +69,39 @@ export default function SettingsPage() {
   const badgeIsPartner = loadingPartnerSettings ? storePartnerStatus.isPartner : isPartner
   const badgeShowPartner = loadingPartnerSettings ? storePartnerStatus.showPartnerBadge : showPartnerBadge
 
+  // Account identity — from auth session + profiles table
   useEffect(() => {
-    setDisplayName(session?.name ?? '')
-    setSupportEmail(session?.email ?? '')
-    if (session?.avatarUrl) setProfileAvatar(session.avatarUrl)
+    if (!session) return
+    setAccountName(session.name ?? '')
+
+    const supabase = getSupabaseBrowserClient()
+    if (!supabase) return
+
+    void supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('user_id', session.userId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.full_name) setAccountName(data.full_name)
+      })
   }, [session])
 
+  // Shop identity — reload when active shop changes
   useEffect(() => {
-    if (store) {
-      setStoreName(store.name ?? '')
-      setStoreSlug(store.slug ?? '')
-      setBio(store.bio ?? '')
-      setSupportEmail(store.support_email ?? session?.email ?? '')
-      if (store.avatar_url) setProfileAvatar(store.avatar_url)
-      setBannerUrl(store.banner_url ?? null)
-      if (store.social_links) setSocialLinks(stripPartnerSocialLinks(store.social_links as Record<string, string>))
+    if (!store) return
+    setStoreName(store.name ?? '')
+    setStoreSlug(store.slug ?? '')
+    setBio(store.bio ?? '')
+    setSupportEmail(store.support_email ?? '')
+    setShopAvatar(store.avatar_url ?? null)
+    setBannerUrl(store.banner_url ?? null)
+    if (store.social_links) {
+      setSocialLinks(stripPartnerSocialLinks(store.social_links as Record<string, string>))
+    } else {
+      setSocialLinks({})
     }
-  }, [store, session?.email])
+  }, [store])
 
   useEffect(() => {
     fetch('/api/profile/partner-badge')
@@ -119,43 +137,28 @@ export default function SettingsPage() {
     }
   }
 
-  async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleShopAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file || !session) return
     if (file.size > 5 * 1024 * 1024) { toast.error('Image must be under 5 MB.'); return }
     setUploadingPhoto(true)
-    const path = buildStoragePath(session.userId, file.name)
+    const path = buildStoragePath(session.userId, `shop-${store?.id ?? 'avatar'}-${file.name}`)
     const result = await uploadFile('store-images', path, file)
-    if (result.error) { toast.error('Upload failed: ' + result.error) }
-    else if (result.url) {
-      setProfileAvatar(result.url)
-      updateAvatarUrl(result.url)
-      // Save to store
-      await saveStore({ avatar_url: result.url })
-      // Save to profile
-      const supabase = getSupabaseBrowserClient()
-      if (supabase) {
-        await supabase.from('profiles').upsert({
-          user_id: session.userId,
-          email: session.email,
-          avatar_url: result.url,
-        })
-        // Also persist into the auth user's own metadata. The sidebar/menu
-        // avatar is derived from session data, and the session gets rebuilt
-        // from this metadata on every auth refresh (tab focus, token
-        // refresh, etc). Without this, those rebuilds fall back to the old/
-        // missing avatar_url and the sidebar reverts to the old photo a few
-        // seconds after upload.
-        await supabase.auth.updateUser({ data: { avatar_url: result.url } })
+    if (result.error) {
+      toast.error('Upload failed: ' + result.error)
+    } else if (result.url) {
+      setShopAvatar(result.url)
+      const err = await saveStore({ avatar_url: result.url })
+      if (err) {
+        toast.error('Photo uploaded but could not save to shop: ' + err)
+      } else {
+        refetch()
+        router.refresh()
+        toast.success('Shop photo updated.')
       }
-      // Force any independently-fetched store state (e.g. the sidebar's own
-      // useUserStore instance, or server-rendered pages) to pick up the
-      // change immediately rather than waiting for their next natural fetch.
-      refetch()
-      router.refresh()
-      toast.success('Profile photo updated.')
     }
     setUploadingPhoto(false)
+    if (photoInputRef.current) photoInputRef.current.value = ''
   }
 
   async function handleBannerUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -163,7 +166,6 @@ export default function SettingsPage() {
     if (!file || !session) return
     if (file.size > 10 * 1024 * 1024) { toast.error('Banner must be under 10 MB.'); return }
 
-    // Guard against blob: or data: URLs slipping through (shouldn't happen with real Supabase)
     setUploadingBanner(true)
     const path = buildStoragePath(session.userId, `banner-${file.name}`)
     const result = await uploadFile('store-banners', path, file)
@@ -171,17 +173,15 @@ export default function SettingsPage() {
     if (result.error) {
       toast.error('Upload failed: ' + result.error)
     } else if (result.url) {
-      // Reject browser-local blob/data URLs — they are not durable
       if (result.url.startsWith('blob:') || result.url.startsWith('data:')) {
         toast.error('Upload did not return a real storage URL. Check Supabase configuration.')
       } else {
         setBannerUrl(result.url)
         const err = await saveStore({ banner_url: result.url })
         if (err) {
-          toast.error('Banner uploaded but could not save to store: ' + err)
+          toast.error('Banner uploaded but could not save to shop: ' + err)
         } else {
           toast.success('Banner updated.')
-          // Refresh store state and bust any server-side page cache
           refetch()
           router.refresh()
         }
@@ -216,7 +216,6 @@ export default function SettingsPage() {
     e.preventDefault()
     setSavingSocial(true)
     try {
-      // Normalize and filter empty entries
       const normalized: Record<string, string> = {}
       for (const [k, v] of Object.entries(socialLinks)) {
         const url = normalizeSocialUrl(v)
@@ -236,37 +235,25 @@ export default function SettingsPage() {
     }
   }
 
-  async function handleSaveProfile(e: React.FormEvent) {
+  async function handleSaveShopProfile(e: React.FormEvent) {
     e.preventDefault()
-    if (!session) return
-    setSaving(true)
+    if (!session || !store) return
+    setSavingShop(true)
     try {
-      const supabase = getSupabaseBrowserClient()
-      if (supabase) {
-        await supabase.from('profiles').upsert({
-          user_id: session.userId,
-          email: session.email,
-          full_name: displayName.trim() || null,
-          avatar_url: profileAvatar,
-        })
-      }
-
       const storeErr = await saveStore({
-        name: storeName.trim() || displayName.trim(),
+        name: storeName.trim(),
         bio: bio.trim() || null,
-        support_email: supportEmail.trim() || session.email,
-        // Always re-affirm banner_url so clicking Save Store never accidentally
-        // clears a banner that was set independently by handleBannerUpload.
+        support_email: supportEmail.trim() || null,
         banner_url: bannerUrl,
       })
       if (storeErr) throw new Error(storeErr)
       refetch()
       router.refresh()
-      toast.success('Profile saved.')
+      toast.success('Shop profile saved.')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to save.')
     } finally {
-      setSaving(false)
+      setSavingShop(false)
     }
   }
 
@@ -300,33 +287,34 @@ export default function SettingsPage() {
   const storeUrl = store?.slug ? `/${store.slug}` : null
   const displayBannerUrl = resolveStoreBannerUrl(bannerUrl)
   const usingCustomBanner = isCustomStoreBanner(bannerUrl)
+  const shopInitial = (storeName.charAt(0) || 'S').toUpperCase()
 
   return (
     <div className="max-w-2xl">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-black">Settings</h1>
-        <p className="text-sm text-neutral-500 mt-1">Manage your profile, store, and account.</p>
+        <p className="text-sm text-neutral-500 mt-1">Manage your Shop and SellBop account.</p>
       </div>
 
       <div className="space-y-5">
-        {/* Profile */}
+        {/* Shop Profile */}
         <Card>
           <CardHeader>
-            <CardTitle>Profile</CardTitle>
+            <CardTitle>Shop Profile</CardTitle>
+            <p className="text-sm text-neutral-500 mt-1">Manage how this Shop appears to customers.</p>
           </CardHeader>
           <CardContent>
-            {/* Avatar */}
             <div className="flex items-center gap-4 mb-6">
               <AvatarWithPartnerBadge
                 isPartner={badgeIsPartner}
                 showPartnerBadge={badgeShowPartner}
               >
                 <div className="w-16 h-16 rounded-full bg-neutral-100 overflow-hidden flex items-center justify-center">
-                  {profileAvatar ? (
+                  {shopAvatar ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={profileAvatar} alt="Profile" className="w-full h-full object-cover" />
+                    <img src={shopAvatar} alt={storeName || 'Shop'} className="w-full h-full object-cover" />
                   ) : (
-                    <User size={22} className="text-neutral-400" />
+                    <span className="text-lg font-bold text-neutral-500">{shopInitial}</span>
                   )}
                 </div>
               </AvatarWithPartnerBadge>
@@ -340,38 +328,56 @@ export default function SettingsPage() {
                   {uploadingPhoto ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
                   {uploadingPhoto ? 'Uploading…' : 'Change photo'}
                 </Button>
-                <p className="text-xs text-neutral-400 mt-1">JPG, PNG · Max 5 MB</p>
+                <p className="text-xs text-neutral-400 mt-1">Shop photo · JPG, PNG · Max 5 MB</p>
               </div>
               <input
                 ref={photoInputRef}
                 type="file"
                 accept="image/*"
                 className="hidden"
-                onChange={handleAvatarUpload}
+                onChange={handleShopAvatarUpload}
               />
             </div>
 
-            <form onSubmit={handleSaveProfile} className="space-y-4">
+            <form onSubmit={handleSaveShopProfile} className="space-y-4">
               <Input
-                label="Display Name"
-                value={displayName}
-                onChange={e => setDisplayName(e.target.value)}
-                placeholder="Your name"
+                label="Shop Name"
+                value={storeName}
+                onChange={e => setStoreName(e.target.value)}
+                placeholder="Jessica Fitness"
               />
+              <div>
+                <label className="block text-xs font-medium text-neutral-500 mb-1">Shop URL</label>
+                <div className="flex items-center rounded-xl border border-neutral-200 overflow-hidden">
+                  <span className="px-3 py-2.5 text-sm text-neutral-500 bg-neutral-50 border-r border-neutral-200 shrink-0">
+                    sellbop.com/
+                  </span>
+                  <span className="px-3 py-2.5 text-sm font-mono text-neutral-700">{storeSlug || '—'}</span>
+                </div>
+                <p className="text-xs text-neutral-400 mt-1">Your shop URL is set when the Shop is created.</p>
+              </div>
+              {storeUrl && (
+                <a href={storeUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-neutral-600 hover:text-black transition-colors">
+                  View your shop <ExternalLink size={13} />
+                </a>
+              )}
               <Input
-                label="Bio"
+                label="Shop Bio"
                 value={bio}
                 onChange={e => setBio(e.target.value)}
-                placeholder="A short description about you"
+                placeholder="A short description about this shop"
               />
               <Input
                 label="Support Email"
                 type="email"
                 value={supportEmail}
                 onChange={e => setSupportEmail(e.target.value)}
-                placeholder="support@yourstore.com"
+                placeholder="support@yourshop.com"
               />
-              <Button type="submit" loading={saving}>Save Profile</Button>
+              <p className="text-xs text-neutral-400 -mt-2">
+                Customers use this email to contact this Shop. It does not change your SellBop login email.
+              </p>
+              <Button type="submit" loading={savingShop}>Save Shop Profile</Button>
             </form>
           </CardContent>
         </Card>
@@ -394,7 +400,7 @@ export default function SettingsPage() {
                     disabled={savingPartnerBadge}
                   />
                   <p className="mt-2 text-xs text-neutral-500">
-                    Display your SellBop Partner badge on your public profile.
+                    Display your SellBop Partner badge on your public shop profile.
                   </p>
                 </div>
               </div>
@@ -402,21 +408,23 @@ export default function SettingsPage() {
           </Card>
         )}
 
-        {/* Store */}
+        {/* Shop Banner */}
         <Card>
           <CardHeader>
-            <CardTitle>Store</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Store size={16} />
+              Shop Banner
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
-            {/* Banner image */}
             <div>
-              <label className="block text-xs font-medium text-neutral-500 mb-2">Store Banner</label>
+              <label className="block text-xs font-medium text-neutral-500 mb-2">Banner Image</label>
               <div
                 className={`relative w-full rounded-xl overflow-hidden border border-neutral-200 mb-2 ${STORE_BANNER_BG_CLASS}`}
                 style={{ aspectRatio: '4/1' }}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={displayBannerUrl} alt="Store banner" className="w-full h-full object-cover" />
+                <img src={displayBannerUrl} alt="Shop banner" className="w-full h-full object-cover" />
                 {usingCustomBanner && (
                   <button
                     onClick={handleRemoveBanner}
@@ -457,31 +465,6 @@ export default function SettingsPage() {
                 onChange={handleBannerUpload}
               />
             </div>
-
-            <form onSubmit={handleSaveProfile} className="space-y-4">
-              <Input
-                label="Store Name"
-                value={storeName}
-                onChange={e => setStoreName(e.target.value)}
-                placeholder="My Awesome Store"
-              />
-              <div>
-                <label className="block text-xs font-medium text-neutral-500 mb-1">Store URL</label>
-                <div className="flex items-center rounded-xl border border-neutral-200 overflow-hidden">
-                  <span className="px-3 py-2.5 text-sm text-neutral-500 bg-neutral-50 border-r border-neutral-200 shrink-0">
-                    sellbop.com/
-                  </span>
-                  <span className="px-3 py-2.5 text-sm font-mono text-neutral-700">{storeSlug || '—'}</span>
-                </div>
-                <p className="text-xs text-neutral-400 mt-1">Your store URL. Slug is set during setup.</p>
-              </div>
-              {storeUrl && (
-                <a href={storeUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-neutral-600 hover:text-black transition-colors">
-                  View your store <ExternalLink size={13} />
-                </a>
-              )}
-              <Button type="submit" loading={saving}>Save Store</Button>
-            </form>
           </CardContent>
         </Card>
 
@@ -491,7 +474,7 @@ export default function SettingsPage() {
             <CardTitle>Social Links</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-xs text-neutral-400 mb-4">Add links to your social profiles. Only platforms you fill in will appear on your storefront.</p>
+            <p className="text-xs text-neutral-400 mb-4">Add links to this Shop&apos;s social profiles. Only platforms you fill in will appear on your storefront.</p>
             <form onSubmit={handleSaveSocial} className="space-y-3">
               {SOCIAL_PLATFORMS.map(platform => (
                 <div key={platform.key} className="flex items-center gap-3">
@@ -522,11 +505,17 @@ export default function SettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle>Account</CardTitle>
+            <p className="text-sm text-neutral-500 mt-1">Your SellBop login and account information.</p>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-neutral-500 mb-1">Email</label>
+              <label className="block text-xs font-medium text-neutral-500 mb-1">Account Name</label>
+              <p className="text-sm text-neutral-700">{accountName || session?.email?.split('@')[0] || '—'}</p>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-neutral-500 mb-1">Login Email</label>
               <p className="text-sm text-neutral-700">{session?.email}</p>
+              <p className="text-xs text-neutral-400 mt-1">This is the email you use to sign into SellBop.</p>
             </div>
 
             <form onSubmit={handleChangePassword} className="space-y-3 pt-2 border-t border-neutral-100">
@@ -558,7 +547,7 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent className="flex items-center justify-between">
             <p className="text-sm text-neutral-600">
-              Let Claude and other AI tools create and manage products in your store.
+              Let Claude and other AI tools create and manage products in your shop.
             </p>
             <Button size="sm" variant="secondary" onClick={() => router.push('/dashboard/settings/ai-integrations')}>
               Manage

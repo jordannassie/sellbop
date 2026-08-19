@@ -148,19 +148,6 @@ export function DashboardSidebar() {
 
   const storeHref = store?.slug ? `/store/${store.slug}` : null
 
-  const accountBlock = session && (
-    <div className="px-4 py-3 border-b border-neutral-100">
-      <p className="text-[11px] text-neutral-400 text-center truncate">{session.email}</p>
-      <button
-        type="button"
-        onClick={handleLogout}
-        className="mt-2 mx-auto flex items-center gap-1.5 text-xs font-medium text-neutral-400 transition-colors hover:text-red-600 lg:hidden"
-      >
-        <LogOut size={12} /> Log out
-      </button>
-    </div>
-  )
-
   const shopBlock = hasStore && stores.length > 0 && (
     <ShopSwitcher
       stores={stores}
@@ -265,15 +252,15 @@ export function DashboardSidebar() {
 
       <aside
         className={cn(
-          'fixed bottom-0 right-0 top-14 z-40 flex w-72 translate-x-full flex-col overflow-y-auto border-l border-neutral-100 bg-white shadow-xl transition-transform duration-200 ease-out pb-16 lg:hidden',
+          'fixed bottom-0 right-0 top-14 z-40 flex w-72 translate-x-full flex-col overflow-y-auto border-l border-neutral-100 bg-white shadow-xl transition-transform duration-200 ease-out lg:hidden',
           mobileOpen && 'translate-x-0',
         )}
         aria-hidden={!mobileOpen}
       >
         {shopBlock}
-        {accountBlock}
         {createBtn(() => setMobileOpen(false))}
         {navLinks(() => setMobileOpen(false))}
+        {logoutBtn}
       </aside>
 
       <aside className="hidden min-h-screen w-56 shrink-0 flex-col border-r border-neutral-100 bg-white lg:flex">
@@ -281,7 +268,6 @@ export function DashboardSidebar() {
           <SellBopLogo size="lg" />
         </div>
         {shopBlock}
-        {accountBlock}
         {createBtn()}
         {navLinks()}
         {logoutBtn}

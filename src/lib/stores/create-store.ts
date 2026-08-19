@@ -10,6 +10,7 @@ export interface CreateStoreInput {
   name: string
   slug?: string
   avatarUrl?: string | null
+  supportEmail?: string | null
 }
 
 export interface CreateStoreResult {
@@ -90,6 +91,7 @@ export async function createStoreForUser(
       name,
       banner_url: DEFAULT_STORE_BANNER_URL,
       avatar_url: input.avatarUrl ?? null,
+      support_email: input.supportEmail ?? null,
     })
     .select('*')
     .single()

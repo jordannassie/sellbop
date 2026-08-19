@@ -80,7 +80,13 @@ export async function ensureUserStore(
   const storeName = name ?? email.split('@')[0]
   const { data: created, error: createErr } = await supabase
     .from('stores')
-    .insert({ owner_user_id: userId, slug, name: storeName, banner_url: DEFAULT_STORE_BANNER_URL })
+    .insert({
+      owner_user_id: userId,
+      slug,
+      name: storeName,
+      banner_url: DEFAULT_STORE_BANNER_URL,
+      support_email: email,
+    })
     .select('*')
     .single()
 

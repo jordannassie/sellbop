@@ -56,6 +56,7 @@ export async function POST(request: Request) {
       name,
       slug: body.slug?.trim(),
       avatarUrl: user.user_metadata?.avatar_url ?? user.user_metadata?.picture ?? null,
+      supportEmail: user.email ?? null,
     })
 
     return NextResponse.json({

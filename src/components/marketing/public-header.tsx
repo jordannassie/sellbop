@@ -24,7 +24,7 @@ export function PublicHeader({ activeHref, ctaMode = 'default' }: PublicHeaderPr
   const [userMenuOpen, setUserMenuOpen] = useState(false)
 
   const hasSeller = !!store?.slug && store.slug !== 'demo-seller'
-  const avatarUrl = store?.avatar_url ?? session?.avatarUrl ?? null
+  const avatarUrl = session?.avatarUrl ?? null
   const partnerStatus = partnerFromSocialLinks(
     (store?.social_links as Record<string, string> | null) ?? null,
   )
