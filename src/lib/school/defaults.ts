@@ -1,6 +1,5 @@
 import type { SchoolLesson, SchoolSection } from './types'
 import { normalizeLesson, youtubeWatchUrl } from './utils'
-import { HOME_SCHOOL_LESSON_FULL } from './home-feature'
 
 const lessons: SchoolLesson[] = [
   {
@@ -174,7 +173,6 @@ const lessons: SchoolLesson[] = [
     published: true,
     section_id: 'sell-it',
   },
-  HOME_SCHOOL_LESSON_FULL,
 ]
 
 export const DEFAULT_SCHOOL_LESSONS: SchoolLesson[] = lessons.map(normalizeLesson)
@@ -184,7 +182,7 @@ export const SCHOOL_SECTIONS: SchoolSection[] = [
     id: 'start-here',
     heading: 'Start Here',
     description: 'Understand the digital-product opportunity before you build anything.',
-    lessonIds: ['how-digital-product-business-works', 'complete-digital-product-roadmap', 'successful-digital-products-common'],
+    lessonIds: ['how-digital-product-business-works', 'complete-digital-product-roadmap', 'successful-digital-products-common', 'power-of-one-great-product'],
   },
   {
     id: 'find-product',
@@ -196,7 +194,7 @@ export const SCHOOL_SECTIONS: SchoolSection[] = [
     id: 'create-it',
     heading: 'Create Your Product Faster',
     description: 'Use AI to turn a useful idea into a real product without spending weeks building it.',
-    lessonIds: ['ai-create-product-faster', 'building-digital-products-claude', 'complete-digital-product-roadmap', 'recreate-winning-product-with-ai'],
+    lessonIds: ['ai-create-product-faster', 'building-digital-products-claude', 'complete-digital-product-roadmap'],
   },
   {
     id: 'sell-it',
