@@ -9,6 +9,7 @@
     "lint": "eslint",
     "db:apply-migrations": "node scripts/apply-migrations.mjs",
     "db:apply-024": "node scripts/apply-migration-024.mjs",
+    "db:apply-025": "node scripts/apply-migration-025.mjs",
     "test:agent": "node scripts/agent-acceptance-test.mjs",
     "test:fees": "node scripts/test-fee-engine.mjs"
   },

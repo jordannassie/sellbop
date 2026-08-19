@@ -26,6 +26,8 @@ export interface AdminUserSummary {
   totalSpentCents: number
   totalSalesCents: number
   lastPurchaseAt: string | null
+  isPartner: boolean
+  showPartnerBadge: boolean
 }
 
 export interface AdminOverviewData {
@@ -90,7 +92,7 @@ export async function getAdminUsers(options?: AdminPaginationParams) {
     productCountByStore.set(product.store_id, (productCountByStore.get(product.store_id) ?? 0) + 1)
   }
 
-  const aggregateByUserId = new Map<string, Omit<AdminUserSummary, 'email' | 'fullName' | 'avatarUrl' | 'createdAt' | 'emailVerified'>>()
+  const aggregateByUserId = new Map<string, Omit<AdminUserSummary, 'email' | 'fullName' | 'avatarUrl' | 'createdAt' | 'emailVerified' | 'isPartner' | 'showPartnerBadge'>>()
 
   for (const profile of profilesResult.data ?? []) {
     const store = storesByOwner.get(profile.user_id)
@@ -160,6 +162,8 @@ export async function getAdminUsers(options?: AdminPaginationParams) {
       avatarUrl: profile.avatar_url,
       createdAt: profile.created_at,
       emailVerified: null,
+      isPartner: profile.is_partner === true,
+      showPartnerBadge: profile.show_partner_badge !== false,
       ...aggregate,
     }
   })

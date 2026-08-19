@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import type { AdminUserSummary } from '@/lib/admin/users'
+import { PARTNER_BADGE_BLUE } from '@/lib/partner-badge'
 import { formatCurrency } from '@/lib/utils'
+import { PartnerBadgeIcon } from '@/components/ui/partner-badge-icon'
 import { AdminEmptyState, AdminFilterBar, AdminPagination, AdminTD, AdminTH } from '@/components/admin/admin-table'
 
 const AVATAR_COLORS = [
@@ -84,6 +86,7 @@ export function UsersSection({
                 <AdminTH>User</AdminTH>
                 <AdminTH>Email</AdminTH>
                 <AdminTH>Seller</AdminTH>
+                <AdminTH>Partner</AdminTH>
                 <AdminTH>Buyer</AdminTH>
                 <AdminTH>Products</AdminTH>
                 <AdminTH>Orders</AdminTH>
@@ -93,12 +96,22 @@ export function UsersSection({
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-50">
-              {users.length === 0 && <AdminEmptyState label="users" colSpan={9} />}
+              {users.length === 0 && <AdminEmptyState label="users" colSpan={10} />}
               {users.map((user) => (
                 <tr key={user.userId} className="transition-colors hover:bg-neutral-50">
                   <AdminTD><UserLink user={user} /></AdminTD>
                   <AdminTD className="whitespace-nowrap text-neutral-500">{user.email}</AdminTD>
                   <AdminTD>{user.isSeller ? 'Yes' : 'No'}</AdminTD>
+                  <AdminTD>
+                    {user.isPartner ? (
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold" style={{ color: PARTNER_BADGE_BLUE }}>
+                        <PartnerBadgeIcon size={14} />
+                        Partner ✓
+                      </span>
+                    ) : (
+                      <span className="text-xs text-neutral-400">—</span>
+                    )}
+                  </AdminTD>
                   <AdminTD>{user.isBuyer ? 'Yes' : 'No'}</AdminTD>
                   <AdminTD>{user.productCount}</AdminTD>
                   <AdminTD>{user.orderCount}</AdminTD>

@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowLeft, ExternalLink } from 'lucide-react'
+import { PartnerStatusControl } from '@/components/admin/partner-status-control'
 import { requireAdminUser } from '@/lib/admin/access'
 import { getAdminUserDetail } from '@/lib/admin/users'
 import { formatCurrency, formatDate } from '@/lib/utils'
@@ -46,11 +47,14 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
         <p className="mt-1 text-sm text-neutral-500">{user.email}</p>
       </div>
 
+      <PartnerStatusControl userId={user.userId} initialIsPartner={user.isPartner} />
+
       <Section title="Profile">
         <Row label="Full name" value={user.fullName ?? '—'} />
         <Row label="Email" value={user.email} />
         <Row label="Joined" value={formatDate(user.createdAt)} />
         <Row label="Is seller" value={user.isSeller ? 'Yes' : 'No'} />
+        <Row label="SellBop Partner" value={user.isPartner ? 'Yes' : 'No'} />
         <Row label="Is buyer" value={user.isBuyer ? 'Yes' : 'No'} />
         <Row label="Total spent" value={formatCurrency(user.totalSpentCents)} />
         <Row label="Total sales" value={formatCurrency(user.totalSalesCents)} />

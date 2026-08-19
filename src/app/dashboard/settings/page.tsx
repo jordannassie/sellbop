@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Toggle } from '@/components/ui/toggle'
+import { PartnerBadgeIcon } from '@/components/ui/partner-badge-icon'
 import { toast } from 'sonner'
 import { useAuth } from '@/context/auth-context'
 import { useUserStore } from '@/hooks/use-user-store'
@@ -51,6 +53,12 @@ export default function SettingsPage() {
   // Danger
   const [deletingAccount, setDeletingAccount] = useState(false)
 
+  // Partner badge
+  const [isPartner, setIsPartner] = useState(false)
+  const [showPartnerBadge, setShowPartnerBadge] = useState(true)
+  const [loadingPartnerSettings, setLoadingPartnerSettings] = useState(true)
+  const [savingPartnerBadge, setSavingPartnerBadge] = useState(false)
+
   useEffect(() => {
     setDisplayName(session?.name ?? '')
     setSupportEmail(session?.email ?? '')
@@ -68,6 +76,39 @@ export default function SettingsPage() {
       if (store.social_links) setSocialLinks(store.social_links as Record<string, string>)
     }
   }, [store, session?.email])
+
+  useEffect(() => {
+    fetch('/api/profile/partner-badge')
+      .then(r => r.ok ? r.json() : null)
+      .then((data: { isPartner?: boolean; showPartnerBadge?: boolean } | null) => {
+        if (data) {
+          setIsPartner(Boolean(data.isPartner))
+          setShowPartnerBadge(data.showPartnerBadge !== false)
+        }
+      })
+      .catch(() => { /* non-partner or unavailable */ })
+      .finally(() => setLoadingPartnerSettings(false))
+  }, [])
+
+  async function handlePartnerBadgeToggle(next: boolean) {
+    setSavingPartnerBadge(true)
+    try {
+      const res = await fetch('/api/profile/partner-badge', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ showPartnerBadge: next }),
+      })
+      const data = await res.json() as { showPartnerBadge?: boolean; error?: string }
+      if (!res.ok) throw new Error(data.error ?? 'Failed to update partner badge.')
+      setShowPartnerBadge(data.showPartnerBadge !== false)
+      toast.success(next ? 'Partner badge enabled.' : 'Partner badge hidden.')
+      router.refresh()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to update partner badge.')
+    } finally {
+      setSavingPartnerBadge(false)
+    }
+  }
 
   async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -319,6 +360,32 @@ export default function SettingsPage() {
             </form>
           </CardContent>
         </Card>
+
+        {isPartner && !loadingPartnerSettings && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <PartnerBadgeIcon size={18} />
+                Partner Badge
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <Toggle
+                    checked={showPartnerBadge}
+                    onChange={handlePartnerBadgeToggle}
+                    label="Show Partner Badge"
+                    disabled={savingPartnerBadge}
+                  />
+                  <p className="mt-2 text-xs text-neutral-500">
+                    Display your SellBop Partner badge on your public profile.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Store */}
         <Card>

@@ -12,6 +12,7 @@ import {
 import { isSupabaseConfigured } from '@/lib/env'
 import { resolveStoreBannerUrl, STORE_BANNER_BG_CLASS } from '@/lib/store-defaults'
 import { SocialIcon, SOCIAL_PLATFORMS } from '@/components/ui/social-icons'
+import { AvatarWithPartnerBadge } from '@/components/ui/avatar-with-partner-badge'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -23,6 +24,8 @@ interface StoreData {
   avatar_url: string | null
   banner_url: string | null
   social_links: Record<string, string> | null
+  is_partner?: boolean
+  show_partner_badge?: boolean
 }
 
 interface ProductCard {
@@ -292,36 +295,44 @@ export function ClientStorefront({ slug }: { slug: string }) {
         </div>
 
         {/* Avatar — absolutely positioned over banner, 75% inside / 25% below */}
-        <div
+        <AvatarWithPartnerBadge
+          isPartner={store.is_partner}
+          showPartnerBadge={store.show_partner_badge}
+          className="absolute z-20"
           style={{
-            position: 'absolute',
             bottom: 0,
             left: '50%',
             transform: 'translate(-50%, 25%)',
-            zIndex: 20,
             width: 'clamp(120px, 14vw, 152px)',
             height: 'clamp(120px, 14vw, 152px)',
-            borderRadius: '50%',
-            overflow: 'hidden',
-            border: '5px solid white',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-            background: '#f0f0f0',
-            flexShrink: 0,
-          }}
+          } as React.CSSProperties}
         >
-          {store.avatar_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={store.avatar_url}
-              alt={store.name}
-              style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
-            />
-          ) : (
-            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#e5e5e5' }}>
-              <User size={40} className="text-neutral-400" />
-            </div>
-          )}
-        </div>
+          <div
+            style={{
+              width: '100%',
+              height: '100%',
+              borderRadius: '50%',
+              overflow: 'hidden',
+              border: '5px solid white',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+              background: '#f0f0f0',
+              flexShrink: 0,
+            }}
+          >
+            {store.avatar_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={store.avatar_url}
+                alt={store.name}
+                style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
+              />
+            ) : (
+              <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#e5e5e5' }}>
+                <User size={40} className="text-neutral-400" />
+              </div>
+            )}
+          </div>
+        </AvatarWithPartnerBadge>
       </div>
 
       {/* ── Creator info — white section below banner ─────────────────── */}

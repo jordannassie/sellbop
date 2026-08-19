@@ -28,13 +28,19 @@ export async function GET(
 
   // Fallback: resolve avatar from profiles if store.avatar_url is null
   let avatarUrl = store.avatar_url
-  if (!avatarUrl && store.owner_user_id) {
+  let isPartner = false
+  let showPartnerBadge = false
+  if (store.owner_user_id) {
     const { data: profile } = await admin
       .from('profiles')
-      .select('avatar_url')
+      .select('avatar_url, is_partner, show_partner_badge')
       .eq('user_id', store.owner_user_id)
       .maybeSingle()
-    avatarUrl = profile?.avatar_url ?? null
+    if (!avatarUrl) avatarUrl = profile?.avatar_url ?? null
+    if (profile) {
+      isPartner = profile.is_partner === true
+      showPartnerBadge = profile.show_partner_badge !== false
+    }
   }
 
   // Extract banner and social links from the single query result
@@ -90,7 +96,14 @@ export async function GET(
 
   return NextResponse.json(
     {
-      store: { ...store, avatar_url: avatarUrl, banner_url: bannerUrl, social_links: socialLinks },
+      store: {
+        ...store,
+        avatar_url: avatarUrl,
+        banner_url: bannerUrl,
+        social_links: socialLinks,
+        is_partner: isPartner,
+        show_partner_badge: showPartnerBadge,
+      },
       products: enrichedProducts,
       hasAffiliateProducts,
     },

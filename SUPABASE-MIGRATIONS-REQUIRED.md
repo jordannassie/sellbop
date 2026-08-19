@@ -40,6 +40,22 @@ Or paste the file into Supabase SQL Editor and click **Run** (idempotent).
 
 ---
 
+## Step 3 — SellBop Partner Badge
+
+7. `supabase/migrations/025_partner_badge.sql`
+
+Adds `profiles.is_partner` (admin-only) and `profiles.show_partner_badge` (user preference), plus a trigger that prevents users from self-granting partner status.
+
+**Apply via script (recommended):**
+
+```bash
+DATABASE_URL="postgresql://..." npm run db:apply-025
+```
+
+Or paste the file into Supabase SQL Editor and click **Run** (idempotent).
+
+---
+
 ## Required Storage Buckets
 
 After running migration 006, these buckets must exist in **Storage**:
