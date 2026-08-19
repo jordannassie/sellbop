@@ -1,18 +1,16 @@
 import Image from 'next/image'
-import { Check } from 'lucide-react'
+import { BadgeCheck, Check } from 'lucide-react'
 import { SellBopLogo } from '@/components/ui/sellbop-logo'
-import { HERO_FACEPILE_PHOTOS } from '@/lib/demo-avatars'
 
-// AI-powered selling promo — practical creator benefits
 const BENEFITS = [
-  'Build digital products faster with Claude',
-  'Create product images and content with Higgsfield',
-  'Launch your store with no monthly fee',
-  'Sell digital products directly to buyers',
-  'Let affiliates help promote your products',
+  'Your branded digital storefront',
+  'Premium PDFs, guides, workbooks & products',
+  'SellBop handles checkout and delivery',
+  'Built-in affiliate infrastructure',
+  'Revenue-share partnership',
 ]
 
-const PROMO_PHOTO = 'https://qsvmgzdaashfsavmfjuz.supabase.co/storage/v1/object/public/SELL/images/0_3.jpg'
+const PARTNER_IMAGE = 'https://qsvmgzdaashfsavmfjuz.supabase.co/storage/v1/object/public/SELL/images/Partner.png'
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -37,17 +35,17 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           lg:mx-0 lg:mb-0 lg:rounded-none lg:w-[460px] lg:shrink-0 lg:overflow-y-auto
         ">
 
-          {/* Hero photo */}
-          <div className="relative w-full h-52 lg:h-64 shrink-0">
+          {/* Partner image */}
+          <div className="relative w-full h-52 lg:h-64 shrink-0 bg-neutral-950">
             <Image
-              src={PROMO_PHOTO}
-              alt="Creator community on SellBop"
+              src={PARTNER_IMAGE}
+              alt="SellBop Partner — verified creator with premium digital products"
               fill
-              className="object-cover object-center"
+              className="object-contain object-center px-4 pt-4 pb-0"
               sizes="460px"
               priority
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-neutral-950/30 via-neutral-950/50 to-neutral-950" />
+            <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-neutral-950 to-transparent" />
           </div>
 
           {/* Copy */}
@@ -56,15 +54,16 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
               {/* Eyebrow */}
               <div className="inline-flex items-center gap-2 bg-white/10 text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full mb-5 self-start">
                 <span className="w-1.5 h-1.5 bg-green-400 rounded-full flex-shrink-0" />
-                AI-Powered Selling
+                SellBop Partnerships
               </div>
 
               <h2 className="text-2xl sm:text-[28px] font-black text-white leading-tight mb-2">
-                Use Claude + Higgsfield to build your digital store
+                You Bring the Audience.<br />
+                We Build the Business.
               </h2>
 
               <p className="text-neutral-400 text-sm leading-relaxed mb-6">
-                Create digital products with Claude, generate creative assets with Higgsfield, and use SellBop to launch your store, sell your products, and grow with affiliates.
+                SellBop partners with creators to build premium digital product businesses around their brand. We create the store, products, checkout, delivery, and affiliate system — then share the revenue.
               </p>
 
               {/* Benefits — no Founder badge */}
@@ -80,24 +79,15 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
               </ul>
             </div>
 
-            {/* Social proof facepile */}
+            {/* Partner positioning */}
             <div className="mt-7 pt-6 border-t border-white/10">
-              <div className="flex -space-x-2.5 mb-3">
-                {HERO_FACEPILE_PHOTOS.slice(0, 5).map((url, i) => (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    key={i}
-                    src={url}
-                    alt=""
-                    width={30}
-                    height={30}
-                    className="w-7 h-7 rounded-full border-2 border-neutral-950 object-cover bg-neutral-800"
-                  />
-                ))}
+              <div className="inline-flex items-center gap-2 rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1.5 mb-3">
+                <BadgeCheck size={14} className="text-green-400 flex-shrink-0" />
+                <span className="text-[11px] font-bold text-green-400 uppercase tracking-wide">SellBop Partner</span>
               </div>
               <p className="text-xs text-neutral-400 leading-relaxed">
-                <span className="text-white font-semibold">Creators are already building with AI</span>
-                {' '}— launch your store and start selling
+                <span className="text-white font-semibold">Built for creators who already have an audience.</span>
+                {' '}You focus on your community. SellBop builds the digital product business behind it.
               </p>
             </div>
           </div>
