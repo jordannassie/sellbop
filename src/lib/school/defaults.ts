@@ -1,4 +1,4 @@
-import type { SchoolLesson, SchoolSection } from './types'
+import type { SchoolCategory, SchoolLesson, SchoolSection } from './types'
 import { normalizeLesson, youtubeWatchUrl } from './utils'
 
 const lessons: SchoolLesson[] = [
@@ -173,6 +173,26 @@ const lessons: SchoolLesson[] = [
     published: true,
     section_id: 'sell-it',
   },
+  {
+    id: 'recreate-winning-product-with-ai',
+    title: 'Recreate a Winning Product With AI',
+    original_video_title:
+      '$354,000 from ONE Digital Product??? Watch me Recreate it with AI in Minutes!',
+    creator: 'Make Money with Stacy La',
+    youtube_url: youtubeWatchUrl('ju7zG9bdhv4'),
+    youtube_video_id: 'ju7zG9bdhv4',
+    thumbnail_url: null,
+    duration: '15 min',
+    categories: ['create-it', 'ai', 'sell-it'] satisfies SchoolCategory[],
+    description:
+      'Watch a real high-performing digital product get recreated step by step using AI — from research to a sellable offer.',
+    why_recommend:
+      'Stacy La breaks down a product that generated hundreds of thousands in sales and shows how modern AI tools can speed up the creation process.',
+    featured: false,
+    sort_order: 10,
+    published: true,
+    section_id: 'create-it',
+  },
 ]
 
 export const DEFAULT_SCHOOL_LESSONS: SchoolLesson[] = lessons.map(normalizeLesson)
@@ -182,7 +202,7 @@ export const SCHOOL_SECTIONS: SchoolSection[] = [
     id: 'start-here',
     heading: 'Start Here',
     description: 'Understand the digital-product opportunity before you build anything.',
-    lessonIds: ['how-digital-product-business-works', 'complete-digital-product-roadmap', 'successful-digital-products-common', 'power-of-one-great-product'],
+    lessonIds: ['how-digital-product-business-works', 'complete-digital-product-roadmap', 'successful-digital-products-common'],
   },
   {
     id: 'find-product',
@@ -194,7 +214,7 @@ export const SCHOOL_SECTIONS: SchoolSection[] = [
     id: 'create-it',
     heading: 'Create Your Product Faster',
     description: 'Use AI to turn a useful idea into a real product without spending weeks building it.',
-    lessonIds: ['ai-create-product-faster', 'building-digital-products-claude', 'complete-digital-product-roadmap'],
+    lessonIds: ['ai-create-product-faster', 'building-digital-products-claude', 'complete-digital-product-roadmap', 'recreate-winning-product-with-ai'],
   },
   {
     id: 'sell-it',

@@ -5,9 +5,10 @@ export const HOME_SCHOOL_LESSON: Pick<
   SchoolLesson,
   'id' | 'title' | 'original_video_title' | 'creator' | 'youtube_video_id'
 > = {
-  id: 'power-of-one-great-product',
-  title: 'The Power of One Great Product',
-  original_video_title: 'How 1 Digital Product Made Me $141M (And How You Can Do It Too)',
-  creator: 'Tanner Chidester',
-  youtube_video_id: 'dHpIKpEP9IA',
+  id: 'recreate-winning-product-with-ai',
+  title: 'Recreate a Winning Product With AI',
+  original_video_title:
+    '$354,000 from ONE Digital Product??? Watch me Recreate it with AI in Minutes!',
+  creator: 'Make Money with Stacy La',
+  youtube_video_id: 'ju7zG9bdhv4',
 }
