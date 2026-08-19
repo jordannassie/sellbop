@@ -5,20 +5,20 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 const BANNERS = [
   {
-    src: 'https://qsvmgzdaashfsavmfjuz.supabase.co/storage/v1/object/public/SELL/images/banners/ChatGPT%20Image%20Aug%2016,%202026,%2006_54_46%20PM%20(8).png',
-    alt: 'Turn PDFs Into Sales',
+    src: 'https://qsvmgzdaashfsavmfjuz.supabase.co/storage/v1/object/public/SELL/partners/ChatGPT%20Image%20Aug%2019,%202026,%2003_51_02%20PM%20(1).png',
+    alt: 'SellBop Partner — creator with verified badge and digital product guides',
   },
   {
-    src: 'https://qsvmgzdaashfsavmfjuz.supabase.co/storage/v1/object/public/SELL/images/banners/ChatGPT%20Image%20Aug%2016,%202026,%2006_54_44%20PM%20(2).png',
-    alt: 'Make Products Pay',
+    src: 'https://qsvmgzdaashfsavmfjuz.supabase.co/storage/v1/object/public/SELL/partners/ChatGPT%20Image%20Aug%2019,%202026,%2003_51_02%20PM%20(2).png',
+    alt: 'SellBop Partner — creator with growth analytics and digital downloads',
   },
   {
-    src: 'https://qsvmgzdaashfsavmfjuz.supabase.co/storage/v1/object/public/SELL/images/banners/ChatGPT%20Image%20Aug%2016,%202026,%2006_54_45%20PM%20(6).png',
-    alt: 'Digital Sales Simplified',
+    src: 'https://qsvmgzdaashfsavmfjuz.supabase.co/storage/v1/object/public/SELL/partners/ChatGPT%20Image%20Aug%2019,%202026,%2003_51_03%20PM%20(3).png',
+    alt: 'SellBop Partner — creator building a digital product business',
   },
   {
-    src: 'https://qsvmgzdaashfsavmfjuz.supabase.co/storage/v1/object/public/SELL/images/banners/ChatGPT%20Image%20Aug%2016,%202026,%2006_54_46%20PM%20(7).png',
-    alt: 'Start Selling Today',
+    src: 'https://qsvmgzdaashfsavmfjuz.supabase.co/storage/v1/object/public/SELL/partners/ChatGPT%20Image%20Aug%2019,%202026,%2003_51_03%20PM%20(4).png',
+    alt: 'SellBop Partner — creator with premium digital products and sales growth',
   },
 ]
 
