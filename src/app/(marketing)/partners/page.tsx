@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { ArrowDown, ArrowRight, Check, Handshake, Store, TrendingUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { PartnerApplicationForm } from '@/components/marketing/partner-application-form'
+import { PartnerBadgeIcon } from '@/components/ui/partner-badge-icon'
 
 const PARTNER_HERO_IMAGE =
   'https://qsvmgzdaashfsavmfjuz.supabase.co/storage/v1/object/public/SELL/partners/9:16/8cd4d768-ef41-48b0-ac48-add6357a8530.png'
@@ -99,6 +100,9 @@ export default function PartnersPage() {
       {/* Application form */}
       <section id="apply" className="max-w-2xl mx-auto px-4 sm:px-6 py-16 sm:py-24 scroll-mt-20">
         <div className="text-center mb-10">
+          <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-neutral-200">
+            <PartnerBadgeIcon size={56} />
+          </div>
           <h2 className="text-3xl sm:text-4xl font-black text-black tracking-tight mb-3">
             Become a SellBop Partner
           </h2>
