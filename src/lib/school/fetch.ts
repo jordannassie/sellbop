@@ -43,7 +43,14 @@ export async function fetchSchoolLessons(): Promise<SchoolLesson[]> {
       return DEFAULT_SCHOOL_LESSONS
     }
 
-    return (data as SchoolLessonRow[]).map(mapRow)
+    // Merge DB rows onto the full code catalog so a partial manual seed
+    // (e.g. one INSERT in Supabase) cannot replace the entire School library.
+    const byId = new Map(DEFAULT_SCHOOL_LESSONS.map(lesson => [lesson.id, lesson]))
+    for (const row of data as SchoolLessonRow[]) {
+      byId.set(row.id, mapRow(row))
+    }
+
+    return Array.from(byId.values()).sort((a, b) => a.sort_order - b.sort_order)
   } catch {
     return DEFAULT_SCHOOL_LESSONS
   }
