@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Toggle } from '@/components/ui/toggle'
 import { PartnerBadgeIcon } from '@/components/ui/partner-badge-icon'
+import { AvatarWithPartnerBadge } from '@/components/ui/avatar-with-partner-badge'
 import { toast } from 'sonner'
 import { useAuth } from '@/context/auth-context'
 import { useUserStore } from '@/hooks/use-user-store'
@@ -18,7 +19,7 @@ import {
   resolveStoreBannerUrl,
   STORE_BANNER_BG_CLASS,
 } from '@/lib/store-defaults'
-import { PARTNER_SOCIAL_IS_KEY, PARTNER_SOCIAL_SHOW_KEY, stripPartnerSocialLinks } from '@/lib/partner-storage'
+import { PARTNER_SOCIAL_IS_KEY, PARTNER_SOCIAL_SHOW_KEY, partnerFromSocialLinks, stripPartnerSocialLinks } from '@/lib/partner-storage'
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -59,6 +60,12 @@ export default function SettingsPage() {
   const [showPartnerBadge, setShowPartnerBadge] = useState(true)
   const [loadingPartnerSettings, setLoadingPartnerSettings] = useState(true)
   const [savingPartnerBadge, setSavingPartnerBadge] = useState(false)
+
+  const storePartnerStatus = partnerFromSocialLinks(
+    (store?.social_links as Record<string, string> | null) ?? null,
+  )
+  const badgeIsPartner = loadingPartnerSettings ? storePartnerStatus.isPartner : isPartner
+  const badgeShowPartner = loadingPartnerSettings ? storePartnerStatus.showPartnerBadge : showPartnerBadge
 
   useEffect(() => {
     setDisplayName(session?.name ?? '')
@@ -103,6 +110,7 @@ export default function SettingsPage() {
       if (!res.ok) throw new Error(data.error ?? 'Failed to update partner badge.')
       setShowPartnerBadge(data.showPartnerBadge !== false)
       toast.success(next ? 'Partner badge enabled.' : 'Partner badge hidden.')
+      refetch()
       router.refresh()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to update partner badge.')
@@ -309,7 +317,10 @@ export default function SettingsPage() {
           <CardContent>
             {/* Avatar */}
             <div className="flex items-center gap-4 mb-6">
-              <div className="relative">
+              <AvatarWithPartnerBadge
+                isPartner={badgeIsPartner}
+                showPartnerBadge={badgeShowPartner}
+              >
                 <div className="w-16 h-16 rounded-full bg-neutral-100 overflow-hidden flex items-center justify-center">
                   {profileAvatar ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -318,7 +329,7 @@ export default function SettingsPage() {
                     <User size={22} className="text-neutral-400" />
                   )}
                 </div>
-              </div>
+              </AvatarWithPartnerBadge>
               <div>
                 <Button
                   size="sm"
@@ -365,7 +376,7 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        {isPartner && !loadingPartnerSettings && (
+        {(badgeIsPartner || isPartner) && !loadingPartnerSettings && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

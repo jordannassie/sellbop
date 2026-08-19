@@ -8,6 +8,8 @@ import { useAuth } from '@/context/auth-context'
 import { useUserStore } from '@/hooks/use-user-store'
 import { cn } from '@/lib/utils'
 import { SellBopLogo } from '@/components/ui/sellbop-logo'
+import { AvatarWithPartnerBadge } from '@/components/ui/avatar-with-partner-badge'
+import { partnerFromSocialLinks } from '@/lib/partner-storage'
 
 interface NavItem {
   href: string
@@ -131,6 +133,9 @@ export function DashboardSidebar() {
   }
 
   const avatarUrl = session?.avatarUrl ?? store?.avatar_url ?? null
+  const partnerStatus = partnerFromSocialLinks(
+    (store?.social_links as Record<string, string> | null) ?? null,
+  )
 
   // Profile click: go to public storefront if seller, else settings
   const profileHref = hasStore && store?.slug ? `/${store.slug}` : '/dashboard/settings'
@@ -140,18 +145,24 @@ export function DashboardSidebar() {
   const userBlock = session && (
     <div className="flex flex-col items-center px-4 pt-6 pb-4 border-b border-neutral-100">
       <Link href={profileHref} className="group mb-3 block" title="View your store">
-        <div className="w-24 h-24 rounded-full overflow-hidden ring-[3px] ring-neutral-100 bg-neutral-900 flex items-center justify-center group-hover:ring-neutral-300 transition-all">
-          {avatarUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={avatarUrl}
-              alt={displayName}
-              className="w-full h-full object-cover object-center"
-            />
-          ) : (
-            <span className="text-white font-bold text-xl select-none">{initial}</span>
-          )}
-        </div>
+        <AvatarWithPartnerBadge
+          isPartner={partnerStatus.isPartner}
+          showPartnerBadge={partnerStatus.showPartnerBadge}
+          className="block"
+        >
+          <div className="w-24 h-24 rounded-full overflow-hidden ring-[3px] ring-neutral-100 bg-neutral-900 flex items-center justify-center group-hover:ring-neutral-300 transition-all">
+            {avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={avatarUrl}
+                alt={displayName}
+                className="w-full h-full object-cover object-center"
+              />
+            ) : (
+              <span className="text-white font-bold text-xl select-none">{initial}</span>
+            )}
+          </div>
+        </AvatarWithPartnerBadge>
       </Link>
       <Link href={profileHref} className="group">
         <p className="text-sm font-semibold text-neutral-900 text-center truncate max-w-[168px] leading-snug group-hover:underline underline-offset-2 transition-colors">
