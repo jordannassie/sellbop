@@ -10,6 +10,7 @@ import { SellBopLogoStatic } from '@/components/ui/sellbop-logo'
 const CENTER_LINKS = [
   { href: '/school', label: 'School' },
   { href: '/marketplace', label: 'Marketplace' },
+  { href: '/partners', label: 'Partners' },
   { href: '/pricing', label: 'Pricing' },
 ]
 

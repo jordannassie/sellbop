@@ -886,6 +886,39 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['agent_activity_log']['Insert']>
         Relationships: []
       }
+
+      partner_applications: {
+        Row: {
+          id: string
+          user_id: string | null
+          name: string
+          email: string
+          phone: string | null
+          social_links: string
+          audience_size: string
+          message: string
+          status: string
+          admin_notes: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          name: string
+          email: string
+          phone?: string | null
+          social_links?: string
+          audience_size: string
+          message?: string
+          status?: string
+          admin_notes?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['partner_applications']['Insert']>
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: Record<string, never>

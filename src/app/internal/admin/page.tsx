@@ -7,6 +7,7 @@ import { SellersSection } from '@/components/admin/sellers-section'
 import { BuyersSection } from '@/components/admin/buyers-section'
 import { ProductsSection, MarketplaceSection } from '@/components/admin/products-section'
 import { AffiliatesSection } from '@/components/admin/affiliates-section'
+import { PartnersSection } from '@/components/admin/partners-section'
 import { ResourcesAdminSection } from '@/components/admin/resources-section'
 import { OrdersSection } from '@/components/admin/orders-section'
 import { EmailDeliveriesSection } from '@/components/admin/email-deliveries-section'
@@ -19,6 +20,7 @@ import { getAdminProducts } from '@/lib/admin/products'
 import { getAdminSellers } from '@/lib/admin/sellers'
 import { getAdminBuyers } from '@/lib/admin/buyers'
 import { getAdminAffiliates } from '@/lib/admin/affiliates'
+import { getAdminPartnerApplications, getNewPartnerApplicationCount } from '@/lib/admin/partner-applications'
 
 function isAdminSection(value: string | undefined): value is AdminSection {
   return value === 'overview'
@@ -30,6 +32,7 @@ function isAdminSection(value: string | undefined): value is AdminSection {
     || value === 'resources'
     || value === 'emails'
     || value === 'affiliates'
+    || value === 'partners'
     || value === 'marketplace'
     || value === 'search'
 }
@@ -44,6 +47,12 @@ export default async function AdminPage({
   const params = await searchParams
   const section: AdminSection = isAdminSection(params.section) ? params.section : 'overview'
   const pagination = parseAdminPagination(params)
+  let newPartnerCount = 0
+  try {
+    newPartnerCount = await getNewPartnerApplicationCount()
+  } catch {
+    /* table may not exist until migration 027 */
+  }
 
   const [overview] = await Promise.all([
     section === 'overview' ? getAdminOverviewData() : Promise.resolve(null),
@@ -74,6 +83,18 @@ export default async function AdminPage({
   } else if (section === 'affiliates') {
     const data = await getAdminAffiliates({ ...pagination, q: params.q, filter: params.filter })
     content = <AffiliatesSection affiliates={data.affiliates} page={data.page} totalPages={data.totalPages} total={data.total} q={params.q} filter={params.filter} />
+  } else if (section === 'partners') {
+    try {
+      const data = await getAdminPartnerApplications({ ...pagination, q: params.q, filter: params.filter })
+      content = <PartnersSection applications={data.applications} page={data.page} totalPages={data.totalPages} total={data.total} q={params.q} filter={params.filter} />
+    } catch {
+      content = (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-900">
+          Partner applications table is not available yet. Apply migration{' '}
+          <code className="font-mono text-xs">027_partner_applications.sql</code> in Supabase.
+        </div>
+      )
+    }
   } else if (section === 'emails') {
     content = <EmailDeliveriesSection />
   } else if (section === 'resources') {
@@ -85,7 +106,7 @@ export default async function AdminPage({
 
   return (
     <div className="flex h-screen overflow-hidden bg-neutral-50">
-      <AdminSidebar active={section} />
+      <AdminSidebar active={section} newPartnerCount={newPartnerCount} />
 
       <main className="flex-1 overflow-y-auto">
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-neutral-200 bg-white px-8 py-3">

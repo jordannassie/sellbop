@@ -72,6 +72,22 @@ Or paste the file into Supabase SQL Editor and click **Run** (idempotent).
 
 ---
 
+## Step 5 — Partner applications (Partners page + Admin)
+
+9. `supabase/migrations/027_partner_applications.sql`
+
+Creates `partner_applications` for the public `/partners` inquiry form and Admin → Partners review workflow.
+
+**Apply via script (recommended):**
+
+```bash
+DATABASE_URL="postgresql://..." npm run db:apply-027
+```
+
+Or paste the file into Supabase SQL Editor and click **Run** (idempotent).
+
+---
+
 ## Required Storage Buckets
 
 After running migration 006, these buckets must exist in **Storage**:

@@ -62,6 +62,7 @@ export function PublicHeader({ activeHref, ctaMode = 'default' }: PublicHeaderPr
           <nav className="hidden sm:flex flex-1 items-center justify-center gap-6">
             {navLink('/school', 'School')}
             {navLink('/marketplace', 'Marketplace')}
+            {navLink('/partners', 'Partners')}
             {navLink('/pricing', 'Pricing')}
           </nav>
 
@@ -194,6 +195,9 @@ export function PublicHeader({ activeHref, ctaMode = 'default' }: PublicHeaderPr
               </Link>
               <Link href="/marketplace" onClick={() => setMenuOpen(false)} className="flex h-11 items-center rounded-xl px-3 text-sm font-medium text-neutral-700 hover:bg-neutral-50 hover:text-black transition-colors">
                 Marketplace
+              </Link>
+              <Link href="/partners" onClick={() => setMenuOpen(false)} className="flex h-11 items-center rounded-xl px-3 text-sm font-medium text-neutral-700 hover:bg-neutral-50 hover:text-black transition-colors">
+                Partners
               </Link>
               <Link href="/pricing" onClick={() => setMenuOpen(false)} className="flex h-11 items-center rounded-xl px-3 text-sm font-medium text-neutral-700 hover:bg-neutral-50 hover:text-black transition-colors">
                 Pricing

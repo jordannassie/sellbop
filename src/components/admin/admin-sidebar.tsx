@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { CreditCard, GraduationCap, LayoutDashboard, Mail, Package, ShoppingBag, Store, TrendingUp, ShoppingCart, Users } from 'lucide-react'
+import { CreditCard, GraduationCap, Handshake, LayoutDashboard, Mail, Package, ShoppingBag, Store, TrendingUp, ShoppingCart, Users } from 'lucide-react'
 import { SellBopLogoStatic } from '@/components/ui/sellbop-logo'
 
 export type AdminSection =
@@ -12,6 +12,7 @@ export type AdminSection =
   | 'resources'
   | 'emails'
   | 'affiliates'
+  | 'partners'
   | 'marketplace'
   | 'search'
 
@@ -24,15 +25,17 @@ const NAV: { id: AdminSection; label: string; icon: React.ReactNode }[] = [
   { id: 'marketplace', label: 'Marketplace', icon: <ShoppingCart size={15} /> },
   { id: 'orders', label: 'Orders', icon: <CreditCard size={15} /> },
   { id: 'affiliates', label: 'Affiliates', icon: <TrendingUp size={15} /> },
+  { id: 'partners', label: 'Partners', icon: <Handshake size={15} /> },
   { id: 'emails', label: 'Emails', icon: <Mail size={15} /> },
   { id: 'resources', label: 'Resources', icon: <GraduationCap size={15} /> },
 ]
 
 interface AdminSidebarProps {
   active: AdminSection
+  newPartnerCount?: number
 }
 
-export function AdminSidebar({ active }: AdminSidebarProps) {
+export function AdminSidebar({ active, newPartnerCount = 0 }: AdminSidebarProps) {
   return (
     <aside className="flex min-h-screen w-56 flex-shrink-0 flex-col border-r border-neutral-200 bg-white">
       <div className="flex items-center gap-3 border-b border-neutral-100 px-5 py-4">
@@ -55,7 +58,12 @@ export function AdminSidebar({ active }: AdminSidebarProps) {
             ].join(' ')}
           >
             <span className="flex-shrink-0">{item.icon}</span>
-            {item.label}
+            <span className="flex-1">{item.label}</span>
+            {item.id === 'partners' && newPartnerCount > 0 && (
+              <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-[10px] font-bold text-blue-700">
+                {newPartnerCount}
+              </span>
+            )}
           </Link>
         ))}
       </nav>
