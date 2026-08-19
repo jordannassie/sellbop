@@ -4,6 +4,7 @@ import { cookies } from 'next/headers'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import type { Database } from '@/lib/supabase/types'
+import { isMissingRelationError } from '@/lib/supabase/schema-errors'
 import type { StoreMemberRole } from './types'
 
 export const ACTIVE_STORE_COOKIE = 'sellbop_active_store_id'
@@ -52,14 +53,23 @@ export async function getAccessibleStoresForUser(userId: string): Promise<Access
     .order('created_at', { ascending: true })
 
   if (error) {
-    // Fallback before migration 029: owner_user_id on stores
-    const { data: owned } = await admin
-      .from('stores')
-      .select('*')
-      .eq('owner_user_id', userId)
-      .order('created_at', { ascending: true })
+    if (isMissingRelationError(error)) {
+      const { data: owned, error: ownedError } = await admin
+        .from('stores')
+        .select('*')
+        .eq('owner_user_id', userId)
+        .order('created_at', { ascending: true })
 
-    return (owned ?? []).map(store => ({ ...store, role: 'owner' as StoreMemberRole }))
+      if (ownedError) {
+        console.error('[getAccessibleStoresForUser] owner fallback failed:', ownedError.message)
+        throw ownedError
+      }
+
+      return (owned ?? []).map(store => ({ ...store, role: 'owner' as StoreMemberRole }))
+    }
+
+    console.error('[getAccessibleStoresForUser] store_members query failed:', error.message)
+    throw error
   }
 
   const byId = new Map<string, AccessibleStore>()
@@ -89,14 +99,17 @@ export async function getAccessibleStoresForUser(userId: string): Promise<Access
 export async function userCanAccessStore(userId: string, storeId: string): Promise<boolean> {
   const admin = getSupabaseAdminClient()
 
-  const { data: membership } = await admin
+  const { data: membership, error: membershipError } = await admin
     .from('store_members')
     .select('id')
     .eq('user_id', userId)
     .eq('store_id', storeId)
     .maybeSingle()
 
-  if (membership) return true
+  if (!membershipError && membership) return true
+  if (membershipError && !isMissingRelationError(membershipError)) {
+    console.error('[userCanAccessStore] membership check failed:', membershipError.message)
+  }
 
   const { data: owned } = await admin
     .from('stores')
@@ -111,14 +124,17 @@ export async function userCanAccessStore(userId: string, storeId: string): Promi
 export async function userCanManageStore(userId: string, storeId: string): Promise<boolean> {
   const admin = getSupabaseAdminClient()
 
-  const { data: membership } = await admin
+  const { data: membership, error: membershipError } = await admin
     .from('store_members')
     .select('role')
     .eq('user_id', userId)
     .eq('store_id', storeId)
     .maybeSingle()
 
-  if (membership && MANAGE_ROLES.has(membership.role as StoreMemberRole)) return true
+  if (!membershipError && membership && MANAGE_ROLES.has(membership.role as StoreMemberRole)) return true
+  if (membershipError && !isMissingRelationError(membershipError)) {
+    console.error('[userCanManageStore] membership check failed:', membershipError.message)
+  }
 
   const { data: owned } = await admin
     .from('stores')
@@ -144,7 +160,7 @@ export async function resolveActiveStoreForUser(userId: string): Promise<Accessi
   return accessible[0] ?? null
 }
 
-/** Ensure cookie matches an accessible shop; only writes when cookie is missing or invalid. */
+/** Ensure cookie matches an accessible shop; repairs stale/invalid cookies. */
 export async function syncActiveStoreCookieIfNeeded(userId: string): Promise<AccessibleStore | null> {
   const accessible = await getAccessibleStoresForUser(userId)
   if (accessible.length === 0) return null

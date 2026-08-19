@@ -1,6 +1,7 @@
 import 'server-only'
 
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
+import { isMissingRelationError } from '@/lib/supabase/schema-errors'
 import type { Database } from '@/lib/supabase/types'
 import type { PartnershipStatus } from './constants'
 import type { StorePartnershipRow } from './publication'
@@ -36,7 +37,7 @@ export async function getPartnershipByStoreId(storeId: string): Promise<StorePar
     .eq('store_id', storeId)
     .maybeSingle()
 
-  if (error && !error.message.includes('does not exist')) throw error
+  if (error && !isMissingRelationError(error)) throw error
   if (!data) return null
   return {
     ...data,
@@ -53,7 +54,7 @@ export async function getPartnershipMapForStores(storeIds: string[]) {
     .in('store_id', storeIds)
 
   if (error) {
-    if (error.message.includes('does not exist')) return new Map()
+    if (isMissingRelationError(error)) return new Map()
     throw error
   }
 

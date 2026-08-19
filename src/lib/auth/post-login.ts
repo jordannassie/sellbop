@@ -2,6 +2,7 @@ import 'server-only'
 
 import { getAllowedAdminEmails } from '@/lib/env'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
+import { isMissingRelationError } from '@/lib/supabase/schema-errors'
 import { isAuthenticatedEmailVerified } from '@/lib/auth/email-verification'
 import type { AccountSummary, AuthSession } from '@/lib/domain/auth'
 import type { User } from '@supabase/supabase-js'
@@ -59,8 +60,23 @@ export async function getAccountSummaryByUserId(userId: string): Promise<Account
     admin.from('orders').select('id', { count: 'exact', head: true }).eq('buyer_user_id', userId),
   ])
 
+  const ownedCount = storeResult.error && !isMissingRelationError(storeResult.error)
+    ? 0
+    : (storeResult.count ?? 0)
+
+  const memberCount = memberResult.error
+    ? (isMissingRelationError(memberResult.error) ? 0 : 0)
+    : (memberResult.count ?? 0)
+
+  if (storeResult.error && !isMissingRelationError(storeResult.error)) {
+    console.error('[getAccountSummaryByUserId] stores count failed:', storeResult.error.message)
+  }
+  if (memberResult.error && !isMissingRelationError(memberResult.error)) {
+    console.error('[getAccountSummaryByUserId] store_members count failed:', memberResult.error.message)
+  }
+
   return {
-    hasStore: (storeResult.count ?? 0) > 0 || (memberResult.count ?? 0) > 0,
+    hasStore: ownedCount > 0 || memberCount > 0,
     hasPurchases: (purchaseResult.count ?? 0) > 0 || (orderResult.count ?? 0) > 0,
     hasSubscriptions: false,
   }

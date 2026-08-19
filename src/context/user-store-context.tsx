@@ -16,7 +16,6 @@ import {
 import { usePathname, useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
-import { ensureUserStore } from '@/lib/supabase/ensure-user-store'
 import type { StoreRow } from '@/lib/supabase/ensure-user-store'
 import type { Database } from '@/lib/supabase/types'
 import type { UserStoreSummary } from '@/lib/stores/types'
@@ -118,6 +117,9 @@ export function UserStoreProvider({ children }: { children: ReactNode }) {
     if (generation !== loadGenerationRef.current) return
 
     if (!res.ok) {
+      const errBody = await res.json().catch(() => ({}))
+      console.error('[UserStoreProvider] /api/stores failed:', res.status, errBody)
+      toast.error(typeof errBody.error === 'string' ? errBody.error : 'Could not load your shops. Please refresh.')
       setStore(null)
       setStores([])
       setActiveStoreId(null)
@@ -149,21 +151,7 @@ export function UserStoreProvider({ children }: { children: ReactNode }) {
         ? sessionStorage.getItem('sellbop_claim_token')
         : null
       if (!pendingClaim) {
-        const created = await ensureUserStore(supabase, session.userId, session.name, session.email)
-        if (generation !== loadGenerationRef.current) return
-        if (created) {
-          setStore(created)
-          setStores([{
-            id: created.id,
-            name: created.name,
-            slug: created.slug,
-            avatar_url: created.avatar_url,
-            banner_url: created.banner_url,
-            owner_user_id: created.owner_user_id,
-            role: 'owner',
-          }])
-          setActiveStoreId(created.id)
-        }
+        console.warn('[UserStoreProvider] no shops returned for authenticated user — skipping auto-create')
       }
     }
   }, [session, supabase])

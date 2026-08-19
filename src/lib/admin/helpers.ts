@@ -2,9 +2,9 @@ import 'server-only'
 
 import { MARKETPLACE_FEE_PERCENT } from '@/lib/platform-config'
 
-export function isMissingRelationError(error: { code?: string | null; message?: string } | null) {
-  return error?.code === 'PGRST205' || error?.message?.includes('does not exist')
-}
+import { isMissingRelationError } from '@/lib/supabase/schema-errors'
+
+export { isMissingRelationError }
 
 export function isMissingColumnError(error: { code?: string | null; message?: string } | null) {
   return error?.code === '42703' || error?.message?.includes('column')

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { isSupabaseAdminConfigured } from '@/lib/env'
 import { getPartnershipMapForStores } from '@/lib/partnerships/queries'
-import { getAccessibleStoresForUser, resolveActiveStoreForUser } from '@/lib/stores/active-store'
+import { getAccessibleStoresForUser, syncActiveStoreCookieIfNeeded } from '@/lib/stores/active-store'
 import { createStoreForUser, CreateStoreError } from '@/lib/stores/create-store'
 
 // GET /api/stores — list accessible shops + active shop id
@@ -15,28 +15,40 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 })
 
-  const stores = await getAccessibleStoresForUser(user.id)
-  const active = await resolveActiveStoreForUser(user.id)
-  const partnershipMap = await getPartnershipMapForStores(stores.map(s => s.id))
+  try {
+    const stores = await getAccessibleStoresForUser(user.id)
+    const active = await syncActiveStoreCookieIfNeeded(user.id)
 
-  return NextResponse.json({
-    stores: stores.map(s => {
-      const partnership = partnershipMap.get(s.id)
-      return {
-        id: s.id,
-        name: s.name,
-        slug: s.slug,
-        avatar_url: s.avatar_url,
-        banner_url: s.banner_url,
-        owner_user_id: s.owner_user_id,
-        role: s.role,
-        isPartnerShop: !!partnership,
-        partnershipStatus: partnership?.status ?? null,
-        isOwnedShop: s.owner_user_id === user.id,
-      }
-    }),
-    activeStoreId: active?.id ?? null,
-  })
+    let partnershipMap = new Map<string, { id: string; status: string }>()
+    try {
+      partnershipMap = await getPartnershipMapForStores(stores.map(s => s.id))
+    } catch (partnershipErr) {
+      console.error('[GET /api/stores] partnership lookup failed:', partnershipErr)
+    }
+
+    return NextResponse.json({
+      stores: stores.map(s => {
+        const partnership = partnershipMap.get(s.id)
+        return {
+          id: s.id,
+          name: s.name,
+          slug: s.slug,
+          avatar_url: s.avatar_url,
+          banner_url: s.banner_url,
+          owner_user_id: s.owner_user_id,
+          role: s.role,
+          isPartnerShop: !!partnership,
+          partnershipStatus: partnership?.status ?? null,
+          isOwnedShop: s.owner_user_id === user.id,
+        }
+      }),
+      activeStoreId: active?.id ?? stores[0]?.id ?? null,
+    })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Could not load shops.'
+    console.error('[GET /api/stores] failed for user', user.id, message)
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }
 
 // POST /api/stores — create a new shop
