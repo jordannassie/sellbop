@@ -1,7 +1,7 @@
 -- SellBop Partner Badge: admin-granted partner status + user visibility preference
 
 ALTER TABLE public.profiles
-  ADD COLUMN IF NOT EXISTS is_partner boolean NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS is_partner boolean NOT NULL DEFAULT true,
   ADD COLUMN IF NOT EXISTS show_partner_badge boolean NOT NULL DEFAULT true;
 
 COMMENT ON COLUMN public.profiles.is_partner IS 'Official SellBop Partner — admin only';
@@ -17,7 +17,8 @@ AS $$
 BEGIN
   IF TG_OP = 'INSERT' THEN
     IF auth.uid() IS NOT NULL AND auth.uid() = NEW.user_id THEN
-      NEW.is_partner := false;
+      NEW.is_partner := true;
+      NEW.show_partner_badge := COALESCE(NEW.show_partner_badge, true);
     END IF;
     RETURN NEW;
   END IF;

@@ -39,7 +39,7 @@ export function AvatarWithPartnerBadge({
           style={{
             width: `${badgeScale * 100}%`,
             height: `${badgeScale * 100}%`,
-            transform: 'translate(12%, 12%)',
+            transform: 'translate(22%, 8%)',
           }}
           title="SellBop Partner"
           aria-label="SellBop Partner"

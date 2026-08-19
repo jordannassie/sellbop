@@ -56,6 +56,22 @@ Or paste the file into Supabase SQL Editor and click **Run** (idempotent).
 
 ---
 
+## Step 4 — Partner badge ON by default (all users)
+
+8. `supabase/migrations/026_partner_badge_default_on.sql`
+
+Turns on partner status and badge visibility for all existing users and sets `is_partner` default to `true` for new signups.
+
+**Apply via script (recommended):**
+
+```bash
+DATABASE_URL="postgresql://..." npm run db:apply-026
+```
+
+Or paste the file into Supabase SQL Editor and click **Run** (idempotent).
+
+---
+
 ## Required Storage Buckets
 
 After running migration 006, these buckets must exist in **Storage**:
