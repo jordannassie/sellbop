@@ -1,8 +1,12 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowDown, ArrowRight, Check, Handshake, Store, TrendingUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { PartnerApplicationForm } from '@/components/marketing/partner-application-form'
+
+const PARTNER_HERO_IMAGE =
+  'https://qsvmgzdaashfsavmfjuz.supabase.co/storage/v1/object/public/SELL/partners/9:16/8cd4d768-ef41-48b0-ac48-add6357a8530.png'
 
 export const metadata: Metadata = {
   title: 'Partners — SellBop',
@@ -31,25 +35,42 @@ export default function PartnersPage() {
   return (
     <div className="bg-white">
       {/* Hero */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 pt-16 sm:pt-24 pb-14 text-center">
-        <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold px-3 py-1.5 rounded-full mb-6">
-          SELLBOP PARTNERS
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 pt-16 sm:pt-24 pb-14">
+        <div className="grid lg:grid-cols-2 gap-10 lg:gap-14 items-center">
+          <div className="text-center lg:text-left">
+            <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold px-3 py-1.5 rounded-full mb-6">
+              SELLBOP PARTNERS
+            </div>
+            <h1 className="text-4xl sm:text-6xl font-black text-black tracking-tight leading-[1.08] mb-5">
+              Your audience. We build the products.
+            </h1>
+            <p className="text-neutral-500 text-base sm:text-lg max-w-2xl mx-auto lg:mx-0 mb-8 leading-relaxed">
+              Partner with SellBop to turn your knowledge, audience, and brand into premium digital products.
+              We can help create the products, build the storefront, handle checkout and delivery, and grow the business together.
+            </p>
+            <Link href="#apply" className="inline-block">
+              <Button size="lg">
+                Become a Partner <ArrowDown size={16} />
+              </Button>
+            </Link>
+            <p className="text-sm text-neutral-400 mt-5">
+              You bring the audience. We help build the business.
+            </p>
+          </div>
+
+          <div className="relative mx-auto w-full max-w-md lg:max-w-none">
+            <div className="relative aspect-[9/16] max-h-[520px] w-full overflow-hidden rounded-3xl border border-neutral-200 bg-neutral-50 shadow-sm">
+              <Image
+                src={PARTNER_HERO_IMAGE}
+                alt="SellBop Partner — creator with a premium digital product store"
+                fill
+                className="object-cover object-center"
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                priority
+              />
+            </div>
+          </div>
         </div>
-        <h1 className="text-4xl sm:text-6xl font-black text-black tracking-tight leading-[1.08] mb-5">
-          Your audience. We build the products.
-        </h1>
-        <p className="text-neutral-500 text-base sm:text-lg max-w-2xl mx-auto mb-8 leading-relaxed">
-          Partner with SellBop to turn your knowledge, audience, and brand into premium digital products.
-          We can help create the products, build the storefront, handle checkout and delivery, and grow the business together.
-        </p>
-        <Link href="#apply">
-          <Button size="lg">
-            Become a Partner <ArrowDown size={16} />
-          </Button>
-        </Link>
-        <p className="text-sm text-neutral-400 mt-5">
-          You bring the audience. We help build the business.
-        </p>
       </section>
 
       {/* 3 steps */}
