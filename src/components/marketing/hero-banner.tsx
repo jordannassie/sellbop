@@ -54,7 +54,7 @@ export function HeroBanner() {
 
   return (
     <div
-      className="relative w-full overflow-hidden rounded-2xl bg-black"
+      className="relative w-full overflow-hidden rounded-2xl bg-white border border-neutral-100"
       style={{ aspectRatio: '16/9' }}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
@@ -82,14 +82,14 @@ export function HeroBanner() {
       {/* Prev/Next */}
       <button
         onClick={prev}
-        className="absolute left-3 top-1/2 -translate-y-1/2 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm hover:bg-black/60 transition-colors"
+        className="absolute left-3 top-1/2 -translate-y-1/2 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-neutral-900/10 text-neutral-700 backdrop-blur-sm hover:bg-neutral-900/15 transition-colors"
         aria-label="Previous slide"
       >
         <ChevronLeft size={18} />
       </button>
       <button
         onClick={next}
-        className="absolute right-3 top-1/2 -translate-y-1/2 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm hover:bg-black/60 transition-colors"
+        className="absolute right-3 top-1/2 -translate-y-1/2 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-neutral-900/10 text-neutral-700 backdrop-blur-sm hover:bg-neutral-900/15 transition-colors"
         aria-label="Next slide"
       >
         <ChevronRight size={18} />
@@ -105,7 +105,7 @@ export function HeroBanner() {
             style={{
               width: i === current ? 20 : 6,
               height: 6,
-              background: i === current ? '#00E676' : 'rgba(255,255,255,0.5)',
+              background: i === current ? '#00E676' : 'rgba(0,0,0,0.2)',
             }}
             aria-label={`Go to slide ${i + 1}`}
           />
@@ -114,7 +114,7 @@ export function HeroBanner() {
 
       {/* Progress bar */}
       {!paused && (
-        <div className="absolute bottom-0 left-0 right-0 z-10 h-0.5 bg-white/10">
+        <div className="absolute bottom-0 left-0 right-0 z-10 h-0.5 bg-neutral-200">
           <div
             key={`${current}-progress`}
             className="h-full bg-emerald-500"

@@ -1,6 +1,7 @@
 import Image from 'next/image'
-import { BadgeCheck, Check } from 'lucide-react'
+import { Check } from 'lucide-react'
 import { SellBopLogo } from '@/components/ui/sellbop-logo'
+import { HERO_FACEPILE_PHOTOS } from '@/lib/demo-avatars'
 
 const BENEFITS = [
   'Your branded digital storefront',
@@ -36,12 +37,13 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         ">
 
           {/* Partner image */}
-          <div className="relative w-full h-64 lg:h-72 shrink-0 bg-neutral-950">
+          <div className="relative w-full h-72 lg:h-80 shrink-0 bg-neutral-950">
             <Image
               src={PARTNER_IMAGE}
               alt="SellBop Partner — creator building a digital product business"
               fill
-              className="object-cover object-top"
+              className="object-cover"
+              style={{ objectPosition: 'center 28%' }}
               sizes="460px"
               priority
             />
@@ -79,11 +81,20 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
               </ul>
             </div>
 
-            {/* Partner positioning */}
+            {/* Social proof + partner positioning */}
             <div className="mt-7 pt-6 border-t border-white/10">
-              <div className="inline-flex items-center gap-2 rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1.5 mb-3">
-                <BadgeCheck size={14} className="text-green-400 flex-shrink-0" />
-                <span className="text-[11px] font-bold text-green-400 uppercase tracking-wide">SellBop Partner</span>
+              <div className="flex -space-x-2.5 mb-3">
+                {HERO_FACEPILE_PHOTOS.slice(0, 5).map((url, i) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    key={i}
+                    src={url}
+                    alt=""
+                    width={30}
+                    height={30}
+                    className="w-7 h-7 rounded-full border-2 border-neutral-950 object-cover bg-neutral-800"
+                  />
+                ))}
               </div>
               <p className="text-xs text-neutral-400 leading-relaxed">
                 <span className="text-white font-semibold">Built for creators who already have an audience.</span>
