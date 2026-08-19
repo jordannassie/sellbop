@@ -63,11 +63,9 @@ export async function buildSellBopAccountSnapshot(
     const supabase = await getSupabaseServerClient()
 
     // ── Fetch store ───────────────────────────────────────────
-    const { data: storeRow } = await supabase
-      .from('stores')
-      .select('*')
-      .eq('owner_user_id', userId)
-      .maybeSingle()
+    const { getActiveStoreForUser } = await import('@/lib/stores/active-store')
+    const activeStore = await getActiveStoreForUser(userId)
+    const storeRow = activeStore
 
     // ── Fetch products ────────────────────────────────────────
     const { data: productRows } = storeRow

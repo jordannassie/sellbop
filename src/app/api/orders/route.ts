@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { isSupabaseAdminConfigured } from '@/lib/env'
+import { requireActiveStoreForUser, ActiveStoreError } from '@/lib/stores/active-store'
 
 // GET /api/orders — list the authenticated seller's orders
 export async function GET() {
@@ -15,13 +16,13 @@ export async function GET() {
 
   const admin = getSupabaseAdminClient()
 
-  const { data: store } = await admin
-    .from('stores')
-    .select('id')
-    .eq('owner_user_id', user.id)
-    .maybeSingle()
-
-  if (!store) return NextResponse.json({ orders: [] })
+  let store
+  try {
+    store = await requireActiveStoreForUser(user.id)
+  } catch (err) {
+    if (err instanceof ActiveStoreError) return NextResponse.json({ orders: [] })
+    throw err
+  }
 
   const { data: orders, error } = await admin
     .from('orders')

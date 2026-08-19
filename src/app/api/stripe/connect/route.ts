@@ -4,16 +4,9 @@ import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { isSupabaseAdminConfigured } from '@/lib/env'
 import { env } from '@/lib/env'
+import { requireActiveStoreForUser, ActiveStoreError } from '@/lib/stores/active-store'
 
-// POST /api/stripe/connect — begin Stripe Connect onboarding for a seller
-//
-// Uses the Accounts v2 API. This platform account was created after Stripe
-// stopped recommending the v1 Accounts API (stripe.accounts.create) for new
-// connected accounts — v1 creation now fails with "Stripe no longer
-// recommends Accounts v1 for new connected accounts." The v2 equivalent for
-// a seller who only needs to *receive* payouts (not accept charges directly)
-// is the `recipient` configuration, paired with a v2 Account Link for
-// hosted onboarding. See https://docs.stripe.com/connect/accounts-v2/migrate-integration
+// POST /api/stripe/connect — begin Stripe Connect onboarding for the active shop
 export async function POST() {
   if (!isSupabaseAdminConfigured()) {
     return NextResponse.json({ error: 'Database not configured.' }, { status: 503 })
@@ -30,18 +23,18 @@ export async function POST() {
     }, { status: 503 })
   }
 
+  let store
+  try {
+    store = await requireActiveStoreForUser(user.id)
+  } catch (err) {
+    if (err instanceof ActiveStoreError) {
+      return NextResponse.json({ error: err.message }, { status: err.status })
+    }
+    throw err
+  }
+
   const stripe = new Stripe(env.stripe.secretKey)
   const admin = getSupabaseAdminClient()
-
-  const { data: store } = await admin
-    .from('stores')
-    .select('id, stripe_account_id')
-    .eq('owner_user_id', user.id)
-    .maybeSingle()
-
-  if (!store) {
-    return NextResponse.json({ error: 'No store found for this account.' }, { status: 404 })
-  }
 
   let accountId = store.stripe_account_id
 
@@ -60,11 +53,6 @@ export async function POST() {
         },
       },
       defaults: {
-        // This platform account's Connect pricing model requires the
-        // platform (not Stripe) to be the fees/losses collector for
-        // recipient accounts — Stripe rejects 'stripe' here with
-        // "can only be 'application' for the set of configurations this
-        // account has."
         responsibilities: {
           fees_collector: 'application',
           losses_collector: 'application',
@@ -75,7 +63,7 @@ export async function POST() {
 
     await admin.from('stores')
       .update({ stripe_account_id: accountId })
-      .eq('owner_user_id', user.id)
+      .eq('id', store.id)
   }
 
   const accountLink = await stripe.v2.core.accountLinks.create({
@@ -84,8 +72,8 @@ export async function POST() {
       type: 'account_onboarding',
       account_onboarding: {
         configurations: ['recipient'],
-        refresh_url: `${env.app.url}/api/stripe/connect/refresh`,
-        return_url: `${env.app.url}/api/stripe/connect/return`,
+        refresh_url: `${env.app.url}/api/stripe/connect/refresh?storeId=${store.id}`,
+        return_url: `${env.app.url}/api/stripe/connect/return?storeId=${store.id}`,
       },
     },
   })
@@ -93,7 +81,7 @@ export async function POST() {
   return NextResponse.json({ onboarding_url: accountLink.url })
 }
 
-// GET /api/stripe/connect — return Stripe account status
+// GET /api/stripe/connect — return Stripe account status for the active shop
 export async function GET() {
   if (!isSupabaseAdminConfigured()) {
     return NextResponse.json({ connected: false, stripe_required: true })
@@ -103,18 +91,19 @@ export async function GET() {
   const { data: { user } } = await userClient.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 })
 
-  const admin = getSupabaseAdminClient()
-  const { data: store } = await admin
-    .from('stores')
-    .select('stripe_account_id, stripe_onboarding_complete, stripe_charges_enabled, stripe_payouts_enabled')
-    .eq('owner_user_id', user.id)
-    .maybeSingle()
-
-  return NextResponse.json({
-    connected: !!(store?.stripe_account_id && store?.stripe_charges_enabled),
-    stripe_account_id: store?.stripe_account_id ?? null,
-    onboarding_complete: store?.stripe_onboarding_complete ?? false,
-    charges_enabled: store?.stripe_charges_enabled ?? false,
-    payouts_enabled: store?.stripe_payouts_enabled ?? false,
-  })
+  try {
+    const store = await requireActiveStoreForUser(user.id)
+    return NextResponse.json({
+      connected: !!(store.stripe_account_id && store.stripe_charges_enabled),
+      stripe_account_id: store.stripe_account_id ?? null,
+      onboarding_complete: store.stripe_onboarding_complete ?? false,
+      charges_enabled: store.stripe_charges_enabled ?? false,
+      payouts_enabled: store.stripe_payouts_enabled ?? false,
+    })
+  } catch (err) {
+    if (err instanceof ActiveStoreError) {
+      return NextResponse.json({ connected: false })
+    }
+    throw err
+  }
 }

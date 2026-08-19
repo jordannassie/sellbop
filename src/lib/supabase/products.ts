@@ -56,15 +56,36 @@ export function mapSupabaseProduct(row: ProductRow, ownerId: string): Product {
 export async function fetchUserProducts(
   supabase: SupabaseClient<Database>,
   userId: string,
+  storeId?: string | null,
 ): Promise<Product[]> {
-  const { data: stores } = await supabase
+  let resolvedStoreId = storeId
+
+  if (!resolvedStoreId) {
+    const res = await fetch('/api/stores', { credentials: 'include' })
+    if (res.ok) {
+      const data = await res.json() as { activeStoreId?: string | null }
+      resolvedStoreId = data.activeStoreId ?? null
+    }
+  }
+
+  if (!resolvedStoreId) {
+    const { data: stores } = await supabase
+      .from('stores')
+      .select('id, owner_user_id')
+      .eq('owner_user_id', userId)
+      .order('created_at', { ascending: true })
+      .limit(1)
+    resolvedStoreId = stores?.[0]?.id
+  }
+
+  if (!resolvedStoreId) return []
+
+  const { data: store } = await supabase
     .from('stores')
     .select('id, owner_user_id')
-    .eq('owner_user_id', userId)
-    .order('updated_at', { ascending: false })
-    .limit(1)
+    .eq('id', resolvedStoreId)
+    .maybeSingle()
 
-  const store = stores?.[0]
   if (!store) return []
 
   const { data: rows } = await supabase

@@ -20,6 +20,7 @@ export interface AdminUserSummary {
   storeId: string | null
   storeSlug: string | null
   storeName: string | null
+  storeCount: number
   productCount: number
   purchaseCount: number
   orderCount: number
@@ -87,7 +88,12 @@ export async function getAdminUsers(options?: AdminPaginationParams) {
     if (result.error) throw result.error
   }
 
-  const storesByOwner = new Map((storesResult.data ?? []).map((store) => [store.owner_user_id, store]))
+  const storesByOwner = new Map<string, typeof storesResult.data>()
+  for (const store of storesResult.data ?? []) {
+    const list = storesByOwner.get(store.owner_user_id) ?? []
+    list.push(store)
+    storesByOwner.set(store.owner_user_id, list)
+  }
   const productCountByStore = new Map<string, number>()
   for (const product of productsResult.data ?? []) {
     productCountByStore.set(product.store_id, (productCountByStore.get(product.store_id) ?? 0) + 1)
@@ -96,15 +102,18 @@ export async function getAdminUsers(options?: AdminPaginationParams) {
   const aggregateByUserId = new Map<string, Omit<AdminUserSummary, 'email' | 'fullName' | 'avatarUrl' | 'createdAt' | 'emailVerified' | 'isPartner' | 'showPartnerBadge'>>()
 
   for (const profile of profilesResult.data ?? []) {
-    const store = storesByOwner.get(profile.user_id)
+    const ownedStores = storesByOwner.get(profile.user_id) ?? []
+    const store = ownedStores[0] ?? null
+    const storeCount = ownedStores.length
     aggregateByUserId.set(profile.user_id, {
       userId: profile.user_id,
       isBuyer: false,
-      isSeller: Boolean(store),
+      isSeller: storeCount > 0,
       storeId: store?.id ?? null,
       storeSlug: store?.slug ?? null,
       storeName: store?.name ?? null,
-      productCount: store ? (productCountByStore.get(store.id) ?? 0) : 0,
+      storeCount,
+      productCount: ownedStores.reduce((sum, s) => sum + (productCountByStore.get(s.id) ?? 0), 0),
       purchaseCount: 0,
       orderCount: 0,
       subscriptionCount: 0,
@@ -157,7 +166,8 @@ export async function getAdminUsers(options?: AdminPaginationParams) {
 
   let users: AdminUserSummary[] = (profilesResult.data ?? []).map((profile) => {
     const aggregate = aggregateByUserId.get(profile.user_id)!
-    const store = storesByOwner.get(profile.user_id)
+    const ownedStores = storesByOwner.get(profile.user_id) ?? []
+    const store = ownedStores[0]
     const profileRecord = profile as typeof profile & {
       is_partner?: boolean | null
       show_partner_badge?: boolean | null

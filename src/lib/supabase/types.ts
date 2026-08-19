@@ -81,6 +81,35 @@ export interface Database {
         Relationships: []
       }
 
+      store_members: {
+        Row: {
+          id: string
+          store_id: string
+          user_id: string
+          role: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          store_id: string
+          user_id: string
+          role: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['store_members']['Insert']>
+        Relationships: [
+          {
+            foreignKeyName: 'store_members_store_id_fkey'
+            columns: ['store_id']
+            isOneToOne: false
+            referencedRelation: 'stores'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+
       products: {
         Row: {
           id: string

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { isSupabaseAdminConfigured } from '@/lib/env'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
+import { requireActiveStoreForUser, ActiveStoreError } from '@/lib/stores/active-store'
 
 export interface OnboardingStatus {
   dismissed: boolean
@@ -26,18 +27,18 @@ async function getUserId() {
 async function computeAutoSteps(userId: string) {
   const admin = getSupabaseAdminClient()
 
-  const { data: store } = await admin
-    .from('stores')
-    .select('id, stripe_charges_enabled')
-    .eq('owner_user_id', userId)
-    .maybeSingle()
-
-  if (!store) {
-    return {
-      create_product: false,
-      affiliates: false,
-      bank_connected: false,
+  let store
+  try {
+    store = await requireActiveStoreForUser(userId)
+  } catch (err) {
+    if (err instanceof ActiveStoreError) {
+      return {
+        create_product: false,
+        affiliates: false,
+        bank_connected: false,
+      }
     }
+    throw err
   }
 
   const [{ data: products }] = await Promise.all([

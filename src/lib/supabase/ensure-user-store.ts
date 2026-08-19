@@ -1,12 +1,8 @@
 /**
  * ensure-user-store.ts
  *
- * Client-side helper that finds the Supabase store owned by the current auth
- * user, or creates one automatically (with a unique slug derived from their
- * name / email).
- *
- * Uses the browser Supabase client — RLS rules allow authenticated users to
- * read/insert their own store row via `auth.uid() = owner_user_id`.
+ * Ensures the authenticated user has at least one shop.
+ * Does NOT resolve the active shop — use /api/stores for that.
  */
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from './types'
@@ -19,22 +15,43 @@ export function slugFromText(text: string): string {
   return text
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')   // strip combining accents
-    .replace(/[^a-z0-9\s-]/g, '')     // keep letters, digits, spaces, dashes
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s-]/g, '')
     .trim()
-    .replace(/\s+/g, '-')             // spaces → dashes
-    .replace(/-+/g, '-')              // collapse consecutive dashes
-    .replace(/^-|-$/g, '')            // trim leading/trailing dashes
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
     .slice(0, 30)
 }
 
+async function userHasAnyStore(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+): Promise<StoreRow | null> {
+  const { data: memberships } = await supabase
+    .from('store_members')
+    .select('stores(*)')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: true })
+    .limit(1)
+
+  const fromMember = memberships?.[0]?.stores as StoreRow | null | undefined
+  if (fromMember) return fromMember
+
+  const { data: rows, error } = await supabase
+    .from('stores')
+    .select('*')
+    .eq('owner_user_id', userId)
+    .order('created_at', { ascending: true })
+    .limit(1)
+
+  if (error) return null
+  return rows?.[0] ?? null
+}
+
 /**
- * Find the store owned by `userId`, or create one if none exists.
- * Returns the store row on success, or `null` if the operation fails
- * (e.g. RLS violation, network error, Supabase not configured).
- *
- * Handles the case where a user may have multiple store rows: picks the
- * most-recently-updated one instead of failing on .maybeSingle().
+ * Ensure this account has at least one shop. Creates one only when none exist.
+ * Returns an existing shop row — not necessarily the user's active shop.
  */
 export async function ensureUserStore(
   supabase: SupabaseClient<Database>,
@@ -42,25 +59,9 @@ export async function ensureUserStore(
   name: string | null,
   email: string,
 ): Promise<StoreRow | null> {
-  // ── 1. Look for existing stores (user may have duplicates) ───
-  const { data: rows, error: findErr } = await supabase
-    .from('stores')
-    .select('*')
-    .eq('owner_user_id', userId)
-    .order('updated_at', { ascending: false })
-    .limit(1)
-
-  if (findErr) return null
-
-  const existing = rows?.[0] ?? null
-
-  if (process.env.NODE_ENV === 'development' && (rows?.length ?? 0) > 1) {
-    console.warn(`[SellBop] User ${userId} has multiple store rows. Using most recently updated.`)
-  }
-
+  const existing = await userHasAnyStore(supabase, userId)
   if (existing) return existing
 
-  // ── 2. Generate a unique slug ────────────────────────────────
   const base = slugFromText(name ?? email.split('@')[0])
   if (!base) return null
 
@@ -76,7 +77,6 @@ export async function ensureUserStore(
     slug = `${base}-${attempt + 1}`
   }
 
-  // ── 3. Create the store ──────────────────────────────────────
   const storeName = name ?? email.split('@')[0]
   const { data: created, error: createErr } = await supabase
     .from('stores')
@@ -84,6 +84,17 @@ export async function ensureUserStore(
     .select('*')
     .single()
 
-  if (createErr) return null
+  if (createErr || !created) return null
+
+  await supabase.from('store_members').upsert(
+    {
+      store_id: created.id,
+      user_id: userId,
+      role: 'owner',
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'store_id,user_id' },
+  ).then(() => undefined, () => undefined)
+
   return created
 }

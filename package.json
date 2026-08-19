@@ -12,6 +12,7 @@
     "db:apply-025": "node scripts/apply-migration-025.mjs",
     "db:apply-026": "node scripts/apply-migration-026.mjs",
     "db:apply-027": "node scripts/apply-migration-027.mjs",
+    "db:apply-029": "node scripts/apply-migration-029.mjs",
     "test:agent": "node scripts/agent-acceptance-test.mjs",
     "test:fees": "node scripts/test-fee-engine.mjs"
   },

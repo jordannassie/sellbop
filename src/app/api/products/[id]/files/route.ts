@@ -4,23 +4,19 @@ import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { isSupabaseAdminConfigured } from '@/lib/env'
 import { normalizeProductLinkUrl, productLinkDisplayName } from '@/lib/product-files/url'
 
-async function verifyProductOwnership(productId: string, userId: string) {
-  const admin = getSupabaseAdminClient()
-  const { data: product } = await admin
-    .from('products')
-    .select('id, store_id')
-    .eq('id', productId)
-    .maybeSingle()
-  if (!product) return null
+import { verifyProductManageAccess } from '@/lib/stores/product-access'
 
+async function verifyProductOwnership(productId: string, userId: string) {
+  const access = await verifyProductManageAccess(productId, userId)
+  if (!access) return null
+  const admin = getSupabaseAdminClient()
   const { data: store } = await admin
     .from('stores')
     .select('id, owner_user_id')
-    .eq('id', product.store_id)
+    .eq('id', access.product.store_id)
     .maybeSingle()
-
-  if (!store || store.owner_user_id !== userId) return null
-  return { product, store }
+  if (!store) return null
+  return { product: access.product, store }
 }
 
 // POST /api/products/[id]/files — register an uploaded file record

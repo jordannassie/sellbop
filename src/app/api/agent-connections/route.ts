@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { isSupabaseAdminConfigured } from '@/lib/env'
+import { requireActiveStoreForUser, ActiveStoreError } from '@/lib/stores/active-store'
 import { generateAgentToken, ALL_AGENT_SCOPES, type AgentProvider, type AgentScope } from '@/lib/agent/auth'
 
 // GET /api/agent-connections — list the current user's AI agent connections (no token hashes returned)
@@ -49,11 +50,13 @@ export async function POST(request: Request) {
 
   const admin = getSupabaseAdminClient()
 
-  const { data: store } = await admin
-    .from('stores')
-    .select('id')
-    .eq('owner_user_id', user.id)
-    .maybeSingle()
+  let storeId: string | null = null
+  try {
+    const store = await requireActiveStoreForUser(user.id)
+    storeId = store.id
+  } catch (err) {
+    if (!(err instanceof ActiveStoreError)) throw err
+  }
 
   const { token, hash, prefix } = generateAgentToken()
 
@@ -61,7 +64,7 @@ export async function POST(request: Request) {
     .from('agent_connections')
     .insert({
       user_id: user.id,
-      store_id: store?.id ?? null,
+      store_id: storeId,
       provider: provider ?? 'custom',
       name: name.trim(),
       token_hash: hash,

@@ -9,6 +9,7 @@ import {
   MAX_PRODUCT_FILE_SIZE_BYTES,
 } from '@/lib/platform-config'
 import { AgentAuthError, requireScope, type AgentIdentity } from './auth'
+import { userCanManageStore } from '@/lib/stores/active-store'
 import type { Database } from '@/lib/supabase/types'
 
 type ProductRow = Database['public']['Tables']['products']['Row']
@@ -73,16 +74,40 @@ async function withActivityLog<T>(
 /** Resolve the store this identity is allowed to act on. Throws if none / mismatched. */
 async function resolveStore(identity: AgentIdentity): Promise<StoreRow> {
   const admin = getSupabaseAdminClient()
+
+  if (identity.storeId) {
+    const canManage = await userCanManageStore(identity.userId, identity.storeId)
+    if (!canManage) {
+      throw new AgentAuthError('This connection is not authorized for this store.', 403)
+    }
+    const { data: store } = await admin
+      .from('stores')
+      .select('*')
+      .eq('id', identity.storeId)
+      .maybeSingle()
+    if (!store) throw new AgentServiceError('Store not found.', 404)
+    return store
+  }
+
+  const { data: memberships } = await admin
+    .from('store_members')
+    .select('stores(*)')
+    .eq('user_id', identity.userId)
+    .order('created_at', { ascending: true })
+    .limit(1)
+
+  const fromMember = memberships?.[0]?.stores as StoreRow | null | undefined
+  if (fromMember) return fromMember
+
   const { data: store } = await admin
     .from('stores')
     .select('*')
     .eq('owner_user_id', identity.userId)
+    .order('created_at', { ascending: true })
+    .limit(1)
     .maybeSingle()
 
   if (!store) throw new AgentServiceError('No store found for this account.', 404)
-  if (identity.storeId && identity.storeId !== store.id) {
-    throw new AgentAuthError('This connection is not authorized for this store.', 403)
-  }
   return store
 }
 

@@ -3,13 +3,10 @@ import Stripe from 'stripe'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { env, isSupabaseAdminConfigured } from '@/lib/env'
+import { userCanManageStore } from '@/lib/stores/active-store'
 
-// GET /api/stripe/connect/refresh — the onboarding link Stripe generated
-// expired (they're only valid for a few minutes) or the seller navigated
-// away and back. Generate a fresh v2 Account Link and send them right back
-// into onboarding.
 export async function GET(request: NextRequest) {
-  const dashboardUrl = new URL('/dashboard', request.url)
+  const dashboardUrl = new URL('/dashboard/payouts', request.url)
 
   if (!isSupabaseAdminConfigured() || !env.stripe.secretKey) {
     return NextResponse.redirect(dashboardUrl)
@@ -19,11 +16,17 @@ export async function GET(request: NextRequest) {
   const { data: { user } } = await userClient.auth.getUser()
   if (!user) return NextResponse.redirect(new URL('/login', request.url))
 
+  const storeId = request.nextUrl.searchParams.get('storeId')
+  if (!storeId) return NextResponse.redirect(dashboardUrl)
+
+  const canManage = await userCanManageStore(user.id, storeId)
+  if (!canManage) return NextResponse.redirect(dashboardUrl)
+
   const admin = getSupabaseAdminClient()
   const { data: store } = await admin
     .from('stores')
     .select('id, stripe_account_id')
-    .eq('owner_user_id', user.id)
+    .eq('id', storeId)
     .maybeSingle()
 
   if (!store?.stripe_account_id) {
@@ -38,8 +41,8 @@ export async function GET(request: NextRequest) {
         type: 'account_onboarding',
         account_onboarding: {
           configurations: ['recipient'],
-          refresh_url: `${env.app.url}/api/stripe/connect/refresh`,
-          return_url: `${env.app.url}/api/stripe/connect/return`,
+          refresh_url: `${env.app.url}/api/stripe/connect/refresh?storeId=${store.id}`,
+          return_url: `${env.app.url}/api/stripe/connect/return?storeId=${store.id}`,
         },
       },
     })

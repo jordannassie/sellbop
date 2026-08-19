@@ -8,8 +8,7 @@ import { useAuth } from '@/context/auth-context'
 import { useUserStore } from '@/hooks/use-user-store'
 import { cn } from '@/lib/utils'
 import { SellBopLogo } from '@/components/ui/sellbop-logo'
-import { AvatarWithPartnerBadge } from '@/components/ui/avatar-with-partner-badge'
-import { partnerFromSocialLinks } from '@/lib/partner-storage'
+import { ShopSwitcher } from '@/components/dashboard/shop-switcher'
 
 interface NavItem {
   href: string
@@ -97,12 +96,28 @@ export function DashboardSidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const { signOut, session, account } = useAuth()
-  const { store } = useUserStore()
+  const {
+    store,
+    stores,
+    activeStoreId,
+    switching,
+    isDemo,
+    switchStore,
+    createStore,
+  } = useUserStore()
   const [mobileOpen, setMobileOpen] = useState(false)
 
-  const hasStore = !!(account?.hasStore || store)
+  const hasStore = !!(account?.hasStore || store || stores.length > 0)
+  const activeSummary = stores.find(s => s.id === activeStoreId) ?? (store ? {
+    id: store.id,
+    name: store.name,
+    slug: store.slug,
+    avatar_url: store.avatar_url,
+    banner_url: store.banner_url,
+    owner_user_id: store.owner_user_id,
+    role: 'owner' as const,
+  } : null)
 
-  // Full seller nav
   const sellerNav: NavItem[] = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, exact: true },
     { href: '/dashboard/products', label: 'Products', icon: Package },
@@ -116,7 +131,6 @@ export function DashboardSidebar() {
     { href: '/dashboard/settings', label: 'Settings', icon: Settings },
   ]
 
-  // Buyer-only nav (no store yet)
   const buyerNav: NavItem[] = [
     { href: '/marketplace', label: 'Marketplace', icon: Grid3x3 },
     { href: '/dashboard/affiliates', label: 'Affiliates', icon: TrendingUp },
@@ -132,57 +146,33 @@ export function DashboardSidebar() {
     router.push('/')
   }
 
-  const avatarUrl = session?.avatarUrl ?? store?.avatar_url ?? null
-  const partnerStatus = partnerFromSocialLinks(
-    (store?.social_links as Record<string, string> | null) ?? null,
-  )
+  const storeHref = store?.slug ? `/store/${store.slug}` : null
 
-  // Profile click: go to public storefront if seller, else settings
-  const profileHref = hasStore && store?.slug ? `/${store.slug}` : '/dashboard/settings'
-  const displayName = session?.name ?? session?.email?.split('@')[0] ?? 'You'
-  const initial = (displayName.charAt(0) || 'U').toUpperCase()
-
-  const userBlock = session && (
-    <div className="flex flex-col items-center px-4 pt-6 pb-4 border-b border-neutral-100">
-      <Link href={profileHref} className="group mb-3 block" title="View your store">
-        <AvatarWithPartnerBadge
-          isPartner={partnerStatus.isPartner}
-          showPartnerBadge={partnerStatus.showPartnerBadge}
-          className="block"
-        >
-          <div className="w-24 h-24 rounded-full overflow-hidden ring-[3px] ring-neutral-100 bg-neutral-900 flex items-center justify-center group-hover:ring-neutral-300 transition-all">
-            {avatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={avatarUrl}
-                alt={displayName}
-                className="w-full h-full object-cover object-center"
-              />
-            ) : (
-              <span className="text-white font-bold text-xl select-none">{initial}</span>
-            )}
-          </div>
-        </AvatarWithPartnerBadge>
-      </Link>
-      <Link href={profileHref} className="group">
-        <p className="text-sm font-semibold text-neutral-900 text-center truncate max-w-[168px] leading-snug group-hover:underline underline-offset-2 transition-colors">
-          {displayName}
-        </p>
-      </Link>
-      <p className="text-[11px] text-neutral-400 text-center truncate max-w-[168px] mt-0.5">
-        {session.email}
-      </p>
+  const accountBlock = session && (
+    <div className="px-4 py-3 border-b border-neutral-100">
+      <p className="text-[11px] text-neutral-400 text-center truncate">{session.email}</p>
       <button
         type="button"
         onClick={handleLogout}
-        className="mt-3 flex items-center gap-1.5 text-xs font-medium text-neutral-400 transition-colors hover:text-red-600 lg:hidden"
+        className="mt-2 mx-auto flex items-center gap-1.5 text-xs font-medium text-neutral-400 transition-colors hover:text-red-600 lg:hidden"
       >
         <LogOut size={12} /> Log out
       </button>
     </div>
   )
 
-  const storeHref = store?.slug ? `/store/${store.slug}` : null
+  const shopBlock = hasStore && stores.length > 0 && (
+    <ShopSwitcher
+      stores={stores}
+      activeStoreId={activeStoreId}
+      activeStore={activeSummary}
+      switching={switching}
+      isDemo={isDemo}
+      onSwitch={switchStore}
+      onCreate={createStore}
+      onClose={() => setMobileOpen(false)}
+    />
+  )
 
   const createBtn = (onNavigate?: () => void) => (
     <div className="px-2 pt-3 pb-2 space-y-2">
@@ -239,15 +229,14 @@ export function DashboardSidebar() {
 
   return (
     <>
-      {/* Mobile top header */}
       <header className="fixed left-0 right-0 top-0 z-40 flex h-14 items-center justify-between border-b border-neutral-100 bg-white px-4 lg:hidden">
         <SellBopLogo size="lg" />
         <div className="flex items-center gap-2">
           {session && (
             <Link href="/dashboard/settings">
               <UserAvatar
-                avatarUrl={avatarUrl}
-                name={session.name}
+                avatarUrl={activeSummary?.avatar_url ?? store?.avatar_url}
+                name={activeSummary?.name ?? store?.name}
                 email={session.email}
                 sizeClass="h-8 w-8"
                 textClass="text-xs"
@@ -265,7 +254,6 @@ export function DashboardSidebar() {
         </div>
       </header>
 
-      {/* Mobile overlay */}
       <div
         className={cn(
           'fixed inset-0 z-30 bg-black/25 transition-opacity duration-200 lg:hidden',
@@ -275,7 +263,6 @@ export function DashboardSidebar() {
         aria-hidden="true"
       />
 
-      {/* Mobile slide-in drawer */}
       <aside
         className={cn(
           'fixed bottom-0 right-0 top-14 z-40 flex w-72 translate-x-full flex-col overflow-y-auto border-l border-neutral-100 bg-white shadow-xl transition-transform duration-200 ease-out pb-16 lg:hidden',
@@ -283,17 +270,18 @@ export function DashboardSidebar() {
         )}
         aria-hidden={!mobileOpen}
       >
-        {userBlock}
+        {shopBlock}
+        {accountBlock}
         {createBtn(() => setMobileOpen(false))}
         {navLinks(() => setMobileOpen(false))}
       </aside>
 
-      {/* Desktop sidebar */}
       <aside className="hidden min-h-screen w-56 shrink-0 flex-col border-r border-neutral-100 bg-white lg:flex">
         <div className="flex h-14 items-center border-b border-neutral-100 px-5">
           <SellBopLogo size="lg" />
         </div>
-        {userBlock}
+        {shopBlock}
+        {accountBlock}
         {createBtn()}
         {navLinks()}
         {logoutBtn}

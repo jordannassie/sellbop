@@ -10,34 +10,7 @@ import {
 } from '@/lib/pricing/product-price'
 import { mapMediaRow, withLegacyCoverMedia } from '@/lib/product-media/utils'
 
-async function getSellerStore(userId: string) {
-  const admin = getSupabaseAdminClient()
-  const { data } = await admin
-    .from('stores')
-    .select('id, owner_user_id')
-    .eq('owner_user_id', userId)
-    .maybeSingle()
-  return data
-}
-
-async function verifyProductOwnership(productId: string, userId: string) {
-  const admin = getSupabaseAdminClient()
-  const { data: product } = await admin
-    .from('products')
-    .select('id, store_id')
-    .eq('id', productId)
-    .maybeSingle()
-  if (!product) return null
-
-  const { data: store } = await admin
-    .from('stores')
-    .select('id, owner_user_id')
-    .eq('id', product.store_id)
-    .maybeSingle()
-
-  if (!store || store.owner_user_id !== userId) return null
-  return { product, store }
-}
+import { verifyProductManageAccess } from '@/lib/stores/product-access'
 
 // GET /api/products/[id]
 export async function GET(
@@ -53,7 +26,7 @@ export async function GET(
   const { data: { user } } = await userClient.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 })
 
-  const ownership = await verifyProductOwnership(id, user.id)
+  const ownership = await verifyProductManageAccess(id, user.id)
   if (!ownership) return NextResponse.json({ error: 'Product not found.' }, { status: 404 })
 
   const admin = getSupabaseAdminClient()
@@ -109,7 +82,7 @@ export async function PATCH(
   const { data: { user } } = await userClient.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 })
 
-  const ownership = await verifyProductOwnership(id, user.id)
+  const ownership = await verifyProductManageAccess(id, user.id)
   if (!ownership) return NextResponse.json({ error: 'Product not found.' }, { status: 404 })
 
   const body = await request.json()
@@ -118,10 +91,12 @@ export async function PATCH(
   // If slug is being changed, ensure uniqueness
   let slug = body.slug ? slugify(body.slug) : undefined
   if (slug) {
+    const storeId = ownership.product.store_id
     for (let i = 1; i <= 10; i++) {
       const { data: existing } = await admin
         .from('products')
         .select('id')
+        .eq('store_id', storeId)
         .eq('slug', slug)
         .neq('id', id)
         .maybeSingle()
@@ -223,7 +198,7 @@ export async function DELETE(
   const { data: { user } } = await userClient.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 })
 
-  const ownership = await verifyProductOwnership(id, user.id)
+  const ownership = await verifyProductManageAccess(id, user.id)
   if (!ownership) return NextResponse.json({ error: 'Product not found.' }, { status: 404 })
 
   const admin = getSupabaseAdminClient()

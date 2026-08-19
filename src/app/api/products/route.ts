@@ -7,6 +7,7 @@ import {
   normalizeSaleFieldsForSave,
   validateSalePricingForSave,
 } from '@/lib/pricing/product-price'
+import { requireActiveStoreForUser, ActiveStoreError } from '@/lib/stores/active-store'
 
 // GET /api/products — list the authenticated seller's products
 export async function GET() {
@@ -20,14 +21,15 @@ export async function GET() {
 
   const admin = getSupabaseAdminClient()
 
-  // Find the seller's store
-  const { data: store } = await admin
-    .from('stores')
-    .select('id')
-    .eq('owner_user_id', user.id)
-    .maybeSingle()
-
-  if (!store) return NextResponse.json({ products: [] })
+  let store
+  try {
+    store = await requireActiveStoreForUser(user.id)
+  } catch (err) {
+    if (err instanceof ActiveStoreError) {
+      return NextResponse.json({ products: [] })
+    }
+    throw err
+  }
 
   const { data: products, error } = await admin
     .from('products')
@@ -106,26 +108,14 @@ export async function POST(request: Request) {
 
   const admin = getSupabaseAdminClient()
 
-  // Find or create the seller's store
-  let { data: store } = await admin
-    .from('stores')
-    .select('id')
-    .eq('owner_user_id', user.id)
-    .maybeSingle()
-
-  if (!store) {
-    const displayName = user.user_metadata?.full_name ?? user.email?.split('@')[0] ?? 'Creator'
-    const baseSlug = displayName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').slice(0, 30)
-    const { data: newStore } = await admin
-      .from('stores')
-      .insert({ owner_user_id: user.id, slug: baseSlug, name: displayName })
-      .select('id')
-      .single()
-    store = newStore
-  }
-
-  if (!store) {
-    return NextResponse.json({ error: 'Could not create seller store.' }, { status: 500 })
+  let store
+  try {
+    store = await requireActiveStoreForUser(user.id)
+  } catch (err) {
+    if (err instanceof ActiveStoreError) {
+      return NextResponse.json({ error: err.message }, { status: err.status })
+    }
+    throw err
   }
 
   // New products are placed first in manual display order.
@@ -145,6 +135,7 @@ export async function POST(request: Request) {
     const { data: existing } = await admin
       .from('products')
       .select('id')
+      .eq('store_id', store.id)
       .eq('slug', slug)
       .maybeSingle()
     if (!existing) break

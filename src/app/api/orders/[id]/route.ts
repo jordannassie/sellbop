@@ -3,6 +3,7 @@ import Stripe from 'stripe'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { env, isSupabaseAdminConfigured } from '@/lib/env'
+import { requireActiveStoreForUser, ActiveStoreError } from '@/lib/stores/active-store'
 
 // GET /api/orders/[id]
 export async function GET(
@@ -20,13 +21,15 @@ export async function GET(
 
   const admin = getSupabaseAdminClient()
 
-  const { data: store } = await admin
-    .from('stores')
-    .select('id')
-    .eq('owner_user_id', user.id)
-    .maybeSingle()
-
-  if (!store) return NextResponse.json({ error: 'Order not found.' }, { status: 404 })
+  let store
+  try {
+    store = await requireActiveStoreForUser(user.id)
+  } catch (err) {
+    if (err instanceof ActiveStoreError) {
+      return NextResponse.json({ error: 'Order not found.' }, { status: 404 })
+    }
+    throw err
+  }
 
   const { data: order, error } = await admin
     .from('orders')
@@ -67,13 +70,15 @@ export async function POST(
 
   const admin = getSupabaseAdminClient()
 
-  const { data: store } = await admin
-    .from('stores')
-    .select('id')
-    .eq('owner_user_id', user.id)
-    .maybeSingle()
-
-  if (!store) return NextResponse.json({ error: 'Order not found.' }, { status: 404 })
+  let store
+  try {
+    store = await requireActiveStoreForUser(user.id)
+  } catch (err) {
+    if (err instanceof ActiveStoreError) {
+      return NextResponse.json({ error: 'Order not found.' }, { status: 404 })
+    }
+    throw err
+  }
 
   const { data: order } = await admin
     .from('orders')

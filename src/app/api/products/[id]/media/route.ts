@@ -10,22 +10,17 @@ import {
 } from '@/lib/product-media/server'
 import { mapMediaRow, withLegacyCoverMedia } from '@/lib/product-media/utils'
 
+import { verifyProductManageAccess } from '@/lib/stores/product-access'
+
 async function verifyProductOwnership(productId: string, userId: string) {
+  const access = await verifyProductManageAccess(productId, userId)
+  if (!access) return null
   const admin = getSupabaseAdminClient()
-  const { data: product } = await admin
-    .from('products')
-    .select('id, store_id, cover_image_url')
-    .eq('id', productId)
-    .maybeSingle()
-  if (!product) return null
-
-  const { data: store } = await admin
-    .from('stores')
-    .select('id, owner_user_id')
-    .eq('id', product.store_id)
-    .maybeSingle()
-
-  if (!store || store.owner_user_id !== userId) return null
+  const [{ data: product }, { data: store }] = await Promise.all([
+    admin.from('products').select('id, store_id, cover_image_url').eq('id', productId).maybeSingle(),
+    admin.from('stores').select('id, owner_user_id').eq('id', access.product.store_id).maybeSingle(),
+  ])
+  if (!product || !store) return null
   return { product, store }
 }
 

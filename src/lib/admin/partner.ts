@@ -14,29 +14,39 @@ async function getStoreForUser(userId: string) {
     .from('stores')
     .select('id, social_links')
     .eq('owner_user_id', userId)
+    .order('created_at', { ascending: true })
+    .limit(1)
     .maybeSingle()
   if (error) throw error
   return data
 }
 
 async function writeStorePartnerStatus(userId: string, status: PartnerStatus) {
-  const store = await getStoreForUser(userId)
-  if (!store) {
+  const admin = getSupabaseAdminClient()
+  const { data: stores, error } = await admin
+    .from('stores')
+    .select('id, social_links')
+    .eq('owner_user_id', userId)
+
+  if (error) throw error
+  if (!stores?.length) {
     throw new Error('User has no store — partner badge requires a public storefront.')
   }
 
-  const admin = getSupabaseAdminClient()
-  const socialLinks = withPartnerSocialLinks(
-    (store.social_links as Record<string, string> | null) ?? {},
-    status,
-  )
+  for (const store of stores) {
+    const socialLinks = withPartnerSocialLinks(
+      (store.social_links as Record<string, string> | null) ?? {},
+      status,
+    )
 
-  const { error } = await admin
-    .from('stores')
-    .update({ social_links: socialLinks, updated_at: new Date().toISOString() })
-    .eq('id', store.id)
+    const { error: updateError } = await admin
+      .from('stores')
+      .update({ social_links: socialLinks, updated_at: new Date().toISOString() })
+      .eq('id', store.id)
 
-  if (error) throw error
+    if (updateError) throw updateError
+  }
+
   return status
 }
 
