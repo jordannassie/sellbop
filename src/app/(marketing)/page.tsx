@@ -14,8 +14,9 @@ import {
   CreditCard,
   Upload,
   TrendingUp,
-  Users,
   DollarSign,
+  Store,
+  Handshake,
   BookOpen,
   Table2,
   SlidersHorizontal,
@@ -171,93 +172,86 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── Sellbop Share / Affiliate Network ─────────────────────── */}
+      {/* ── SellBop Partner Program ───────────────────────────────── */}
       <section className="border-t border-neutral-100 py-24 bg-white">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold px-3 py-1.5 rounded-full mb-5">
-                <TrendingUp size={11} />
-                Sellbop Share
-              </div>
-              <h2 className="text-3xl sm:text-4xl font-black text-black tracking-tight leading-tight mb-4">
-                Build your own affiliate network.
-              </h2>
-              <p className="text-neutral-500 text-base leading-relaxed mb-6">
-                Stop being the only person selling your product. Set the commission. Sellbop handles the links, tracking, sales, and commissions.
-              </p>
-              <div className="space-y-3 mb-8">
-                {[
-                  { icon: Users, text: 'Customers and fans become your salespeople' },
-                  { icon: DollarSign, text: 'You only pay when they actually make a sale' },
-                  { icon: TrendingUp, text: 'Real-time tracking for every click and conversion' },
-                ].map(({ icon: Icon, text }) => (
-                  <div key={text} className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-100">
-                      <Icon size={14} className="text-emerald-600" />
-                    </div>
-                    <p className="text-sm text-neutral-700">{text}</p>
-                  </div>
-                ))}
-              </div>
-              <Link href="/signup">
-                <Button size="lg">
-                  Build Your Network <ArrowRight size={16} />
-                </Button>
-              </Link>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            {/* Partner image — stacks above text on mobile */}
+            <div className="order-1">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="https://qsvmgzdaashfsavmfjuz.supabase.co/storage/v1/object/public/SELL/images/Partner.png"
+                alt="SellBop Partner — verified creator with premium digital products and growing sales"
+                className="w-full h-auto object-contain"
+              />
             </div>
 
-            {/* Visual mockup */}
-            <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-6 shadow-sm">
-              <div className="rounded-xl border border-neutral-200 bg-white overflow-hidden mb-4">
-                {/* Product cover image */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="https://qsvmgzdaashfsavmfjuz.supabase.co/storage/v1/object/public/SELL/images/HOLD.png"
-                  alt="Digital Product"
-                  className="w-full object-cover object-center rounded-t-xl"
-                  style={{ aspectRatio: '1 / 1' }}
-                />
-                <div className="p-5">
-                  <div className="flex items-center justify-between mb-3">
-                    <div>
-                      <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">Digital Product</p>
-                      <p className="text-2xl font-black text-black">$49</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs text-neutral-400">Sellbop Share</p>
-                      <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-bold" style={{ background: '#ecfff6', color: '#00A854' }}>ON · 30%</span>
-                    </div>
-                  </div>
-                  <div className="border-t border-neutral-100 pt-3">
-                    <div className="flex justify-between text-sm items-baseline">
-                      <span className="text-neutral-500">Affiliate earns per sale</span>
-                      <span className="text-2xl font-black" style={{ color: '#00E676' }}>$14.70</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+            <div className="order-2">
+              <p className="text-xs font-bold uppercase tracking-[0.25em] mb-4" style={{ color: '#00E676' }}>
+                SellBop Partnerships
+              </p>
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-black tracking-tight leading-[1.1] mb-5">
+                You Bring the Audience.<br />
+                We Build the Business.
+              </h2>
+              <p className="text-neutral-500 text-base sm:text-lg leading-relaxed mb-8">
+                SellBop partners with creators to build premium digital product businesses around their brand. We create the store, products, checkout, delivery, and affiliate infrastructure — then we share the revenue.
+              </p>
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-4 mb-10">
                 {[
-                  { label: 'Affiliates', value: '47' },
-                  { label: 'Affiliate Sales', value: '312' },
-                  { label: 'Revenue', value: '$15,288' },
-                ].map(s => (
-                  <div key={s.label} className="rounded-xl border border-neutral-200 bg-white p-3 text-center">
-                    <p className="text-lg font-black text-black">{s.value}</p>
-                    <p className="text-[10px] text-neutral-400 mt-0.5">{s.label}</p>
+                  {
+                    icon: Store,
+                    title: 'Your Branded Store',
+                    desc: 'We build and manage your digital storefront.',
+                  },
+                  {
+                    icon: BookOpen,
+                    title: 'Premium Digital Products',
+                    desc: 'We create guides, workbooks, blueprints, and other digital products for your audience.',
+                  },
+                  {
+                    icon: Zap,
+                    title: 'SellBop Handles Everything',
+                    desc: 'Product creation, checkout, delivery, affiliates, and infrastructure.',
+                  },
+                  {
+                    icon: Handshake,
+                    title: 'Revenue Share Partnership',
+                    desc: 'No upfront product-development cost. We succeed when you succeed.',
+                  },
+                ].map(({ icon: Icon, title, desc }) => (
+                  <div key={title} className="flex items-start gap-3">
+                    <div
+                      className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl"
+                      style={{ background: 'rgba(0,230,118,0.12)' }}
+                    >
+                      <Icon size={16} style={{ color: '#00E676' }} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-black">{title}</p>
+                      <p className="text-sm text-neutral-500 leading-relaxed">{desc}</p>
+                    </div>
                   </div>
                 ))}
               </div>
 
-              <div className="mt-4 rounded-xl bg-black p-4">
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  <p className="text-xs font-mono text-neutral-400 truncate">sellbop.com/creator/product?ref=ABC12345</p>
-                </div>
-                <div className="flex w-full items-center justify-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-black text-black">
-                  COPY LINK
-                </div>
+              <div className="flex flex-col items-start gap-4">
+                <a href="mailto:hello@sellbop.com?subject=SellBop%20Partnership%20Application">
+                  <Button
+                    size="lg"
+                    className="font-black"
+                    style={{ background: '#00E676', color: '#000', borderColor: '#00E676' }}
+                  >
+                    Become a SellBop Partner <ArrowRight size={16} />
+                  </Button>
+                </a>
+                <a
+                  href="mailto:hello@sellbop.com?subject=How%20SellBop%20Partnerships%20Work"
+                  className="text-sm font-medium text-neutral-500 hover:text-black transition-colors"
+                >
+                  See How Partnerships Work →
+                </a>
               </div>
             </div>
           </div>
