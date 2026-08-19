@@ -9,7 +9,7 @@ interface AvatarWithPartnerBadgeProps {
   className?: string
   style?: React.CSSProperties
   badgeClassName?: string
-  /** Badge size as a fraction of the avatar diameter (default 0.42). */
+  /** Badge size as a fraction of the avatar diameter (default 0.30). */
   badgeScale?: number
 }
 
@@ -23,7 +23,7 @@ export function AvatarWithPartnerBadge({
   className,
   style,
   badgeClassName,
-  badgeScale = 0.42,
+  badgeScale = 0.30,
 }: AvatarWithPartnerBadgeProps) {
   const visible = shouldShowPartnerBadge(isPartner, showPartnerBadge)
 
@@ -33,18 +33,18 @@ export function AvatarWithPartnerBadge({
       {visible && (
         <span
           className={cn(
-            'pointer-events-none absolute bottom-0 right-0 z-10 flex items-center justify-center rounded-full bg-white p-[2%] shadow-sm ring-1 ring-white',
+            'pointer-events-none absolute bottom-0 right-0 z-10 flex items-center justify-center rounded-full bg-white p-0 shadow-sm ring-1 ring-white',
             badgeClassName,
           )}
           style={{
             width: `${badgeScale * 100}%`,
             height: `${badgeScale * 100}%`,
-            transform: 'translate(20%, 12%)',
+            transform: 'translate(16%, 8%)',
           }}
           title="SellBop Partner"
           aria-label="SellBop Partner"
         >
-          <PartnerBadgeIcon className="h-full w-full" />
+          <PartnerBadgeIcon className="h-[92%] w-[92%] object-contain" />
         </span>
       )}
     </div>

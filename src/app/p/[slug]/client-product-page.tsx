@@ -403,7 +403,7 @@ export function ClientProductPage({ slug }: { slug: string }) {
                 <AvatarWithPartnerBadge
                   isPartner={store.is_partner}
                   showPartnerBadge={store.show_partner_badge}
-                  badgeScale={0.50}
+                  badgeScale={0.36}
                 >
                   <div className="w-8 h-8 rounded-full bg-neutral-200 overflow-hidden flex-shrink-0">
                     {store.avatar_url ? (

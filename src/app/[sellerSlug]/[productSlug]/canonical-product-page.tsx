@@ -631,7 +631,7 @@ export function CanonicalProductPage({ sellerSlug, productSlug }: { sellerSlug: 
                 <AvatarWithPartnerBadge
                   isPartner={store.is_partner}
                   showPartnerBadge={store.show_partner_badge}
-                  badgeScale={0.55}
+                  badgeScale={0.40}
                 >
                   <div className="w-5 h-5 rounded-full overflow-hidden bg-neutral-200 flex-shrink-0">
                     {store.avatar_url
@@ -721,7 +721,7 @@ export function CanonicalProductPage({ sellerSlug, productSlug }: { sellerSlug: 
                   <AvatarWithPartnerBadge
                     isPartner={store.is_partner}
                     showPartnerBadge={store.show_partner_badge}
-                    badgeScale={0.55}
+                    badgeScale={0.40}
                   >
                     <div className="w-5 h-5 rounded-full overflow-hidden bg-neutral-200 flex-shrink-0">
                       {store.avatar_url
