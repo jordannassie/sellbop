@@ -439,8 +439,8 @@ export default async function HomePage() {
             <div className="order-first sm:order-none sm:col-start-2 sm:row-start-1 sm:row-span-3 relative overflow-hidden rounded-3xl min-h-[300px]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="https://qsvmgzdaashfsavmfjuz.supabase.co/storage/v1/object/public/SELL/images/People/c34a0091-ff30-48a5-af07-a889d85387c1.png"
-                alt=""
+                src="https://qsvmgzdaashfsavmfjuz.supabase.co/storage/v1/object/public/SELL/partners/9:16/Screenshot%202026-08-19%20at%204.02.23%20PM.png"
+                alt="Creator selling digital products on SellBop"
                 className="absolute inset-0 w-full h-full object-cover object-center"
               />
               <div className="absolute inset-0 bg-black/65" />
