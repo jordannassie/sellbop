@@ -13,6 +13,7 @@ import { isSupabaseConfigured } from '@/lib/env'
 import { resolveStoreBannerUrl, STORE_BANNER_BG_CLASS } from '@/lib/store-defaults'
 import { SocialIcon, SOCIAL_PLATFORMS } from '@/components/ui/social-icons'
 import { AvatarWithPartnerBadge } from '@/components/ui/avatar-with-partner-badge'
+import { stripPartnerSocialLinks } from '@/lib/partner-storage'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -46,8 +47,9 @@ interface ProductCard {
 // ── Social Links row ──────────────────────────────────────────────────────────
 
 function SocialLinksRow({ links, name }: { links: Record<string, string>; name: string }) {
+  const publicLinks = stripPartnerSocialLinks(links)
   // Only show platforms that have a value, in canonical order
-  const populated = SOCIAL_PLATFORMS.filter(p => links[p.key])
+  const populated = SOCIAL_PLATFORMS.filter(p => publicLinks[p.key])
   if (populated.length === 0) return null
 
   return (
@@ -55,7 +57,7 @@ function SocialLinksRow({ links, name }: { links: Record<string, string>; name: 
       {populated.map(platform => (
         <a
           key={platform.key}
-          href={links[platform.key]}
+          href={publicLinks[platform.key]}
           target="_blank"
           rel="noopener noreferrer"
           aria-label={`Visit ${name} on ${platform.label}`}

@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { isSupabaseAdminConfigured } from '@/lib/env'
+import { getStorePartnerFields } from '@/lib/admin/partner'
+import { stripPartnerSocialLinks } from '@/lib/partner-storage'
 import { resolveStoreBannerUrl } from '@/lib/store-defaults'
 
 // GET /api/public/store/[slug] — publicly fetch a store and its live products
@@ -28,28 +30,25 @@ export async function GET(
 
   // Fallback: resolve avatar from profiles if store.avatar_url is null
   let avatarUrl = store.avatar_url
-  let isPartner = false
-  let showPartnerBadge = false
-  if (store.owner_user_id) {
+  const rawSl = (store as Record<string, unknown>).social_links
+  const socialLinksRaw: Record<string, string> =
+    rawSl && typeof rawSl === 'object' ? rawSl as Record<string, string> : {}
+
+  if (!avatarUrl && store.owner_user_id) {
     const { data: profile } = await admin
       .from('profiles')
-      .select('avatar_url, is_partner, show_partner_badge')
+      .select('avatar_url')
       .eq('user_id', store.owner_user_id)
       .maybeSingle()
-    if (!avatarUrl) avatarUrl = profile?.avatar_url ?? null
-    if (profile) {
-      isPartner = profile.is_partner === true
-      showPartnerBadge = profile.show_partner_badge !== false
-    }
+    avatarUrl = profile?.avatar_url ?? null
   }
 
-  // Extract banner and social links from the single query result
+  const partnerStatus = await getStorePartnerFields(store.owner_user_id, socialLinksRaw)
+  const socialLinks = stripPartnerSocialLinks(socialLinksRaw)
+
   const bannerUrl = resolveStoreBannerUrl(
     (store as Record<string, unknown>).banner_url as string | null | undefined,
   )
-  const rawSl = (store as Record<string, unknown>).social_links
-  const socialLinks: Record<string, string> =
-    rawSl && typeof rawSl === 'object' ? rawSl as Record<string, string> : {}
 
   // Load products — core fields only
   const { data: rawProducts } = await admin
@@ -101,8 +100,8 @@ export async function GET(
         avatar_url: avatarUrl,
         banner_url: bannerUrl,
         social_links: socialLinks,
-        is_partner: isPartner,
-        show_partner_badge: showPartnerBadge,
+        is_partner: partnerStatus.isPartner,
+        show_partner_badge: partnerStatus.showPartnerBadge,
       },
       products: enrichedProducts,
       hasAffiliateProducts,

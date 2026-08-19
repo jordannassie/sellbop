@@ -18,6 +18,7 @@ import {
   resolveStoreBannerUrl,
   STORE_BANNER_BG_CLASS,
 } from '@/lib/store-defaults'
+import { PARTNER_SOCIAL_IS_KEY, PARTNER_SOCIAL_SHOW_KEY, stripPartnerSocialLinks } from '@/lib/partner-storage'
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -73,7 +74,7 @@ export default function SettingsPage() {
       setSupportEmail(store.support_email ?? session?.email ?? '')
       if (store.avatar_url) setProfileAvatar(store.avatar_url)
       setBannerUrl(store.banner_url ?? null)
-      if (store.social_links) setSocialLinks(store.social_links as Record<string, string>)
+      if (store.social_links) setSocialLinks(stripPartnerSocialLinks(store.social_links as Record<string, string>))
     }
   }, [store, session?.email])
 
@@ -213,6 +214,9 @@ export default function SettingsPage() {
         const url = normalizeSocialUrl(v)
         if (url) normalized[k] = url
       }
+      const existing = (store?.social_links as Record<string, string> | null) ?? {}
+      if (existing[PARTNER_SOCIAL_IS_KEY]) normalized[PARTNER_SOCIAL_IS_KEY] = existing[PARTNER_SOCIAL_IS_KEY]
+      if (existing[PARTNER_SOCIAL_SHOW_KEY]) normalized[PARTNER_SOCIAL_SHOW_KEY] = existing[PARTNER_SOCIAL_SHOW_KEY]
       const err = await saveStore({ social_links: normalized })
       if (err) throw new Error(err)
       setSocialLinks(normalized)

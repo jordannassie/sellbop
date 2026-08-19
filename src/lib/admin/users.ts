@@ -3,6 +3,7 @@ import 'server-only'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { inferSaleSource, isMissingRelationError, paginate, type AdminPaginationParams } from '@/lib/admin/helpers'
 import { getAdminBuyers } from '@/lib/admin/buyers'
+import { resolvePartnerStatus } from '@/lib/partner-storage'
 import { getAdminProducts } from '@/lib/admin/products'
 import { getAdminOrders } from '@/lib/admin/orders'
 import { getAdminSellers } from '@/lib/admin/sellers'
@@ -74,7 +75,7 @@ export async function getAdminUsers(options?: AdminPaginationParams) {
   const admin = getSupabaseAdminClient()
   const [profilesResult, storesResult, purchasesResult, ordersResult, subscriptionsResult, productsResult, sellerOrdersResult] = await Promise.all([
     admin.from('profiles').select('*').order('created_at', { ascending: false }),
-    admin.from('stores').select('id,owner_user_id,slug,name'),
+    admin.from('stores').select('id,owner_user_id,slug,name,social_links'),
     admin.from('purchases').select('buyer_user_id,created_at'),
     admin.from('orders').select('id,buyer_user_id,seller_user_id,total_cents,created_at,payment_status'),
     admin.from('subscriptions').select('user_id,status'),
@@ -156,14 +157,24 @@ export async function getAdminUsers(options?: AdminPaginationParams) {
 
   let users: AdminUserSummary[] = (profilesResult.data ?? []).map((profile) => {
     const aggregate = aggregateByUserId.get(profile.user_id)!
+    const store = storesByOwner.get(profile.user_id)
+    const profileRecord = profile as typeof profile & {
+      is_partner?: boolean | null
+      show_partner_badge?: boolean | null
+    }
+    const partnerStatus = resolvePartnerStatus(
+      profileRecord,
+      (store?.social_links as Record<string, string> | null) ?? null,
+      profileRecord.is_partner !== undefined,
+    )
     return {
       email: profile.email,
       fullName: profile.full_name,
       avatarUrl: profile.avatar_url,
       createdAt: profile.created_at,
       emailVerified: null,
-      isPartner: profile.is_partner === true,
-      showPartnerBadge: profile.show_partner_badge !== false,
+      isPartner: partnerStatus.isPartner,
+      showPartnerBadge: partnerStatus.showPartnerBadge,
       ...aggregate,
     }
   })

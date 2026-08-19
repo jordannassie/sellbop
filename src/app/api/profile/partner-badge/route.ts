@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { isSupabaseAdminConfigured } from '@/lib/env'
-import { getProfilePartnerFields } from '@/lib/admin/partner'
-import { getSupabaseAdminClient } from '@/lib/supabase/admin'
+import { getProfilePartnerFields, setUserPartnerBadgeVisibility } from '@/lib/admin/partner'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 
 async function getAuthenticatedUserId(): Promise<string | null> {
@@ -61,36 +60,10 @@ export async function PATCH(req: NextRequest) {
   }
 
   try {
-    const admin = getSupabaseAdminClient()
-    const { data: profile, error: loadError } = await admin
-      .from('profiles')
-      .select('is_partner')
-      .eq('user_id', userId)
-      .maybeSingle()
-
-    if (loadError) throw loadError
-    if (!profile) {
-      return NextResponse.json({ error: 'Profile not found.' }, { status: 404 })
-    }
-    if (profile.is_partner !== true) {
-      return NextResponse.json({ error: 'Partner badge is not available for this account.' }, { status: 403 })
-    }
-
-    const { data, error } = await admin
-      .from('profiles')
-      .update({
-        show_partner_badge: showPartnerBadge,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('user_id', userId)
-      .select('is_partner, show_partner_badge')
-      .single()
-
-    if (error) throw error
-
+    const result = await setUserPartnerBadgeVisibility(userId, showPartnerBadge)
     return NextResponse.json({
-      isPartner: data.is_partner === true,
-      showPartnerBadge: data.show_partner_badge !== false,
+      isPartner: result.isPartner,
+      showPartnerBadge: result.showPartnerBadge,
     })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to update partner badge preference.'
