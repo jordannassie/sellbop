@@ -87,7 +87,7 @@ export function PublicHeader({ activeHref, ctaMode = 'default' }: PublicHeaderPr
                     <AvatarWithPartnerBadge
                       isPartner={partnerStatus.isPartner}
                       showPartnerBadge={partnerStatus.showPartnerBadge}
-                      badgeScale={0.36}
+                      badgeScale={0.48}
                       className="h-9 w-9"
                     >
                       <div className="h-9 w-9 overflow-hidden rounded-full">
