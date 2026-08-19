@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { MissionSection } from '@/components/marketing/mission-section'
 import { HeroBanner } from '@/components/marketing/hero-banner'
+import { HomeSchoolSection } from '@/components/marketing/home-school-section'
 import { AFFILIATE_CLOUD_PHOTOS } from '@/lib/demo-avatars'
 import { isSupabaseConfigured } from '@/lib/env'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
@@ -257,6 +258,8 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      <HomeSchoolSection />
 
       {/* ── Become an Affiliate ───────────────────────────────────── */}
       <section className="border-t border-neutral-900 py-28 bg-[#080808] overflow-hidden">
