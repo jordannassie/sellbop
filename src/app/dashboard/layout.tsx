@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth-context'
 import { cn } from '@/lib/utils'
 import { DashboardSidebar } from '@/components/dashboard/sidebar'
+import { UserStoreProvider } from '@/hooks/use-user-store'
 import { MobileEditorNav } from '@/components/dashboard/mobile-editor-nav'
 import { MobileTopMiniNav } from '@/components/dashboard/mobile-top-mini-nav'
 
@@ -35,28 +36,30 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <div className={cn('flex bg-neutral-50', isStoreEditor ? 'h-screen overflow-hidden' : 'min-h-screen')}>
-      <DashboardSidebar />
+    <UserStoreProvider>
+      <div className={cn('flex bg-neutral-50', isStoreEditor ? 'h-screen overflow-hidden' : 'min-h-screen')}>
+        <DashboardSidebar />
 
-      <div
-        className={cn(
-          'flex min-w-0 flex-1 flex-col overflow-x-hidden pt-14 lg:pt-0',
-        )}
-      >
-        <main
+        <div
           className={cn(
-            'min-h-0 flex-1',
-            isStoreEditor
-              ? 'flex flex-col overflow-hidden p-0'
-              : 'w-full max-w-6xl p-4 pb-28 sm:p-6 sm:pb-8 lg:p-8 lg:pb-10',
+            'flex min-w-0 flex-1 flex-col overflow-x-hidden pt-14 lg:pt-0',
           )}
         >
-          {children}
-        </main>
-      </div>
+          <main
+            className={cn(
+              'min-h-0 flex-1',
+              isStoreEditor
+                ? 'flex flex-col overflow-hidden p-0'
+                : 'w-full max-w-6xl p-4 pb-28 sm:p-6 sm:pb-8 lg:p-8 lg:pb-10',
+            )}
+          >
+            {children}
+          </main>
+        </div>
 
-      <MobileTopMiniNav />
-      <MobileEditorNav />
-    </div>
+        <MobileTopMiniNav />
+        <MobileEditorNav />
+      </div>
+    </UserStoreProvider>
   )
 }

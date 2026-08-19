@@ -3,13 +3,11 @@
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { useAuth } from '@/context/auth-context'
-import { useUserStore } from '@/hooks/use-user-store'
 import { Button } from '@/components/ui/button'
 
 export function LaunchOnSellbopSection() {
-  const { session } = useAuth()
-  const { store } = useUserStore()
-  const hasStore = !!store?.slug && store.slug !== 'demo-seller'
+  const { session, account } = useAuth()
+  const hasStore = !!account?.hasStore
 
   const ctaHref = session
     ? hasStore

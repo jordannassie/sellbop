@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/context/auth-context'
+import { useUserStore } from '@/hooks/use-user-store'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -39,21 +40,23 @@ interface OrderRow {
 
 export default function PayoutsPage() {
   const { session } = useAuth()
+  const { activeStoreId, storeVersion } = useUserStore()
   const [stripeStatus, setStripeStatus] = useState<StripeStatus | null>(null)
   const [orders, setOrders] = useState<OrderRow[]>([])
   const [loading, setLoading] = useState(true)
   const [connecting, setConnecting] = useState(false)
 
   useEffect(() => {
-    if (!session || !isSupabaseConfigured()) { setLoading(false); return }
+    if (!session || !isSupabaseConfigured() || !activeStoreId) { setLoading(false); return }
+    setLoading(true)
     Promise.all([
-      fetch('/api/stripe/connect').then(r => r.ok ? r.json() : null),
-      fetch('/api/orders').then(r => r.ok ? r.json() : { orders: [] }),
+      fetch('/api/stripe/connect', { cache: 'no-store' }).then(r => r.ok ? r.json() : null),
+      fetch('/api/orders', { cache: 'no-store' }).then(r => r.ok ? r.json() : { orders: [] }),
     ]).then(([stripe, ordersData]) => {
       setStripeStatus(stripe)
       setOrders(ordersData.orders ?? [])
     }).catch(() => {}).finally(() => setLoading(false))
-  }, [session])
+  }, [session, activeStoreId, storeVersion])
 
   const paidOrders = orders.filter(o => o.payment_status === 'paid')
   const grossRevenue = paidOrders.reduce((s, o) => s + (o.total_cents ?? 0), 0) / 100

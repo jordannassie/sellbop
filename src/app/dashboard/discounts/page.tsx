@@ -26,7 +26,7 @@ interface DiscountCode {
 
 export default function DiscountsPage() {
   const { session } = useAuth()
-  const { store } = useUserStore()
+  const { store, activeStoreId, storeVersion } = useUserStore()
   const [codes, setCodes] = useState<DiscountCode[]>([])
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
@@ -40,19 +40,20 @@ export default function DiscountsPage() {
   const [expiresAt, setExpiresAt] = useState('')
 
   useEffect(() => {
-    if (!session || !store || !isSupabaseConfigured()) { setLoading(false); return }
+    if (!session || !store || !activeStoreId || !isSupabaseConfigured()) { setLoading(false); return }
+    setLoading(true)
     const supabase = getSupabaseBrowserClient()
     if (!supabase) { setLoading(false); return }
     supabase
       .from('discount_codes')
       .select('*')
-      .eq('seller_id', session.userId)
+      .eq('store_id', store.id)
       .order('created_at', { ascending: false })
       .then(({ data }) => {
         setCodes(data ?? [])
         setLoading(false)
       })
-  }, [session, store])
+  }, [session, store?.id, activeStoreId, storeVersion])
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()

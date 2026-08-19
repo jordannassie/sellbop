@@ -186,23 +186,24 @@ function ProductRow({
 
 export default function ProductsPage() {
   const { session } = useAuth()
-  const { store } = useUserStore()
+  const { activeStoreId, storeVersion, store } = useUserStore()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [reordering, setReordering] = useState(false)
 
   useEffect(() => {
-    if (!session || !isSupabaseConfigured()) {
+    if (!session || !isSupabaseConfigured() || !activeStoreId) {
       setLoading(false)
       return
     }
 
-    fetch('/api/products')
+    setLoading(true)
+    fetch('/api/products', { cache: 'no-store' })
       .then(r => r.ok ? r.json() : { products: [] })
       .then(data => setProducts(data.products ?? []))
       .catch(() => setProducts([]))
       .finally(() => setLoading(false))
-  }, [session])
+  }, [session, activeStoreId, storeVersion])
 
   function handleDelete(id: string) {
     setProducts(prev => prev.filter(p => p.id !== id))

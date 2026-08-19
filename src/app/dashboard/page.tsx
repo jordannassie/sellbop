@@ -50,7 +50,7 @@ function statusVariant(status: string) {
 
 export default function DashboardOverview() {
   const { session, account } = useAuth()
-  const { store, stores, activeStoreId, loading: storeLoading } = useUserStore()
+  const { store, stores, activeStoreId, storeVersion, loading: storeLoading } = useUserStore()
   const router = useRouter()
   const [orders, setOrders] = useState<OrderRow[]>([])
   const [products, setProducts] = useState<ProductRow[]>([])
@@ -68,14 +68,15 @@ export default function DashboardOverview() {
   }, [storeLoading, hasStore, router])
 
   useEffect(() => {
-    if (!isSupabaseConfigured()) {
+    if (!isSupabaseConfigured() || !activeStoreId) {
       setLoading(false)
       return
     }
 
+    setLoading(true)
     Promise.all([
-      fetch('/api/orders').then(r => r.ok ? r.json() : { orders: [] }),
-      fetch('/api/products').then(r => r.ok ? r.json() : { products: [] }),
+      fetch('/api/orders', { cache: 'no-store' }).then(r => r.ok ? r.json() : { orders: [] }),
+      fetch('/api/products', { cache: 'no-store' }).then(r => r.ok ? r.json() : { products: [] }),
     ]).then(([ordersData, productsData]) => {
       setOrders(ordersData.orders ?? [])
       setProducts(productsData.products ?? [])
@@ -83,7 +84,7 @@ export default function DashboardOverview() {
       setOrders([])
       setProducts([])
     }).finally(() => setLoading(false))
-  }, [])
+  }, [activeStoreId, storeVersion])
 
   const paidOrders = orders.filter(o => o.payment_status === 'paid')
   const totalRevenue = paidOrders.reduce((s, o) => s + (o.total_cents ?? 0), 0) / 100

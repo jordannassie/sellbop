@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { isSupabaseAdminConfigured } from '@/lib/env'
-import { getStorePartnerFields } from '@/lib/admin/partner'
-import { stripPartnerSocialLinks } from '@/lib/partner-storage'
+import { stripPartnerSocialLinks, partnerFromSocialLinks } from '@/lib/partner-storage'
 import { resolveStoreBannerUrl } from '@/lib/store-defaults'
 import { getPartnershipByStoreId } from '@/lib/partnerships/queries'
 import { canPubliclyViewStore } from '@/lib/partnerships/publication'
@@ -23,7 +22,7 @@ export async function GET(
   // Single comprehensive query — includes banner_url and social_links
   const { data: store, error } = await admin
     .from('stores')
-    .select('id, slug, name, headline, bio, avatar_url, banner_url, social_links, owner_user_id')
+    .select('id, slug, name, headline, bio, avatar_url, banner_url, social_links')
     .eq('slug', slug)
     .maybeSingle()
 
@@ -35,22 +34,11 @@ export async function GET(
     return NextResponse.json({ error: 'Store not found.' }, { status: 404 })
   }
 
-  // Fallback: resolve avatar from profiles if store.avatar_url is null
-  let avatarUrl = store.avatar_url
   const rawSl = (store as Record<string, unknown>).social_links
   const socialLinksRaw: Record<string, string> =
     rawSl && typeof rawSl === 'object' ? rawSl as Record<string, string> : {}
 
-  if (!avatarUrl && store.owner_user_id) {
-    const { data: profile } = await admin
-      .from('profiles')
-      .select('avatar_url')
-      .eq('user_id', store.owner_user_id)
-      .maybeSingle()
-    avatarUrl = profile?.avatar_url ?? null
-  }
-
-  const partnerStatus = await getStorePartnerFields(store.owner_user_id, socialLinksRaw)
+  const partnerStatus = partnerFromSocialLinks(socialLinksRaw)
   const socialLinks = stripPartnerSocialLinks(socialLinksRaw)
 
   const bannerUrl = resolveStoreBannerUrl(
@@ -103,8 +91,12 @@ export async function GET(
   return NextResponse.json(
     {
       store: {
-        ...store,
-        avatar_url: avatarUrl,
+        id: store.id,
+        slug: store.slug,
+        name: store.name,
+        headline: store.headline,
+        bio: store.bio,
+        avatar_url: store.avatar_url,
         banner_url: bannerUrl,
         social_links: socialLinks,
         is_partner: partnerStatus.isPartner,

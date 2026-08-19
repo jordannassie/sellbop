@@ -20,7 +20,10 @@ async function startStripeConnect(): Promise<void> {
   }
 }
 
+import { useUserStore } from '@/hooks/use-user-store'
+
 export function StripePaymentsCard() {
+  const { activeStoreId, storeVersion } = useUserStore()
   const [status, setStatus] = useState<StripeStatus | null>(null)
   const [loading, setLoading] = useState(true)
   const [connecting, setConnecting] = useState(false)
@@ -39,8 +42,13 @@ export function StripePaymentsCard() {
   }, [])
 
   useEffect(() => {
+    if (!activeStoreId) {
+      setLoading(false)
+      return
+    }
+    setLoading(true)
     loadStatus()
-  }, [loadStatus])
+  }, [activeStoreId, storeVersion, loadStatus])
 
   async function handleConnect() {
     setConnecting(true)

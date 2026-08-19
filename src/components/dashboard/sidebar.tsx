@@ -109,15 +109,7 @@ export function DashboardSidebar() {
   const [mobileOpen, setMobileOpen] = useState(false)
 
   const hasStore = !!(account?.hasStore || store || stores.length > 0)
-  const activeSummary = stores.find(s => s.id === activeStoreId) ?? (store ? {
-    id: store.id,
-    name: store.name,
-    slug: store.slug,
-    avatar_url: store.avatar_url,
-    banner_url: store.banner_url,
-    owner_user_id: store.owner_user_id,
-    role: 'owner' as const,
-  } : null)
+  const activeSummary = stores.find(s => s.id === activeStoreId) ?? null
 
   const sellerNav: NavItem[] = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, exact: true },

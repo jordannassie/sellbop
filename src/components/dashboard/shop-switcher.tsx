@@ -114,7 +114,7 @@ export function ShopSwitcher({
     }
   }
 
-  const display = activeStore ?? stores[0] ?? null
+  const display = activeStore ?? stores.find(s => s.id === activeStoreId) ?? null
 
   if (!display && stores.length === 0) return null
 
@@ -163,7 +163,10 @@ export function ShopSwitcher({
                   )}
                 >
                   <ShopAvatar store={shop} />
-                  <span className="min-w-0 flex-1 truncate font-medium text-neutral-900">{shop.name}</span>
+                  <span className="min-w-0 flex-1 truncate">
+                    <span className="block font-medium text-neutral-900 truncate">{shop.name}</span>
+                    <span className="block text-[11px] text-neutral-400 truncate">@{shop.slug}</span>
+                  </span>
                   {isActive && <Check size={14} className="flex-shrink-0 text-[#00E676]" />}
                 </button>
               )
@@ -186,11 +189,12 @@ export function ShopSwitcher({
                       )}
                     >
                       <ShopAvatar store={shop} />
-                      <span className="min-w-0 flex-1 truncate font-medium text-neutral-900">
-                        {shop.name}
-                        {shop.partnershipStatus && (
-                          <span className="text-neutral-400 font-normal"> · {shop.partnershipStatus}</span>
-                        )}
+                      <span className="min-w-0 flex-1 truncate">
+                        <span className="block font-medium text-neutral-900 truncate">{shop.name}</span>
+                        <span className="block text-[11px] text-neutral-400 truncate">
+                          @{shop.slug}
+                          {shop.partnershipStatus ? ` · ${shop.partnershipStatus}` : ''}
+                        </span>
                       </span>
                       {isActive && <Check size={14} className="flex-shrink-0 text-[#00E676]" />}
                     </button>

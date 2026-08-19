@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/context/auth-context'
+import { useUserStore } from '@/hooks/use-user-store'
 import { formatCurrency, timeAgo } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -18,17 +19,19 @@ interface CustomerRow {
 
 export default function CustomersPage() {
   const { session } = useAuth()
+  const { activeStoreId, storeVersion } = useUserStore()
   const [customers, setCustomers] = useState<CustomerRow[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!session || !isSupabaseConfigured()) { setLoading(false); return }
-    fetch('/api/customers')
+    if (!session || !isSupabaseConfigured() || !activeStoreId) { setLoading(false); return }
+    setLoading(true)
+    fetch('/api/customers', { cache: 'no-store' })
       .then(r => r.ok ? r.json() : { customers: [] })
       .then(data => setCustomers(data.customers ?? []))
       .catch(() => setCustomers([]))
       .finally(() => setLoading(false))
-  }, [session])
+  }, [session, activeStoreId, storeVersion])
 
   function handleExportCSV() {
     if (customers.length === 0) return

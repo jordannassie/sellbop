@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth } from '@/context/auth-context'
+import { useUserStore } from '@/hooks/use-user-store'
 import { formatCurrency } from '@/lib/utils'
 import { Check, Copy, ExternalLink, Loader2, Share2, TrendingUp, Users } from 'lucide-react'
 
@@ -204,13 +205,19 @@ interface AffiliateItem {
 }
 
 function NetworkTab() {
+  const { activeStoreId, storeVersion } = useUserStore()
   const [products, setProducts] = useState<NetworkProduct[]>([])
   const [affiliates, setAffiliates] = useState<AffiliateItem[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/affiliates/network')
+    if (!activeStoreId) {
+      setLoading(false)
+      return
+    }
+    setLoading(true)
+    fetch('/api/affiliates/network', { cache: 'no-store' })
       .then(r => r.json())
       .then(d => {
         setProducts(d.products ?? [])
@@ -218,7 +225,7 @@ function NetworkTab() {
         setTotal(d.totalAffiliates ?? 0)
       })
       .finally(() => setLoading(false))
-  }, [])
+  }, [activeStoreId, storeVersion])
 
   if (loading) return <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-neutral-400" /></div>
 

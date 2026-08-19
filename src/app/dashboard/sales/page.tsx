@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/context/auth-context'
+import { useUserStore } from '@/hooks/use-user-store'
 import { formatCurrency, timeAgo } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -30,17 +31,19 @@ function statusVariant(status: string) {
 
 export default function SalesPage() {
   const { session } = useAuth()
+  const { activeStoreId, storeVersion } = useUserStore()
   const [orders, setOrders] = useState<OrderRow[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!session || !isSupabaseConfigured()) { setLoading(false); return }
-    fetch('/api/orders')
+    if (!session || !isSupabaseConfigured() || !activeStoreId) { setLoading(false); return }
+    setLoading(true)
+    fetch('/api/orders', { cache: 'no-store' })
       .then(r => r.ok ? r.json() : { orders: [] })
       .then(data => setOrders(data.orders ?? []))
       .catch(() => setOrders([]))
       .finally(() => setLoading(false))
-  }, [session])
+  }, [session, activeStoreId, storeVersion])
 
   const paidOrders = orders.filter(o => o.payment_status === 'paid')
   const totalRevenue = paidOrders.reduce((s, o) => s + (o.total_cents ?? 0), 0) / 100

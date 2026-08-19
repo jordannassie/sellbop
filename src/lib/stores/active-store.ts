@@ -62,26 +62,28 @@ export async function getAccessibleStoresForUser(userId: string): Promise<Access
     return (owned ?? []).map(store => ({ ...store, role: 'owner' as StoreMemberRole }))
   }
 
-  const stores: AccessibleStore[] = []
+  const byId = new Map<string, AccessibleStore>()
   for (const row of memberships ?? []) {
     const store = row.stores as Database['public']['Tables']['stores']['Row'] | null
     if (store) {
-      stores.push({ ...store, role: row.role as StoreMemberRole })
+      byId.set(store.id, { ...store, role: row.role as StoreMemberRole })
     }
   }
 
-  // Safety net: owned stores missing membership rows (pre-backfill edge case)
-  if (stores.length === 0) {
-    const { data: owned } = await admin
-      .from('stores')
-      .select('*')
-      .eq('owner_user_id', userId)
-      .order('created_at', { ascending: true })
+  // Always merge owned stores missing membership rows (pre-backfill / edge cases)
+  const { data: owned } = await admin
+    .from('stores')
+    .select('*')
+    .eq('owner_user_id', userId)
+    .order('created_at', { ascending: true })
 
-    return (owned ?? []).map(store => ({ ...store, role: 'owner' as StoreMemberRole }))
+  for (const store of owned ?? []) {
+    if (!byId.has(store.id)) {
+      byId.set(store.id, { ...store, role: 'owner' as StoreMemberRole })
+    }
   }
 
-  return stores
+  return Array.from(byId.values())
 }
 
 export async function userCanAccessStore(userId: string, storeId: string): Promise<boolean> {
@@ -128,7 +130,22 @@ export async function userCanManageStore(userId: string, storeId: string): Promi
   return !!owned
 }
 
-export async function getActiveStoreForUser(userId: string): Promise<AccessibleStore | null> {
+/** Read active shop from cookie without mutating cookie. */
+export async function resolveActiveStoreForUser(userId: string): Promise<AccessibleStore | null> {
+  const accessible = await getAccessibleStoresForUser(userId)
+  if (accessible.length === 0) return null
+
+  const cookieStoreId = await readActiveStoreIdFromCookie()
+  if (cookieStoreId) {
+    const match = accessible.find(s => s.id === cookieStoreId)
+    if (match) return match
+  }
+
+  return accessible[0] ?? null
+}
+
+/** Ensure cookie matches an accessible shop; only writes when cookie is missing or invalid. */
+export async function syncActiveStoreCookieIfNeeded(userId: string): Promise<AccessibleStore | null> {
   const accessible = await getAccessibleStoresForUser(userId)
   if (accessible.length === 0) return null
 
@@ -141,6 +158,10 @@ export async function getActiveStoreForUser(userId: string): Promise<AccessibleS
   const fallback = accessible[0]
   await setActiveStoreCookie(fallback.id)
   return fallback
+}
+
+export async function getActiveStoreForUser(userId: string): Promise<AccessibleStore | null> {
+  return syncActiveStoreCookieIfNeeded(userId)
 }
 
 export async function requireActiveStoreForUser(userId: string): Promise<AccessibleStore> {
@@ -159,13 +180,13 @@ export class ActiveStoreError extends Error {
   }
 }
 
-/** Switch active shop after verifying access; sets cookie. */
+/** Switch active shop after verifying management access; sets cookie. */
 export async function switchActiveStoreForUser(
   userId: string,
   storeId: string,
 ): Promise<AccessibleStore> {
-  const canAccess = await userCanAccessStore(userId, storeId)
-  if (!canAccess) {
+  const canManage = await userCanManageStore(userId, storeId)
+  if (!canManage) {
     throw new ActiveStoreError('You do not have access to this shop.', 403)
   }
 

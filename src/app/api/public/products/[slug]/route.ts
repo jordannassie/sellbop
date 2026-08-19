@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { isSupabaseAdminConfigured } from '@/lib/env'
-import { getStorePartnerFields } from '@/lib/admin/partner'
+import { partnerFromSocialLinks } from '@/lib/partner-storage'
 import { mapMediaRow, withLegacyCoverMedia } from '@/lib/product-media/utils'
 
 // GET /api/public/products/[slug] — publicly fetch a published product by slug
@@ -68,20 +68,11 @@ export async function GET(
   // Fetch seller/store info
   const { data: store } = await admin
     .from('stores')
-    .select('id, slug, name, bio, avatar_url, owner_user_id, social_links')
+    .select('id, slug, name, bio, avatar_url, social_links')
     .eq('id', product.store_id)
     .maybeSingle()
 
-  // Fallback avatar from profiles
-  let avatarUrl = store?.avatar_url ?? null
-  if (!avatarUrl && store?.owner_user_id) {
-    const { data: profile } = await admin
-      .from('profiles')
-      .select('avatar_url')
-      .eq('user_id', store.owner_user_id)
-      .maybeSingle()
-    avatarUrl = profile?.avatar_url ?? null
-  }
+  const avatarUrl = store?.avatar_url ?? null
 
   // Sales count
   const { count: salesCount } = await admin
@@ -124,7 +115,7 @@ export async function GET(
       ? (store.social_links as Record<string, string>)
       : {}
   const partnerStatus = store
-    ? await getStorePartnerFields(store.owner_user_id, socialLinksRaw)
+    ? partnerFromSocialLinks(socialLinksRaw)
     : { isPartner: false, showPartnerBadge: false }
 
   return NextResponse.json({

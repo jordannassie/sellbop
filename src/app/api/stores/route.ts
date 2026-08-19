@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { isSupabaseAdminConfigured } from '@/lib/env'
 import { getPartnershipMapForStores } from '@/lib/partnerships/queries'
-import { getAccessibleStoresForUser, getActiveStoreForUser } from '@/lib/stores/active-store'
+import { getAccessibleStoresForUser, resolveActiveStoreForUser } from '@/lib/stores/active-store'
 import { createStoreForUser, CreateStoreError } from '@/lib/stores/create-store'
 
 // GET /api/stores — list accessible shops + active shop id
@@ -16,7 +16,7 @@ export async function GET() {
   if (!user) return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 })
 
   const stores = await getAccessibleStoresForUser(user.id)
-  const active = await getActiveStoreForUser(user.id)
+  const active = await resolveActiveStoreForUser(user.id)
   const partnershipMap = await getPartnershipMapForStores(stores.map(s => s.id))
 
   return NextResponse.json({

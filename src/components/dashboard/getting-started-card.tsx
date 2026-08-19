@@ -70,7 +70,7 @@ function AnimatedSmile() {
 }
 
 export function GettingStartedCard() {
-  const { store } = useUserStore()
+  const { store, activeStoreId, storeVersion } = useUserStore()
   const [status, setStatus] = useState<OnboardingStatus | null>(null)
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState(false)
@@ -91,8 +91,13 @@ export function GettingStartedCard() {
   }
 
   useEffect(() => {
+    if (!activeStoreId) {
+      setLoading(false)
+      return
+    }
+    setLoading(true)
     loadStatus().finally(() => setLoading(false))
-  }, [])
+  }, [activeStoreId, storeVersion])
 
   if (loading || !status || status.dismissed) return null
 

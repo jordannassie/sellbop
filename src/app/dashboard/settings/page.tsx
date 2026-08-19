@@ -24,7 +24,7 @@ import { PARTNER_SOCIAL_IS_KEY, PARTNER_SOCIAL_SHOW_KEY, partnerFromSocialLinks,
 export default function SettingsPage() {
   const router = useRouter()
   const { session, signOut } = useAuth()
-  const { store, saveStore, refetch } = useUserStore()
+  const { store, saveStore, refetch, activeStoreId } = useUserStore()
 
   // Shop profile form (active shop only)
   const [storeName, setStoreName] = useState('')
@@ -101,7 +101,7 @@ export default function SettingsPage() {
     } else {
       setSocialLinks({})
     }
-  }, [store])
+  }, [store?.id, activeStoreId])
 
   useEffect(() => {
     fetch('/api/profile/partner-badge')
