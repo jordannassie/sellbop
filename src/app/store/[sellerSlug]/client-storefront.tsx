@@ -8,6 +8,7 @@ import { ProductPriceDisplay } from '@/components/ui/product-price-display'
 import { User, Package } from 'lucide-react'
 import { isSupabaseConfigured } from '@/lib/env'
 import { resolveStoreBannerUrl, STORE_BANNER_BG_CLASS } from '@/lib/store-defaults'
+import { AvatarWithPartnerBadge } from '@/components/ui/avatar-with-partner-badge'
 
 interface StoreData {
   slug: string
@@ -16,6 +17,8 @@ interface StoreData {
   bio: string | null
   avatar_url: string | null
   banner_url: string | null
+  is_partner?: boolean
+  show_partner_badge?: boolean
 }
 
 interface ProductCard {
@@ -93,14 +96,20 @@ export function ClientStorefront({ slug }: { slug: string }) {
       {/* Creator header */}
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
         <div className="flex flex-col items-center text-center py-10 border-b border-neutral-100">
-          <div className="w-20 h-20 rounded-full overflow-hidden bg-neutral-200 mb-4 flex items-center justify-center">
-            {store.avatar_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={store.avatar_url} alt={store.name} className="w-full h-full object-cover" />
-            ) : (
-              <User size={28} className="text-neutral-400" />
-            )}
-          </div>
+          <AvatarWithPartnerBadge
+            isPartner={store.is_partner}
+            showPartnerBadge={store.show_partner_badge}
+            className="mb-4"
+          >
+            <div className="w-20 h-20 rounded-full overflow-hidden bg-neutral-200 flex items-center justify-center">
+              {store.avatar_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={store.avatar_url} alt={store.name} className="w-full h-full object-cover" />
+              ) : (
+                <User size={28} className="text-neutral-400" />
+              )}
+            </div>
+          </AvatarWithPartnerBadge>
           <h1 className="text-2xl font-bold text-black mb-1">{store.name}</h1>
           {store.headline && <p className="text-base text-neutral-500 mb-2">{store.headline}</p>}
           {store.bio && <p className="text-sm text-neutral-400 max-w-md">{store.bio}</p>}

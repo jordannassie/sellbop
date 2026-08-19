@@ -6,6 +6,8 @@ import { Menu, X, User, LayoutDashboard, Library, TrendingUp, ShoppingBag, LogOu
 import { useAuth } from '@/context/auth-context'
 import { useUserStore } from '@/hooks/use-user-store'
 import { SellBopLogo } from '@/components/ui/sellbop-logo'
+import { AvatarWithPartnerBadge } from '@/components/ui/avatar-with-partner-badge'
+import { partnerFromSocialLinks } from '@/lib/partner-storage'
 
 interface PublicHeaderProps {
   /** Override the active link highlight (e.g. 'marketplace') */
@@ -23,6 +25,9 @@ export function PublicHeader({ activeHref, ctaMode = 'default' }: PublicHeaderPr
 
   const hasSeller = !!store?.slug && store.slug !== 'demo-seller'
   const avatarUrl = store?.avatar_url ?? session?.avatarUrl ?? null
+  const partnerStatus = partnerFromSocialLinks(
+    (store?.social_links as Record<string, string> | null) ?? null,
+  )
 
   async function handleSignOut() {
     setUserMenuOpen(false)
@@ -76,15 +81,26 @@ export function PublicHeader({ activeHref, ctaMode = 'default' }: PublicHeaderPr
                 <div className="relative">
                   <button
                     onClick={() => setUserMenuOpen(v => !v)}
-                    className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-neutral-200 bg-neutral-100 hover:border-neutral-400 transition-colors focus:outline-none"
+                    className="flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 bg-neutral-100 hover:border-neutral-400 transition-colors focus:outline-none overflow-visible"
                     aria-label="User menu"
                   >
-                    {avatarUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={avatarUrl} alt={session.name ?? 'You'} className="h-full w-full object-cover" />
-                    ) : (
-                      <User size={16} className="text-neutral-500" />
-                    )}
+                    <AvatarWithPartnerBadge
+                      isPartner={partnerStatus.isPartner}
+                      showPartnerBadge={partnerStatus.showPartnerBadge}
+                      badgeScale={0.36}
+                      className="h-9 w-9"
+                    >
+                      <div className="h-9 w-9 overflow-hidden rounded-full">
+                        {avatarUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={avatarUrl} alt={session.name ?? 'You'} className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center">
+                            <User size={16} className="text-neutral-500" />
+                          </div>
+                        )}
+                      </div>
+                    </AvatarWithPartnerBadge>
                   </button>
 
                   {userMenuOpen && (

@@ -33,13 +33,13 @@ export function AvatarWithPartnerBadge({
       {visible && (
         <span
           className={cn(
-            'pointer-events-none absolute bottom-0 right-0 z-10 flex items-center justify-center rounded-full bg-white p-[6%] shadow-sm ring-2 ring-white',
+            'pointer-events-none absolute bottom-0 right-0 z-10 flex items-center justify-center rounded-full bg-white p-[8%] shadow-sm ring-2 ring-white',
             badgeClassName,
           )}
           style={{
             width: `${badgeScale * 100}%`,
             height: `${badgeScale * 100}%`,
-            transform: 'translate(22%, 8%)',
+            transform: 'translate(18%, 10%)',
           }}
           title="SellBop Partner"
           aria-label="SellBop Partner"

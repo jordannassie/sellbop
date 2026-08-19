@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { isSupabaseAdminConfigured } from '@/lib/env'
+import { getStorePartnerFields } from '@/lib/admin/partner'
 import { mapMediaRow, withLegacyCoverMedia } from '@/lib/product-media/utils'
 
 // GET /api/public/products/[slug] — publicly fetch a published product by slug
@@ -67,7 +68,7 @@ export async function GET(
   // Fetch seller/store info
   const { data: store } = await admin
     .from('stores')
-    .select('id, slug, name, bio, avatar_url, owner_user_id')
+    .select('id, slug, name, bio, avatar_url, owner_user_id, social_links')
     .eq('id', product.store_id)
     .maybeSingle()
 
@@ -118,13 +119,31 @@ export async function GET(
     // table may not exist yet
   }
 
+  const socialLinksRaw =
+    store?.social_links && typeof store.social_links === 'object'
+      ? (store.social_links as Record<string, string>)
+      : {}
+  const partnerStatus = store
+    ? await getStorePartnerFields(store.owner_user_id, socialLinksRaw)
+    : { isPartner: false, showPartnerBadge: false }
+
   return NextResponse.json({
     product: {
       ...product,
       affiliate_enabled: affiliateEnabled,
       affiliate_commission_percent: affiliateCommissionPercent,
     },
-    store: store ? { ...store, avatar_url: avatarUrl } : null,
+    store: store
+      ? {
+          id: store.id,
+          slug: store.slug,
+          name: store.name,
+          bio: store.bio,
+          avatar_url: avatarUrl,
+          is_partner: partnerStatus.isPartner,
+          show_partner_badge: partnerStatus.showPartnerBadge,
+        }
+      : null,
     sales_count: salesCount ?? 0,
     media,
     reviews,

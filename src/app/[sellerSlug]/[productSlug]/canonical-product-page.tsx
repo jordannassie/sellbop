@@ -17,6 +17,7 @@ import { ProductMediaGalleryViewer } from '@/components/product-media/product-me
 import { MobileCheckoutSheet, MobileStickyCheckoutBar } from '@/components/product/mobile-checkout-bar'
 import { ProductDescriptionMarkdown } from '@/components/product/product-description-markdown'
 import { ProductReviewsCard } from '@/components/product/product-reviews-card'
+import { AvatarWithPartnerBadge } from '@/components/ui/avatar-with-partner-badge'
 import { PRODUCT_IMAGE_ASPECT_RATIO } from '@/lib/product-media/constants'
 import type { ProductReviewItem } from '@/lib/product-reviews/defaults'
 import type { ProductMediaItem } from '@/lib/product-media/types'
@@ -45,6 +46,8 @@ interface StoreData {
   name: string
   bio: string | null
   avatar_url: string | null
+  is_partner?: boolean
+  show_partner_badge?: boolean
 }
 
 type PageState = 'loading' | 'notfound' | 'ready' | 'entering_email' | 'processing' | 'success' | 'stripe_required'
@@ -88,16 +91,21 @@ function ShareProductButton({ url, title }: { url: string; title: string }) {
 function CreatorRow({ store }: { store: StoreData }) {
   return (
     <Link href={`/${store.slug}`} className="group flex items-center gap-4 mb-6">
-      <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden bg-neutral-100 border border-neutral-200 flex-shrink-0 ring-2 ring-white">
-        {store.avatar_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={store.avatar_url} alt={store.name} className="w-full h-full object-cover object-center" />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <User size={22} className="text-neutral-400" />
-          </div>
-        )}
-      </div>
+      <AvatarWithPartnerBadge
+        isPartner={store.is_partner}
+        showPartnerBadge={store.show_partner_badge}
+      >
+        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden bg-neutral-100 border border-neutral-200 flex-shrink-0 ring-2 ring-white">
+          {store.avatar_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={store.avatar_url} alt={store.name} className="w-full h-full object-cover object-center" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <User size={22} className="text-neutral-400" />
+            </div>
+          )}
+        </div>
+      </AvatarWithPartnerBadge>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-neutral-900 group-hover:text-black leading-none mb-1 transition-colors">
           {store.name}
@@ -620,13 +628,19 @@ export function CanonicalProductPage({ sellerSlug, productSlug }: { sellerSlug: 
                 href={`/${store.slug}`}
                 className="lg:hidden flex items-center gap-2 px-1 text-sm text-neutral-400 hover:text-black transition-colors"
               >
-                <div className="w-5 h-5 rounded-full overflow-hidden bg-neutral-200 flex-shrink-0">
-                  {store.avatar_url
-                    // eslint-disable-next-line @next/next/no-img-element
-                    ? <img src={store.avatar_url} alt={store.name} className="w-full h-full object-cover" />
-                    : <User size={10} className="text-neutral-400 m-auto" />
-                  }
-                </div>
+                <AvatarWithPartnerBadge
+                  isPartner={store.is_partner}
+                  showPartnerBadge={store.show_partner_badge}
+                  badgeScale={0.42}
+                >
+                  <div className="w-5 h-5 rounded-full overflow-hidden bg-neutral-200 flex-shrink-0">
+                    {store.avatar_url
+                      // eslint-disable-next-line @next/next/no-img-element
+                      ? <img src={store.avatar_url} alt={store.name} className="w-full h-full object-cover" />
+                      : <User size={10} className="text-neutral-400 m-auto" />
+                    }
+                  </div>
+                </AvatarWithPartnerBadge>
                 <span>More from {store.name}</span>
                 <ChevronRight size={13} className="ml-auto" />
               </Link>
@@ -704,13 +718,19 @@ export function CanonicalProductPage({ sellerSlug, productSlug }: { sellerSlug: 
                   href={`/${store.slug}`}
                   className="flex items-center gap-2 px-1 text-sm text-neutral-400 hover:text-black transition-colors"
                 >
-                  <div className="w-5 h-5 rounded-full overflow-hidden bg-neutral-200 flex-shrink-0">
-                    {store.avatar_url
-                      // eslint-disable-next-line @next/next/no-img-element
-                      ? <img src={store.avatar_url} alt={store.name} className="w-full h-full object-cover" />
-                      : <User size={10} className="text-neutral-400 m-auto" />
-                    }
-                  </div>
+                  <AvatarWithPartnerBadge
+                    isPartner={store.is_partner}
+                    showPartnerBadge={store.show_partner_badge}
+                    badgeScale={0.42}
+                  >
+                    <div className="w-5 h-5 rounded-full overflow-hidden bg-neutral-200 flex-shrink-0">
+                      {store.avatar_url
+                        // eslint-disable-next-line @next/next/no-img-element
+                        ? <img src={store.avatar_url} alt={store.name} className="w-full h-full object-cover" />
+                        : <User size={10} className="text-neutral-400 m-auto" />
+                      }
+                    </div>
+                  </AvatarWithPartnerBadge>
                   <span>More from {store.name}</span>
                   <ChevronRight size={13} className="ml-auto" />
                 </Link>

@@ -13,6 +13,7 @@ import { ProductPriceDisplay } from '@/components/ui/product-price-display'
 import { ProductMediaGalleryViewer } from '@/components/product-media/product-media-gallery-viewer'
 import { ProductDescriptionMarkdown } from '@/components/product/product-description-markdown'
 import { ProductReviewsCard } from '@/components/product/product-reviews-card'
+import { AvatarWithPartnerBadge } from '@/components/ui/avatar-with-partner-badge'
 import { PRODUCT_IMAGE_ASPECT_RATIO } from '@/lib/product-media/constants'
 import type { ProductReviewItem } from '@/lib/product-reviews/defaults'
 import type { ProductMediaItem } from '@/lib/product-media/types'
@@ -39,6 +40,8 @@ interface StoreData {
   name: string
   bio: string | null
   avatar_url: string | null
+  is_partner?: boolean
+  show_partner_badge?: boolean
 }
 
 type State = 'loading' | 'notfound' | 'ready' | 'entering_email' | 'processing' | 'success' | 'stripe_required'
@@ -397,16 +400,22 @@ export function ClientProductPage({ slug }: { slug: string }) {
             {/* Creator */}
             {store && (
               <Link href={`/${store.slug}`} className="flex items-center gap-2 mb-6 group">
-                <div className="w-8 h-8 rounded-full bg-neutral-200 overflow-hidden flex-shrink-0">
-                  {store.avatar_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={store.avatar_url} alt={store.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <User size={14} className="text-neutral-400" />
-                    </div>
-                  )}
-                </div>
+                <AvatarWithPartnerBadge
+                  isPartner={store.is_partner}
+                  showPartnerBadge={store.show_partner_badge}
+                  badgeScale={0.38}
+                >
+                  <div className="w-8 h-8 rounded-full bg-neutral-200 overflow-hidden flex-shrink-0">
+                    {store.avatar_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={store.avatar_url} alt={store.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <User size={14} className="text-neutral-400" />
+                      </div>
+                    )}
+                  </div>
+                </AvatarWithPartnerBadge>
                 <span className="text-sm text-neutral-600 group-hover:text-black transition-colors">{store.name}</span>
               </Link>
             )}
