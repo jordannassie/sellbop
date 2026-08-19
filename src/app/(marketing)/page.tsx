@@ -180,7 +180,7 @@ export default async function HomePage() {
             <div className="order-1">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="https://qsvmgzdaashfsavmfjuz.supabase.co/storage/v1/object/public/SELL/images/Partner.png"
+                src="https://qsvmgzdaashfsavmfjuz.supabase.co/storage/v1/object/public/SELL/partners/9:16/8cd4d768-ef41-48b0-ac48-add6357a8530.png"
                 alt="SellBop Partner — verified creator with premium digital products and growing sales"
                 className="w-full h-auto object-contain"
               />

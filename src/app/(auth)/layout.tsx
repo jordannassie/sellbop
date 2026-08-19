@@ -10,7 +10,7 @@ const BENEFITS = [
   'Revenue-share partnership',
 ]
 
-const PARTNER_IMAGE = 'https://qsvmgzdaashfsavmfjuz.supabase.co/storage/v1/object/public/SELL/images/Partner.png'
+const PARTNER_IMAGE = 'https://qsvmgzdaashfsavmfjuz.supabase.co/storage/v1/object/public/SELL/partners/9:16/00b10ff6-4ea2-4b6e-9c54-f6b840f1a535.png'
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -36,12 +36,12 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         ">
 
           {/* Partner image */}
-          <div className="relative w-full h-52 lg:h-64 shrink-0 bg-neutral-950">
+          <div className="relative w-full h-64 lg:h-72 shrink-0 bg-neutral-950">
             <Image
               src={PARTNER_IMAGE}
-              alt="SellBop Partner — verified creator with premium digital products"
+              alt="SellBop Partner — creator building a digital product business"
               fill
-              className="object-contain object-center px-4 pt-4 pb-0"
+              className="object-cover object-top"
               sizes="460px"
               priority
             />
