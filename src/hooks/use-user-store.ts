@@ -114,19 +114,24 @@ export function useUserStore(): UseUserStoreResult {
     }
 
     if (data.stores.length === 0 && supabase) {
-      const created = await ensureUserStore(supabase, session.userId, session.name, session.email)
-      if (created) {
-        setStore(created)
-        setStores([{
-          id: created.id,
-          name: created.name,
-          slug: created.slug,
-          avatar_url: created.avatar_url,
-          banner_url: created.banner_url,
-          owner_user_id: created.owner_user_id,
-          role: 'owner',
-        }])
-        setActiveStoreId(created.id)
+      const pendingClaim = typeof window !== 'undefined'
+        ? sessionStorage.getItem('sellbop_claim_token')
+        : null
+      if (!pendingClaim) {
+        const created = await ensureUserStore(supabase, session.userId, session.name, session.email)
+        if (created) {
+          setStore(created)
+          setStores([{
+            id: created.id,
+            name: created.name,
+            slug: created.slug,
+            avatar_url: created.avatar_url,
+            banner_url: created.banner_url,
+            owner_user_id: created.owner_user_id,
+            role: 'owner',
+          }])
+          setActiveStoreId(created.id)
+        }
       }
     }
   }, [session, supabase])

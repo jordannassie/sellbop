@@ -150,7 +150,7 @@ export function ShopSwitcher({
             <p className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-neutral-400">
               Your Shops
             </p>
-            {stores.map(shop => {
+            {stores.filter(s => !s.isPartnerShop || s.isOwnedShop).map(shop => {
               const isActive = shop.id === activeStoreId
               return (
                 <button
@@ -168,6 +168,36 @@ export function ShopSwitcher({
                 </button>
               )
             })}
+            {stores.some(s => s.isPartnerShop && !s.isOwnedShop) && (
+              <>
+                <p className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-neutral-400 mt-1">
+                  Partner Shops
+                </p>
+                {stores.filter(s => s.isPartnerShop && !s.isOwnedShop).map(shop => {
+                  const isActive = shop.id === activeStoreId
+                  return (
+                    <button
+                      key={shop.id}
+                      type="button"
+                      onClick={() => handleSwitch(shop.id)}
+                      className={cn(
+                        'flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm transition-colors hover:bg-neutral-50',
+                        isActive && 'bg-neutral-50',
+                      )}
+                    >
+                      <ShopAvatar store={shop} />
+                      <span className="min-w-0 flex-1 truncate font-medium text-neutral-900">
+                        {shop.name}
+                        {shop.partnershipStatus && (
+                          <span className="text-neutral-400 font-normal"> · {shop.partnershipStatus}</span>
+                        )}
+                      </span>
+                      {isActive && <Check size={14} className="flex-shrink-0 text-[#00E676]" />}
+                    </button>
+                  )
+                })}
+              </>
+            )}
             {!isDemo && (
               <>
                 <div className="my-1 border-t border-neutral-100" />

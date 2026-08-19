@@ -52,12 +52,13 @@ function AuthForm() {
   const ideaFromParam = params.get('idea') ?? ''
   const idea = ideaFromParam || getLaunchIdea() || ''
 
-  // If already authenticated, redirect away from login immediately
+  // If already authenticated, redirect away from login (preserve claim / redirect targets)
   useEffect(() => {
     if (!authLoading && session) {
-      router.replace('/dashboard')
+      const redirectTo = params.get('redirect') ?? params.get('next')
+      router.replace(redirectTo && redirectTo.startsWith('/') ? redirectTo : '/dashboard')
     }
-  }, [authLoading, session, router])
+  }, [authLoading, session, router, params])
 
   // Detect OAuth error conditions
   const oauthError    = params.get('oauth_error')
@@ -94,8 +95,8 @@ function AuthForm() {
 
       // Hard navigation so Next.js re-fetches with fresh session cookies.
       // router.push alone can fail if the server-side session isn't yet visible.
-      const next = params.get('next')
-      window.location.href = next && next.startsWith('/') ? next : '/dashboard'
+      const redirectTo = params.get('redirect') ?? params.get('next')
+      window.location.href = redirectTo && redirectTo.startsWith('/') ? redirectTo : '/dashboard'
     } catch (err) {
       setError(err instanceof Error ? err.message : mode === 'login' ? 'Login failed.' : 'Signup failed.')
       setLoading(false)

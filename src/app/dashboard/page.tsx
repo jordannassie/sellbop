@@ -50,7 +50,7 @@ function statusVariant(status: string) {
 
 export default function DashboardOverview() {
   const { session, account } = useAuth()
-  const { store, loading: storeLoading } = useUserStore()
+  const { store, stores, activeStoreId, loading: storeLoading } = useUserStore()
   const router = useRouter()
   const [orders, setOrders] = useState<OrderRow[]>([])
   const [products, setProducts] = useState<ProductRow[]>([])
@@ -94,6 +94,11 @@ export default function DashboardOverview() {
   const topProducts = [...products].sort((a, b) => (b.sales_count ?? 0) - (a.sales_count ?? 0)).slice(0, 4)
 
   const storeSlug = store?.slug
+  const activeSummary = stores.find(s => s.id === activeStoreId)
+  const isUnpublishedPartner = !!(activeSummary?.isPartnerShop && activeSummary.partnershipStatus !== 'active')
+  const showPartnerClaimCard = activeSummary?.isPartnerShop
+    && (activeSummary.partnershipStatus === 'claimed' || activeSummary.partnershipStatus === 'invited')
+    && !store?.stripe_charges_enabled
 
   return (
     <div>
@@ -107,7 +112,7 @@ export default function DashboardOverview() {
               : 'Create your first product to start selling.'}
           </p>
         </div>
-        {storeSlug && (
+        {storeSlug && !isUnpublishedPartner && (
           <Link href={`/store/${storeSlug}`} target="_blank">
             <Button
               size="sm"
@@ -119,6 +124,18 @@ export default function DashboardOverview() {
           </Link>
         )}
       </div>
+
+      {showPartnerClaimCard && (
+        <div className="mb-6 rounded-xl border border-neutral-200 bg-white p-5">
+          <p className="text-sm font-semibold text-black">SellBop Partner Shop</p>
+          <p className="text-sm text-neutral-500 mt-1">
+            Your Shop has been claimed. Connect Stripe to prepare for launch.
+          </p>
+          <Link href="/dashboard/payouts" className="inline-block mt-3">
+            <Button size="sm">Connect Stripe</Button>
+          </Link>
+        </div>
+      )}
 
       <StripePaymentsCard />
       <StripeLiveProductsWarning liveProductCount={publishedProducts} />

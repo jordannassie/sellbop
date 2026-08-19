@@ -9,6 +9,7 @@ import { useUserStore } from '@/hooks/use-user-store'
 import { cn } from '@/lib/utils'
 import { SellBopLogo } from '@/components/ui/sellbop-logo'
 import { ShopSwitcher } from '@/components/dashboard/shop-switcher'
+import { PartnerShopPreviewButton } from '@/components/dashboard/partner-shop-preview-button'
 
 interface NavItem {
   href: string
@@ -146,7 +147,12 @@ export function DashboardSidebar() {
     router.push('/')
   }
 
-  const storeHref = store?.slug ? `/store/${store.slug}` : null
+  const storeHref = store?.slug
+    ? (activeSummary?.isPartnerShop && activeSummary.partnershipStatus !== 'active'
+      ? null
+      : `/store/${store.slug}`)
+    : null
+  const isUnpublishedPartner = !!(activeSummary?.isPartnerShop && activeSummary.partnershipStatus !== 'active')
 
   const shopBlock = hasStore && stores.length > 0 && (
     <ShopSwitcher
@@ -191,6 +197,9 @@ export function DashboardSidebar() {
         >
           <ExternalLink size={14} /> View Store
         </a>
+      )}
+      {isUnpublishedPartner && store?.slug && (
+        <PartnerShopPreviewButton onNavigate={onNavigate} />
       )}
     </div>
   )

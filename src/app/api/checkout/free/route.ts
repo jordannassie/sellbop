@@ -59,6 +59,13 @@ export async function POST(request: Request) {
 
   if (!store) return NextResponse.json({ error: 'Store not found.' }, { status: 500 })
 
+  const { getPartnershipByStoreId } = await import('@/lib/partnerships/queries')
+  const { canStoreAcceptCheckout } = await import('@/lib/partnerships/publication')
+  const partnership = await getPartnershipByStoreId(store.id)
+  if (!canStoreAcceptCheckout(partnership)) {
+    return NextResponse.json({ error: 'This shop is not accepting purchases yet.' }, { status: 403 })
+  }
+
   const { data: existing } = await admin
     .from('purchases')
     .select('id, order_id, access_token')

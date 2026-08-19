@@ -6,6 +6,8 @@ import { env } from '@/lib/env'
 import { calculateTransactionFees } from '@/lib/platform-config'
 import { resolveSaleType } from '@/lib/checkout/sale-source'
 import { getEffectiveProductPrice } from '@/lib/pricing/product-price'
+import { getPartnershipByStoreId } from '@/lib/partnerships/queries'
+import { canStoreAcceptCheckout } from '@/lib/partnerships/publication'
 import { fulfillPurchase } from '@/lib/services/purchase-fulfillment'
 
 interface PaidCheckoutPayload {
@@ -68,6 +70,11 @@ export async function POST(request: Request) {
     .maybeSingle()
 
   if (!store) return NextResponse.json({ error: 'Store not found.' }, { status: 500 })
+
+  const partnership = await getPartnershipByStoreId(store.id)
+  if (!canStoreAcceptCheckout(partnership)) {
+    return NextResponse.json({ error: 'This Shop is not available for checkout yet.' }, { status: 403 })
+  }
 
   if (!store.stripe_account_id || !store.stripe_charges_enabled) {
     return NextResponse.json({

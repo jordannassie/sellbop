@@ -13,6 +13,7 @@ export type AdminSection =
   | 'emails'
   | 'affiliates'
   | 'partners'
+  | 'partnerships'
   | 'marketplace'
   | 'search'
 
@@ -26,6 +27,7 @@ const NAV: { id: AdminSection; label: string; icon: React.ReactNode }[] = [
   { id: 'orders', label: 'Orders', icon: <CreditCard size={15} /> },
   { id: 'affiliates', label: 'Affiliates', icon: <TrendingUp size={15} /> },
   { id: 'partners', label: 'Partners', icon: <Handshake size={15} /> },
+  { id: 'partnerships', label: 'Partnerships', icon: <Store size={15} /> },
   { id: 'emails', label: 'Emails', icon: <Mail size={15} /> },
   { id: 'resources', label: 'Resources', icon: <GraduationCap size={15} /> },
 ]
@@ -49,7 +51,7 @@ export function AdminSidebar({ active, newPartnerCount = 0 }: AdminSidebarProps)
         {NAV.map((item) => (
           <Link
             key={item.id}
-            href={`/internal/admin?section=${item.id}`}
+            href={item.id === 'partnerships' ? '/internal/admin/partnerships' : `/internal/admin?section=${item.id}`}
             className={[
               'flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm transition-colors',
               active === item.id

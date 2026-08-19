@@ -6,6 +6,7 @@ export type TransactionalEmailType =
   | 'refund_full'
   | 'refund_partial'
   | 'purchase_recovery'
+  | 'partner_shop_invite'
   | 'test'
 
 export type EmailDeliveryStatus =

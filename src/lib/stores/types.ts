@@ -8,4 +8,7 @@ export type UserStoreSummary = {
   banner_url: string | null
   owner_user_id: string
   role: StoreMemberRole
+  isPartnerShop?: boolean
+  partnershipStatus?: string | null
+  isOwnedShop?: boolean
 }

@@ -1,11 +1,8 @@
 import { NextResponse } from 'next/server'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { isSupabaseAdminConfigured } from '@/lib/env'
-import {
-  getAccessibleStoresForUser,
-  getActiveStoreForUser,
-  ActiveStoreError,
-} from '@/lib/stores/active-store'
+import { getPartnershipMapForStores } from '@/lib/partnerships/queries'
+import { getAccessibleStoresForUser, getActiveStoreForUser } from '@/lib/stores/active-store'
 import { createStoreForUser, CreateStoreError } from '@/lib/stores/create-store'
 
 // GET /api/stores — list accessible shops + active shop id
@@ -20,17 +17,24 @@ export async function GET() {
 
   const stores = await getAccessibleStoresForUser(user.id)
   const active = await getActiveStoreForUser(user.id)
+  const partnershipMap = await getPartnershipMapForStores(stores.map(s => s.id))
 
   return NextResponse.json({
-    stores: stores.map(s => ({
-      id: s.id,
-      name: s.name,
-      slug: s.slug,
-      avatar_url: s.avatar_url,
-      banner_url: s.banner_url,
-      owner_user_id: s.owner_user_id,
-      role: s.role,
-    })),
+    stores: stores.map(s => {
+      const partnership = partnershipMap.get(s.id)
+      return {
+        id: s.id,
+        name: s.name,
+        slug: s.slug,
+        avatar_url: s.avatar_url,
+        banner_url: s.banner_url,
+        owner_user_id: s.owner_user_id,
+        role: s.role,
+        isPartnerShop: !!partnership,
+        partnershipStatus: partnership?.status ?? null,
+        isOwnedShop: s.owner_user_id === user.id,
+      }
+    }),
     activeStoreId: active?.id ?? null,
   })
 }

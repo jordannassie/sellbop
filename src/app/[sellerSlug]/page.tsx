@@ -1,6 +1,8 @@
 import { notFound } from 'next/navigation'
 import { isSupabaseAdminConfigured } from '@/lib/env'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
+import { getPartnershipByStoreId } from '@/lib/partnerships/queries'
+import { canPubliclyViewStore } from '@/lib/partnerships/publication'
 import { ClientStorefront } from './client-storefront'
 import { MarketingFooter } from '@/components/marketing/footer'
 import type { Metadata } from 'next'
@@ -54,6 +56,9 @@ export default async function SellerStorefrontPage({ params }: { params: Promise
     .maybeSingle()
 
   if (!store) notFound()
+
+  const partnership = await getPartnershipByStoreId(store.id)
+  if (!canPubliclyViewStore(partnership)) notFound()
 
   return (
     <>

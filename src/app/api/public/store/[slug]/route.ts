@@ -4,6 +4,8 @@ import { isSupabaseAdminConfigured } from '@/lib/env'
 import { getStorePartnerFields } from '@/lib/admin/partner'
 import { stripPartnerSocialLinks } from '@/lib/partner-storage'
 import { resolveStoreBannerUrl } from '@/lib/store-defaults'
+import { getPartnershipByStoreId } from '@/lib/partnerships/queries'
+import { canPubliclyViewStore } from '@/lib/partnerships/publication'
 
 // GET /api/public/store/[slug] — publicly fetch a store and its live products
 export async function GET(
@@ -27,6 +29,11 @@ export async function GET(
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   if (!store) return NextResponse.json({ error: 'Store not found.' }, { status: 404 })
+
+  const partnership = await getPartnershipByStoreId(store.id)
+  if (!canPubliclyViewStore(partnership)) {
+    return NextResponse.json({ error: 'Store not found.' }, { status: 404 })
+  }
 
   // Fallback: resolve avatar from profiles if store.avatar_url is null
   let avatarUrl = store.avatar_url

@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { isSupabaseAdminConfigured } from '@/lib/env'
 import { getCategoryFilterValues, normalizeProductCategory } from '@/lib/product-categories'
+import { getPartnershipMapForStores } from '@/lib/partnerships/queries'
+import { canPubliclyViewStore } from '@/lib/partnerships/publication'
 
 export async function GET(request: Request) {
   if (!isSupabaseAdminConfigured()) {
@@ -50,7 +52,21 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  const products = (data ?? []).map((p: Record<string, unknown>) => {
+  const storeIds = [...new Set((data ?? []).map((p: Record<string, unknown>) => {
+    const store = p.stores as { id: string } | null
+    return store?.id
+  }).filter(Boolean) as string[])]
+
+  const partnershipMap = await getPartnershipMapForStores(storeIds)
+
+  const filtered = (data ?? []).filter((p: Record<string, unknown>) => {
+    const store = p.stores as { id: string } | null
+    if (!store) return false
+    const partnership = partnershipMap.get(store.id)
+    return canPubliclyViewStore(partnership ? { id: partnership.id, store_id: store.id, status: partnership.status, partner_user_id: null, partner_name: null, partner_email: null } : null)
+  })
+
+  const products = filtered.map((p: Record<string, unknown>) => {
     const store = p.stores as { id: string; name: string; slug: string; avatar_url: string | null } | null
     return {
       id: p.id,

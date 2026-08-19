@@ -1,6 +1,8 @@
 import { notFound } from 'next/navigation'
 import { isSupabaseAdminConfigured } from '@/lib/env'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
+import { getPartnershipByStoreId } from '@/lib/partnerships/queries'
+import { canPubliclyViewStore } from '@/lib/partnerships/publication'
 import { CanonicalProductPage } from './canonical-product-page'
 import type { Metadata } from 'next'
 
@@ -68,6 +70,9 @@ export default async function CanonicalProductRoute({
     .maybeSingle()
 
   if (!store) notFound()
+
+  const partnership = await getPartnershipByStoreId(store.id)
+  if (!canPubliclyViewStore(partnership)) notFound()
 
   // Verify product belongs to that store
   const { data: product } = await admin

@@ -110,6 +110,115 @@ export interface Database {
         ]
       }
 
+      store_partnerships: {
+        Row: {
+          id: string
+          store_id: string
+          created_by_user_id: string
+          partner_user_id: string | null
+          partner_name: string | null
+          partner_email: string | null
+          status: string
+          internal_notes: string | null
+          claimed_at: string | null
+          activated_at: string | null
+          paused_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          store_id: string
+          created_by_user_id: string
+          partner_user_id?: string | null
+          partner_name?: string | null
+          partner_email?: string | null
+          status?: string
+          internal_notes?: string | null
+          claimed_at?: string | null
+          activated_at?: string | null
+          paused_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['store_partnerships']['Insert']>
+        Relationships: [
+          {
+            foreignKeyName: 'store_partnerships_store_id_fkey'
+            columns: ['store_id']
+            isOneToOne: true
+            referencedRelation: 'stores'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+
+      partner_shop_invites: {
+        Row: {
+          id: string
+          partnership_id: string
+          email: string
+          token_hash: string
+          expires_at: string
+          accepted_at: string | null
+          revoked_at: string | null
+          created_by_user_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          partnership_id: string
+          email: string
+          token_hash: string
+          expires_at: string
+          accepted_at?: string | null
+          revoked_at?: string | null
+          created_by_user_id: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['partner_shop_invites']['Insert']>
+        Relationships: [
+          {
+            foreignKeyName: 'partner_shop_invites_partnership_id_fkey'
+            columns: ['partnership_id']
+            isOneToOne: false
+            referencedRelation: 'store_partnerships'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+
+      partner_shop_preview_tokens: {
+        Row: {
+          id: string
+          partnership_id: string
+          token_hash: string
+          expires_at: string | null
+          revoked_at: string | null
+          created_by_user_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          partnership_id: string
+          token_hash: string
+          expires_at?: string | null
+          revoked_at?: string | null
+          created_by_user_id: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['partner_shop_preview_tokens']['Insert']>
+        Relationships: [
+          {
+            foreignKeyName: 'partner_shop_preview_tokens_partnership_id_fkey'
+            columns: ['partnership_id']
+            isOneToOne: false
+            referencedRelation: 'store_partnerships'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+
       products: {
         Row: {
           id: string
@@ -950,7 +1059,35 @@ export interface Database {
       }
     }
     Views: Record<string, never>
-    Functions: Record<string, never>
+    Functions: {
+      create_partner_shop: {
+        Args: {
+          p_admin_user_id: string
+          p_shop_name: string
+          p_shop_slug: string
+          p_partner_name: string | null
+          p_partner_email: string | null
+          p_banner_url: string
+          p_avatar_url: string | null
+        }
+        Returns: {
+          out_store_id: string
+          out_partnership_id: string
+        }[]
+      }
+      claim_partner_shop: {
+        Args: {
+          p_token_hash: string
+          p_user_id: string
+          p_user_email: string
+        }
+        Returns: {
+          ok: boolean
+          error?: string
+          store_id?: string
+        }
+      }
+    }
     Enums: Record<string, never>
   }
 }
