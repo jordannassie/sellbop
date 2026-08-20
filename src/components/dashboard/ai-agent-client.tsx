@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import {
-  Bot, Sparkles, Copy, ExternalLink, ChevronDown, Shield, Store,
+  Sparkles, Copy, ExternalLink, ChevronDown, Shield, Store,
   Package, DollarSign, TrendingUp, Upload, BarChart3, Handshake,
   CheckCircle2, Loader2,
 } from 'lucide-react'
@@ -13,6 +13,10 @@ import { toast } from 'sonner'
 import { getClaudeConnectionState } from '@/lib/agent/connection-status'
 import { SCOPE_LABELS, accessModeLabel } from '@/lib/agent/scope-labels'
 import { cn } from '@/lib/utils'
+
+const CLAUDE_CONNECTORS_URL = 'https://claude.ai/new#settings/customize-connectors'
+const CLAUDE_DOWNLOAD_URL = 'https://claude.com/download'
+const TEST_PROMPT = 'List the SellBop Shops I can manage. Do not make any changes yet.'
 
 type AccessMode = 'single_shop' | 'all_managed_shops'
 
@@ -79,6 +83,123 @@ const CAPABILITIES = [
   { icon: Handshake, title: 'Partner Shops', text: 'Authorized SellBop admins can create and manage Partner Shops through Claude E-Com.' },
 ]
 
+function authorizedShopsLabel(hub: HubData, accessMode: AccessMode, connectionAccessMode?: string | null): string {
+  const mode = connectionAccessMode ?? accessMode
+  if (mode === 'all_managed_shops') {
+    if (hub.shops.length === 0) return 'All authorized shops'
+    if (hub.shops.length <= 3) return hub.shops.map(s => s.name).join(', ')
+    return `All ${hub.shops.length} authorized shops`
+  }
+  const shop = hub.activeShop ?? hub.shops.find(s => s.isActive) ?? hub.shops[0]
+  return shop?.name ?? 'Current Shop'
+}
+
+function ShopAccessPicker({
+  hub,
+  accessMode,
+  onAccessModeChange,
+}: {
+  hub: HubData
+  accessMode: AccessMode
+  onAccessModeChange: (mode: AccessMode) => void
+}) {
+  return (
+    <div className="space-y-3">
+      <p className="text-xs font-semibold uppercase tracking-wide text-neutral-400">Shop access</p>
+      <div className="grid sm:grid-cols-2 gap-3">
+        <button
+          type="button"
+          onClick={() => onAccessModeChange('single_shop')}
+          className={cn(
+            'rounded-xl border p-4 text-left transition-colors',
+            accessMode === 'single_shop' ? 'border-black bg-neutral-50' : 'border-neutral-200 hover:border-neutral-300',
+          )}
+        >
+          <p className="text-sm font-semibold text-black">Current Shop Only</p>
+          <p className="text-xs text-neutral-500 mt-1">{hub.activeShop?.name ?? 'Your active shop'}</p>
+          <p className="text-xs text-neutral-400 mt-2">Claude can only manage this Shop.</p>
+        </button>
+        <button
+          type="button"
+          onClick={() => onAccessModeChange('all_managed_shops')}
+          className={cn(
+            'rounded-xl border p-4 text-left transition-colors',
+            accessMode === 'all_managed_shops' ? 'border-black bg-neutral-50' : 'border-neutral-200 hover:border-neutral-300',
+          )}
+        >
+          <p className="text-sm font-semibold text-black">All My Shops</p>
+          <p className="text-xs text-neutral-500 mt-1">{hub.shops.length} shop{hub.shops.length === 1 ? '' : 's'}</p>
+          <p className="text-xs text-neutral-400 mt-2">Every Shop you already manage.</p>
+        </button>
+      </div>
+      <p className="text-xs text-neutral-500">Claude can never access Shops you do not already have permission to manage.</p>
+    </div>
+  )
+}
+
+function ConnectionSteps({ mcpUrl, onCopyMcpUrl, compact = false }: { mcpUrl: string; onCopyMcpUrl: () => void; compact?: boolean }) {
+  return (
+    <div className={cn('space-y-6', compact && 'space-y-4 text-sm')}>
+      <div>
+        <h3 className={cn('font-bold text-black', compact ? 'text-sm' : 'text-base')}>1. Open Claude Connectors</h3>
+        <p className="text-neutral-600 mt-1">Open Claude&apos;s Connectors page.</p>
+        <a href={CLAUDE_CONNECTORS_URL} target="_blank" rel="noopener noreferrer" className="inline-block mt-3">
+          <Button size={compact ? 'xs' : 'sm'} className="font-semibold">
+            Open Claude Connectors <ExternalLink size={14} className="ml-1" />
+          </Button>
+        </a>
+      </div>
+
+      <div>
+        <h3 className={cn('font-bold text-black', compact ? 'text-sm' : 'text-base')}>2. Add SellBop</h3>
+        <p className="text-neutral-600 mt-1">
+          Click <span className="font-medium text-black">Add → Add custom connector</span>
+        </p>
+        <div className="mt-4 space-y-3 rounded-xl border border-neutral-200 bg-neutral-50 p-4">
+          <div>
+            <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">Name</p>
+            <p className="text-sm font-medium text-black mt-1">SellBop</p>
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">MCP URL</p>
+            <code className="block mt-1 text-sm font-mono text-black break-all">{mcpUrl}</code>
+          </div>
+          <Button size="sm" variant="secondary" onClick={onCopyMcpUrl}>
+            <Copy size={14} className="mr-1" /> Copy MCP URL
+          </Button>
+        </div>
+        <p className="text-neutral-600 mt-3">Click <span className="font-medium text-black">Add / Connect</span> in Claude.</p>
+      </div>
+
+      <div>
+        <h3 className={cn('font-bold text-black', compact ? 'text-sm' : 'text-base')}>3. Connect Your SellBop Account</h3>
+        <p className="text-neutral-600 mt-1 leading-relaxed">
+          Claude will ask you to authorize SellBop. Approve the connection so Claude can securely use the Shops you selected.
+        </p>
+      </div>
+    </div>
+  )
+}
+
+function StartUsingSection({ onCopyTestPrompt }: { onCopyTestPrompt: () => void }) {
+  return (
+    <section className="rounded-xl border border-neutral-200 bg-neutral-50 p-5">
+      <h3 className="text-sm font-bold text-black">Start using Claude E-Com</h3>
+      <p className="text-sm text-neutral-600 mt-2 leading-relaxed">
+        Open a new Claude chat and make sure <span className="font-medium text-black">SellBop</span> is enabled under{' '}
+        <span className="font-medium text-black">+ → Connectors</span>.
+      </p>
+      <p className="text-sm text-neutral-600 mt-3">Then try:</p>
+      <blockquote className="mt-2 rounded-lg border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-700 italic">
+        {TEST_PROMPT}
+      </blockquote>
+      <Button size="sm" variant="secondary" className="mt-3" onClick={onCopyTestPrompt}>
+        <Copy size={14} className="mr-1" /> Copy Test Prompt
+      </Button>
+    </section>
+  )
+}
+
 export function AiAgentClient() {
   const [hub, setHub] = useState<HubData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -86,7 +207,8 @@ export function AiAgentClient() {
   const [accessMode, setAccessMode] = useState<AccessMode>('single_shop')
   const [connecting, setConnecting] = useState(false)
   const [showAdvanced, setShowAdvanced] = useState(false)
-  const [showConnectPanel, setShowConnectPanel] = useState(false)
+  const [showManageAccess, setShowManageAccess] = useState(false)
+  const [showConnectionHelp, setShowConnectionHelp] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -112,21 +234,39 @@ export function AiAgentClient() {
   const connectionState = getClaudeConnectionState(activeConnections)
   const isConnected = connectionState === 'connected' || connectionState === 'mcp_ready'
   const primary = hub?.activeConnection
+  const mcpUrl = hub?.mcpUrl ?? 'https://sellbop.com/api/mcp'
 
-  async function handleConnect() {
+  async function saveAccessMode() {
+    await fetch('/api/agent-connections/hub', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ access_mode: accessMode }),
+    })
+  }
+
+  async function handleOpenConnectors() {
     setConnecting(true)
     try {
-      await fetch('/api/agent-connections/hub', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ access_mode: accessMode }),
-      })
-      window.open('https://claude.ai/settings/connectors', '_blank', 'noopener,noreferrer')
-      toast.success('Open Claude → Add Connector → paste the SellBop MCP URL when prompted.')
-      setShowConnectPanel(false)
+      await saveAccessMode()
+      window.open(CLAUDE_CONNECTORS_URL, '_blank', 'noopener,noreferrer')
+      toast.success('Shop access saved. Follow the steps to add SellBop in Claude.')
       load()
     } catch {
       toast.error('Could not prepare connection.')
+    } finally {
+      setConnecting(false)
+    }
+  }
+
+  async function handleSaveAccessMode() {
+    setConnecting(true)
+    try {
+      await saveAccessMode()
+      toast.success('Shop access updated.')
+      setShowManageAccess(false)
+      load()
+    } catch {
+      toast.error('Could not update shop access.')
     } finally {
       setConnecting(false)
     }
@@ -144,14 +284,18 @@ export function AiAgentClient() {
   }
 
   function copyMcpUrl() {
-    if (!hub?.mcpUrl) return
-    navigator.clipboard.writeText(hub.mcpUrl)
+    navigator.clipboard.writeText(mcpUrl)
     toast.success('MCP URL copied.')
   }
 
   function copyPrompt(text: string) {
     navigator.clipboard.writeText(text)
     toast.success('Prompt copied.')
+  }
+
+  function copyTestPrompt() {
+    navigator.clipboard.writeText(TEST_PROMPT)
+    toast.success('Test prompt copied.')
   }
 
   if (loading) {
@@ -167,12 +311,6 @@ export function AiAgentClient() {
       <div className="rounded-xl border border-red-200 bg-red-50 p-6 max-w-lg">
         <p className="font-semibold text-red-800">Unable to load Claude E-Com</p>
         <p className="text-sm text-red-600 mt-2">{error}</p>
-        {error.includes('access_mode') && (
-          <p className="text-xs text-red-700 mt-3">
-            Migration 032 must be applied to production. Run <code className="font-mono">npm run db:apply-032</code> or paste{' '}
-            <code className="font-mono">supabase/migrations/032_agent_shop_access.sql</code> in the Supabase SQL Editor.
-          </p>
-        )}
         <Button size="sm" variant="secondary" className="mt-4" onClick={load}>Retry</Button>
       </div>
     )
@@ -180,9 +318,8 @@ export function AiAgentClient() {
 
   if (!hub) return null
 
-  const shopLabel = accessMode === 'single_shop'
-    ? hub.activeShop?.name ?? 'Current Shop'
-    : `All ${hub.shops.length} authorized shop${hub.shops.length === 1 ? '' : 's'}`
+  const lastActivity = hub.activity[0]
+  const connectedShopLabel = authorizedShopsLabel(hub, accessMode, primary?.access_mode)
 
   return (
     <div className="max-w-3xl space-y-8 pb-12">
@@ -196,7 +333,7 @@ export function AiAgentClient() {
         </p>
       </div>
 
-      {/* Connection status */}
+      {/* Connection */}
       <section className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
         {isConnected && primary ? (
           <>
@@ -205,19 +342,44 @@ export function AiAgentClient() {
               <h2 className="text-lg font-bold text-black">Claude Connected ✓</h2>
             </div>
             <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm mb-5">
-              <div><dt className="text-neutral-400">Connection</dt><dd className="font-medium">{primary.name}</dd></div>
-              <div><dt className="text-neutral-400">Status</dt><dd className="font-medium capitalize">{connectionState === 'connected' ? 'Active' : 'Ready'}</dd></div>
-              <div><dt className="text-neutral-400">Access</dt><dd className="font-medium">{accessModeLabel(primary.access_mode)}</dd></div>
-              <div><dt className="text-neutral-400">Authorized</dt><dd className="font-medium">{shopLabel}</dd></div>
+              <div><dt className="text-neutral-400">Authorized Shop(s)</dt><dd className="font-medium">{connectedShopLabel}</dd></div>
+              <div><dt className="text-neutral-400">Access mode</dt><dd className="font-medium">{accessModeLabel(primary.access_mode)}</dd></div>
+              <div><dt className="text-neutral-400">Last activity</dt><dd>{primary.last_used_at ? new Date(primary.last_used_at).toLocaleString() : lastActivity ? `${lastActivity.actionLabel} · ${new Date(lastActivity.createdAt).toLocaleString()}` : 'Not yet used'}</dd></div>
               <div><dt className="text-neutral-400">Connected</dt><dd>{new Date(primary.created_at).toLocaleDateString()}</dd></div>
-              <div><dt className="text-neutral-400">Last activity</dt><dd>{primary.last_used_at ? new Date(primary.last_used_at).toLocaleString() : 'Not yet used'}</dd></div>
             </dl>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 mb-6">
               <a href="https://claude.ai/new" target="_blank" rel="noopener noreferrer">
                 <Button size="sm" className="font-semibold">Open Claude</Button>
               </a>
-              <Button size="sm" variant="secondary" onClick={() => setShowConnectPanel(true)}>Manage Access</Button>
+              <Button size="sm" variant="secondary" onClick={() => setShowManageAccess(v => !v)}>Manage Access</Button>
               <Button size="sm" variant="ghost" className="text-red-600 hover:bg-red-50" onClick={() => handleDisconnect(primary.id)}>Disconnect</Button>
+            </div>
+
+            {showManageAccess && (
+              <div className="mb-6 pt-5 border-t border-neutral-100">
+                <ShopAccessPicker hub={hub} accessMode={accessMode} onAccessModeChange={setAccessMode} />
+                <Button size="sm" variant="secondary" className="mt-4" loading={connecting} onClick={handleSaveAccessMode}>
+                  Save shop access
+                </Button>
+                <p className="text-xs text-neutral-500 mt-2">Reconnect Claude after changing access if a new authorization is required.</p>
+              </div>
+            )}
+
+            <StartUsingSection onCopyTestPrompt={copyTestPrompt} />
+
+            <div className="mt-6 pt-5 border-t border-neutral-100">
+              <button
+                type="button"
+                onClick={() => setShowConnectionHelp(v => !v)}
+                className="flex items-center gap-2 text-sm font-semibold text-neutral-600 hover:text-black"
+              >
+                Connection Help <ChevronDown size={16} className={cn('transition-transform', showConnectionHelp && 'rotate-180')} />
+              </button>
+              {showConnectionHelp && (
+                <div className="mt-4">
+                  <ConnectionSteps mcpUrl={mcpUrl} onCopyMcpUrl={copyMcpUrl} compact />
+                </div>
+              )}
             </div>
           </>
         ) : (
@@ -225,68 +387,24 @@ export function AiAgentClient() {
             <h2 className="text-lg font-bold text-black mb-1">Connect Claude</h2>
             <p className="text-sm text-neutral-500 mb-5">Give Claude secure access to your SellBop business.</p>
 
-            {/* Shop access picker */}
-            <div className="space-y-3 mb-5">
-              <p className="text-xs font-semibold uppercase tracking-wide text-neutral-400">Shop access</p>
-              <div className="grid sm:grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setAccessMode('single_shop')}
-                  className={cn(
-                    'rounded-xl border p-4 text-left transition-colors',
-                    accessMode === 'single_shop' ? 'border-black bg-neutral-50' : 'border-neutral-200 hover:border-neutral-300',
-                  )}
-                >
-                  <p className="text-sm font-semibold text-black">Current Shop Only</p>
-                  <p className="text-xs text-neutral-500 mt-1">{hub.activeShop?.name ?? 'Your active shop'}</p>
-                  <p className="text-xs text-neutral-400 mt-2">Claude can only manage this Shop.</p>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAccessMode('all_managed_shops')}
-                  className={cn(
-                    'rounded-xl border p-4 text-left transition-colors',
-                    accessMode === 'all_managed_shops' ? 'border-black bg-neutral-50' : 'border-neutral-200 hover:border-neutral-300',
-                  )}
-                >
-                  <p className="text-sm font-semibold text-black">All My Shops</p>
-                  <p className="text-xs text-neutral-500 mt-1">{hub.shops.length} shop{hub.shops.length === 1 ? '' : 's'}</p>
-                  <p className="text-xs text-neutral-400 mt-2">Every Shop you already manage.</p>
-                </button>
-              </div>
-              <p className="text-xs text-neutral-500">Claude can never access Shops you do not already have permission to manage.</p>
+            <ShopAccessPicker hub={hub} accessMode={accessMode} onAccessModeChange={setAccessMode} />
+
+            <div className="mt-6 pt-6 border-t border-neutral-100">
+              <ConnectionSteps mcpUrl={mcpUrl} onCopyMcpUrl={copyMcpUrl} />
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              <Button onClick={handleConnect} loading={connecting} className="font-semibold text-white" style={{ background: '#00E676', borderColor: '#00E676' }}>
-                Connect Claude
+            <div className="flex flex-col sm:flex-row flex-wrap gap-2 mt-6">
+              <Button onClick={handleOpenConnectors} loading={connecting} className="font-semibold text-white w-full sm:w-auto" style={{ background: '#00E676', borderColor: '#00E676' }}>
+                Open Claude Connectors <ExternalLink size={14} className="ml-1" />
               </Button>
-              <a href="https://claude.com/download" target="_blank" rel="noopener noreferrer">
-                <Button size="sm" variant="secondary"><ExternalLink size={14} /> Download Claude Desktop</Button>
+              <a href={CLAUDE_DOWNLOAD_URL} target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto">
+                <Button size="sm" variant="secondary" className="w-full sm:w-auto">
+                  <ExternalLink size={14} className="mr-1" /> Download Claude Desktop
+                </Button>
               </a>
             </div>
-            <button type="button" className="text-xs text-neutral-500 underline mt-3" onClick={() => setShowConnectPanel(true)}>
-              Already use Claude? Connect now
-            </button>
+            <p className="text-xs text-neutral-400 mt-3">Claude on the web works great — you don&apos;t need Claude Desktop unless you prefer it.</p>
           </>
-        )}
-
-        {showConnectPanel && (
-          <div className="mt-5 pt-5 border-t border-neutral-100 space-y-3">
-            <p className="text-sm font-medium">Add SellBop in Claude</p>
-            <ol className="text-sm text-neutral-600 list-decimal list-inside space-y-1">
-              <li>Open Claude → Settings → Connectors → Add custom connector</li>
-              <li>Paste the SellBop MCP URL below</li>
-              <li>Sign in to SellBop when Claude asks and approve access</li>
-            </ol>
-            <div className="flex gap-2">
-              <code className="flex-1 rounded-lg bg-neutral-100 px-3 py-2 text-xs font-mono break-all">{hub.mcpUrl}</code>
-              <Button size="sm" variant="secondary" onClick={copyMcpUrl}><Copy size={14} /></Button>
-            </div>
-            <a href="https://claude.ai/settings/connectors" target="_blank" rel="noopener noreferrer">
-              <Button size="sm" variant="secondary"><ExternalLink size={13} /> Open Claude Connectors</Button>
-            </a>
-          </div>
         )}
       </section>
 
@@ -307,48 +425,6 @@ export function AiAgentClient() {
           <p className="text-xs text-neutral-400 mt-2">Bank and identity verification always happens through Stripe&apos;s secure hosted flow — never through Claude.</p>
         </section>
       )}
-
-      {/* Get Claude */}
-      <section>
-        <h2 className="text-lg font-bold text-black mb-3">Get Claude</h2>
-        <p className="text-sm text-neutral-600 mb-4">
-          Claude E-Com works with Claude&apos;s remote MCP connector. Install Claude on your computer or use a supported Claude interface, then connect SellBop.
-        </p>
-        <div className="flex flex-wrap gap-2">
-          <a href="https://claude.com/download" target="_blank" rel="noopener noreferrer">
-            <Button variant="secondary"><ExternalLink size={14} /> Download for Mac / Windows</Button>
-          </a>
-          <Button variant="ghost" onClick={() => setShowConnectPanel(true)}>I already have Claude</Button>
-        </div>
-      </section>
-
-      {/* 3 steps */}
-      <section className="rounded-2xl border border-neutral-200 bg-neutral-50 p-6">
-        <h2 className="text-lg font-bold text-black mb-4">Connect Claude in 3 Steps</h2>
-        <div className="space-y-4">
-          {[
-            { step: '1', title: 'Get Claude', body: 'Install or open Claude.', action: 'Get Claude', href: 'https://claude.com/download' },
-            { step: '2', title: 'Connect SellBop', body: 'Click Connect Claude, choose Current Shop Only or All My Shops. SellBop handles secure configuration.', action: 'Connect Claude', onClick: handleConnect },
-            { step: '3', title: 'Start Building', body: 'Open Claude and tell it what you want — products, catalogs, pricing, affiliates, and more.' },
-          ].map(s => (
-            <div key={s.step} className="flex gap-4">
-              <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-black text-white text-sm font-bold">{s.step}</span>
-              <div>
-                <p className="font-semibold text-black">{s.title}</p>
-                <p className="text-sm text-neutral-600 mt-0.5">{s.body}</p>
-                {s.href && (
-                  <a href={s.href} target="_blank" rel="noopener noreferrer" className="inline-block mt-2">
-                    <Button size="xs" variant="secondary">{s.action}</Button>
-                  </a>
-                )}
-                {s.onClick && (
-                  <Button size="xs" variant="secondary" className="mt-2" onClick={s.onClick}>{s.action}</Button>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
 
       {/* Capabilities */}
       <section>
@@ -435,12 +511,12 @@ export function AiAgentClient() {
         <button type="button" onClick={() => setShowAdvanced(v => !v)} className="flex items-center gap-2 text-sm font-semibold text-neutral-600 hover:text-black">
           Advanced Connection Details <ChevronDown size={16} className={cn('transition-transform', showAdvanced && 'rotate-180')} />
         </button>
-        {showAdvanced && primary && (
+        {showAdvanced && (
           <div className="mt-3 rounded-xl border border-neutral-200 bg-white p-4 text-xs font-mono space-y-2 text-neutral-600">
-            <p><span className="text-neutral-400">MCP endpoint:</span> {hub.mcpUrl}</p>
-            <p><span className="text-neutral-400">Connection ID:</span> {primary.id}</p>
-            <p><span className="text-neutral-400">Access mode:</span> {primary.access_mode ?? 'single_shop'}</p>
-            <p><span className="text-neutral-400">Scopes:</span> {primary.scopes.join(', ')}</p>
+            <p><span className="text-neutral-400">MCP endpoint:</span> {mcpUrl}</p>
+            {primary && <p><span className="text-neutral-400">Connection ID:</span> {primary.id}</p>}
+            <p><span className="text-neutral-400">Access mode:</span> {primary?.access_mode ?? accessMode}</p>
+            {primary && <p><span className="text-neutral-400">Scopes:</span> {primary.scopes.join(', ')}</p>}
             <Button size="xs" variant="secondary" onClick={copyMcpUrl}><Copy size={12} /> Copy MCP URL</Button>
           </div>
         )}
