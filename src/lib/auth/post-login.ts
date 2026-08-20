@@ -2,7 +2,7 @@ import 'server-only'
 
 import { getAllowedAdminEmails } from '@/lib/env'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
-import { isMissingRelationError } from '@/lib/supabase/schema-errors'
+import { isMissingRelationError } from '@/lib/supabase/schema-compat'
 import { isAuthenticatedEmailVerified } from '@/lib/auth/email-verification'
 import type { AccountSummary, AuthSession } from '@/lib/domain/auth'
 import type { User } from '@supabase/supabase-js'
@@ -50,7 +50,10 @@ export async function linkGuestCommerceByEmail(userId: string, email: string) {
   ])
 }
 
-export async function getAccountSummaryByUserId(userId: string): Promise<AccountSummary> {
+export async function getAccountSummaryByUserId(
+  userId: string,
+  email?: string | null,
+): Promise<AccountSummary> {
   const admin = getSupabaseAdminClient()
 
   const [storeResult, memberResult, purchaseResult, orderResult] = await Promise.all([
@@ -60,25 +63,36 @@ export async function getAccountSummaryByUserId(userId: string): Promise<Account
     admin.from('orders').select('id', { count: 'exact', head: true }).eq('buyer_user_id', userId),
   ])
 
-  const ownedCount = storeResult.error && !isMissingRelationError(storeResult.error)
-    ? 0
+  const ownedCount = storeResult.error
+    ? (isMissingRelationError(storeResult.error) ? 0 : null)
     : (storeResult.count ?? 0)
 
   const memberCount = memberResult.error
-    ? (isMissingRelationError(memberResult.error) ? 0 : 0)
+    ? (isMissingRelationError(memberResult.error) ? 0 : null)
     : (memberResult.count ?? 0)
 
-  if (storeResult.error && !isMissingRelationError(storeResult.error)) {
-    console.error('[getAccountSummaryByUserId] stores count failed:', storeResult.error.message)
+  if (ownedCount === null) {
+    console.error('[getAccountSummaryByUserId] stores count failed:', storeResult.error?.message)
+    throw new Error('Could not verify shop access.')
   }
-  if (memberResult.error && !isMissingRelationError(memberResult.error)) {
-    console.error('[getAccountSummaryByUserId] store_members count failed:', memberResult.error.message)
+  if (memberCount === null) {
+    console.error('[getAccountSummaryByUserId] store_members count failed:', memberResult.error?.message)
+    throw new Error('Could not verify shop membership.')
+  }
+  if (purchaseResult.error) {
+    console.error('[getAccountSummaryByUserId] purchases count failed:', purchaseResult.error.message)
+    throw new Error('Could not verify purchase history.')
+  }
+  if (orderResult.error) {
+    console.error('[getAccountSummaryByUserId] orders count failed:', orderResult.error.message)
+    throw new Error('Could not verify order history.')
   }
 
   return {
     hasStore: ownedCount > 0 || memberCount > 0,
     hasPurchases: (purchaseResult.count ?? 0) > 0 || (orderResult.count ?? 0) > 0,
     hasSubscriptions: false,
+    isPlatformAdmin: email ? isAllowedAdminEmail(email) : false,
   }
 }
 
@@ -87,7 +101,7 @@ export async function bootstrapAuthenticatedUser(session: AuthSession) {
   if (session.emailVerified) {
     await linkGuestCommerceByEmail(session.userId, session.email)
   }
-  return getAccountSummaryByUserId(session.userId)
+  return getAccountSummaryByUserId(session.userId, session.email)
 }
 
 export function authSessionFromUser(user: User): AuthSession | null {

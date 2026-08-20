@@ -10,6 +10,7 @@ export interface AccountSummary {
   hasStore: boolean
   hasPurchases: boolean
   hasSubscriptions: boolean
+  isPlatformAdmin: boolean
 }
 
 export interface IAuthProvider {

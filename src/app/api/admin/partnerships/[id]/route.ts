@@ -4,6 +4,7 @@ import { verifyPlatformAdmin } from '@/lib/admin/verify-admin'
 import { getPartnershipDetail } from '@/lib/partnerships/queries'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import type { Database } from '@/lib/supabase/types'
+import { PartnershipSchemaUnavailableError } from '@/lib/supabase/schema-compat'
 import { isPartnershipStatus } from '@/lib/partnerships/constants'
 
 export async function GET(
@@ -23,7 +24,11 @@ export async function GET(
     if (!detail) return NextResponse.json({ error: 'Not found.' }, { status: 404 })
     return NextResponse.json(detail)
   } catch (err) {
+    if (err instanceof PartnershipSchemaUnavailableError) {
+      return NextResponse.json({ migrationRequired: true, message: err.message }, { status: 503 })
+    }
     const message = err instanceof Error ? err.message : 'Failed to load partnership.'
+    console.error('[GET /api/admin/partnerships/[id]]', message)
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }

@@ -10,6 +10,7 @@ import {
 } from '@/lib/platform-config'
 import { AgentAuthError, requireScope, type AgentIdentity } from './auth'
 import { userCanManageStore } from '@/lib/stores/active-store'
+import { isMissingRelationError } from '@/lib/supabase/schema-compat'
 import type { Database } from '@/lib/supabase/types'
 
 type ProductRow = Database['public']['Tables']['products']['Row']
@@ -89,12 +90,17 @@ async function resolveStore(identity: AgentIdentity): Promise<StoreRow> {
     return store
   }
 
-  const { data: memberships } = await admin
+  const { data: memberships, error: memberError } = await admin
     .from('store_members')
     .select('stores(*)')
     .eq('user_id', identity.userId)
     .order('created_at', { ascending: true })
     .limit(1)
+
+  if (memberError && !isMissingRelationError(memberError)) {
+    console.error('[resolveStore] store_members query failed:', memberError.message)
+    throw new AgentServiceError('Could not resolve shop access.', 500)
+  }
 
   const fromMember = memberships?.[0]?.stores as StoreRow | null | undefined
   if (fromMember) return fromMember

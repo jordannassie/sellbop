@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { isSupabaseAdminConfigured } from '@/lib/env'
 import { verifyPlatformAdmin } from '@/lib/admin/verify-admin'
 import { listAdminPartnerships } from '@/lib/partnerships/queries'
+import { PartnershipSchemaUnavailableError } from '@/lib/supabase/schema-compat'
 import { createPartnerShop, PartnershipError } from '@/lib/partnerships/service'
 
 export async function GET() {
@@ -16,7 +17,15 @@ export async function GET() {
     const partnerships = await listAdminPartnerships()
     return NextResponse.json({ partnerships })
   } catch (err) {
+    if (err instanceof PartnershipSchemaUnavailableError) {
+      return NextResponse.json({
+        partnerships: [],
+        migrationRequired: true,
+        message: err.message,
+      })
+    }
     const message = err instanceof Error ? err.message : 'Failed to load partnerships.'
+    console.error('[GET /api/admin/partnerships]', message)
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }

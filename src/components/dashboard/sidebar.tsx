@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { BookOpen, GraduationCap, LayoutDashboard, LogOut, Menu, Package, Settings, Store, Users, DollarSign, ShoppingBag, Tag, X, Plus, TrendingUp, Grid3x3, ExternalLink, } from 'lucide-react'
+import { BookOpen, GraduationCap, LayoutDashboard, LogOut, Menu, Package, Settings, Store, Users, DollarSign, ShoppingBag, Tag, X, Plus, TrendingUp, Grid3x3, ExternalLink, Shield, } from 'lucide-react'
 import { useAuth } from '@/context/auth-context'
 import { useUserStore } from '@/hooks/use-user-store'
 import { cn } from '@/lib/utils'
@@ -209,6 +209,16 @@ export function DashboardSidebar() {
 
   const navLinks = (onNavigate?: () => void) => (
     <nav className="flex-1 space-y-0.5 overflow-y-auto px-2 py-3">
+      {account?.isPlatformAdmin && (
+        <Link
+          href="/internal/admin"
+          onClick={onNavigate}
+          className="mb-1 flex items-center gap-2.5 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-100 hover:text-black"
+        >
+          <Shield size={16} />
+          Admin
+        </Link>
+      )}
       {nav.map(item => (
         <NavLink key={item.href} item={item} pathname={pathname} onClick={onNavigate} />
       ))}

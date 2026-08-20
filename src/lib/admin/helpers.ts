@@ -2,7 +2,7 @@ import 'server-only'
 
 import { MARKETPLACE_FEE_PERCENT } from '@/lib/platform-config'
 
-import { isMissingRelationError } from '@/lib/supabase/schema-errors'
+import { isMissingRelationError } from '@/lib/supabase/schema-compat'
 
 export { isMissingRelationError }
 

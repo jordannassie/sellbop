@@ -20,6 +20,6 @@ export async function GET() {
     // Non-fatal: the library query will still fall back to email matching.
   }
 
-  const account = await getAccountSummaryByUserId(user.id)
+  const account = await getAccountSummaryByUserId(user.id, user.email)
   return NextResponse.json({ account })
 }

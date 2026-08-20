@@ -3,6 +3,8 @@ import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { isSupabaseAdminConfigured } from '@/lib/env'
 import { getCategoryFilterValues, normalizeProductCategory } from '@/lib/product-categories'
 import { getPartnershipMapForStores } from '@/lib/partnerships/queries'
+import { isMissingSchemaError } from '@/lib/supabase/schema-compat'
+import type { PartnershipStatus } from '@/lib/partnerships/constants'
 import { canPubliclyViewStore } from '@/lib/partnerships/publication'
 
 export async function GET(request: Request) {
@@ -45,10 +47,10 @@ export async function GET(request: Request) {
   const { data, error } = await dbQuery
 
   if (error) {
-    // Gracefully handle missing columns (migration not yet applied)
-    if (error.message?.includes('does not exist') || error.message?.includes('column')) {
+    if (isMissingSchemaError(error) || error.message?.includes('column')) {
       return NextResponse.json({ products: [], migrationRequired: true })
     }
+    console.error('[GET /api/marketplace]', error.message)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
@@ -57,7 +59,13 @@ export async function GET(request: Request) {
     return store?.id
   }).filter(Boolean) as string[])]
 
-  const partnershipMap = await getPartnershipMapForStores(storeIds)
+  let partnershipMap = new Map<string, { id: string; status: PartnershipStatus }>()
+  try {
+    partnershipMap = await getPartnershipMapForStores(storeIds)
+  } catch (partnershipErr) {
+    console.error('[GET /api/marketplace] partnership lookup failed:', partnershipErr)
+    return NextResponse.json({ error: 'Could not load marketplace listings.' }, { status: 500 })
+  }
 
   const filtered = (data ?? []).filter((p: Record<string, unknown>) => {
     const store = p.stores as { id: string } | null

@@ -4,7 +4,7 @@ import { cookies } from 'next/headers'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import type { Database } from '@/lib/supabase/types'
-import { isMissingRelationError } from '@/lib/supabase/schema-errors'
+import { isMissingRelationError } from '@/lib/supabase/schema-compat'
 import type { StoreMemberRole } from './types'
 
 export const ACTIVE_STORE_COOKIE = 'sellbop_active_store_id'

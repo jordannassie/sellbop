@@ -1,7 +1,7 @@
 import 'server-only'
 
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
-import { isMissingRelationError } from '@/lib/supabase/schema-errors'
+import { isMissingRelationError, PartnershipSchemaUnavailableError } from '@/lib/supabase/schema-compat'
 import type { Database } from '@/lib/supabase/types'
 import type { PartnershipStatus } from './constants'
 import type { StorePartnershipRow } from './publication'
@@ -72,7 +72,12 @@ export async function listAdminPartnerships(): Promise<PartnershipSummary[]> {
     `)
     .order('created_at', { ascending: false })
 
-  if (error) throw error
+  if (error) {
+    if (isMissingRelationError(error)) {
+      throw new PartnershipSchemaUnavailableError()
+    }
+    throw error
+  }
 
   const storeIds = (partnerships ?? []).map(p => p.store_id)
   const productCounts = new Map<string, number>()
@@ -119,7 +124,12 @@ export async function getPartnershipDetail(partnershipId: string) {
     .eq('id', partnershipId)
     .maybeSingle()
 
-  if (error) throw error
+  if (error) {
+    if (isMissingRelationError(error)) {
+      throw new PartnershipSchemaUnavailableError()
+    }
+    throw error
+  }
   if (!partnership) return null
 
   const typedPartnership = partnership as PartnershipRow & { stores: StoreSummary | null }
@@ -141,11 +151,25 @@ export async function getPartnershipDetail(partnershipId: string) {
       .limit(1),
   ])
 
+  const latestInvite = inviteResult.error && isMissingRelationError(inviteResult.error)
+    ? null
+    : (inviteResult.error ? null : (inviteResult.data?.[0] ?? null))
+  const activePreviewToken = previewResult.error && isMissingRelationError(previewResult.error)
+    ? null
+    : (previewResult.error ? null : (previewResult.data?.[0] ?? null))
+
+  if (inviteResult.error && !isMissingRelationError(inviteResult.error)) {
+    console.error('[getPartnershipDetail] invite lookup failed:', inviteResult.error.message)
+  }
+  if (previewResult.error && !isMissingRelationError(previewResult.error)) {
+    console.error('[getPartnershipDetail] preview lookup failed:', previewResult.error.message)
+  }
+
   return {
     partnership: typedPartnership,
     store: typedPartnership.stores,
     productCount: productCount ?? 0,
-    latestInvite: inviteResult.data?.[0] ?? null,
-    activePreviewToken: previewResult.data?.[0] ?? null,
+    latestInvite,
+    activePreviewToken,
   }
 }
