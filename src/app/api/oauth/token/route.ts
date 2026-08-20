@@ -2,7 +2,10 @@ import 'server-only'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { isSupabaseAdminConfigured } from '@/lib/env'
 import { verifyPkceS256 } from '@/lib/oauth/mcp-oauth'
-import { generateAgentToken, ALL_AGENT_SCOPES, type AgentScope } from '@/lib/agent/auth'
+import { generateAgentToken, ALL_AGENT_SCOPES, CLAUDE_ECOM_SCOPES, type AgentScope, type AgentAccessMode } from '@/lib/agent/auth'
+import { cookies } from 'next/headers'
+import { requireActiveStoreForUser, ActiveStoreError } from '@/lib/stores/active-store'
+import { AGENT_ACCESS_MODE_COOKIE } from '@/lib/agent/constants'
 
 // RFC 6749 §4.1.3 (authorization_code grant) + RFC 7636 (PKCE).
 // Exchanges a single-use authorization code for an access token. The
@@ -80,23 +83,34 @@ export async function POST(request: Request) {
   const scopes = (authCode.scope?.split(' ') ?? []).filter((s): s is AgentScope =>
     ALL_AGENT_SCOPES.includes(s as AgentScope),
   )
+  const grantedScopes = scopes.length > 0 ? scopes : CLAUDE_ECOM_SCOPES
 
-  const { data: store } = await admin
-    .from('stores')
-    .select('id')
-    .eq('owner_user_id', authCode.user_id)
-    .maybeSingle()
+  const cookieStore = await cookies()
+  const accessMode = (cookieStore.get(AGENT_ACCESS_MODE_COOKIE)?.value as AgentAccessMode | undefined) ?? 'single_shop'
+
+  let storeId: string | null = null
+  if (accessMode === 'single_shop') {
+    try {
+      const store = await requireActiveStoreForUser(authCode.user_id)
+      storeId = store.id
+    } catch (err) {
+      if (!(err instanceof ActiveStoreError)) throw err
+      const { data: owned } = await admin.from('stores').select('id').eq('owner_user_id', authCode.user_id).limit(1).maybeSingle()
+      storeId = owned?.id ?? null
+    }
+  }
 
   const { token, hash, prefix } = generateAgentToken()
 
   const { error: insertError } = await admin.from('agent_connections').insert({
     user_id: authCode.user_id,
-    store_id: store?.id ?? null,
+    store_id: storeId,
+    access_mode: accessMode,
     provider: 'claude',
-    name: `Claude (OAuth) — ${new Date().toLocaleDateString()}`,
+    name: `Claude E-Com — ${new Date().toLocaleDateString()}`,
     token_hash: hash,
     token_prefix: prefix,
-    scopes: scopes.length > 0 ? scopes : ALL_AGENT_SCOPES,
+    scopes: grantedScopes,
   })
 
   if (insertError) {
@@ -106,6 +120,6 @@ export async function POST(request: Request) {
   return Response.json({
     access_token: token,
     token_type: 'bearer',
-    scope: (scopes.length > 0 ? scopes : ALL_AGENT_SCOPES).join(' '),
+    scope: grantedScopes.join(' '),
   })
 }

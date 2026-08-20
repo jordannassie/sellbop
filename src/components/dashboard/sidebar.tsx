@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { BookOpen, GraduationCap, LayoutDashboard, LogOut, Menu, Package, Settings, Store, Users, DollarSign, ShoppingBag, Tag, X, Plus, TrendingUp, Grid3x3, ExternalLink, Shield, } from 'lucide-react'
+import { BookOpen, GraduationCap, LayoutDashboard, LogOut, Menu, Package, Settings, Store, Users, DollarSign, ShoppingBag, Tag, X, Plus, TrendingUp, Grid3x3, ExternalLink, Shield, Sparkles, } from 'lucide-react'
 import { useAuth } from '@/context/auth-context'
 import { useUserStore } from '@/hooks/use-user-store'
 import { cn } from '@/lib/utils'
@@ -113,6 +113,7 @@ export function DashboardSidebar() {
 
   const sellerNav: NavItem[] = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, exact: true },
+    { href: '/dashboard/ai-agent', label: 'AI Agent', icon: Sparkles },
     { href: '/dashboard/products', label: 'Products', icon: Package },
     { href: '/dashboard/sales', label: 'Sales', icon: ShoppingBag, activePaths: ['/dashboard/orders'] },
     ...(activeSummary?.isPartnerShop

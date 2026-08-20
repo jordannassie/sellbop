@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Bot, ArrowRight, ExternalLink } from 'lucide-react'
+import { Bot, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { getClaudeConnectionState, type ClaudeConnectionState } from '@/lib/agent/connection-status'
 
@@ -10,7 +10,6 @@ interface ConnectionRow {
   id: string
   provider: string
   name: string
-  token_prefix: string
   scopes: string[]
   created_at: string
   last_used_at: string | null
@@ -23,7 +22,7 @@ export function ClaudeEcomCard() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    fetch('/api/agent-connections', { cache: 'no-store' })
+    fetch('/api/agent-connections/hub', { cache: 'no-store' })
       .then(async (res) => {
         if (!res.ok) {
           const data = await res.json().catch(() => ({}))
@@ -37,9 +36,8 @@ export function ClaudeEcomCard() {
   }, [])
 
   const active = connections.filter(c => !c.revoked_at)
-  const claudeConnections = active.filter(c => c.provider === 'claude')
   const state: ClaudeConnectionState = getClaudeConnectionState(active)
-  const primary = claudeConnections[0] ?? active[0]
+  const isConnected = state === 'connected' || state === 'mcp_ready'
 
   if (loading) {
     return (
@@ -55,11 +53,12 @@ export function ClaudeEcomCard() {
       <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-5">
         <p className="text-sm font-semibold text-red-800">Claude E-Com unavailable</p>
         <p className="text-xs text-red-600 mt-1">{error}</p>
+        <Link href="/dashboard/ai-agent" className="inline-block mt-3 text-xs font-semibold text-red-700 underline">
+          Open AI Agent →
+        </Link>
       </div>
     )
   }
-
-  const isConnected = state === 'connected' || state === 'mcp_ready'
 
   return (
     <div className="mb-6 rounded-xl border border-neutral-200 bg-white p-5">
@@ -80,42 +79,20 @@ export function ClaudeEcomCard() {
             Build and run your SellBop business with Claude.
           </p>
 
-          {isConnected && primary ? (
-            <div className="mt-3 space-y-1 text-xs text-neutral-600">
-              <p><span className="text-neutral-400">Connection:</span> {primary.name}</p>
-              <p><span className="text-neutral-400">Scopes:</span> {primary.scopes.join(', ')}</p>
-              {primary.last_used_at && (
-                <p><span className="text-neutral-400">Last activity:</span> {new Date(primary.last_used_at).toLocaleDateString()}</p>
-              )}
-            </div>
-          ) : (
-            <p className="text-xs text-neutral-500 mt-2">
-              Give Claude secure access to build products, configure your Shop, and help operate your business.
-            </p>
-          )}
-
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="mt-4">
             {!isConnected ? (
-              <Link href="/dashboard/settings/ai-integrations">
+              <Link href="/dashboard/ai-agent">
                 <Button size="sm" className="font-semibold text-white" style={{ background: '#00E676', borderColor: '#00E676' }}>
                   Connect Claude
                 </Button>
               </Link>
             ) : (
-              <>
-                <a href="https://claude.ai" target="_blank" rel="noopener noreferrer">
-                  <Button size="sm" variant="secondary">
-                    <ExternalLink size={13} /> Open Claude
-                  </Button>
-                </a>
-                <Link href="/dashboard/settings/ai-integrations">
-                  <Button size="sm" variant="secondary">Manage Access</Button>
-                </Link>
-              </>
+              <Link href="/dashboard/ai-agent">
+                <Button size="sm" variant="secondary">
+                  Open AI Agent <ArrowRight size={12} />
+                </Button>
+              </Link>
             )}
-            <Link href="/dashboard/settings/ai-integrations" className="inline-flex items-center gap-1 text-xs font-semibold text-neutral-500 hover:text-black py-2">
-              AI & Integrations <ArrowRight size={12} />
-            </Link>
           </div>
         </div>
       </div>

@@ -16,6 +16,7 @@
     "db:apply-030": "node scripts/apply-migration-030.mjs",
     "db:apply-031": "node scripts/apply-migration-031.mjs",
     "db:apply-032": "node scripts/apply-migration-032.mjs",
+    "db:verify-032": "node scripts/verify-migration-032.mjs",
     "db:verify-production": "node scripts/verify-production-schema.mjs",
     "test:partner-allocation": "node scripts/test-partner-allocation.mjs",
     "test:agent": "node scripts/agent-acceptance-test.mjs",

@@ -74,6 +74,12 @@ async function main() {
   console.log('partnership_financial_terms (031):', financialTermsExists ? 'EXISTS' : 'NOT APPLIED')
   console.log('order_financials (031):', orderFinancialsExists ? 'EXISTS' : 'NOT APPLIED')
 
+  const { error: accessModeErr } = await admin.from('agent_connections').select('access_mode').limit(1)
+  const { error: activityStoreErr } = await admin.from('agent_activity_log').select('store_id').limit(1)
+  console.log('--- MIGRATION 032 (Claude E-Com shop access) ---')
+  console.log('agent_connections.access_mode:', accessModeErr ? `NOT APPLIED (${accessModeErr.message})` : 'EXISTS')
+  console.log('agent_activity_log.store_id:', activityStoreErr ? `NOT APPLIED (${activityStoreErr.message})` : 'EXISTS')
+
   if (storeMembersExists) {
     const { count } = await countTable('store_members')
     console.log('store_members count:', count)
