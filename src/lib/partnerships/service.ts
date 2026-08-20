@@ -9,6 +9,7 @@ import { env } from '@/lib/env'
 import { sendTransactionalEmail } from '@/lib/email/service'
 import { INVITE_EXPIRY_DAYS, PREVIEW_EXPIRY_DAYS } from './constants'
 import { generateSecureToken, hashToken } from './tokens'
+import { createInitialFinancialTerms } from './financial-terms'
 
 export class PartnershipError extends Error {
   status: number
@@ -63,6 +64,12 @@ export async function createPartnerShop(input: {
 
   if (!storeId || !partnershipId) {
     throw new PartnershipError('Could not create Partner Shop.', 500)
+  }
+
+  try {
+    await createInitialFinancialTerms(partnershipId, input.adminUserId)
+  } catch (termsErr) {
+    console.error('[createPartnerShop] financial terms creation failed:', termsErr)
   }
 
   await setActiveStoreCookie(storeId)

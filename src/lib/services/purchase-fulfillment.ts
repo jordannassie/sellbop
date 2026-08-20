@@ -31,6 +31,9 @@ export interface FulfillmentContext {
   affiliateCommissionPercent?: number
   discountCodeId?: string | null
   sendEmails?: boolean
+  isPartnerCheckout?: boolean
+  partnershipId?: string | null
+  financialTermsId?: string | null
 }
 
 export interface FulfillmentResult {
@@ -254,6 +257,41 @@ export async function fulfillPurchase(ctx: FulfillmentContext): Promise<Fulfillm
     }
   }
 
+  if (ctx.isPartnerCheckout && ctx.partnershipId && ctx.financialTermsId) {
+    try {
+      const { createPartnerFinancialSnapshot, settlePartnerOrder } = await import('@/lib/payments/partner-settlement')
+      const { getCurrentFinancialTerms } = await import('@/lib/partnerships/financial-terms')
+      const terms = await getCurrentFinancialTerms(ctx.partnershipId)
+      if (terms) {
+        let stripeChargeId: string | null = null
+        if (ctx.stripePaymentIntentId && process.env.STRIPE_SECRET_KEY) {
+          const Stripe = (await import('stripe')).default
+          const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
+          const pi = await stripe.paymentIntents.retrieve(ctx.stripePaymentIntentId)
+          stripeChargeId = typeof pi.latest_charge === 'string' ? pi.latest_charge : pi.latest_charge?.id ?? null
+        }
+        await createPartnerFinancialSnapshot({
+          orderId: order.id,
+          storeId: ctx.storeId,
+          partnershipId: ctx.partnershipId,
+          financialTermsId: ctx.financialTermsId,
+          partnerShareBps: terms.partner_share_bps,
+          financialModel: terms.financial_model,
+          saleSubtotalCents: totalCents,
+          discountCents,
+          affiliateCommissionCents,
+          stripeFeeCents: null,
+          stripeCheckoutSessionId: ctx.stripeSessionId ?? null,
+          stripePaymentIntentId: ctx.stripePaymentIntentId ?? null,
+          stripeChargeId,
+        })
+        await settlePartnerOrder(order.id)
+      }
+    } catch (partnerErr) {
+      console.error('[fulfillment] partner settlement failed', order.id, partnerErr)
+    }
+  }
+
   const accessUrl = getPurchaseAccessUrl(purchase.access_token)
   const emails = { receipt: null as EmailSendResult | null, seller: null as EmailSendResult | null }
 
@@ -375,5 +413,8 @@ export async function fulfillFromStripeSession(
       : 0,
     discountCodeId: meta.discount_code_id || null,
     sendEmails: options?.sendEmails,
+    isPartnerCheckout: meta.sellbop_partner_checkout === 'true',
+    partnershipId: meta.sellbop_partnership_id || null,
+    financialTermsId: meta.sellbop_financial_terms_id || null,
   })
 }

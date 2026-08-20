@@ -14,6 +14,9 @@
     "db:apply-027": "node scripts/apply-migration-027.mjs",
     "db:apply-029": "node scripts/apply-migration-029.mjs",
     "db:apply-030": "node scripts/apply-migration-030.mjs",
+    "db:apply-031": "node scripts/apply-migration-031.mjs",
+    "db:verify-production": "node scripts/verify-production-schema.mjs",
+    "test:partner-allocation": "node scripts/test-partner-allocation.mjs",
     "test:agent": "node scripts/agent-acceptance-test.mjs",
     "test:fees": "node scripts/test-fee-engine.mjs"
   },

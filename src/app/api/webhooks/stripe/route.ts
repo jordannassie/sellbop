@@ -5,6 +5,35 @@ import { isSupabaseAdminConfigured } from '@/lib/env'
 import { env } from '@/lib/env'
 import { fulfillFromStripeSession } from '@/lib/services/purchase-fulfillment'
 import { sendRefundEmail } from '@/lib/email/service'
+import { processPartnerRefund } from '@/lib/payments/partner-settlement'
+
+async function claimStripeWebhookEvent(event: Stripe.Event): Promise<'process' | 'skip'> {
+  if (!isSupabaseAdminConfigured()) return 'process'
+  const admin = getSupabaseAdminClient()
+  const { error } = await admin.from('stripe_webhook_events').insert({
+    stripe_event_id: event.id,
+    event_type: event.type,
+    status: 'processing',
+  })
+  if (error?.code === '23505') return 'skip'
+  if (error?.code === 'PGRST205' || (error?.message?.includes('schema cache') ?? false)) return 'process'
+  if (error) {
+    console.error('[stripe webhook] event claim failed', event.id, error.message)
+    return 'process'
+  }
+  return 'process'
+}
+
+async function markStripeWebhookEvent(eventId: string, status: 'processed' | 'failed', lastError?: string) {
+  if (!isSupabaseAdminConfigured()) return
+  const admin = getSupabaseAdminClient()
+  const { error } = await admin.from('stripe_webhook_events').update({
+    status,
+    processed_at: status === 'processed' ? new Date().toISOString() : null,
+    last_error: lastError ?? null,
+  }).eq('stripe_event_id', eventId)
+  if (error?.code === 'PGRST205' || (error?.message?.includes('schema cache') ?? false)) return
+}
 
 // POST /api/webhooks/stripe — Stripe webhook endpoint
 export async function POST(request: Request) {
@@ -27,6 +56,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid signature.' }, { status: 400 })
   }
 
+  const claim = await claimStripeWebhookEvent(event)
+  if (claim === 'skip') {
+    return NextResponse.json({ received: true, duplicate: true })
+  }
+
+  try {
   switch (event.type) {
     case 'checkout.session.completed': {
       const session = event.data.object as Stripe.Checkout.Session
@@ -102,6 +137,14 @@ export async function POST(request: Request) {
     }
   }
 
+  await markStripeWebhookEvent(event.id, 'processed')
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Webhook handler failed'
+    console.error('[stripe webhook]', event.type, event.id, message)
+    await markStripeWebhookEvent(event.id, 'failed', message)
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
+
   return NextResponse.json({ received: true })
 }
 
@@ -125,6 +168,17 @@ async function handleChargeRefunded(charge: Stripe.Charge) {
     .maybeSingle()
 
   if (!order) return
+
+  try {
+    await processPartnerRefund({
+      orderId: order.id,
+      refundCents: amountRefunded,
+      stripeRefundId: charge.id,
+      isFullRefund,
+    })
+  } catch (partnerRefundErr) {
+    console.error('[handleChargeRefunded] partner refund', order.id, partnerRefundErr)
+  }
 
   await admin.from('orders').update({
     refunded_cents: amountRefunded,

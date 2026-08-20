@@ -8,6 +8,7 @@ import { resolveSaleType } from '@/lib/checkout/sale-source'
 import { getEffectiveProductPrice } from '@/lib/pricing/product-price'
 import { getPartnershipByStoreId } from '@/lib/partnerships/queries'
 import { canStoreAcceptCheckout } from '@/lib/partnerships/publication'
+import { getActivePartnerContext } from '@/lib/partnerships/activation'
 import { fulfillPurchase } from '@/lib/services/purchase-fulfillment'
 
 interface PaidCheckoutPayload {
@@ -76,7 +77,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'This Shop is not available for checkout yet.' }, { status: 403 })
   }
 
-  if (!store.stripe_account_id || !store.stripe_charges_enabled) {
+  const partnerContext = partnership?.status === 'active'
+    ? await getActivePartnerContext(store.id)
+    : null
+  const isPartnerShopCheckout = !!partnerContext
+
+  if (isPartnerShopCheckout && partnerContext) {
+    if (!partnerContext.terms.accepted_at) {
+      return NextResponse.json({ error: 'This Shop is not ready for checkout.' }, { status: 403 })
+    }
+    if (!store.stripe_account_id || !store.stripe_charges_enabled) {
+      return NextResponse.json({
+        error: 'This Partner Shop has not finished connecting Stripe yet.',
+      }, { status: 400 })
+    }
+  } else if (!store.stripe_account_id || !store.stripe_charges_enabled) {
     return NextResponse.json({
       error: 'This seller has not finished connecting their Stripe account yet.',
     }, { status: 400 })
@@ -134,11 +149,21 @@ export async function POST(request: Request) {
     marketplaceListing: product.marketplace_listing ?? false,
     request,
   })
-  const fees = calculateTransactionFees({
-    grossAmountCents: totalCents,
-    saleType,
-    affiliateCommissionPercent: affiliateCommissionPercent ?? 0,
-  })
+  const fees = isPartnerShopCheckout
+    ? {
+        grossAmountCents: totalCents,
+        saleType,
+        sellbopPlatformFeeCents: 0,
+        affiliateCommissionCents: affiliateCommissionPercent
+          ? Math.floor(totalCents * (affiliateCommissionPercent / 100))
+          : 0,
+        sellerNetCents: totalCents,
+      }
+    : calculateTransactionFees({
+        grossAmountCents: totalCents,
+        saleType,
+        affiliateCommissionPercent: affiliateCommissionPercent ?? 0,
+      })
   const platformFeeCents = fees.sellbopPlatformFeeCents
   const appUrl = env.app.url
 
@@ -204,14 +229,30 @@ export async function POST(request: Request) {
       },
       quantity: 1,
     }],
-    payment_intent_data: {
-      application_fee_amount: platformFeeCents,
-      transfer_data: { destination: store.stripe_account_id },
-    },
+    ...(isPartnerShopCheckout
+      ? {
+          payment_intent_data: {
+            transfer_group: `SB_CHECKOUT_${product.id}_${Date.now()}`,
+            metadata: {
+              sellbop_partner_checkout: 'true',
+              sellbop_partnership_id: partnerContext!.partnership.id,
+              sellbop_financial_terms_id: partnerContext!.terms.id,
+            },
+          },
+        }
+      : {
+          payment_intent_data: {
+            application_fee_amount: platformFeeCents,
+            transfer_data: { destination: store.stripe_account_id! },
+          },
+        }),
     metadata: {
       sellbop_product_id: product.id,
       sellbop_product_slug: productSlug,
       sellbop_store_id: store.id,
+      sellbop_partner_checkout: isPartnerShopCheckout ? 'true' : 'false',
+      sellbop_partnership_id: partnerContext?.partnership.id ?? '',
+      sellbop_financial_terms_id: partnerContext?.terms.id ?? '',
       buyer_email: buyerEmail,
       buyer_name: buyerName ?? '',
       discount_code_id: discountCodeId ?? '',

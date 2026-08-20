@@ -19,6 +19,7 @@ import { useUserStore } from '@/hooks/use-user-store'
 import { GettingStartedCard } from '@/components/dashboard/getting-started-card'
 import { StripePaymentsCard } from '@/components/dashboard/stripe-payments-card'
 import { StripeLiveProductsWarning } from '@/components/dashboard/stripe-live-products-warning'
+import { PartnerTermsAcceptance } from '@/components/dashboard/partner-terms-acceptance'
 import { isSupabaseConfigured } from '@/lib/env'
 
 interface OrderRow {
@@ -55,6 +56,12 @@ export default function DashboardOverview() {
   const [orders, setOrders] = useState<OrderRow[]>([])
   const [products, setProducts] = useState<ProductRow[]>([])
   const [loading, setLoading] = useState(true)
+  const [partnerContext, setPartnerContext] = useState<{
+    partnershipId: string
+    partnerShareBps: number
+    termsAccepted: boolean
+    isPartnerOwner: boolean
+  } | null>(null)
 
   const firstName = session?.name?.split(' ')[0] ?? session?.email?.split('@')[0] ?? 'there'
   const hasStore = !!(account?.hasStore || store)
@@ -77,9 +84,20 @@ export default function DashboardOverview() {
     Promise.all([
       fetch('/api/orders', { cache: 'no-store' }).then(r => r.ok ? r.json() : { orders: [] }),
       fetch('/api/products', { cache: 'no-store' }).then(r => r.ok ? r.json() : { products: [] }),
-    ]).then(([ordersData, productsData]) => {
+      fetch('/api/partnerships/context', { cache: 'no-store' }).then(r => r.ok ? r.json() : { partnership: null }),
+    ]).then(([ordersData, productsData, partnerData]) => {
       setOrders(ordersData.orders ?? [])
       setProducts(productsData.products ?? [])
+      if (partnerData.partnership?.isPartnerOwner && partnerData.terms) {
+        setPartnerContext({
+          partnershipId: partnerData.partnership.id,
+          partnerShareBps: partnerData.terms.partnerShareBps,
+          termsAccepted: !!partnerData.terms.acceptedAt,
+          isPartnerOwner: true,
+        })
+      } else {
+        setPartnerContext(null)
+      }
     }).catch(() => {
       setOrders([])
       setProducts([])
@@ -125,6 +143,14 @@ export default function DashboardOverview() {
           </Link>
         )}
       </div>
+
+      {partnerContext && !partnerContext.termsAccepted && (
+        <PartnerTermsAcceptance
+          partnershipId={partnerContext.partnershipId}
+          partnerShareBps={partnerContext.partnerShareBps}
+          termsAccepted={partnerContext.termsAccepted}
+        />
+      )}
 
       {showPartnerClaimCard && (
         <div className="mb-6 rounded-xl border border-neutral-200 bg-white p-5">

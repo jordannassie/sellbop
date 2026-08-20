@@ -123,6 +123,7 @@ export interface Database {
           claimed_at: string | null
           activated_at: string | null
           paused_at: string | null
+          current_financial_terms_id: string | null
           created_at: string
           updated_at: string
         }
@@ -138,6 +139,7 @@ export interface Database {
           claimed_at?: string | null
           activated_at?: string | null
           paused_at?: string | null
+          current_financial_terms_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -217,6 +219,201 @@ export interface Database {
             referencedColumns: ['id']
           },
         ]
+      }
+
+      partnership_financial_terms: {
+        Row: {
+          id: string
+          partnership_id: string
+          version: number
+          partner_share_bps: number
+          financial_model: string
+          split_basis: string
+          created_by_user_id: string
+          created_at: string
+          effective_at: string
+          accepted_by_user_id: string | null
+          accepted_at: string | null
+          superseded_at: string | null
+        }
+        Insert: {
+          id?: string
+          partnership_id: string
+          version: number
+          partner_share_bps: number
+          financial_model?: string
+          split_basis?: string
+          created_by_user_id: string
+          created_at?: string
+          effective_at?: string
+          accepted_by_user_id?: string | null
+          accepted_at?: string | null
+          superseded_at?: string | null
+        }
+        Update: Partial<Database['public']['Tables']['partnership_financial_terms']['Insert']>
+        Relationships: []
+      }
+
+      order_financials: {
+        Row: {
+          id: string
+          order_id: string
+          store_id: string
+          partnership_id: string
+          financial_terms_id: string
+          financial_model: string
+          currency: string
+          sale_subtotal_cents: number
+          tax_cents: number
+          discount_cents: number
+          stripe_fee_cents: number | null
+          affiliate_commission_cents: number
+          net_distributable_cents: number
+          partner_share_bps: number
+          partner_share_cents: number
+          sellbop_share_cents: number
+          transfer_group: string
+          stripe_checkout_session_id: string | null
+          stripe_payment_intent_id: string | null
+          stripe_charge_id: string | null
+          stripe_balance_transaction_id: string | null
+          settlement_status: string
+          reconciliation_status: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          order_id: string
+          store_id: string
+          partnership_id: string
+          financial_terms_id: string
+          financial_model: string
+          currency?: string
+          sale_subtotal_cents: number
+          tax_cents?: number
+          discount_cents?: number
+          stripe_fee_cents?: number | null
+          affiliate_commission_cents?: number
+          net_distributable_cents: number
+          partner_share_bps: number
+          partner_share_cents: number
+          sellbop_share_cents: number
+          transfer_group: string
+          stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
+          stripe_charge_id?: string | null
+          stripe_balance_transaction_id?: string | null
+          settlement_status?: string
+          reconciliation_status?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['order_financials']['Insert']>
+        Relationships: []
+      }
+
+      financial_ledger_entries: {
+        Row: {
+          id: string
+          order_id: string
+          order_financial_id: string | null
+          store_id: string
+          partnership_id: string | null
+          party_type: string
+          party_user_id: string | null
+          entry_type: string
+          amount_cents: number
+          currency: string
+          status: string
+          stripe_object_id: string | null
+          reference: string | null
+          metadata: Record<string, unknown> | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          order_id: string
+          order_financial_id?: string | null
+          store_id: string
+          partnership_id?: string | null
+          party_type: string
+          party_user_id?: string | null
+          entry_type: string
+          amount_cents: number
+          currency?: string
+          status?: string
+          stripe_object_id?: string | null
+          reference?: string | null
+          metadata?: Record<string, unknown> | null
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['financial_ledger_entries']['Insert']>
+        Relationships: []
+      }
+
+      partner_transfers: {
+        Row: {
+          id: string
+          order_financial_id: string
+          partnership_id: string
+          store_id: string
+          partner_user_id: string
+          amount_cents: number
+          currency: string
+          status: string
+          stripe_transfer_id: string | null
+          stripe_transfer_reversal_id: string | null
+          idempotency_key: string
+          failure_code: string | null
+          failure_message: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          order_financial_id: string
+          partnership_id: string
+          store_id: string
+          partner_user_id: string
+          amount_cents: number
+          currency?: string
+          status?: string
+          stripe_transfer_id?: string | null
+          stripe_transfer_reversal_id?: string | null
+          idempotency_key: string
+          failure_code?: string | null
+          failure_message?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['partner_transfers']['Insert']>
+        Relationships: []
+      }
+
+      stripe_webhook_events: {
+        Row: {
+          id: string
+          stripe_event_id: string
+          event_type: string
+          status: string
+          attempt_count: number
+          processed_at: string | null
+          last_error: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          stripe_event_id: string
+          event_type: string
+          status?: string
+          attempt_count?: number
+          processed_at?: string | null
+          last_error?: string | null
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['stripe_webhook_events']['Insert']>
+        Relationships: []
       }
 
       products: {
