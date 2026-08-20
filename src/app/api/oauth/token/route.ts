@@ -2,18 +2,10 @@ import 'server-only'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { isSupabaseAdminConfigured } from '@/lib/env'
 import { verifyPkceS256 } from '@/lib/oauth/mcp-oauth'
-import { generateAgentToken, ALL_AGENT_SCOPES, CLAUDE_ECOM_SCOPES, type AgentScope, type AgentAccessMode } from '@/lib/agent/auth'
-import { cookies } from 'next/headers'
-import { requireActiveStoreForUser, ActiveStoreError } from '@/lib/stores/active-store'
-import { AGENT_ACCESS_MODE_COOKIE } from '@/lib/agent/constants'
+import { generateAgentToken, ALL_AGENT_SCOPES, CLAUDE_ECOM_SCOPES, type AgentScope } from '@/lib/agent/auth'
+import { accessFromAuthCode, resolvePendingAgentAccess } from '@/lib/agent/oauth-access-mode'
 
 // RFC 6749 §4.1.3 (authorization_code grant) + RFC 7636 (PKCE).
-// Exchanges a single-use authorization code for an access token. The
-// access token issued here is a normal sk_agent_live_... token — it's
-// created in agent_connections exactly like the manual "Connect a tool"
-// flow, so it works with resolveAgentToken() and every existing scope
-// check unmodified. Long-lived (matches the existing manual-token model;
-// no refresh tokens for now — revoke from Settings → AI & Integrations).
 export async function POST(request: Request) {
   if (!isSupabaseAdminConfigured()) {
     return Response.json({ error: 'server_error', error_description: 'Database not configured.' }, { status: 503 })
@@ -70,7 +62,6 @@ export async function POST(request: Request) {
     }, { status: 400 })
   }
 
-  // Single-use — mark consumed before minting the token.
   const { error: markUsedError } = await admin
     .from('oauth_authorization_codes')
     .update({ used: true })
@@ -85,20 +76,16 @@ export async function POST(request: Request) {
   )
   const grantedScopes = scopes.length > 0 ? scopes : CLAUDE_ECOM_SCOPES
 
-  const cookieStore = await cookies()
-  const accessMode = (cookieStore.get(AGENT_ACCESS_MODE_COOKIE)?.value as AgentAccessMode | undefined) ?? 'single_shop'
+  const fallbackAccess = await resolvePendingAgentAccess(authCode.user_id)
+  const { accessMode, storeId } = accessFromAuthCode(authCode, fallbackAccess)
 
-  let storeId: string | null = null
-  if (accessMode === 'single_shop') {
-    try {
-      const store = await requireActiveStoreForUser(authCode.user_id)
-      storeId = store.id
-    } catch (err) {
-      if (!(err instanceof ActiveStoreError)) throw err
-      const { data: owned } = await admin.from('stores').select('id').eq('owner_user_id', authCode.user_id).limit(1).maybeSingle()
-      storeId = owned?.id ?? null
-    }
-  }
+  // Replace any prior active Claude connection so reconnecting changes effective access.
+  await admin
+    .from('agent_connections')
+    .update({ revoked_at: new Date().toISOString() })
+    .eq('user_id', authCode.user_id)
+    .eq('provider', 'claude')
+    .is('revoked_at', null)
 
   const { token, hash, prefix } = generateAgentToken()
 

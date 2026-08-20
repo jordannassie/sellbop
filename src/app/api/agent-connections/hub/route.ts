@@ -3,7 +3,7 @@ import { cookies } from 'next/headers'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { isSupabaseAdminConfigured, env } from '@/lib/env'
-import { getAccessibleStoresForUser, readActiveStoreIdFromCookie } from '@/lib/stores/active-store'
+import { getAccessibleStoresForUser, readActiveStoreIdFromCookie, requireActiveStoreForUser, ActiveStoreError } from '@/lib/stores/active-store'
 import { humanActionLabel } from '@/lib/agent/scope-labels'
 import { CLAUDE_ECOM_SCOPES } from '@/lib/agent/auth'
 
@@ -71,11 +71,20 @@ export async function GET() {
   const activeConnections = (connectionsResult.data ?? []).filter(c => !c.revoked_at)
   const primary = activeConnections.find(c => c.provider === 'claude') ?? activeConnections[0] ?? null
 
+  let boundShop: { id: string; name: string; slug: string } | null = null
+  if (primary?.store_id) {
+    const match = shops.find(s => s.id === primary.store_id)
+    if (match) {
+      boundShop = { id: match.id, name: match.name, slug: match.slug }
+    }
+  }
+
   return NextResponse.json({
     mcpUrl: `${env.app.url}/api/mcp`,
     recommendedScopes: CLAUDE_ECOM_SCOPES,
     connections: connectionsResult.data ?? [],
     activeConnection: primary,
+    boundShop,
     shops: shops.map(s => ({
       id: s.id,
       name: s.name,
@@ -107,8 +116,27 @@ export async function POST(request: Request) {
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     path: '/',
-    maxAge: 60 * 60, // 1 hour — enough for OAuth round trip
+    maxAge: 60 * 60 * 24, // persist through OAuth round trip
   })
 
-  return NextResponse.json({ ok: true, access_mode: mode })
+  let storeId: string | null = null
+  if (mode === 'single_shop') {
+    try {
+      const store = await requireActiveStoreForUser(user.id)
+      storeId = store.id
+    } catch (err) {
+      if (!(err instanceof ActiveStoreError)) throw err
+      const admin = getSupabaseAdminClient()
+      const { data: owned } = await admin
+        .from('stores')
+        .select('id')
+        .eq('owner_user_id', user.id)
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .maybeSingle()
+      storeId = owned?.id ?? null
+    }
+  }
+
+  return NextResponse.json({ ok: true, access_mode: mode, store_id: storeId })
 }

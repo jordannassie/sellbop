@@ -4,6 +4,7 @@ import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { isSupabaseAdminConfigured } from '@/lib/env'
 import { generateAuthCode, AUTH_CODE_TTL_MS } from '@/lib/oauth/mcp-oauth'
 import { ALL_AGENT_SCOPES, type AgentScope } from '@/lib/agent/auth'
+import { resolvePendingAgentAccess } from '@/lib/agent/oauth-access-mode'
 
 // Called by the /oauth/authorize consent page after the user clicks Allow.
 // Requires an authenticated SellBop session (cookie-based, same as every
@@ -58,8 +59,10 @@ export async function POST(request: Request) {
   )
   const grantedScopes = requestedScopes.length > 0 ? requestedScopes : ALL_AGENT_SCOPES
 
+  const pendingAccess = await resolvePendingAgentAccess(user.id)
+
   const code = generateAuthCode()
-  const { error } = await admin.from('oauth_authorization_codes').insert({
+  const insertPayload = {
     code,
     client_id,
     user_id: user.id,
@@ -68,7 +71,17 @@ export async function POST(request: Request) {
     code_challenge_method: code_challenge_method ?? 'S256',
     scope: grantedScopes.join(' '),
     expires_at: new Date(Date.now() + AUTH_CODE_TTL_MS).toISOString(),
-  })
+    access_mode: pendingAccess.accessMode,
+    store_id: pendingAccess.storeId,
+  }
+
+  let { error } = await admin.from('oauth_authorization_codes').insert(insertPayload)
+
+  if (error?.message?.includes('access_mode') || error?.message?.includes('store_id')) {
+    const { access_mode: _a, store_id: _s, ...legacyPayload } = insertPayload
+    const retry = await admin.from('oauth_authorization_codes').insert(legacyPayload)
+    error = retry.error
+  }
 
   if (error) {
     return Response.json({ error: 'server_error', error_description: error.message }, { status: 500 })

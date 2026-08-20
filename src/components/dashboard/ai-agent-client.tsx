@@ -41,6 +41,7 @@ interface HubData {
     revoked_at: string | null
   }>
   activeConnection: HubData['connections'][0] | null
+  boundShop: { id: string; name: string; slug: string } | null
   shops: Array<{ id: string; name: string; slug: string; role: string; isActive: boolean }>
   activeShop: { id: string; name: string; slug: string } | null
   stripeStatus: {
@@ -89,15 +90,23 @@ const CAPABILITIES = [
   { icon: Handshake, title: 'Partner Shops', text: 'Authorized SellBop admins can create and manage Partner Shops through Claude E-Com.' },
 ]
 
-function authorizedShopsLabel(hub: HubData, accessMode: AccessMode, connectionAccessMode?: string | null): string {
-  const mode = connectionAccessMode ?? accessMode
+function authorizedShopsLabel(
+  hub: HubData,
+  connectionAccessMode?: string | null,
+  connectionStoreId?: string | null,
+): string {
+  const mode = connectionAccessMode === 'all_managed_shops' ? 'all_managed_shops' : 'single_shop'
   if (mode === 'all_managed_shops') {
     if (hub.shops.length === 0) return 'All authorized shops'
     if (hub.shops.length <= 3) return hub.shops.map(s => s.name).join(', ')
     return `All ${hub.shops.length} authorized shops`
   }
-  const shop = hub.activeShop ?? hub.shops.find(s => s.isActive) ?? hub.shops[0]
-  return shop?.name ?? 'Current Shop'
+  const bound = hub.boundShop ?? hub.shops.find(s => s.id === connectionStoreId)
+  return bound?.name ?? 'Current Shop'
+}
+
+function connectionAccessModeOf(connection: HubData['connections'][0] | null | undefined): AccessMode {
+  return connection?.access_mode === 'all_managed_shops' ? 'all_managed_shops' : 'single_shop'
 }
 
 function ShopAccessPicker({
@@ -320,8 +329,8 @@ export function AiAgentClient() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Could not load AI Agent hub.')
       setHub(data)
-      if (data.activeConnection?.access_mode === 'all_managed_shops') {
-        setAccessMode('all_managed_shops')
+      if (data.activeConnection) {
+        setAccessMode(connectionAccessModeOf(data.activeConnection))
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load AI Agent hub.')
@@ -346,6 +355,20 @@ export function AiAgentClient() {
     })
   }
 
+  async function handleReconnectClaude() {
+    setConnecting(true)
+    try {
+      await saveAccessMode()
+      window.open(CLAUDE_CONNECTORS_URL, '_blank', 'noopener,noreferrer')
+      toast.success('Reconnect Claude — approve SellBop again to apply your new shop access.')
+      load()
+    } catch {
+      toast.error('Could not prepare reconnection.')
+    } finally {
+      setConnecting(false)
+    }
+  }
+
   async function handleConnectClaude() {
     setConnecting(true)
     try {
@@ -361,10 +384,17 @@ export function AiAgentClient() {
   }
 
   async function handleSaveAccessMode() {
+    if (!primary) return
+    const targetMode = accessMode
+    const currentMode = connectionAccessModeOf(primary)
+    if (targetMode !== currentMode) {
+      await handleReconnectClaude()
+      return
+    }
     setConnecting(true)
     try {
       await saveAccessMode()
-      toast.success('Shop access updated.')
+      toast.success('Shop access preference saved.')
       setShowManageAccess(false)
       load()
     } catch {
@@ -431,7 +461,12 @@ export function AiAgentClient() {
   if (!hub) return null
 
   const lastActivity = hub.activity[0]
-  const connectedShopLabel = authorizedShopsLabel(hub, accessMode, primary?.access_mode)
+  const connectionMode = connectionAccessModeOf(primary)
+  const connectedShopLabel = authorizedShopsLabel(hub, primary?.access_mode, primary?.store_id)
+  const accessModeMismatch = isConnected && !!primary && accessMode !== connectionMode
+  const reconnectLabel = accessMode === 'all_managed_shops'
+    ? 'Reconnect Claude with All My Shops access'
+    : 'Reconnect Claude with Current Shop Only access'
 
   return (
     <div className="max-w-3xl space-y-8 pb-12">
@@ -470,10 +505,24 @@ export function AiAgentClient() {
             {showManageAccess && (
               <div className="mb-6 pt-5 border-t border-neutral-100">
                 <ShopAccessPicker hub={hub} accessMode={accessMode} onAccessModeChange={setAccessMode} />
-                <Button size="sm" variant="secondary" className="mt-4" loading={connecting} onClick={handleSaveAccessMode}>
-                  Save shop access
-                </Button>
-                <p className="text-xs text-neutral-500 mt-2">Reconnect Claude after changing access if a new authorization is required.</p>
+                {accessModeMismatch ? (
+                  <>
+                    <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mt-4">
+                      Your Claude connection is currently <span className="font-medium">{accessModeLabel(connectionMode)}</span>.
+                      Reconnect to apply <span className="font-medium">{accessModeLabel(accessMode)}</span>.
+                    </p>
+                    <Button size="sm" className="mt-4 font-semibold" loading={connecting} onClick={handleReconnectClaude}>
+                      {reconnectLabel} <ExternalLink size={14} className="ml-1" />
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button size="sm" variant="secondary" className="mt-4" loading={connecting} onClick={handleSaveAccessMode}>
+                      Save shop access
+                    </Button>
+                    <p className="text-xs text-neutral-500 mt-2">Your current Claude connection matches this access mode.</p>
+                  </>
+                )}
               </div>
             )}
 

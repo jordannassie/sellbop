@@ -1176,6 +1176,8 @@ export interface Database {
           used: boolean
           expires_at: string
           created_at: string
+          access_mode: string
+          store_id: string | null
         }
         Insert: {
           code: string
@@ -1188,6 +1190,8 @@ export interface Database {
           used?: boolean
           expires_at: string
           created_at?: string
+          access_mode?: string
+          store_id?: string | null
         }
         Update: Partial<Database['public']['Tables']['oauth_authorization_codes']['Insert']>
         Relationships: []
