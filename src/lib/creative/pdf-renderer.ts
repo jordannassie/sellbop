@@ -124,15 +124,6 @@ export async function renderProductPdf(input: RenderPdfInput): Promise<Buffer> {
     )
   }
 
-  // Footer page numbers
-  const range = doc.bufferedPageRange()
-  for (let i = range.start; i < range.start + range.count; i++) {
-    doc.switchToPage(i)
-    if (i === 0) continue
-    doc.font('Helvetica').fontSize(9).fillColor('#888888')
-      .text(`${i} / ${range.count - 1}`, PAGE.width - MARGIN - 40, PAGE.height - MARGIN + 10, { lineBreak: false })
-  }
-
   doc.end()
   return finished
 }

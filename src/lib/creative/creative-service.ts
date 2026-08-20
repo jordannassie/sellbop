@@ -418,6 +418,7 @@ export async function generateProductPdfForAgent(
     if (err instanceof AgentShopAccessError) {
       return new CreativeError(err.message.includes('not found') ? 'invalid_product' : 'unauthorized_shop', err.message, err.status).toResult()
     }
+    console.error('[creative] PDF generation failed:', err instanceof Error ? err.message : err)
     return {
       success: false,
       error_code: 'generation_failed',

@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: ['pdfkit'],
+  outputFileTracingIncludes: {
+    '/api/mcp': ['./node_modules/pdfkit/js/data/**/*'],
+  },
   images: {
     remotePatterns: [
       // Original Supabase bucket
