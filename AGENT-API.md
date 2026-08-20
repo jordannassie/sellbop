@@ -214,7 +214,9 @@ Legacy tokens using `products:read` / `products:write` remain compatible (scope 
 
 **Analytics (read-only):** `get_shop_sales_summary`, `get_product_sales_summary`
 
-**Creative (provider abstraction):** `generate_product_image`, `generate_shop_banner`, `generate_product_pdf` — returns `not_configured` until `OPENAI_API_KEY` + provider package are set.
+**Creative Factory (V1.1):** `get_creative_capabilities`, `generate_product_image`, `generate_shop_banner`, `generate_product_pdf`, `build_product_assets`
+
+See [Claude E-Com Creative Factory](#claude-e-com-creative-factory-v11) below.
 
 ### Safety (unchanged + extended)
 
@@ -255,6 +257,114 @@ node scripts/agent-acceptance-test.mjs
 ```
 
 Requires `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and optionally `BASE_URL`.
+
+---
+
+## Claude E-Com Creative Factory (V1.1)
+
+Creative Factory turns Claude E-Com from catalog CRUD into a full asset builder: generated covers, shop banners, and premium downloadable PDFs — stored and attached automatically.
+
+### Environment
+
+| Variable | Purpose |
+|---|---|
+| `OPENAI_API_KEY` | Enables DALL-E image generation (`generate_product_image`, `generate_shop_banner`) |
+| *(none required)* | PDF generation uses built-in SellBop PDF renderer (`pdfkit`) |
+
+If `OPENAI_API_KEY` is missing, image tools return `provider_not_configured`. PDF tools always work.
+
+### Provider abstraction
+
+- `src/lib/creative/image-provider.ts` — provider interface
+- `src/lib/creative/providers/openai-image.ts` — OpenAI DALL-E 3 (first provider)
+- `src/lib/creative/pdf-renderer.ts` — premium US Letter PDF layout
+- `src/lib/creative/creative-service.ts` — auth, storage, attachment, logging
+
+Additional image providers can be added without changing MCP tool names.
+
+### Creative MCP tools
+
+| Tool | Description |
+|---|---|
+| `get_creative_capabilities` | Returns available/unavailable status for image, banner, PDF generation |
+| `generate_product_image` | Generate square cover (default) or gallery image; auto-upload + attach |
+| `generate_shop_banner` | Generate wide banner; updates `stores.banner_url` |
+| `generate_product_pdf` | Render premium PDF from structured content; upload + attach as delivery file |
+| `build_product_assets` | Orchestrates cover + optional gallery images + PDF + audit snapshot |
+
+### Brand consistency
+
+Pass optional `brand_context` on any creative tool:
+
+```json
+{
+  "brand_name": "GlowWell",
+  "audience": "Women 30–45",
+  "visual_direction": "Soft wellness minimalism",
+  "photography_style": "Natural light, muted greens",
+  "image_mood": "Calm, premium, trustworthy",
+  "exclusions": "No neon colors or clip art"
+}
+```
+
+SellBop merges brand context with shop/product fields when building prompts.
+
+### Structured PDF input
+
+```json
+{
+  "shop_id": "...",
+  "product_id": "...",
+  "title": "30-Day Reset Guide",
+  "subtitle": "For busy women",
+  "sections": [
+    { "heading": "Week 1", "body": "Foundation habits...", "bullets": ["Hydration", "Sleep"] },
+    { "heading": "Week 2", "callout": "Progress, not perfection." }
+  ],
+  "include_health_disclaimer": true
+}
+```
+
+The renderer does **not** invent claims — it only layouts content Claude provides.
+
+### Error codes
+
+`provider_not_configured`, `generation_failed`, `invalid_product`, `unauthorized_shop`, `storage_failed`, `attachment_failed`, `timeout`, `rate_limited`
+
+### Draft behavior
+
+All generated products remain **draft**. Creative tools never auto-publish.
+
+### Example workflow — one shop, three products, assets, audit
+
+1. `get_creative_capabilities`
+2. `update_shop` — name, bio
+3. `generate_shop_banner` — with shared `brand_context`
+4. For each of 3 products:
+   - `create_product` (draft)
+   - `set_product_description` + `set_product_price`
+   - `generate_product_image` (`image_type: product_cover`, `make_primary: true`)
+   - `generate_product_pdf` — structured sections
+   - `enable_affiliates`
+5. `reorder_products` — pricing ladder
+6. `audit_shop` — verify covers, PDFs, prices, descriptions
+7. `get_shop_preview_url`
+
+Or use `build_product_assets` per product to orchestrate cover + PDF in one call.
+
+### Creative acceptance test
+
+```bash
+npm run test:creative
+```
+
+### Usage tracking
+
+Migration **033** adds `creative_generation_usage` for per-user generation counts and future billing limits (40/hour default).
+
+```bash
+npm run db:apply-033   # requires DATABASE_URL
+```
 
 ### Database
 

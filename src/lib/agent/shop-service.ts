@@ -337,16 +337,27 @@ export async function auditShop(identity: AgentIdentity, shopId?: string) {
   const productIds = rows.map(p => p.id)
 
   const { data: files } = productIds.length
-    ? await admin.from('product_files').select('product_id').in('product_id', productIds)
+    ? await admin.from('product_files').select('product_id, file_type, file_name').in('product_id', productIds)
     : { data: [] }
 
-  const filesByProduct = new Map<string, number>()
+  const { data: media } = productIds.length
+    ? await admin.from('product_media').select('product_id').in('product_id', productIds)
+    : { data: [] }
+
+  const filesByProduct = new Map<string, Array<{ file_type: string | null; file_name: string | null }>>()
   for (const f of files ?? []) {
-    filesByProduct.set(f.product_id, (filesByProduct.get(f.product_id) ?? 0) + 1)
+    const list = filesByProduct.get(f.product_id) ?? []
+    list.push({ file_type: f.file_type, file_name: f.file_name })
+    filesByProduct.set(f.product_id, list)
+  }
+
+  const galleryCountByProduct = new Map<string, number>()
+  for (const m of media ?? []) {
+    galleryCountByProduct.set(m.product_id, (galleryCountByProduct.get(m.product_id) ?? 0) + 1)
   }
 
   const missingImages = rows.filter(p => !p.cover_image_url).map(p => ({ id: p.id, title: p.title }))
-  const missingFiles = rows.filter(p => !filesByProduct.has(p.id)).map(p => ({ id: p.id, title: p.title }))
+  const missingFiles = rows.filter(p => !(filesByProduct.get(p.id)?.length)).map(p => ({ id: p.id, title: p.title }))
   const missingDescriptions = rows.filter(p => !p.description?.trim()).map(p => ({ id: p.id, title: p.title }))
   const missingPrices = rows.filter(p => !p.price_cents || p.price_cents <= 0).map(p => ({ id: p.id, title: p.title }))
 
@@ -388,6 +399,23 @@ export async function auditShop(identity: AgentIdentity, shopId?: string) {
     marketplace_listed_count: rows.filter(p => p.marketplace_listing).length,
     duplicate_titles: [...new Set(duplicateTitles)],
     product_sort_order: rows.map(p => ({ id: p.id, title: p.title, sort_order: p.sort_order })),
+    products: rows.map(p => {
+      const productFiles = filesByProduct.get(p.id) ?? []
+      const pdfFiles = productFiles.filter(f => (f.file_type ?? '').includes('pdf') || (f.file_name ?? '').toLowerCase().endsWith('.pdf'))
+      return {
+        id: p.id,
+        title: p.title,
+        cover_image_present: !!p.cover_image_url,
+        gallery_images_count: galleryCountByProduct.get(p.id) ?? 0,
+        delivery_file_present: productFiles.length > 0,
+        generated_pdf_present: pdfFiles.length > 0,
+        price_present: !!p.price_cents && p.price_cents > 0,
+        description_present: !!p.description?.trim(),
+        affiliate_configured: !!p.affiliate_enabled,
+        is_draft: !p.is_live,
+        is_live: !!p.is_live,
+      }
+    }),
     preview_url: preview?.preview_url ?? null,
     partner,
     issues,
@@ -438,7 +466,10 @@ export async function getShopSnapshot(identity: AgentIdentity, shopId?: string) 
     shop: formatShopSummary(store, identity, partner),
     storefront: await getStorefrontConfiguration(identity, store.id),
     preview_url: preview?.preview_url ?? null,
-    products: (products ?? []).map(p => ({
+    products: (products ?? []).map(p => {
+      const productFiles = filesByProduct[p.id] ?? []
+      const pdfFiles = productFiles.filter(f => (f.file_type ?? '').includes('pdf') || (f.file_name ?? '').toLowerCase().endsWith('.pdf'))
+      return {
       id: p.id,
       title: p.title,
       slug: p.slug,
@@ -451,10 +482,17 @@ export async function getShopSnapshot(identity: AgentIdentity, shopId?: string) 
       affiliate_commission_percent: p.affiliate_commission_percent,
       marketplace_listing: p.marketplace_listing,
       has_cover_image: !!p.cover_image_url,
+      cover_image_present: !!p.cover_image_url,
       has_description: !!p.description?.trim(),
-      file_count: filesByProduct[p.id]?.length ?? 0,
+      description_present: !!p.description?.trim(),
+      file_count: productFiles.length,
+      delivery_file_present: productFiles.length > 0,
+      generated_pdf_present: pdfFiles.length > 0,
       gallery_image_count: mediaByProduct[p.id]?.length ?? 0,
+      price_present: !!p.price_cents && p.price_cents > 0,
+      affiliate_configured: !!p.affiliate_enabled,
+      is_draft: !p.is_live,
       sort_order: p.sort_order,
-    })),
+    }}),
   }
 }

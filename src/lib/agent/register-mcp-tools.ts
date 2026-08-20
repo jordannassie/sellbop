@@ -18,7 +18,32 @@ import {
   reorderProducts, duplicateProduct, listProductFiles, setProductSalePrice, addProductGalleryImage,
 } from './catalog-service'
 import { getShopSalesSummary, getProductSalesSummary } from './analytics-service'
-import { generateProductImage, generateShopBanner, generateProductPdf } from '@/lib/creative'
+import {
+  generateProductImageForAgent,
+  generateShopBannerForAgent,
+  generateProductPdfForAgent,
+  buildProductAssetsForAgent,
+  getCreativeCapabilities,
+} from '@/lib/creative/creative-service'
+
+const brandContextSchema = z.object({
+  brand_name: z.string().optional(),
+  audience: z.string().optional(),
+  visual_direction: z.string().optional(),
+  tone: z.string().optional(),
+  typography_direction: z.string().optional(),
+  photography_style: z.string().optional(),
+  image_mood: z.string().optional(),
+  visual_motifs: z.array(z.string()).optional(),
+  exclusions: z.string().optional(),
+}).optional()
+
+const pdfSectionSchema = z.object({
+  heading: z.string(),
+  body: z.string().optional(),
+  bullets: z.array(z.string()).optional(),
+  callout: z.string().optional(),
+})
 
 function identityOf(ctx: { http?: { authInfo?: AuthInfo } }): AgentIdentity {
   const identity = ctx.http?.authInfo?.extra?.identity as AgentIdentity | undefined
@@ -90,8 +115,14 @@ export function registerSellBopMcpTools(server) {
   server.registerTool('get_shop_sales_summary', { title: 'Get Shop Sales Summary', description: 'Read-only shop sales metrics.', inputSchema: z.object({ shop_id: z.string().optional(), days: z.number().int().min(1).max(365).optional() }) }, async (args, ctx) => tool(() => getShopSalesSummary(identityOf(ctx), args.shop_id, args.days ?? 30)))
   server.registerTool('get_product_sales_summary', { title: 'Get Product Sales Summary', description: 'Read-only product sales metrics.', inputSchema: z.object({ product_id: z.string(), shop_id: z.string().optional(), days: z.number().int().min(1).max(365).optional() }) }, async (args, ctx) => tool(() => getProductSalesSummary(identityOf(ctx), args.product_id, args.shop_id, args.days ?? 30)))
 
-  // ── Creative (provider abstraction) ───────────────────────────────────────
-  server.registerTool('generate_product_image', { title: 'Generate Product Image', description: 'Generate image via configured provider.', inputSchema: z.object({ prompt: z.string(), aspect_ratio: z.enum(['1:1', '16:9', '4:3']).optional(), shop_id: z.string().optional(), product_id: z.string().optional() }) }, async (args, ctx) => tool(() => generateProductImage({ prompt: args.prompt, aspectRatio: args.aspect_ratio, shopId: args.shop_id, productId: args.product_id })))
-  server.registerTool('generate_shop_banner', { title: 'Generate Shop Banner', description: 'Generate banner via configured provider.', inputSchema: z.object({ prompt: z.string(), shop_id: z.string().optional() }) }, async (args, ctx) => tool(() => generateShopBanner({ prompt: args.prompt, shopId: args.shop_id })))
-  server.registerTool('generate_product_pdf', { title: 'Generate Product PDF', description: 'Generate PDF via configured provider.', inputSchema: z.object({ prompt: z.string(), title: z.string().optional(), shop_id: z.string().optional(), product_id: z.string().optional() }) }, async (args, ctx) => tool(() => generateProductPdf({ prompt: args.prompt, title: args.title, shopId: args.shop_id, productId: args.product_id })))
+  // ── Creative Factory ──────────────────────────────────────────────────────
+  server.registerTool('get_creative_capabilities', { title: 'Get Creative Capabilities', description: 'Check which creative generation features are available.', inputSchema: z.object({}) }, async (_a, ctx) => tool(() => Promise.resolve(getCreativeCapabilities())))
+
+  server.registerTool('generate_product_image', { title: 'Generate Product Image', description: 'Generate, store, and attach a product image.', inputSchema: z.object({ shop_id: z.string().optional(), product_id: z.string(), prompt: z.string(), image_type: z.enum(['product_cover', 'lifestyle', 'mockup', 'supporting_image']).optional(), make_primary: z.boolean().optional(), aspect_ratio: z.enum(['1:1', '16:9', '4:3']).optional(), brand_context: brandContextSchema }) }, async (args, ctx) => tool(() => generateProductImageForAgent(identityOf(ctx), args)))
+
+  server.registerTool('generate_shop_banner', { title: 'Generate Shop Banner', description: 'Generate and set a shop banner.', inputSchema: z.object({ shop_id: z.string().optional(), prompt: z.string(), brand_context: brandContextSchema, creator_context: z.string().optional() }) }, async (args, ctx) => tool(() => generateShopBannerForAgent(identityOf(ctx), args)))
+
+  server.registerTool('generate_product_pdf', { title: 'Generate Product PDF', description: 'Generate a premium PDF, upload, and attach as delivery file.', inputSchema: z.object({ shop_id: z.string().optional(), product_id: z.string(), title: z.string().optional(), subtitle: z.string().optional(), audience: z.string().optional(), content_brief: z.string().optional(), prompt: z.string().optional(), sections: z.array(pdfSectionSchema).optional(), brand_context: brandContextSchema, author_name: z.string().optional(), include_health_disclaimer: z.boolean().optional() }) }, async (args, ctx) => tool(() => generateProductPdfForAgent(identityOf(ctx), args)))
+
+  server.registerTool('build_product_assets', { title: 'Build Product Assets', description: 'Orchestrate cover, optional gallery images, and PDF for one product.', inputSchema: z.object({ shop_id: z.string().optional(), product_id: z.string(), cover_prompt: z.string(), supporting_image_prompts: z.array(z.string()).optional(), brand_context: brandContextSchema, make_cover_primary: z.boolean().optional(), pdf_content: z.object({ title: z.string().optional(), subtitle: z.string().optional(), audience: z.string().optional(), content_brief: z.string().optional(), sections: z.array(pdfSectionSchema).optional(), author_name: z.string().optional(), include_health_disclaimer: z.boolean().optional() }).optional() }) }, async (args, ctx) => tool(() => buildProductAssetsForAgent(identityOf(ctx), args)))
 }

@@ -29,3 +29,5 @@ const authHandler = withMcpAuth(handler, verifyToken, {
 })
 
 export { authHandler as GET, authHandler as POST }
+
+export const maxDuration = 60

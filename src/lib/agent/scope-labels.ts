@@ -25,6 +25,10 @@ export function humanActionLabel(action: string): string {
     set_affiliate_commission: 'Changed affiliate commission',
     reorder_products: 'Reordered catalog',
     duplicate_product: 'Duplicated product',
+    generate_product_image: 'Generated product image',
+    generate_shop_banner: 'Generated shop banner',
+    generate_product_pdf: 'Generated product PDF',
+    build_product_assets: 'Built product assets',
   }
   return map[action] ?? action.replace(/_/g, ' ')
 }
