@@ -34,6 +34,7 @@ const DEMO_STORE_ROW: StoreRow = {
   bio: DEMO_STOREFRONT.bio ?? null,
   avatar_url: DEMO_STOREFRONT.avatarUrl ?? null,
   banner_url: DEMO_STOREFRONT.bannerUrl ?? DEFAULT_STORE_BANNER_URL,
+  value_video_url: null,
   social_links: null,
   header_layout: null,
   layout_mode: null,
@@ -289,7 +290,7 @@ export function UserStoreProvider({ children }: { children: ReactNode }) {
 
       if (error?.message?.includes('column') && error.message.includes('does not exist')) {
         const safePatch: Database['public']['Tables']['stores']['Update'] = {}
-        const knownCols = ['name', 'headline', 'bio', 'avatar_url', 'banner_url', 'social_links', 'support_email', 'header_layout']
+        const knownCols = ['name', 'headline', 'bio', 'avatar_url', 'banner_url', 'value_video_url', 'social_links', 'support_email', 'header_layout']
         for (const k of knownCols) {
           if (k in patch) {
             (safePatch as Record<string, unknown>)[k] = (patch as Record<string, unknown>)[k]

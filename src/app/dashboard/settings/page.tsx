@@ -12,7 +12,7 @@ import { useAuth } from '@/context/auth-context'
 import { useUserStore } from '@/hooks/use-user-store'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { uploadFile, buildStoragePath } from '@/lib/supabase/storage'
-import { Upload, Store, Loader2, ExternalLink, X } from 'lucide-react'
+import { Upload, Store, Loader2, ExternalLink, X, Play } from 'lucide-react'
 import { LinkField, type AvailabilityStatus } from '@/components/dashboard/link-field'
 import { SOCIAL_PLATFORMS, SocialIcon, normalizeSocialUrl } from '@/components/ui/social-icons'
 import {
@@ -21,6 +21,7 @@ import {
   STORE_BANNER_BG_CLASS,
 } from '@/lib/store-defaults'
 import { PARTNER_SOCIAL_IS_KEY, PARTNER_SOCIAL_SHOW_KEY, partnerFromSocialLinks, stripPartnerSocialLinks } from '@/lib/partner-storage'
+import { isValidYouTubeUrl } from '@/lib/youtube'
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -49,6 +50,11 @@ export default function SettingsPage() {
   const [bannerUrl, setBannerUrl] = useState<string | null>(null)
   const [uploadingBanner, setUploadingBanner] = useState(false)
   const bannerInputRef = useRef<HTMLInputElement>(null)
+
+  // Value video
+  const [valueVideoUrl, setValueVideoUrl] = useState('')
+  const [valueVideoError, setValueVideoError] = useState<string | null>(null)
+  const [savingValueVideo, setSavingValueVideo] = useState(false)
 
   // Social links
   const [socialLinks, setSocialLinks] = useState<Record<string, string>>({})
@@ -102,6 +108,8 @@ export default function SettingsPage() {
     setSupportEmail(store.support_email ?? '')
     setShopAvatar(store.avatar_url ?? null)
     setBannerUrl(store.banner_url ?? null)
+    setValueVideoUrl(store.value_video_url ?? '')
+    setValueVideoError(null)
     if (store.social_links) {
       setSocialLinks(stripPartnerSocialLinks(store.social_links as Record<string, string>))
     } else {
@@ -212,6 +220,28 @@ export default function SettingsPage() {
 
   async function handleRemoveBanner() {
     await handleUseDefaultBanner()
+  }
+
+  async function handleSaveValueVideo(e: React.FormEvent) {
+    e.preventDefault()
+    const trimmed = valueVideoUrl.trim()
+    if (trimmed && !isValidYouTubeUrl(trimmed)) {
+      setValueVideoError('Enter a valid YouTube URL.')
+      return
+    }
+    setValueVideoError(null)
+    setSavingValueVideo(true)
+    try {
+      const err = await saveStore({ value_video_url: trimmed || null })
+      if (err) throw new Error(err)
+      toast.success(trimmed ? 'Value video saved.' : 'Value video removed.')
+      refetch()
+      router.refresh()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save value video.')
+    } finally {
+      setSavingValueVideo(false)
+    }
   }
 
   function setSocialLink(key: string, value: string) {
@@ -553,6 +583,42 @@ export default function SettingsPage() {
                 onChange={handleBannerUpload}
               />
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Value Video */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Play size={16} />
+              Value Video
+            </CardTitle>
+            <p className="text-sm text-neutral-500 mt-1">
+              Add a YouTube video to your Shop to teach, introduce your products, or give visitors value before they buy.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSaveValueVideo} className="space-y-4">
+              <div>
+                <Input
+                  label="YouTube Video URL"
+                  value={valueVideoUrl}
+                  onChange={e => {
+                    setValueVideoUrl(e.target.value)
+                    if (valueVideoError) setValueVideoError(null)
+                  }}
+                  placeholder="https://www.youtube.com/watch?v=..."
+                  inputMode="url"
+                />
+                <p className="text-xs text-neutral-400 mt-1.5">
+                  Paste a YouTube or YouTube Shorts link. Leave blank to hide the video from your Shop.
+                </p>
+                {valueVideoError && (
+                  <p className="text-xs text-red-600 mt-2">{valueVideoError}</p>
+                )}
+              </div>
+              <Button type="submit" loading={savingValueVideo}>Save Value Video</Button>
+            </form>
           </CardContent>
         </Card>
 

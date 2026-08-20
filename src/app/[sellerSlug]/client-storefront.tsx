@@ -14,6 +14,7 @@ import { resolveStoreBannerUrl, STORE_BANNER_BG_CLASS } from '@/lib/store-defaul
 import { SocialIcon, SOCIAL_PLATFORMS } from '@/components/ui/social-icons'
 import { AvatarWithPartnerBadge } from '@/components/ui/avatar-with-partner-badge'
 import { stripPartnerSocialLinks } from '@/lib/partner-storage'
+import { ValueVideoSection } from '@/components/storefront/value-video-section'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -24,6 +25,7 @@ interface StoreData {
   bio: string | null
   avatar_url: string | null
   banner_url: string | null
+  value_video_url: string | null
   social_links: Record<string, string> | null
   is_partner?: boolean
   show_partner_badge?: boolean
@@ -385,6 +387,8 @@ export function ClientStorefront({ slug }: { slug: string }) {
           storeSlug={slug}
         />
       )}
+
+      <ValueVideoSection valueVideoUrl={store.value_video_url} />
 
       {/* ── Products — clean white section ───────────────────────────── */}
       <div ref={productsRef} className="max-w-5xl mx-auto px-4 sm:px-6 py-12">

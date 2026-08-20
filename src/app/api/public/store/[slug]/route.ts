@@ -22,7 +22,7 @@ export async function GET(
   // Single comprehensive query — includes banner_url and social_links
   const { data: store, error } = await admin
     .from('stores')
-    .select('id, slug, name, headline, bio, avatar_url, banner_url, social_links')
+    .select('id, slug, name, headline, bio, avatar_url, banner_url, value_video_url, social_links')
     .eq('slug', slug)
     .maybeSingle()
 
@@ -98,6 +98,7 @@ export async function GET(
         bio: store.bio,
         avatar_url: store.avatar_url,
         banner_url: bannerUrl,
+        value_video_url: (store as Record<string, unknown>).value_video_url as string | null | undefined ?? null,
         social_links: socialLinks,
         is_partner: partnerStatus.isPartner,
         show_partner_badge: partnerStatus.showPartnerBadge,
