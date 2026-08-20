@@ -3,8 +3,9 @@ import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { isSupabaseAdminConfigured } from '@/lib/env'
 import { generateAuthCode, AUTH_CODE_TTL_MS } from '@/lib/oauth/mcp-oauth'
-import { ALL_AGENT_SCOPES, type AgentScope } from '@/lib/agent/auth'
+import { ALL_AGENT_SCOPES } from '@/lib/agent/auth'
 import { resolvePendingAgentAccess } from '@/lib/agent/oauth-access-mode'
+import { filterAgentScopes, withAccessModeScope } from '@/lib/agent/oauth-access-scope'
 
 // Called by the /oauth/authorize consent page after the user clicks Allow.
 // Requires an authenticated SellBop session (cookie-based, same as every
@@ -54,12 +55,11 @@ export async function POST(request: Request) {
     return Response.json({ error: 'invalid_request', error_description: 'redirect_uri does not match registered client.' }, { status: 400 })
   }
 
-  const requestedScopes = (scope?.split(' ') ?? []).filter((s): s is AgentScope =>
-    ALL_AGENT_SCOPES.includes(s as AgentScope),
-  )
+  const requestedScopes = filterAgentScopes(scope)
   const grantedScopes = requestedScopes.length > 0 ? requestedScopes : ALL_AGENT_SCOPES
 
   const pendingAccess = await resolvePendingAgentAccess(user.id)
+  const scopeWithAccess = withAccessModeScope(grantedScopes.join(' '), pendingAccess)
 
   const code = generateAuthCode()
   const insertPayload = {
@@ -69,7 +69,7 @@ export async function POST(request: Request) {
     redirect_uri,
     code_challenge,
     code_challenge_method: code_challenge_method ?? 'S256',
-    scope: grantedScopes.join(' '),
+    scope: scopeWithAccess,
     expires_at: new Date(Date.now() + AUTH_CODE_TTL_MS).toISOString(),
     access_mode: pendingAccess.accessMode,
     store_id: pendingAccess.storeId,

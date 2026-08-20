@@ -2,8 +2,9 @@ import 'server-only'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { isSupabaseAdminConfigured } from '@/lib/env'
 import { verifyPkceS256 } from '@/lib/oauth/mcp-oauth'
-import { generateAgentToken, ALL_AGENT_SCOPES, CLAUDE_ECOM_SCOPES, type AgentScope } from '@/lib/agent/auth'
-import { accessFromAuthCode, resolvePendingAgentAccess } from '@/lib/agent/oauth-access-mode'
+import { generateAgentToken, CLAUDE_ECOM_SCOPES } from '@/lib/agent/auth'
+import { accessFromAuthCode, resolveTokenExchangeAccessFallback } from '@/lib/agent/oauth-access-mode'
+import { filterAgentScopes } from '@/lib/agent/oauth-access-scope'
 import { revokeActiveClaudeConnections } from '@/lib/agent/revoke-claude-connections'
 
 // RFC 6749 §4.1.3 (authorization_code grant) + RFC 7636 (PKCE).
@@ -72,12 +73,10 @@ export async function POST(request: Request) {
     return Response.json({ error: 'server_error' }, { status: 500 })
   }
 
-  const scopes = (authCode.scope?.split(' ') ?? []).filter((s): s is AgentScope =>
-    ALL_AGENT_SCOPES.includes(s as AgentScope),
-  )
+  const scopes = filterAgentScopes(authCode.scope)
   const grantedScopes = scopes.length > 0 ? scopes : CLAUDE_ECOM_SCOPES
 
-  const fallbackAccess = await resolvePendingAgentAccess(authCode.user_id)
+  const fallbackAccess = await resolveTokenExchangeAccessFallback(authCode.user_id)
   const { accessMode, storeId } = accessFromAuthCode(authCode, fallbackAccess)
 
   // Replace any prior active Claude connection so reconnecting changes effective access.

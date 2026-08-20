@@ -18,6 +18,7 @@
     "db:apply-032": "node scripts/apply-migration-032.mjs",
     "db:apply-034": "node scripts/apply-migration-034.mjs",
     "db:verify-034": "node scripts/verify-migration-034.mjs",
+    "test:oauth-access-scope": "node scripts/test-oauth-access-scope.mjs",
     "test:agent-access": "node scripts/agent-access-mode-test.mjs",
     "db:apply-033": "node scripts/apply-migration-033.mjs",
     "db:verify-032": "node scripts/verify-migration-032.mjs",
