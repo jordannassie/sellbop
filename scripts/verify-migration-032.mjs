@@ -20,7 +20,8 @@ console.log('  agent_connections.access_mode:', connErr ? `FAIL (${connErr.messa
 console.log('  agent_activity_log.store_id:', logErr ? `FAIL (${logErr.message})` : 'OK')
 
 if (connErr || logErr) {
-  console.error('\nApply: npm run db:apply-032  OR paste supabase/migrations/032_agent_shop_access.sql in Supabase SQL Editor')
+  console.error('\nApply: paste APPLY-032-IN-SUPABASE.sql in Supabase SQL Editor')
+  console.error('https://supabase.com/dashboard/project/qsvmgzdaashfsavmfjuz/sql/new')
   process.exit(1)
 }
 
