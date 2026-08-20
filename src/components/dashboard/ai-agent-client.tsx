@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import {
   Sparkles, Copy, ExternalLink, ChevronDown, Shield, Store,
   Package, DollarSign, TrendingUp, Upload, BarChart3, Handshake,
@@ -20,6 +21,7 @@ const CONNECTOR_NAME = 'SellBop'
 const MCP_URL = 'https://sellbop.com/api/mcp'
 const TEST_PROMPT = 'List the SellBop Shops I can manage. Do not make any changes yet.'
 const BUILD_TEST_PROMPT = 'In my selected SellBop Shop, create one Draft product called Claude E-Com Test, price it at $9, enable affiliates at 40%, audit the Shop, and return the private preview URL. Do not publish anything.'
+const CONNECTOR_SCREENSHOT_URL = 'https://qsvmgzdaashfsavmfjuz.supabase.co/storage/v1/object/public/SELL/images/connector.png'
 
 type AccessMode = 'single_shop' | 'all_managed_shops'
 
@@ -165,6 +167,37 @@ function AddSellBopHelper({ mcpUrl, onCopyMcpUrl, onCopyName }: { mcpUrl: string
   )
 }
 
+function ClaudeConnectorScreenshot({ compact = false }: { compact?: boolean }) {
+  return (
+    <div className={cn('mt-4 space-y-3', compact && 'mt-3')}>
+      <h4 className={cn('font-semibold text-black', compact ? 'text-sm' : 'text-base')}>
+        This is the screen you&apos;ll see in Claude
+      </h4>
+      <div className="mx-auto w-full max-w-[800px]">
+        <Image
+          src={CONNECTOR_SCREENSHOT_URL}
+          alt="Claude Add custom connector dialog with Name and Remote MCP server URL fields"
+          width={528}
+          height={558}
+          className="w-full h-auto rounded-xl border border-neutral-200 shadow-sm"
+          sizes="(max-width: 768px) 100vw, 528px"
+        />
+      </div>
+      <p className={cn('text-neutral-600 leading-relaxed', compact ? 'text-xs' : 'text-sm')}>
+        <span className="font-medium text-black">Enter:</span>
+        <br />
+        Name: <span className="font-medium text-black">{CONNECTOR_NAME}</span>
+        <br />
+        Remote MCP server URL: <span className="font-medium text-black break-all">{MCP_URL}</span>
+        <br />
+        Leave Advanced Settings blank.
+        <br />
+        Click <span className="font-medium text-black">Add</span>.
+      </p>
+    </div>
+  )
+}
+
 function ConnectionSteps({ compact = false }: { compact?: boolean }) {
   return (
     <div className={cn('space-y-5', compact && 'space-y-4 text-sm')}>
@@ -174,15 +207,7 @@ function ConnectionSteps({ compact = false }: { compact?: boolean }) {
       </div>
       <div>
         <h3 className={cn('font-bold text-black', compact ? 'text-sm' : 'text-base')}>2. Add SellBop</h3>
-        <p className="text-neutral-600 mt-1 leading-relaxed">
-          Enter <span className="font-medium text-black">Name:</span> {CONNECTOR_NAME}
-          <br />
-          <span className="font-medium text-black">Remote MCP server URL:</span> {MCP_URL}
-          <br />
-          Leave Advanced Settings blank.
-          <br />
-          Click <span className="font-medium text-black">Add</span>.
-        </p>
+        <ClaudeConnectorScreenshot compact={compact} />
       </div>
       <div>
         <h3 className={cn('font-bold text-black', compact ? 'text-sm' : 'text-base')}>3. Authorize</h3>
