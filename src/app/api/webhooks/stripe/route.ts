@@ -5,7 +5,7 @@ import { isSupabaseAdminConfigured } from '@/lib/env'
 import { env } from '@/lib/env'
 import { fulfillFromStripeSession } from '@/lib/services/purchase-fulfillment'
 import { sendRefundEmail } from '@/lib/email/service'
-import { processPartnerRefund } from '@/lib/payments/partner-settlement'
+import { processPartnerDispute, processPartnerRefund } from '@/lib/payments/partner-settlement'
 
 async function claimStripeWebhookEvent(event: Stripe.Event): Promise<'process' | 'skip'> {
   if (!isSupabaseAdminConfigured()) return 'process'
@@ -109,14 +109,13 @@ export async function POST(request: Request) {
 
     case 'charge.dispute.created': {
       const dispute = event.data.object as Stripe.Dispute
-      const paymentIntentId = typeof dispute.payment_intent === 'string' ? dispute.payment_intent : null
-      if (isSupabaseAdminConfigured() && paymentIntentId) {
-        const admin = getSupabaseAdminClient()
-        await admin
-          .from('orders')
-          .update({ refund_status: 'disputed' })
-          .eq('stripe_payment_intent_id', paymentIntentId)
-      }
+      await handlePartnerDisputeEvent(dispute, 'created')
+      break
+    }
+
+    case 'charge.dispute.closed': {
+      const dispute = event.data.object as Stripe.Dispute
+      await handlePartnerDisputeEvent(dispute, 'closed')
       break
     }
 
@@ -146,6 +145,38 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({ received: true })
+}
+
+async function handlePartnerDisputeEvent(dispute: Stripe.Dispute, phase: 'created' | 'closed') {
+  if (!isSupabaseAdminConfigured()) return
+  const paymentIntentId = typeof dispute.payment_intent === 'string' ? dispute.payment_intent : null
+  if (!paymentIntentId) return
+
+  const admin = getSupabaseAdminClient()
+  const { data: order } = await admin
+    .from('orders')
+    .select('id')
+    .eq('stripe_payment_intent_id', paymentIntentId)
+    .maybeSingle()
+
+  if (!order) return
+
+  const outcome = dispute.status === 'won' ? 'won'
+    : dispute.status === 'lost' ? 'lost'
+    : dispute.status === 'warning_closed' ? 'withdrawn'
+    : null
+
+  try {
+    await processPartnerDispute({
+      orderId: order.id,
+      disputeId: dispute.id,
+      disputeStatus: phase,
+      disputeOutcome: outcome,
+      amountCents: dispute.amount,
+    })
+  } catch (err) {
+    console.error('[handlePartnerDisputeEvent]', order.id, dispute.id, err)
+  }
 }
 
 async function handleChargeRefunded(charge: Stripe.Charge) {

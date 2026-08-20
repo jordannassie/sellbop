@@ -67,5 +67,49 @@ function assert(name, ok) { if (ok) { passed++; console.log(`✓ ${name}`) } els
   assert('partial refund sums', rev.affiliateReversalCents + rev.partnerReversalCents + rev.sellbopReversalCents + rev.stripeFeeReversalCents === 5000)
 }
 
+{
+  const original = calculatePartnerAllocation({ saleSubtotalCents: 10000, affiliateCommissionCents: 2000, stripeFeeCents: 320, partnerShareBps: 5000 })
+  const full = calculatePartialRefundReversal({ original, refundCents: 10000 })
+  assert('full refund reverses all gross', full.refundCents === 10000)
+  assert('full refund partner reversal', full.partnerReversalCents === original.partnerShareCents)
+  assert('full refund no over-reversal', full.partnerReversalCents <= original.partnerShareCents)
+}
+
+{
+  const original = calculatePartnerAllocation({ saleSubtotalCents: 10000, affiliateCommissionCents: 2000, stripeFeeCents: 320, partnerShareBps: 5000 })
+  const partial = calculatePartialRefundReversal({ original, refundCents: 2500 })
+  assert('$25 partial on $100', partial.refundCents === 2500)
+  assert('partial no negative sellbop', partial.sellbopReversalCents >= 0)
+  assert('partial partner capped', partial.partnerReversalCents <= original.partnerShareCents)
+}
+
+{
+  const r50 = calculatePartnerAllocation({ saleSubtotalCents: 10000, affiliateCommissionCents: 0, stripeFeeCents: 320, partnerShareBps: 5000 })
+  const r60 = calculatePartnerAllocation({ saleSubtotalCents: 10000, affiliateCommissionCents: 0, stripeFeeCents: 320, partnerShareBps: 6000 })
+  assert('50/50 vs 60/40 differ', r50.partnerShareCents !== r60.partnerShareCents)
+  assert('terms version math independent', r50.partnerShareCents + r50.sellbopShareCents === r50.netDistributableCents)
+}
+
+function partnerTransferIdempotencyKey(orderId) { return `partner-transfer:${orderId}:v1` }
+function partnerReversalIdempotencyKey(orderId, refundId) { return `partner-reversal:${orderId}:${refundId}:v1` }
+
+{
+  const orderId = 'order-abc'
+  assert('transfer idempotency stable', partnerTransferIdempotencyKey(orderId) === partnerTransferIdempotencyKey(orderId))
+  assert('reversal idempotency stable', partnerReversalIdempotencyKey(orderId, 're_1') === partnerReversalIdempotencyKey(orderId, 're_1'))
+  assert('reversal keys differ by refund', partnerReversalIdempotencyKey(orderId, 're_1') !== partnerReversalIdempotencyKey(orderId, 're_2'))
+}
+
+{
+  const r = calculatePartnerAllocation({ saleSubtotalCents: 10000, affiliateCommissionCents: 2000, stripeFeeCents: 320, partnerShareBps: 5000 })
+  assert('money invariant', r.stripeFeeCents + r.affiliateCommissionCents + r.partnerShareCents + r.sellbopShareCents === r.saleSubtotalCents)
+}
+
+{
+  const awaiting = calculatePartnerAllocation({ saleSubtotalCents: 10000, affiliateCommissionCents: 2000, stripeFeeCents: null, partnerShareBps: 5000 })
+  assert('missing stripe fee awaits processing', awaiting.awaitingStripeFee)
+  assert('awaiting fee still allocates provisional split', awaiting.partnerShareCents + awaiting.sellbopShareCents === awaiting.netDistributableCents)
+}
+
 console.log(`\n${passed} passed, ${failed} failed`)
 process.exit(failed ? 1 : 0)

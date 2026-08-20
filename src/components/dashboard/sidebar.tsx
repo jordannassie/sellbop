@@ -115,6 +115,9 @@ export function DashboardSidebar() {
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, exact: true },
     { href: '/dashboard/products', label: 'Products', icon: Package },
     { href: '/dashboard/sales', label: 'Sales', icon: ShoppingBag, activePaths: ['/dashboard/orders'] },
+    ...(activeSummary?.isPartnerShop
+      ? [{ href: '/dashboard/earnings', label: 'Earnings', icon: DollarSign }]
+      : []),
     { href: '/dashboard/customers', label: 'Customers', icon: Users },
     { href: '/marketplace', label: 'Marketplace', icon: Grid3x3 },
     { href: '/dashboard/affiliates', label: 'Affiliates', icon: TrendingUp },

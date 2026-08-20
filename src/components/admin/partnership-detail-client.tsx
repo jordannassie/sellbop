@@ -8,6 +8,7 @@ import { AdminTopBar } from '@/components/admin/admin-top-bar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { sellbopShareBps } from '@/lib/payments/partner-allocation'
+import { formatCurrency } from '@/lib/utils'
 
 const SHARE_PRESETS = [3000, 4000, 5000, 6000, 7000]
 
@@ -27,6 +28,19 @@ export function PartnershipDetailClient({ partnershipId }: { partnershipId: stri
   const [detail, setDetail] = useState<Record<string, unknown> | null>(null)
   const [checklist, setChecklist] = useState<LaunchChecklist | null>(null)
   const [terms, setTerms] = useState<Array<{ partner_share_bps: number; version: number; accepted_at: string | null }>>([])
+  const [financials, setFinancials] = useState<{
+    summary: {
+      grossSalesCents: number
+      partnerEarningsCents: number
+      pendingCents: number
+      transferredCents: number
+      affiliateCommissionsCents: number
+      stripeFeesCents: number
+      sellbopRevenueCents: number
+      refundsAdjustmentsCents: number
+      reconciliationRequiredCount: number
+    }
+  } | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [partnerEmail, setPartnerEmail] = useState('')
@@ -34,10 +48,11 @@ export function PartnershipDetailClient({ partnershipId }: { partnershipId: stri
   const [message, setMessage] = useState<string | null>(null)
 
   async function load() {
-    const [detailRes, checklistRes, termsRes] = await Promise.all([
+    const [detailRes, checklistRes, termsRes, financialsRes] = await Promise.all([
       fetch(`/api/admin/partnerships/${partnershipId}`),
       fetch(`/api/admin/partnerships/${partnershipId}/activate`),
       fetch(`/api/admin/partnerships/${partnershipId}/terms`),
+      fetch(`/api/admin/partnerships/${partnershipId}/financials`),
     ])
     if (detailRes.ok) {
       const data = await detailRes.json()
@@ -53,6 +68,12 @@ export function PartnershipDetailClient({ partnershipId }: { partnershipId: stri
       setTerms(data.terms ?? [])
       const current = data.terms?.[0]
       if (current?.partner_share_bps) setShareBps(current.partner_share_bps)
+    }
+    if (financialsRes.ok) {
+      const data = await financialsRes.json()
+      setFinancials(data)
+    } else {
+      setFinancials(null)
     }
     setLoading(false)
   }
@@ -161,6 +182,37 @@ export function PartnershipDetailClient({ partnershipId }: { partnershipId: stri
               <p className="text-xs text-amber-600">Current terms awaiting Partner acceptance (v{terms[0].version}).</p>
             )}
           </section>
+
+          {financials?.summary && (
+            <section className="mt-4 rounded-xl border bg-white p-5 space-y-3">
+              <h2 className="font-semibold">Financials</h2>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                {[
+                  ['Gross Sales', financials.summary.grossSalesCents],
+                  ['Affiliate Commissions', financials.summary.affiliateCommissionsCents],
+                  ['Stripe Processing Fees', financials.summary.stripeFeesCents],
+                  ['Partner Earnings', financials.summary.partnerEarningsCents],
+                  ['Partner Transferred', financials.summary.transferredCents],
+                  ['SellBop Revenue', financials.summary.sellbopRevenueCents],
+                  ['Refunds', financials.summary.refundsAdjustmentsCents],
+                  ['Outstanding / Pending', financials.summary.pendingCents],
+                ].map(([label, cents]) => (
+                  <div key={label as string} className="flex justify-between border-b border-neutral-50 pb-2">
+                    <span className="text-neutral-500">{label as string}</span>
+                    <span className="font-medium">{formatCurrency((cents as number) / 100)}</span>
+                  </div>
+                ))}
+              </div>
+              {financials.summary.reconciliationRequiredCount > 0 && (
+                <p className="text-xs font-semibold text-red-600">
+                  Reconciliation Required: {financials.summary.reconciliationRequiredCount} record(s)
+                </p>
+              )}
+              <Link href="/internal/admin/financials" className="text-xs font-semibold text-neutral-600 hover:text-black">
+                View platform financials →
+              </Link>
+            </section>
+          )}
 
           <section className="mt-4 rounded-xl border bg-white p-5 space-y-3">
             <h2 className="font-semibold">Partner</h2>

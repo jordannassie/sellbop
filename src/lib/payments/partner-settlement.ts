@@ -470,6 +470,148 @@ export async function processPartnerRefund(params: {
   return reversal
 }
 
+/** Retry a failed or pending Partner transfer using deterministic idempotency. */
+export async function retryPartnerTransfer(orderId: string) {
+  const admin = getSupabaseAdminClient()
+  const { data: financial } = await admin
+    .from('order_financials')
+    .select('*')
+    .eq('order_id', orderId)
+    .maybeSingle()
+
+  if (!financial) throw new PartnerSettlementError('No financial record for this order.')
+
+  const { data: transfer } = await admin
+    .from('partner_transfers')
+    .select('*')
+    .eq('order_financial_id', financial.id)
+    .maybeSingle()
+
+  if (transfer?.stripe_transfer_id || transfer?.status === 'transferred') {
+    throw new PartnerSettlementError('Transfer already completed.')
+  }
+
+  if (!['failed', 'pending', 'ready', 'transfer_pending', 'reconciliation_required'].includes(transfer?.status ?? financial.settlement_status)) {
+    throw new PartnerSettlementError('Transfer is not eligible for retry.')
+  }
+
+  if (financial.reconciliation_status === 'reconciliation_required' && financial.stripe_fee_cents === null) {
+    throw new PartnerSettlementError('Stripe fee unavailable — manual review required.')
+  }
+
+  return settlePartnerOrder(orderId)
+}
+
+export async function processPartnerDispute(params: {
+  orderId: string
+  disputeId: string
+  disputeStatus: 'created' | 'closed'
+  disputeOutcome?: 'won' | 'lost' | 'withdrawn' | null
+  amountCents?: number
+}) {
+  const admin = getSupabaseAdminClient()
+  const { data: financial } = await admin
+    .from('order_financials')
+    .select('*')
+    .eq('order_id', params.orderId)
+    .maybeSingle()
+
+  if (!financial) return null
+
+  if (params.disputeStatus === 'created') {
+    await insertLedgerEntry({
+      orderId: params.orderId,
+      orderFinancialId: financial.id,
+      storeId: financial.store_id,
+      partnershipId: financial.partnership_id,
+      partyType: 'partner',
+      entryType: 'dispute',
+      amountCents: -financial.partner_share_cents,
+      stripeObjectId: params.disputeId,
+      metadata: { status: 'open' },
+    })
+
+    const { data: transfer } = await admin
+      .from('partner_transfers')
+      .select('*')
+      .eq('order_financial_id', financial.id)
+      .maybeSingle()
+
+    if (transfer?.stripe_transfer_id && env.stripe.secretKey) {
+      const reversalAmount = Math.min(financial.partner_share_cents, transfer.amount_cents)
+      if (reversalAmount > 0) {
+        const Stripe = (await import('stripe')).default
+        const stripe = new Stripe(env.stripe.secretKey)
+        const idempotencyKey = partnerReversalIdempotencyKey(params.orderId, params.disputeId)
+        try {
+          await stripe.transfers.createReversal(transfer.stripe_transfer_id, {
+            amount: reversalAmount,
+          }, { idempotencyKey })
+          await admin.from('partner_transfers').update({
+            status: 'reversed',
+            updated_at: new Date().toISOString(),
+          }).eq('id', transfer.id)
+          await insertLedgerEntry({
+            orderId: params.orderId,
+            orderFinancialId: financial.id,
+            storeId: financial.store_id,
+            partnershipId: financial.partnership_id,
+            partyType: 'partner',
+            entryType: 'dispute_recovery',
+            amountCents: -reversalAmount,
+            stripeObjectId: params.disputeId,
+          })
+        } catch (err) {
+          console.error('[processPartnerDispute] recovery failed', params.orderId, params.disputeId, err)
+          await admin.from('partner_transfers').update({
+            status: 'reconciliation_required',
+            failure_message: err instanceof Error ? err.message : 'Dispute recovery failed',
+            updated_at: new Date().toISOString(),
+          }).eq('id', transfer.id)
+          await admin.from('order_financials').update({
+            settlement_status: 'reconciliation_required',
+            reconciliation_status: 'reconciliation_required',
+            updated_at: new Date().toISOString(),
+          }).eq('id', financial.id)
+          return { recovered: false }
+        }
+      }
+    } else if (financial.partner_share_cents > 0 && !transfer?.stripe_transfer_id) {
+      await admin.from('order_financials').update({
+        settlement_status: 'reconciliation_required',
+        reconciliation_status: 'reconciliation_required',
+        updated_at: new Date().toISOString(),
+      }).eq('id', financial.id)
+    }
+
+    await admin.from('orders').update({ refund_status: 'disputed' }).eq('id', params.orderId)
+    return { recovered: true }
+  }
+
+  if (params.disputeStatus === 'closed' && params.disputeOutcome === 'won') {
+    await insertLedgerEntry({
+      orderId: params.orderId,
+      orderFinancialId: financial.id,
+      storeId: financial.store_id,
+      partnershipId: financial.partnership_id,
+      partyType: 'partner',
+      entryType: 'dispute_resolved',
+      amountCents: 0,
+      stripeObjectId: params.disputeId,
+      metadata: { outcome: 'won', note: 'No duplicate credit — dispute won in SellBop favor' },
+    })
+  }
+
+  if (params.disputeStatus === 'closed' && params.disputeOutcome === 'lost') {
+    await admin.from('order_financials').update({
+      settlement_status: 'refunded',
+      updated_at: new Date().toISOString(),
+    }).eq('id', financial.id)
+  }
+
+  return { recovered: true }
+}
+
 /** Affiliate commission for partner checkout — uses existing calcCommissionCents. */
 export function partnerAffiliateCommissionCents(grossCents: number, percent: number): number {
   return calcCommissionCents(grossCents, percent)

@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { ArrowLeft, ExternalLink } from 'lucide-react'
 import { requireAdminUser } from '@/lib/admin/access'
 import { getAdminOrderById } from '@/lib/admin/orders'
+import { getOrderFinancialDetail, formatSettlementStatusLabel } from '@/lib/payments/partner-financials'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { RefundBadge, SaleSourceBadge } from '@/components/admin/admin-table'
 
@@ -31,6 +32,8 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
   const { id } = await params
   const order = await getAdminOrderById(id)
   if (!order) notFound()
+
+  const partnerFinancial = await getOrderFinancialDetail(id)
 
   return (
     <div className="max-w-2xl space-y-4">
@@ -77,6 +80,24 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
         <Row label="Seller net" value={formatCurrency(order.sellerNetCents)} />
         <Row label="Sale source" value={<SaleSourceBadge source={order.saleSource} hasAffiliate={order.hasAffiliate} />} />
       </Section>
+
+      {partnerFinancial?.financial && (
+        <Section title="Financial Breakdown (Partner)">
+          <Row label="Gross" value={formatCurrency(partnerFinancial.financial.sale_subtotal_cents / 100)} />
+          <Row label="Affiliate" value={`-${formatCurrency(partnerFinancial.financial.affiliate_commission_cents / 100)}`} />
+          <Row label="Stripe Fee" value={partnerFinancial.financial.stripe_fee_cents != null ? `-${formatCurrency(partnerFinancial.financial.stripe_fee_cents / 100)}` : '—'} />
+          <Row label="Net Distributable" value={formatCurrency(partnerFinancial.financial.net_distributable_cents / 100)} />
+          <Row label={`Partner ${partnerFinancial.financial.partner_share_bps / 100}%`} value={formatCurrency(partnerFinancial.financial.partner_share_cents / 100)} />
+          <Row label="SellBop" value={formatCurrency(partnerFinancial.financial.sellbop_share_cents / 100)} />
+          <Row
+            label="Partner Transfer"
+            value={formatSettlementStatusLabel(partnerFinancial.financial.settlement_status, partnerFinancial.transfer?.status)}
+          />
+          {partnerFinancial.transfer?.stripe_transfer_id && (
+            <Row label="Stripe Transfer ID" value={partnerFinancial.transfer.stripe_transfer_id} />
+          )}
+        </Section>
+      )}
 
       <Section title="Payment & refund">
         <Row label="Order status" value={order.status} />
