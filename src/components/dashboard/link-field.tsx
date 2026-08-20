@@ -22,6 +22,8 @@ interface LinkFieldProps {
   checkUrl: string
   /** Extra query param to allow the current owner to keep their link */
   ownerParam?: { key: string; value: string }
+  /** Store ID — current shop slug counts as available when unchanged */
+  storeId?: string
   label?: string
   required?: boolean
   /** Optional callback fired whenever the availability status changes */
@@ -34,6 +36,7 @@ export function LinkField({
   prefix,
   checkUrl,
   ownerParam,
+  storeId,
   label,
   required,
   onStatusChange,
@@ -63,6 +66,7 @@ export function LinkField({
       try {
         const params = new URLSearchParams({ value: slug })
         if (ownerParam) params.set(ownerParam.key, ownerParam.value)
+        if (storeId) params.set('storeId', storeId)
         const res = await fetch(`${checkUrl}?${params.toString()}`)
         const data = (await res.json()) as { status: string; message?: string }
         applyStatus(data.status as AvailabilityStatus)
@@ -73,7 +77,7 @@ export function LinkField({
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [checkUrl, ownerParam, value, onChange],
+    [checkUrl, ownerParam, storeId, value, onChange],
   )
 
   function handleChange(raw: string) {
@@ -137,11 +141,14 @@ export function LinkField({
       </div>
 
       {/* Status message */}
-      {status === 'available' && !message && (
-        <p className="text-xs text-emerald-600">Available</p>
+      {status === 'available' && (
+        <p className="text-xs text-emerald-600">{message || 'Available ✓'}</p>
       )}
-      {(status === 'taken' || status === 'invalid') && message && (
-        <p className="text-xs text-red-500">{message}</p>
+      {status === 'taken' && (
+        <p className="text-xs text-red-500">{message || 'Already taken'}</p>
+      )}
+      {status === 'invalid' && message && (
+        <p className="text-xs text-amber-600">{message}</p>
       )}
       {status === 'idle' && draft && (
         <p className="text-xs text-neutral-400">

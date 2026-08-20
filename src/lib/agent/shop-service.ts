@@ -14,6 +14,7 @@ import { MAX_COVER_IMAGE_SIZE_BYTES } from '@/lib/platform-config'
 import { requireScope, type AgentIdentity } from './auth'
 import { listAuthorizedShops, resolveStoreForOperation, AgentShopAccessError } from './shop-access'
 import { withActivityLog } from './activity-log'
+import { checkStoreSlugAvailability, updateStoreSlugForUser, StoreSlugError } from '@/lib/stores/slug-service'
 import type { Database } from '@/lib/supabase/types'
 
 type StoreRow = Database['public']['Tables']['stores']['Row']
@@ -202,6 +203,48 @@ export async function updateShop(
     const partner = await partnerContextForStore(store.id)
     const result = formatShopSummary(store, identity, partner)
     return { result, before, after: result, storeId: store.id }
+  }, shopId)
+}
+
+export async function checkShopSlugAvailability(
+  identity: AgentIdentity,
+  slug: string,
+  shopId?: string,
+) {
+  requireScope(identity, 'shops:read')
+  const store = shopId ? await resolveStoreForOperation(identity, shopId) : null
+  const result = await checkStoreSlugAvailability(slug, { storeId: store?.id })
+  return {
+    slug: result.slug,
+    available: result.available,
+    reason: result.available ? undefined : result.reason,
+  }
+}
+
+export async function updateShopSlug(
+  identity: AgentIdentity,
+  shopId: string | undefined,
+  slug: string,
+) {
+  requireScope(identity, 'shops:write')
+
+  return withActivityLog(identity, 'update_shop_slug', 'store', shopId, async () => {
+    const beforeStore = await resolveStoreForOperation(identity, shopId)
+    try {
+      const updated = await updateStoreSlugForUser(identity.userId, beforeStore.id, slug)
+      const after = await getShop(identity, beforeStore.id)
+      return {
+        result: after,
+        before: { id: beforeStore.id, slug: updated.previousSlug },
+        after: { id: updated.storeId, slug: updated.slug },
+        storeId: updated.storeId,
+      }
+    } catch (err) {
+      if (err instanceof StoreSlugError) {
+        throw new AgentShopAccessError(err.message, err.status)
+      }
+      throw err
+    }
   }, shopId)
 }
 

@@ -13,6 +13,7 @@ import { useUserStore } from '@/hooks/use-user-store'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { uploadFile, buildStoragePath } from '@/lib/supabase/storage'
 import { Upload, Store, Loader2, ExternalLink, X } from 'lucide-react'
+import { LinkField, type AvailabilityStatus } from '@/components/dashboard/link-field'
 import { SOCIAL_PLATFORMS, SocialIcon, normalizeSocialUrl } from '@/components/ui/social-icons'
 import {
   isCustomStoreBanner,
@@ -29,6 +30,9 @@ export default function SettingsPage() {
   // Shop profile form (active shop only)
   const [storeName, setStoreName] = useState('')
   const [storeSlug, setStoreSlug] = useState('')
+  const [draftSlug, setDraftSlug] = useState('')
+  const [slugStatus, setSlugStatus] = useState<AvailabilityStatus>('idle')
+  const [showSlugConfirm, setShowSlugConfirm] = useState(false)
   const [bio, setBio] = useState('')
   const [supportEmail, setSupportEmail] = useState('')
   const [savingShop, setSavingShop] = useState(false)
@@ -92,6 +96,8 @@ export default function SettingsPage() {
     if (!store) return
     setStoreName(store.name ?? '')
     setStoreSlug(store.slug ?? '')
+    setDraftSlug(store.slug ?? '')
+    setSlugStatus('idle')
     setBio(store.bio ?? '')
     setSupportEmail(store.support_email ?? '')
     setShopAvatar(store.avatar_url ?? null)
@@ -235,11 +241,26 @@ export default function SettingsPage() {
     }
   }
 
-  async function handleSaveShopProfile(e: React.FormEvent) {
-    e.preventDefault()
+  async function saveShopProfile(includeSlug = false) {
     if (!session || !store) return
+    const slugWasChanged = includeSlug && draftSlug !== storeSlug
     setSavingShop(true)
     try {
+      if (slugWasChanged) {
+        const slugRes = await fetch(`/api/stores/${store.id}/slug`, {
+          method: 'PATCH',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ slug: draftSlug }),
+        })
+        const slugData = await slugRes.json().catch(() => ({}))
+        if (!slugRes.ok) {
+          throw new Error(slugData.error ?? 'Could not update shop URL.')
+        }
+        setStoreSlug(slugData.slug)
+        setDraftSlug(slugData.slug)
+      }
+
       const storeErr = await saveStore({
         name: storeName.trim(),
         bio: bio.trim() || null,
@@ -249,12 +270,37 @@ export default function SettingsPage() {
       if (storeErr) throw new Error(storeErr)
       refetch()
       router.refresh()
-      toast.success('Shop profile saved.')
+      toast.success(slugWasChanged ? 'Shop profile and URL saved.' : 'Shop profile saved.')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to save.')
     } finally {
       setSavingShop(false)
+      setShowSlugConfirm(false)
     }
+  }
+
+  async function handleSaveShopProfile(e: React.FormEvent) {
+    e.preventDefault()
+    if (!session || !store) return
+
+    const slugChanged = draftSlug !== storeSlug
+    const slugBlocked = slugChanged && (slugStatus === 'taken' || slugStatus === 'invalid' || slugStatus === 'checking')
+
+    if (slugBlocked) {
+      toast.error(slugStatus === 'checking' ? 'Still checking availability — please wait.' : 'Choose an available shop URL before saving.')
+      return
+    }
+
+    if (slugChanged) {
+      setShowSlugConfirm(true)
+      return
+    }
+
+    await saveShopProfile(false)
+  }
+
+  async function confirmSlugChange() {
+    await saveShopProfile(true)
   }
 
   async function handleChangePassword(e: React.FormEvent) {
@@ -284,7 +330,9 @@ export default function SettingsPage() {
     router.push('/')
   }
 
-  const storeUrl = store?.slug ? `/${store.slug}` : null
+  const storeUrl = (draftSlug || storeSlug) ? `/${draftSlug || storeSlug}` : null
+  const slugChanged = draftSlug !== storeSlug
+  const slugSaveBlocked = slugChanged && (slugStatus === 'taken' || slugStatus === 'invalid' || slugStatus === 'checking')
   const displayBannerUrl = resolveStoreBannerUrl(bannerUrl)
   const usingCustomBanner = isCustomStoreBanner(bannerUrl)
   const shopInitial = (storeName.charAt(0) || 'S').toUpperCase()
@@ -346,16 +394,19 @@ export default function SettingsPage() {
                 onChange={e => setStoreName(e.target.value)}
                 placeholder="Jessica Fitness"
               />
-              <div>
-                <label className="block text-xs font-medium text-neutral-500 mb-1">Shop URL</label>
-                <div className="flex items-center rounded-xl border border-neutral-200 overflow-hidden">
-                  <span className="px-3 py-2.5 text-sm text-neutral-500 bg-neutral-50 border-r border-neutral-200 shrink-0">
-                    sellbop.com/
-                  </span>
-                  <span className="px-3 py-2.5 text-sm font-mono text-neutral-700">{storeSlug || '—'}</span>
-                </div>
-                <p className="text-xs text-neutral-400 mt-1">Your shop URL is set when the Shop is created.</p>
-              </div>
+              <LinkField
+                label="Shop URL"
+                value={storeSlug}
+                onChange={setDraftSlug}
+                prefix="sellbop.com/"
+                checkUrl="/api/availability/store-link"
+                storeId={store?.id}
+                ownerParam={session ? { key: 'ownerId', value: session.userId } : undefined}
+                onStatusChange={setSlugStatus}
+              />
+              <p className="text-xs text-neutral-400 -mt-2">
+                Only the part after <span className="font-mono">sellbop.com/</span> is editable. Use lowercase letters, numbers, and hyphens.
+              </p>
               {storeUrl && (
                 <a href={storeUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-neutral-600 hover:text-black transition-colors">
                   View your shop <ExternalLink size={13} />
@@ -377,8 +428,45 @@ export default function SettingsPage() {
               <p className="text-xs text-neutral-400 -mt-2">
                 Customers use this email to contact this Shop. It does not change your SellBop login email.
               </p>
-              <Button type="submit" loading={savingShop}>Save Shop Profile</Button>
+              <Button type="submit" loading={savingShop} disabled={slugSaveBlocked}>Save Changes</Button>
             </form>
+
+            {showSlugConfirm && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+                <div className="w-full max-w-md rounded-2xl border border-neutral-200 bg-white p-6 shadow-xl">
+                  <h3 className="text-lg font-bold text-black">Change Shop URL?</h3>
+                  <p className="text-sm text-neutral-600 mt-2 leading-relaxed">
+                    Changing your Shop URL will update your public storefront link.
+                    Old links may no longer work unless SellBop redirects them.
+                  </p>
+                  <div className="mt-4 rounded-lg bg-neutral-50 border border-neutral-200 px-3 py-2 text-sm">
+                    <span className="text-neutral-500">sellbop.com/</span>
+                    <span className="font-mono text-neutral-400 line-through">{storeSlug}</span>
+                    <span className="text-neutral-400 mx-1">→</span>
+                    <span className="font-mono font-medium text-black">{draftSlug}</span>
+                  </div>
+                  <div className="flex flex-col-reverse sm:flex-row gap-2 mt-6">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      className="w-full sm:w-auto"
+                      onClick={() => setShowSlugConfirm(false)}
+                      disabled={savingShop}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="button"
+                      className="w-full sm:w-auto"
+                      loading={savingShop}
+                      onClick={() => void confirmSlugChange()}
+                    >
+                      Change URL
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 

@@ -15,6 +15,7 @@ export function humanActionLabel(action: string): string {
     update_product: 'Updated product',
     create_shop: 'Created shop',
     update_shop: 'Updated shop',
+    update_shop_slug: 'Changed shop URL',
     set_shop_avatar: 'Updated shop avatar',
     set_shop_banner: 'Updated shop banner',
     upload_product_file: 'Uploaded product file',

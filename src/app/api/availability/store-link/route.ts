@@ -1,38 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getSupabaseAdminClient } from '@/lib/supabase/admin'
-import { validateStoreSlug } from '@/lib/store-slugs'
+import { checkStoreSlugAvailability } from '@/lib/stores/slug-service'
 
 export async function GET(req: NextRequest) {
-  const value = req.nextUrl.searchParams.get('value')?.toLowerCase().trim() ?? ''
+  const value = req.nextUrl.searchParams.get('value') ?? ''
   const currentOwnerId = req.nextUrl.searchParams.get('ownerId') ?? ''
+  const storeId = req.nextUrl.searchParams.get('storeId') ?? ''
 
-  const validationError = validateStoreSlug(value)
-  if (validationError) {
-    return NextResponse.json({ status: 'invalid', message: validationError })
+  const result = await checkStoreSlugAvailability(value, {
+    storeId: storeId || undefined,
+    ownerId: currentOwnerId || undefined,
+  })
+
+  if (!result.available) {
+    const isValidation = result.reason && !result.reason.toLowerCase().includes('taken')
+    return NextResponse.json({
+      status: isValidation ? 'invalid' : 'taken',
+      message: result.reason ?? 'This store link is already taken.',
+      slug: result.slug,
+      available: false,
+    })
   }
 
-  const admin = getSupabaseAdminClient()
-  if (!admin) {
-    return NextResponse.json({ status: 'available' })
-  }
-
-  const { data, error } = await admin
-    .from('stores')
-    .select('id, owner_user_id, slug')
-    .eq('slug', value)
-    .maybeSingle()
-
-  if (error) {
-    return NextResponse.json({ status: 'available' })
-  }
-
-  if (!data) {
-    return NextResponse.json({ status: 'available' })
-  }
-
-  if (currentOwnerId && data.owner_user_id === currentOwnerId) {
-    return NextResponse.json({ status: 'available' })
-  }
-
-  return NextResponse.json({ status: 'taken', message: 'This store link is already taken.' })
+  return NextResponse.json({
+    status: 'available',
+    slug: result.slug,
+    available: true,
+  })
 }
