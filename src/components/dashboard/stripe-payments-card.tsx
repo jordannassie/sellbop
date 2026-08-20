@@ -109,10 +109,10 @@ export function StripePaymentsCard() {
           ) : (
             <Button
               size="sm"
+              variant="brand"
               onClick={handleConnect}
               disabled={connecting}
-              className="font-bold text-white hover:opacity-90"
-              style={{ background: '#00E676', borderColor: '#00E676' }}
+              className="font-semibold"
             >
               {connecting ? 'Connecting…' : 'Connect Stripe'}
             </Button>

@@ -124,7 +124,7 @@ export default function PayoutsPage() {
                 Connect your Stripe account to start accepting payments and receive payouts.
                 Sellbop uses Stripe Connect to securely transfer your earnings directly to your bank.
               </p>
-              <Button onClick={handleConnectStripe} loading={connecting}>
+              <Button onClick={handleConnectStripe} loading={connecting} variant="brand">
                 Connect Stripe
               </Button>
             </div>

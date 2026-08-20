@@ -270,7 +270,7 @@ export function GettingStartedCard() {
                           {step.stripeConnect ? (
                             <Button
                               size="xs"
-                              variant="secondary"
+                              variant="brand"
                               onClick={handleStripeConnect}
                               disabled={connectingStripe}
                             >
@@ -278,7 +278,7 @@ export function GettingStartedCard() {
                             </Button>
                           ) : href ? (
                             <Link href={href} target={step.id === 'share_store' ? '_blank' : undefined}>
-                              <Button size="xs" variant="secondary">
+                              <Button size="xs" variant="brand">
                                 {step.id === 'share_store' && <ExternalLink size={11} />}
                                 {step.cta}
                               </Button>

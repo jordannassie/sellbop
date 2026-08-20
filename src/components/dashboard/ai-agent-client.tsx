@@ -552,7 +552,7 @@ export function AiAgentClient() {
             <ShopAccessPicker hub={hub} accessMode={accessMode} onAccessModeChange={setAccessMode} />
 
             <div className="mt-6 space-y-4">
-              <Button onClick={handleConnectClaude} loading={connecting} className="font-semibold text-white w-full sm:w-auto" style={{ background: '#00E676', borderColor: '#00E676' }}>
+              <Button onClick={handleConnectClaude} loading={connecting} variant="brand" className="font-semibold w-full sm:w-auto">
                 Connect Claude <ExternalLink size={14} className="ml-1" />
               </Button>
               <AddSellBopHelper mcpUrl={MCP_URL} onCopyMcpUrl={copyMcpUrl} onCopyName={copyConnectorName} />
@@ -581,7 +581,7 @@ export function AiAgentClient() {
             <>
               <p className="text-sm text-neutral-600">Not connected — connect Stripe so your Shop can accept payments.</p>
               <Link href="/dashboard/payouts" className="inline-block mt-2">
-                <Button size="sm" variant="secondary">Connect Stripe</Button>
+                <Button size="sm" variant="brand">Connect Stripe</Button>
               </Link>
             </>
           )}

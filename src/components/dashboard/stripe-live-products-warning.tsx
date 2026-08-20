@@ -39,10 +39,10 @@ export function StripeLiveProductsWarning({ liveProductCount }: { liveProductCou
         </div>
         <Button
           size="sm"
+          variant="brand"
           onClick={handleConnect}
           disabled={connecting}
-          className="flex-shrink-0 font-bold text-white hover:opacity-90"
-          style={{ background: '#00E676', borderColor: '#00E676' }}
+          className="flex-shrink-0 font-semibold"
         >
           {connecting ? 'Connecting…' : 'Connect Stripe'}
         </Button>

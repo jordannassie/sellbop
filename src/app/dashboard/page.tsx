@@ -135,11 +135,7 @@ export default function DashboardOverview() {
         </div>
         {storeSlug && !isUnpublishedPartner && (
           <Link href={`/store/${storeSlug}`} target="_blank">
-            <Button
-              size="sm"
-              className="font-bold text-white hover:opacity-90"
-              style={{ background: '#00E676', borderColor: '#00E676' }}
-            >
+            <Button size="sm" variant="brand" className="font-semibold">
               <ExternalLink size={13} /> View Store
             </Button>
           </Link>
@@ -165,7 +161,7 @@ export default function DashboardOverview() {
             Your Shop has been claimed. Connect Stripe to prepare for launch.
           </p>
           <Link href="/dashboard/payouts" className="inline-block mt-3">
-            <Button size="sm">Connect Stripe</Button>
+            <Button size="sm" variant="brand">Connect Stripe</Button>
           </Link>
         </div>
       )}

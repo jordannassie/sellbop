@@ -188,8 +188,7 @@ export function DashboardSidebar() {
           target="_blank"
           rel="noopener noreferrer"
           onClick={onNavigate}
-          className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-white transition-colors hover:opacity-90"
-          style={{ background: '#00E676' }}
+          className="flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-500 bg-white px-4 py-2.5 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-50"
         >
           <ExternalLink size={14} /> View Store
         </a>

@@ -82,7 +82,7 @@ export function ClaudeEcomCard() {
           <div className="mt-4">
             {!isConnected ? (
               <Link href="/dashboard/ai-agent">
-                <Button size="sm" className="font-semibold text-white" style={{ background: '#00E676', borderColor: '#00E676' }}>
+                <Button size="sm" variant="brand" className="font-semibold">
                   Connect Claude
                 </Button>
               </Link>
