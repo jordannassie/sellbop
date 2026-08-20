@@ -1117,6 +1117,7 @@ export interface Database {
           id: string
           user_id: string
           store_id: string | null
+          access_mode: string
           provider: string
           name: string
           token_hash: string
@@ -1130,6 +1131,7 @@ export interface Database {
           id?: string
           user_id: string
           store_id?: string | null
+          access_mode?: string
           provider?: string
           name: string
           token_hash: string
@@ -1196,6 +1198,7 @@ export interface Database {
           id: string
           connection_id: string | null
           user_id: string
+          store_id: string | null
           action: string
           target_type: string | null
           target_id: string | null
@@ -1209,6 +1212,7 @@ export interface Database {
           id?: string
           connection_id?: string | null
           user_id: string
+          store_id?: string | null
           action: string
           target_type?: string | null
           target_id?: string | null

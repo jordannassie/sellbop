@@ -9,13 +9,13 @@ import {
   MAX_PRODUCT_FILE_SIZE_BYTES,
 } from '@/lib/platform-config'
 import { AgentAuthError, requireScope, type AgentIdentity } from './auth'
-import { userCanManageStore } from '@/lib/stores/active-store'
-import { isMissingRelationError } from '@/lib/supabase/schema-compat'
+import { resolveStoreForOperation, resolveProductInShop } from './shop-access'
+import { withActivityLog } from './activity-log'
+
 import type { Database } from '@/lib/supabase/types'
 
 type ProductRow = Database['public']['Tables']['products']['Row']
 type ProductUpdate = Database['public']['Tables']['products']['Update']
-type StoreRow = Database['public']['Tables']['stores']['Row']
 
 export class AgentServiceError extends Error {
   status: number
@@ -25,142 +25,33 @@ export class AgentServiceError extends Error {
   }
 }
 
-// ── Activity logging ──────────────────────────────────────────────────────
+// ── get_store (legacy — returns resolved shop) ─────────────────────────────
 
-async function logActivity(params: {
-  identity: AgentIdentity
-  action: string
-  targetType?: string
-  targetId?: string
-  before?: unknown
-  after?: unknown
-  status: 'ok' | 'error'
-  errorMessage?: string
-}) {
-  const admin = getSupabaseAdminClient()
-  await admin.from('agent_activity_log').insert({
-    connection_id: params.identity.connectionId,
-    user_id: params.identity.userId,
-    action: params.action,
-    target_type: params.targetType ?? null,
-    target_id: params.targetId ?? null,
-    before: (params.before as Record<string, unknown> | undefined) ?? null,
-    after: (params.after as Record<string, unknown> | undefined) ?? null,
-    status: params.status,
-    error_message: params.errorMessage ?? null,
-  })
-}
-
-/** Wraps a service action: runs it, logs success/failure, re-throws on failure. */
-async function withActivityLog<T>(
-  identity: AgentIdentity,
-  action: string,
-  targetType: string,
-  targetId: string | undefined,
-  fn: () => Promise<{ result: T; before?: unknown; after?: unknown }>,
-): Promise<T> {
-  try {
-    const { result, before, after } = await fn()
-    await logActivity({ identity, action, targetType, targetId, before, after, status: 'ok' })
-    return result
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error'
-    await logActivity({ identity, action, targetType, targetId, status: 'error', errorMessage: message })
-    throw err
-  }
-}
-
-// ── Store resolution ──────────────────────────────────────────────────────
-
-/** Resolve the store this identity is allowed to act on. Throws if none / mismatched. */
-async function resolveStore(identity: AgentIdentity): Promise<StoreRow> {
-  const admin = getSupabaseAdminClient()
-
-  if (identity.storeId) {
-    const canManage = await userCanManageStore(identity.userId, identity.storeId)
-    if (!canManage) {
-      throw new AgentAuthError('This connection is not authorized for this store.', 403)
-    }
-    const { data: store } = await admin
-      .from('stores')
-      .select('*')
-      .eq('id', identity.storeId)
-      .maybeSingle()
-    if (!store) throw new AgentServiceError('Store not found.', 404)
-    return store
-  }
-
-  const { data: memberships, error: memberError } = await admin
-    .from('store_members')
-    .select('stores(*)')
-    .eq('user_id', identity.userId)
-    .order('created_at', { ascending: true })
-    .limit(1)
-
-  if (memberError && !isMissingRelationError(memberError)) {
-    console.error('[resolveStore] store_members query failed:', memberError.message)
-    throw new AgentServiceError('Could not resolve shop access.', 500)
-  }
-
-  const fromMember = memberships?.[0]?.stores as StoreRow | null | undefined
-  if (fromMember) return fromMember
-
-  const { data: store } = await admin
-    .from('stores')
-    .select('*')
-    .eq('owner_user_id', identity.userId)
-    .order('created_at', { ascending: true })
-    .limit(1)
-    .maybeSingle()
-
-  if (!store) throw new AgentServiceError('No store found for this account.', 404)
-  return store
-}
-
-/** Verify a product belongs to a store owned by this identity. Throws otherwise. */
-async function resolveOwnedProduct(identity: AgentIdentity, productId: string): Promise<ProductRow> {
-  const admin = getSupabaseAdminClient()
-  const { data: product } = await admin
-    .from('products')
-    .select('*')
-    .eq('id', productId)
-    .maybeSingle()
-
-  if (!product) throw new AgentServiceError('Product not found.', 404)
-
-  const store = await resolveStore(identity)
-  if (product.store_id !== store.id) throw new AgentServiceError('Product not found.', 404)
-
-  return product
-}
-
-// ── get_store ──────────────────────────────────────────────────────────────
-
-export async function getStore(identity: AgentIdentity) {
+export async function getStore(identity: AgentIdentity, shopId?: string) {
   requireScope(identity, 'products:read')
-  return resolveStore(identity)
+  return resolveStoreForOperation(identity, shopId)
 }
 
 // ── get_products / get_product ────────────────────────────────────────────
 
-export async function getProducts(identity: AgentIdentity) {
+export async function getProducts(identity: AgentIdentity, shopId?: string) {
   requireScope(identity, 'products:read')
-  const store = await resolveStore(identity)
+  const store = await resolveStoreForOperation(identity, shopId)
   const admin = getSupabaseAdminClient()
 
   const { data: products, error } = await admin
     .from('products')
     .select('*')
     .eq('store_id', store.id)
-    .order('created_at', { ascending: false })
+    .order('sort_order', { ascending: true })
 
   if (error) throw new AgentServiceError(error.message, 500)
   return products ?? []
 }
 
-export async function getProduct(identity: AgentIdentity, productId: string) {
+export async function getProduct(identity: AgentIdentity, productId: string, shopId?: string) {
   requireScope(identity, 'products:read')
-  const product = await resolveOwnedProduct(identity, productId)
+  const { product } = await resolveProductInShop(identity, productId, shopId)
 
   const admin = getSupabaseAdminClient()
   const { data: files } = await admin
@@ -176,6 +67,7 @@ export async function getProduct(identity: AgentIdentity, productId: string) {
 
 export interface CreateProductInput {
   title: string
+  shop_id?: string
   description?: string | null
   short_description?: string | null
   price_cents?: number | null
@@ -196,7 +88,7 @@ export async function createProduct(identity: AgentIdentity, input: CreateProduc
   }
 
   return withActivityLog(identity, 'create_product', 'product', undefined, async () => {
-    const store = await resolveStore(identity)
+    const store = await resolveStoreForOperation(identity, input.shop_id)
     const admin = getSupabaseAdminClient()
 
     const baseSlug = input.slug?.trim() ? slugify(input.slug) : slugify(input.title)
@@ -233,8 +125,8 @@ export async function createProduct(identity: AgentIdentity, input: CreateProduc
       .single()
 
     if (error) throw new AgentServiceError(error.message, 500)
-    return { result: product, after: product }
-  })
+    return { result: product, after: product, storeId: store.id }
+  }, input.shop_id)
 }
 
 // ── update_product (generic — backs every set_/enable_/publish_ tool) ──────
@@ -254,9 +146,11 @@ export type ProductPatch = Partial<{
   affiliate_commission_percent: number | null
   access_message: string | null
   checkout_copy: string | null
+  sale_enabled: boolean
+  sale_price_cents: number | null
 }>
 
-export async function updateProduct(identity: AgentIdentity, productId: string, patch: ProductPatch) {
+export async function updateProduct(identity: AgentIdentity, productId: string, patch: ProductPatch, shopId?: string) {
   const isAffiliateChange = 'affiliate_enabled' in patch || 'affiliate_commission_percent' in patch
   requireScope(identity, isAffiliateChange ? 'affiliates:write' : 'products:write')
 
@@ -269,7 +163,7 @@ export async function updateProduct(identity: AgentIdentity, productId: string, 
   }
 
   return withActivityLog(identity, 'update_product', 'product', productId, async () => {
-    const before = await resolveOwnedProduct(identity, productId)
+    const { product: before } = await resolveProductInShop(identity, productId, shopId)
     const admin = getSupabaseAdminClient()
 
     const update: ProductUpdate = { updated_at: new Date().toISOString() }
@@ -288,6 +182,8 @@ export async function updateProduct(identity: AgentIdentity, productId: string, 
     if (patch.marketplace_listing !== undefined) update.marketplace_listing = patch.marketplace_listing
     if (patch.access_message !== undefined) update.access_message = patch.access_message
     if (patch.checkout_copy !== undefined) update.checkout_copy = patch.checkout_copy
+    if (patch.sale_enabled !== undefined) update.sale_enabled = patch.sale_enabled
+    if (patch.sale_price_cents !== undefined) update.sale_price_cents = patch.sale_price_cents
     if (patch.affiliate_enabled !== undefined) {
       update.affiliate_enabled = patch.affiliate_enabled
       update.affiliate_updated_at = new Date().toISOString()
@@ -319,8 +215,8 @@ export async function updateProduct(identity: AgentIdentity, productId: string, 
       .single()
 
     if (error) throw new AgentServiceError(error.message, 500)
-    return { result: product, before, after: product }
-  })
+    return { result: product, before, after: product, storeId: before.store_id }
+  }, shopId)
 }
 
 // ── File / image upload ─────────────────────────────────────────────────────
@@ -345,8 +241,7 @@ export async function uploadProductFile(identity: AgentIdentity, productId: stri
   }
 
   return withActivityLog(identity, 'upload_product_file', 'product_file', productId, async () => {
-    await resolveOwnedProduct(identity, productId)
-    const store = await resolveStore(identity)
+    const { product, store } = await resolveProductInShop(identity, productId)
     const admin = getSupabaseAdminClient()
 
     const buffer = decodeBase64(input.base64Data)
@@ -379,7 +274,7 @@ export async function uploadProductFile(identity: AgentIdentity, productId: stri
       .single()
 
     if (error) throw new AgentServiceError(error.message, 500)
-    return { result: file, after: file }
+    return { result: file, after: file, storeId: store.id }
   })
 }
 
@@ -392,8 +287,7 @@ export async function attachProductFile(
   requireScope(identity, 'files:write')
 
   return withActivityLog(identity, 'attach_product_file', 'product_file', productId, async () => {
-    await resolveOwnedProduct(identity, productId)
-    const store = await resolveStore(identity)
+    const { store } = await resolveProductInShop(identity, productId)
     const admin = getSupabaseAdminClient()
 
     const { data: file, error } = await admin
@@ -414,7 +308,7 @@ export async function attachProductFile(
       .single()
 
     if (error) throw new AgentServiceError(error.message, 500)
-    return { result: file, after: file }
+    return { result: file, after: file, storeId: store.id }
   })
 }
 
@@ -431,8 +325,7 @@ export async function uploadProductImage(
   }
 
   return withActivityLog(identity, 'upload_product_image', 'product', productId, async () => {
-    const before = await resolveOwnedProduct(identity, productId)
-    const store = await resolveStore(identity)
+    const { product: before, store } = await resolveProductInShop(identity, productId)
     const admin = getSupabaseAdminClient()
 
     const buffer = decodeBase64(input.base64Data)
@@ -462,7 +355,7 @@ export async function uploadProductImage(
       product = updated
     }
 
-    return { result: { url: imageUrl, path, product }, before, after: product }
+    return { result: { url: imageUrl, path, product }, before, after: product, storeId: store.id }
   })
 }
 

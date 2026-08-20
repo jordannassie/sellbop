@@ -169,3 +169,99 @@ token), `403` (token valid but missing the required scope, or acting outside its
    call `publish_product`, which they can revoke access for at any time).
 
 Every step above is visible in **Settings → AI & Integrations → AI Activity**.
+
+---
+
+## 6. Claude E-Com V1 — Universal Autonomous Shop Builder
+
+Claude E-Com extends the Phase 1 agent API so Claude can operate an entire SellBop shop end-to-end: discovery, branding, catalog creation, media, affiliates, audit, and analytics.
+
+### Connection model
+
+Each connection belongs to a user and has an **access mode**:
+
+| Mode | Behavior |
+|---|---|
+| `single_shop` | Token is bound to one shop (`store_id`). Claude cannot access other shops. |
+| `all_managed_shops` | Claude may list and operate any shop the user can manage via `store_members` / ownership. |
+
+Create connections in **Settings → AI & Integrations** or via `POST /api/agent-connections` with:
+
+```json
+{
+  "name": "Claude E-Com",
+  "provider": "claude",
+  "claude_ecom": true,
+  "access_mode": "single_shop"
+}
+```
+
+Recommended Claude E-Com scopes: `shops:read`, `shops:write`, `products:read`, `products:write`, `files:write`, `affiliates:write`, `analytics:read`.
+
+Legacy tokens using `products:read` / `products:write` remain compatible (scope aliases).
+
+### Complete MCP tool list (V1)
+
+**Shop discovery & branding:** `list_shops`, `get_shop`, `get_shop_by_slug`, `create_shop`, `update_shop`, `set_shop_avatar`, `set_shop_banner`, `get_storefront_configuration`, `get_shop_preview_url`, `audit_shop`, `get_shop_snapshot`
+
+**Products (Phase 1 preserved):** `get_store`, `get_products`, `list_products`, `get_product`, `create_product`, `update_product`, `set_product_description`, `set_product_price`, `set_product_sale_price`, `save_product_as_draft`, `publish_product`, `unpublish_product`
+
+**Catalog:** `reorder_products`, `duplicate_product`, `list_product_files`
+
+**Media & files:** `upload_product_file`, `attach_product_file`, `upload_product_image`, `set_primary_product_image`, `add_product_gallery_image`
+
+**Affiliates:** `enable_affiliates`, `disable_affiliates`, `set_affiliate_commission`
+
+**Analytics (read-only):** `get_shop_sales_summary`, `get_product_sales_summary`
+
+**Creative (provider abstraction):** `generate_product_image`, `generate_shop_banner`, `generate_product_pdf` — returns `not_configured` until `OPENAI_API_KEY` + provider package are set.
+
+### Safety (unchanged + extended)
+
+- No raw SQL, service-role keys, Stripe secrets, refunds, or payout modification
+- New products default to **draft** (`is_live: false`)
+- Partner Shop creation requires platform admin + uses existing 50/50 Partnership economics
+- All writes logged to `agent_activity_log` with `store_id` when migration 032 is applied
+
+### REST equivalents (partial)
+
+| MCP tool | REST |
+|---|---|
+| `list_shops` | `GET /api/agent/v1/shops` |
+| `get_shop_snapshot` | `GET /api/agent/v1/shops/:id?view=snapshot` |
+| `audit_shop` | `GET /api/agent/v1/shops/:id?view=audit` |
+| Phase 1 product tools | `/api/agent/v1/products/*` (unchanged) |
+
+---
+
+## Claude E-Com Example
+
+Build a 10-product draft business for an influencer:
+
+1. `list_shops` — find or confirm target shop
+2. `create_shop` (admin + `partner_mode: true`) or `update_shop` — configure name, bio, support email
+3. `set_shop_banner` / `set_shop_avatar` — upload branding (or `generate_shop_banner` when configured)
+4. Loop 10×: `create_product` (draft) → `set_product_description` → `set_product_price` → `enable_affiliates` → `upload_product_image` → `upload_product_file`
+5. `reorder_products` — arrange pricing ladder
+6. `audit_shop` — verify completeness
+7. `get_shop_preview_url` — return private preview for human review
+
+Products remain **draft** until the seller explicitly publishes.
+
+### Acceptance test
+
+```bash
+node scripts/agent-acceptance-test.mjs
+```
+
+Requires `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and optionally `BASE_URL`.
+
+### Database
+
+Migration **032** adds `access_mode` to `agent_connections` and `store_id` to `agent_activity_log`:
+
+```bash
+npm run db:apply-032   # requires DATABASE_URL
+```
+
+Apply to production before deploying code that writes `access_mode` / `store_id`.

@@ -21,6 +21,7 @@ import { StripePaymentsCard } from '@/components/dashboard/stripe-payments-card'
 import { StripeLiveProductsWarning } from '@/components/dashboard/stripe-live-products-warning'
 import { PartnerTermsAcceptance } from '@/components/dashboard/partner-terms-acceptance'
 import { PartnerEarningsCard } from '@/components/dashboard/partner-earnings-card'
+import { ClaudeEcomCard } from '@/components/dashboard/claude-ecom-card'
 import { isSupabaseConfigured } from '@/lib/env'
 
 interface OrderRow {
@@ -154,6 +155,8 @@ export default function DashboardOverview() {
       )}
 
       {activeSummary?.isPartnerShop && <PartnerEarningsCard />}
+
+      <ClaudeEcomCard />
 
       {showPartnerClaimCard && (
         <div className="mb-6 rounded-xl border border-neutral-200 bg-white p-5">

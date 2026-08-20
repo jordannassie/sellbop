@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server'
 import { isSupabaseAdminConfigured } from '@/lib/env'
 import { resolveAgentToken, AgentAuthError, type AgentIdentity } from './auth'
 import { AgentServiceError } from './service'
+import { AgentShopAccessError } from './shop-access'
 
 /**
  * Authenticates an incoming /api/agent/v1/* request via its Authorization
@@ -36,7 +37,7 @@ export async function runAgentAction<T>(fn: () => Promise<T>): Promise<NextRespo
     const result = await fn()
     return NextResponse.json(result)
   } catch (err) {
-    if (err instanceof AgentAuthError || err instanceof AgentServiceError) {
+    if (err instanceof AgentAuthError || err instanceof AgentServiceError || err instanceof AgentShopAccessError) {
       return NextResponse.json({ error: err.message }, { status: err.status })
     }
     const message = err instanceof Error ? err.message : 'Unknown error.'

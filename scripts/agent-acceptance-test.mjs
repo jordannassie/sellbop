@@ -96,7 +96,7 @@ async function main() {
   const sellerA = stores[0]
   const sellerB = stores.length > 1 ? stores[1] : null
 
-  const scopes = ['products:read', 'products:write', 'files:write', 'affiliates:write']
+  const scopes = ['shops:read', 'shops:write', 'products:read', 'products:write', 'files:write', 'affiliates:write', 'analytics:read']
   let tokenA = PROVIDED_TOKEN
 
   if (!tokenA) {
@@ -105,6 +105,7 @@ async function main() {
     const { error } = await admin.from('agent_connections').insert({
       user_id: sellerA.owner_user_id,
       store_id: sellerA.id,
+      access_mode: 'single_shop',
       provider: 'claude',
       name: 'Acceptance Test Connection',
       token_hash: hash,
@@ -120,6 +121,22 @@ async function main() {
   if (storeRes.status === 200 && storeBody.id) ok('GET /api/agent/v1/store with token → own store')
   else fail('GET /api/agent/v1/store with token', `${storeRes.status} ${JSON.stringify(storeBody)}`)
 
+  // Claude E-Com V1 — list shops
+  const { res: shopsRes, body: shopsBody } = await agentFetch('/api/agent/v1/shops', tokenA)
+  if (shopsRes.status === 200 && Array.isArray(shopsBody.shops)) ok('GET /api/agent/v1/shops → authorized shops')
+  else fail('GET /api/agent/v1/shops', `${shopsRes.status} ${JSON.stringify(shopsBody)}`)
+
+  const shopId = shopsBody.shops?.[0]?.id ?? storeBody.id
+  if (shopId) {
+    const { res: snapRes, body: snapBody } = await agentFetch(`/api/agent/v1/shops/${shopId}?view=snapshot`, tokenA)
+    if (snapRes.status === 200 && snapBody.shop) ok('GET shop snapshot')
+    else fail('GET shop snapshot', `${snapRes.status}`)
+
+    const { res: auditRes, body: auditBody } = await agentFetch(`/api/agent/v1/shops/${shopId}?view=audit`, tokenA)
+    if (auditRes.status === 200 && typeof auditBody.product_count === 'number') ok('GET shop audit')
+    else fail('GET shop audit', `${auditRes.status}`)
+  }
+
   // Test 3 — store isolation
   if (sellerB) {
     let tokenB
@@ -128,6 +145,7 @@ async function main() {
     await admin.from('agent_connections').insert({
       user_id: sellerB.owner_user_id,
       store_id: sellerB.id,
+      access_mode: 'single_shop',
       provider: 'claude',
       name: 'Acceptance Test B',
       token_hash: hash,
