@@ -22,6 +22,7 @@ const MCP_URL = 'https://sellbop.com/api/mcp'
 const TEST_PROMPT = 'List the SellBop Shops I can manage. Do not make any changes yet.'
 const BUILD_TEST_PROMPT = 'In my selected SellBop Shop, create one Draft product called Claude E-Com Test, price it at $9, enable affiliates at 40%, audit the Shop, and return the private preview URL. Do not publish anything.'
 const CONNECTOR_SCREENSHOT_URL = 'https://qsvmgzdaashfsavmfjuz.supabase.co/storage/v1/object/public/SELL/images/connector.png'
+const ALWAYS_ALLOW_SCREENSHOT_URL = 'https://qsvmgzdaashfsavmfjuz.supabase.co/storage/v1/object/public/SELL/images/always%20allow.png'
 
 type AccessMode = 'single_shop' | 'all_managed_shops'
 
@@ -198,6 +199,42 @@ function ClaudeConnectorScreenshot({ compact = false }: { compact?: boolean }) {
   )
 }
 
+function ClaudeAlwaysAllowScreenshot({ compact = false }: { compact?: boolean }) {
+  return (
+    <div className={cn('mt-4 space-y-3', compact && 'mt-3')}>
+      <h4 className={cn('font-semibold text-black', compact ? 'text-sm' : 'text-base')}>
+        Let Claude Work Without Constant Approval
+      </h4>
+      <p className={cn('text-neutral-600 leading-relaxed', compact ? 'text-xs' : 'text-sm')}>
+        Claude may ask you to approve individual SellBop actions.
+      </p>
+      <p className={cn('text-neutral-600 leading-relaxed', compact ? 'text-xs' : 'text-sm')}>
+        For a smoother Claude E-Com experience, set trusted SellBop tools to:{' '}
+        <span className="font-medium text-black">Always Allow</span>
+      </p>
+      <p className={cn('text-neutral-600 leading-relaxed', compact ? 'text-xs' : 'text-sm')}>
+        This lets Claude build your Shop, create products, update pricing, configure affiliates, generate assets, and complete longer workflows without asking for approval on every single action.
+      </p>
+      <div className="mx-auto w-full max-w-[800px]">
+        <Image
+          src={ALWAYS_ALLOW_SCREENSHOT_URL}
+          alt="Claude tool permission menu showing Always Allow option for SellBop"
+          width={198}
+          height={234}
+          className="w-full h-auto rounded-xl border border-neutral-200 shadow-sm"
+          sizes="(max-width: 768px) 100vw, 198px"
+        />
+      </div>
+      <p className={cn('text-neutral-600 leading-relaxed', compact ? 'text-xs' : 'text-sm')}>
+        <span className="font-medium text-black">Look for &ldquo;Always Allow&rdquo;</span> or the equivalent trusted-tool permission option in Claude.
+      </p>
+      <p className={cn('text-neutral-500 leading-relaxed', compact ? 'text-xs' : 'text-xs')}>
+        Only enable Always Allow for SellBop if you trust the connection and want Claude to operate your authorized Shops.
+      </p>
+    </div>
+  )
+}
+
 function ConnectionSteps({ compact = false }: { compact?: boolean }) {
   return (
     <div className={cn('space-y-5', compact && 'space-y-4 text-sm')}>
@@ -206,14 +243,25 @@ function ConnectionSteps({ compact = false }: { compact?: boolean }) {
         <p className="text-neutral-600 mt-1">Click <span className="font-medium text-black">Connect Claude</span>.</p>
       </div>
       <div>
-        <h3 className={cn('font-bold text-black', compact ? 'text-sm' : 'text-base')}>2. Add SellBop</h3>
+        <h3 className={cn('font-bold text-black', compact ? 'text-sm' : 'text-base')}>2. Add SellBop custom connector</h3>
         <ClaudeConnectorScreenshot compact={compact} />
       </div>
       <div>
-        <h3 className={cn('font-bold text-black', compact ? 'text-sm' : 'text-base')}>3. Authorize</h3>
+        <h3 className={cn('font-bold text-black', compact ? 'text-sm' : 'text-base')}>3. Authorize SellBop</h3>
         <p className="text-neutral-600 mt-1 leading-relaxed">
           Claude will connect to SellBop and request authorization if required. After authorization, return to SellBop — you should see{' '}
           <span className="font-medium text-black">Claude Connected ✓</span>.
+        </p>
+      </div>
+      <div>
+        <h3 className={cn('font-bold text-black', compact ? 'text-sm' : 'text-base')}>4. Set SellBop to Always Allow for smoother hands-free operation</h3>
+        <ClaudeAlwaysAllowScreenshot compact={compact} />
+      </div>
+      <div>
+        <h3 className={cn('font-bold text-black', compact ? 'text-sm' : 'text-base')}>5. Start using Claude E-Com</h3>
+        <p className="text-neutral-600 mt-1 leading-relaxed">
+          Open a Claude chat, enable <span className="font-medium text-black">SellBop</span> under{' '}
+          <span className="font-medium text-black">+ → Connectors</span>, and try one of the test prompts below — or ask Claude to build your Shop.
         </p>
       </div>
     </div>
