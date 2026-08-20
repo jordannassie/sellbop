@@ -21,7 +21,7 @@ import {
   STORE_BANNER_BG_CLASS,
 } from '@/lib/store-defaults'
 import { PARTNER_SOCIAL_IS_KEY, PARTNER_SOCIAL_SHOW_KEY, partnerFromSocialLinks, stripPartnerSocialLinks } from '@/lib/partner-storage'
-import { isValidYouTubeUrl } from '@/lib/youtube'
+import { isValidYouTubeUrl, youTubeEmbedFromUrl } from '@/lib/youtube'
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -366,6 +366,7 @@ export default function SettingsPage() {
   const displayBannerUrl = resolveStoreBannerUrl(bannerUrl)
   const usingCustomBanner = isCustomStoreBanner(bannerUrl)
   const shopInitial = (storeName.charAt(0) || 'S').toUpperCase()
+  const valueVideoPreviewSrc = youTubeEmbedFromUrl(valueVideoUrl)
 
   return (
     <div className="max-w-2xl">
@@ -615,6 +616,20 @@ export default function SettingsPage() {
                 </p>
                 {valueVideoError && (
                   <p className="text-xs text-red-600 mt-2">{valueVideoError}</p>
+                )}
+                {valueVideoPreviewSrc && (
+                  <div className="mt-4">
+                    <p className="text-xs font-medium text-neutral-500 mb-2">Preview</p>
+                    <div className="relative w-full max-w-sm overflow-hidden rounded-xl border border-neutral-200 bg-neutral-50 aspect-video">
+                      <iframe
+                        src={valueVideoPreviewSrc}
+                        title="Value video preview"
+                        className="absolute inset-0 h-full w-full"
+                        allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen
+                      />
+                    </div>
+                  </div>
                 )}
               </div>
               <Button type="submit" loading={savingValueVideo}>Save Value Video</Button>
