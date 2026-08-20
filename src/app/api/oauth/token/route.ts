@@ -4,6 +4,7 @@ import { isSupabaseAdminConfigured } from '@/lib/env'
 import { verifyPkceS256 } from '@/lib/oauth/mcp-oauth'
 import { generateAgentToken, ALL_AGENT_SCOPES, CLAUDE_ECOM_SCOPES, type AgentScope } from '@/lib/agent/auth'
 import { accessFromAuthCode, resolvePendingAgentAccess } from '@/lib/agent/oauth-access-mode'
+import { revokeActiveClaudeConnections } from '@/lib/agent/revoke-claude-connections'
 
 // RFC 6749 §4.1.3 (authorization_code grant) + RFC 7636 (PKCE).
 export async function POST(request: Request) {
@@ -80,12 +81,7 @@ export async function POST(request: Request) {
   const { accessMode, storeId } = accessFromAuthCode(authCode, fallbackAccess)
 
   // Replace any prior active Claude connection so reconnecting changes effective access.
-  await admin
-    .from('agent_connections')
-    .update({ revoked_at: new Date().toISOString() })
-    .eq('user_id', authCode.user_id)
-    .eq('provider', 'claude')
-    .is('revoked_at', null)
+  await revokeActiveClaudeConnections(authCode.user_id)
 
   const { token, hash, prefix } = generateAgentToken()
 

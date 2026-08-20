@@ -4,6 +4,7 @@ import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { isSupabaseAdminConfigured } from '@/lib/env'
 import { requireActiveStoreForUser, ActiveStoreError } from '@/lib/stores/active-store'
 import { generateAgentToken, ALL_AGENT_SCOPES, CLAUDE_ECOM_SCOPES, type AgentProvider, type AgentScope, type AgentAccessMode } from '@/lib/agent/auth'
+import { revokeActiveClaudeConnections } from '@/lib/agent/revoke-claude-connections'
 
 // GET /api/agent-connections — list the current user's AI agent connections (no token hashes returned)
 export async function GET() {
@@ -58,6 +59,11 @@ export async function POST(request: Request) {
 
   const admin = getSupabaseAdminClient()
 
+  const resolvedProvider = provider ?? (claude_ecom ? 'claude' : 'custom')
+  if (resolvedProvider === 'claude') {
+    await revokeActiveClaudeConnections(user.id)
+  }
+
   let storeId: string | null = null
   const mode: AgentAccessMode = access_mode ?? 'single_shop'
 
@@ -78,7 +84,7 @@ export async function POST(request: Request) {
       user_id: user.id,
       store_id: mode === 'single_shop' ? storeId : null,
       access_mode: mode,
-      provider: provider ?? (claude_ecom ? 'claude' : 'custom'),
+      provider: resolvedProvider,
       name: name.trim(),
       token_hash: hash,
       token_prefix: prefix,

@@ -404,9 +404,9 @@ export function AiAgentClient() {
     }
   }
 
-  async function handleDisconnect(id: string) {
+  async function handleDisconnect() {
     if (!confirm('Disconnect Claude from SellBop? Claude will lose access immediately. Your activity history will be kept.')) return
-    const res = await fetch(`/api/agent-connections/${id}/revoke`, { method: 'POST' })
+    const res = await fetch('/api/agent-connections/revoke-claude', { method: 'POST' })
     if (!res.ok) {
       toast.error('Could not disconnect.')
       return
@@ -499,7 +499,7 @@ export function AiAgentClient() {
                 <Button size="sm" className="font-semibold">Open Claude</Button>
               </a>
               <Button size="sm" variant="secondary" onClick={() => setShowManageAccess(v => !v)}>Manage Access</Button>
-              <Button size="sm" variant="ghost" className="text-red-600 hover:bg-red-50" onClick={() => handleDisconnect(primary.id)}>Disconnect</Button>
+              <Button size="sm" variant="ghost" className="text-red-600 hover:bg-red-50" onClick={() => void handleDisconnect()}>Disconnect</Button>
             </div>
 
             {showManageAccess && (

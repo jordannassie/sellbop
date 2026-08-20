@@ -8,6 +8,8 @@ import { humanActionLabel } from '@/lib/agent/scope-labels'
 import { CLAUDE_ECOM_SCOPES } from '@/lib/agent/auth'
 
 import { AGENT_ACCESS_MODE_COOKIE } from '@/lib/agent/constants'
+import { selectPrimaryClaudeConnection, staleClaudeConnectionIds } from '@/lib/agent/connection-selection'
+import { revokeActiveClaudeConnections } from '@/lib/agent/revoke-claude-connections'
 
 export async function GET() {
   if (!isSupabaseAdminConfigured()) {
@@ -68,8 +70,18 @@ export async function GET() {
     createdAt: a.created_at,
   }))
 
-  const activeConnections = (connectionsResult.data ?? []).filter(c => !c.revoked_at)
-  const primary = activeConnections.find(c => c.provider === 'claude') ?? activeConnections[0] ?? null
+  const allConnections = connectionsResult.data ?? []
+  const primary = selectPrimaryClaudeConnection(allConnections)
+
+  // One effective Claude token per user — revoke stale active rows Claude may still present.
+  const staleIds = staleClaudeConnectionIds(allConnections, primary)
+  if (staleIds.length > 0 && primary) {
+    await revokeActiveClaudeConnections(user.id, primary.id)
+  }
+
+  const connections = staleIds.length > 0
+    ? allConnections.map(c => staleIds.includes(c.id) ? { ...c, revoked_at: new Date().toISOString() } : c)
+    : allConnections
 
   let boundShop: { id: string; name: string; slug: string } | null = null
   if (primary?.store_id) {
@@ -82,7 +94,7 @@ export async function GET() {
   return NextResponse.json({
     mcpUrl: `${env.app.url}/api/mcp`,
     recommendedScopes: CLAUDE_ECOM_SCOPES,
-    connections: connectionsResult.data ?? [],
+    connections,
     activeConnection: primary,
     boundShop,
     shops: shops.map(s => ({
