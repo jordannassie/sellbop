@@ -126,9 +126,9 @@ async function main() {
       is_live: false,
     }),
   })
-  if (!product?.id) { fail('Create draft product', `${createRes.status}`); process.exit(1) }
+  if (!product?.product?.id && !product?.id) { fail('Create draft product', `${createRes.status} ${JSON.stringify(product)}`); process.exit(1) }
   ok('Create draft test product')
-  const productId = product.id
+  const productId = product.product?.id ?? product.id
 
   const pdf = await mcpToolCall(token, 'generate_product_pdf', {
     shop_id: store.id,
