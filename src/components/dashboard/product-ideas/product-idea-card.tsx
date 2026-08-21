@@ -1,14 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 import {
-  ArrowRight,
   Bookmark,
   ChevronDown,
   ExternalLink,
   Info,
   Loader2,
+  Sparkles,
   User,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -23,7 +22,8 @@ import {
   scoreDisplay,
   sourceBadgeLabel,
 } from '@/lib/product-ideas/scoring'
-import { buildLaunchUrl } from '@/lib/product-ideas/launch-url'
+import { buildClaudePrompt } from '@/lib/product-ideas/claude-prompt'
+import { toast } from 'sonner'
 
 function formatPrice(minCents: number, maxCents: number): string {
   const min = Math.round(minCents / 100)
@@ -157,10 +157,26 @@ export function ProductIdeaCard({
   onRemove?: () => void
   removing?: boolean
 }) {
+  const [copying, setCopying] = useState(false)
   const scoreMeta = scoreDisplay(idea)
   const tone = opportunityScoreTone(scoreMeta.value)
   const evidenceChips = buildEvidenceChips(idea)
   const isTrendBacked = idea.source === 'google_trends' || idea.source === 'google_trends_youtube'
+
+  async function handleCopyForClaude() {
+    setCopying(true)
+    try {
+      const prompt = buildClaudePrompt(idea)
+      await navigator.clipboard.writeText(prompt)
+      toast.success('Copied for Claude', {
+        description: 'Paste it into Claude to build the product.',
+      })
+    } catch {
+      toast.error("Couldn't copy. Please try again.")
+    } finally {
+      setCopying(false)
+    }
+  }
 
   return (
     <article className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm flex flex-col h-full">
@@ -243,11 +259,15 @@ export function ProductIdeaCard({
       </CollapsibleSection>
 
       <div className="mt-auto pt-5 flex flex-wrap items-center gap-2">
-        <Link href={buildLaunchUrl(idea)} className="flex-1 min-w-[200px]">
-          <Button className="w-full font-semibold">
-            Build This Product with AI <ArrowRight size={14} className="ml-1" />
-          </Button>
-        </Link>
+        <Button
+          type="button"
+          className="flex-1 min-w-[160px] font-semibold"
+          loading={copying}
+          onClick={() => void handleCopyForClaude()}
+        >
+          <Sparkles size={14} className="mr-1.5" />
+          Copy for Claude
+        </Button>
         {onSave && (
           <Button type="button" variant="secondary" size="sm" loading={saving} disabled={saved} onClick={onSave}>
             <Bookmark size={14} className="mr-1" />

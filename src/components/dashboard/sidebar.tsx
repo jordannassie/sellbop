@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { BookOpen, GraduationCap, LayoutDashboard, LogOut, Menu, Package, Settings, Store, Users, DollarSign, ShoppingBag, Tag, X, Plus, TrendingUp, Grid3x3, ExternalLink, Shield, Sparkles, Lightbulb, } from 'lucide-react'
+import { BookOpen, GraduationCap, LayoutDashboard, LogOut, Menu, Package, Settings, Store, Users, DollarSign, ShoppingBag, TrendingUp, Grid3x3, ExternalLink, Shield, Sparkles, Lightbulb, Plus, X } from 'lucide-react'
 import { useAuth } from '@/context/auth-context'
 import { useUserStore } from '@/hooks/use-user-store'
 import { cn } from '@/lib/utils'
@@ -17,6 +17,7 @@ interface NavItem {
   icon: React.ComponentType<{ size?: number }>
   exact?: boolean
   activePaths?: string[]
+  children?: NavItem[]
 }
 
 function isNavActive(item: NavItem, pathname: string): boolean {
@@ -25,7 +26,45 @@ function isNavActive(item: NavItem, pathname: string): boolean {
   return (item.activePaths ?? []).some(p => pathname.startsWith(p))
 }
 
+function isNavParentActive(item: NavItem, pathname: string): boolean {
+  return (item.children ?? []).some(child => isNavActive(child, pathname))
+}
+
 function NavLink({
+  item,
+  pathname,
+  onClick,
+  nested,
+  parentHighlight,
+}: {
+  item: NavItem
+  pathname: string
+  onClick?: () => void
+  nested?: boolean
+  parentHighlight?: boolean
+}) {
+  const active = isNavActive(item, pathname)
+  return (
+    <Link
+      href={item.href}
+      onClick={onClick}
+      className={cn(
+        'flex items-center gap-2.5 rounded-xl px-3 py-2 transition-colors',
+        nested ? 'ml-6 py-1.5 text-xs' : 'text-sm',
+        active
+          ? cn('bg-neutral-900 font-medium text-white', nested && 'text-sm')
+          : parentHighlight
+            ? 'font-medium text-neutral-800 hover:bg-neutral-100'
+            : 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900',
+      )}
+    >
+      <item.icon size={nested ? 14 : 16} />
+      {item.label}
+    </Link>
+  )
+}
+
+function NavEntry({
   item,
   pathname,
   onClick,
@@ -34,21 +73,20 @@ function NavLink({
   pathname: string
   onClick?: () => void
 }) {
-  const active = isNavActive(item, pathname)
+  if (!item.children?.length) {
+    return <NavLink item={item} pathname={pathname} onClick={onClick} />
+  }
+
+  const parentActive = isNavActive(item, pathname)
+  const parentHighlight = !parentActive && isNavParentActive(item, pathname)
+
   return (
-    <Link
-      href={item.href}
-      onClick={onClick}
-      className={cn(
-        'flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm transition-colors',
-        active
-          ? 'bg-neutral-900 font-medium text-white'
-          : 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900',
-      )}
-    >
-      <item.icon size={16} />
-      {item.label}
-    </Link>
+    <div className="space-y-0.5">
+      <NavLink item={item} pathname={pathname} onClick={onClick} parentHighlight={parentHighlight} />
+      {item.children.map(child => (
+        <NavLink key={child.href} item={child} pathname={pathname} onClick={onClick} nested />
+      ))}
+    </div>
   )
 }
 
@@ -113,9 +151,14 @@ export function DashboardSidebar() {
 
   const sellerNav: NavItem[] = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, exact: true },
-    { href: '/dashboard/product-ideas', label: 'Product Ideas', icon: Lightbulb },
-    { href: '/dashboard/ai-agent', label: 'AI Agent', icon: Sparkles },
-    { href: '/dashboard/products', label: 'Products', icon: Package },
+    {
+      href: '/dashboard/products',
+      label: 'Products',
+      icon: Package,
+      children: [
+        { href: '/dashboard/product-ideas', label: 'Product Ideas', icon: Lightbulb },
+      ],
+    },
     { href: '/dashboard/sales', label: 'Sales', icon: ShoppingBag, activePaths: ['/dashboard/orders'] },
     ...(activeSummary?.isPartnerShop
       ? [{ href: '/dashboard/earnings', label: 'Earnings', icon: DollarSign }]
@@ -125,6 +168,7 @@ export function DashboardSidebar() {
     { href: '/dashboard/affiliates', label: 'Affiliates', icon: TrendingUp },
     { href: '/dashboard/library', label: 'Library', icon: BookOpen },
     { href: '/dashboard/resources', label: 'Resources', icon: GraduationCap },
+    { href: '/dashboard/ai-agent', label: 'AI Agent', icon: Sparkles },
     { href: '/dashboard/payouts', label: 'Payouts', icon: DollarSign },
     { href: '/dashboard/settings', label: 'Settings', icon: Settings },
   ]
@@ -224,7 +268,7 @@ export function DashboardSidebar() {
         </Link>
       )}
       {nav.map(item => (
-        <NavLink key={item.href} item={item} pathname={pathname} onClick={onNavigate} />
+        <NavEntry key={item.href} item={item} pathname={pathname} onClick={onNavigate} />
       ))}
     </nav>
   )
