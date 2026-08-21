@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Toggle } from '@/components/ui/toggle'
-import { Package, ExternalLink, Pencil, Copy, Trash2, TrendingUp, Grid3x3, ChevronUp, ChevronDown } from 'lucide-react'
+import { Package, ExternalLink, Pencil, Copy, Trash2, TrendingUp, ChevronUp, ChevronDown } from 'lucide-react'
 import { toast } from 'sonner'
 import { isSupabaseConfigured } from '@/lib/env'
 
@@ -32,18 +32,29 @@ interface Product {
 }
 
 function ProductRow({
-  p, onDelete, onTogglePublish, onMove, isFirst, isLast,
+  p,
+  onDelete,
+  onTogglePublish,
+  onToggleMarketplace,
+  onMove,
+  isFirst,
+  isLast,
+  storeMarketplaceEnabled,
 }: {
   p: Product
   onDelete: (id: string) => void
   onTogglePublish: (id: string, nextLive: boolean) => void
+  onToggleMarketplace: (id: string, next: boolean) => void
   onMove: (id: string, direction: 'up' | 'down') => void
   isFirst: boolean
   isLast: boolean
+  storeMarketplaceEnabled: boolean
 }) {
   const router = useRouter()
   const [deleting, setDeleting] = useState(false)
   const [publishing, setPublishing] = useState(false)
+  const [marketplaceSaving, setMarketplaceSaving] = useState(false)
+  const marketplaceOn = p.marketplace_listing ?? false
 
   async function handleDelete() {
     if (!confirm(`Delete "${p.title}"? This cannot be undone.`)) return
@@ -81,6 +92,23 @@ function ProductRow({
       toast.error('Failed to update publish status.')
     } finally {
       setPublishing(false)
+    }
+  }
+
+  async function handleToggleMarketplace(next: boolean) {
+    setMarketplaceSaving(true)
+    try {
+      const res = await fetch(`/api/products/${p.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ marketplace_listing: next }),
+      })
+      if (!res.ok) throw new Error()
+      onToggleMarketplace(p.id, next)
+    } catch {
+      toast.error("Couldn't update Marketplace settings. Please try again.")
+    } finally {
+      setMarketplaceSaving(false)
     }
   }
 
@@ -127,12 +155,6 @@ function ProductRow({
           <Badge variant={p.is_live ? 'success' : 'neutral'}>
             {p.is_live ? 'Live' : 'Draft'}
           </Badge>
-          {/* Growth feature indicators */}
-          {(p.marketplace_listing ?? true) && (
-            <span className="hidden sm:inline-flex items-center gap-0.5 text-[10px] font-medium text-neutral-400">
-              <Grid3x3 size={9} /> Marketplace
-            </span>
-          )}
           {(p.affiliate_enabled ?? true) && (p.price_cents ?? 0) > 0 && (
             <span className="hidden sm:inline-flex items-center gap-0.5 text-[10px] font-medium" style={{ color: '#00A854' }}>
               <TrendingUp size={9} /> {p.affiliate_commission_percent ?? 30}% Affiliate
@@ -144,6 +166,22 @@ function ProductRow({
           {' · '}{p.sales_count} sales
           <span className="hidden sm:inline"> · Updated {timeAgo(p.updated_at ?? p.created_at)}</span>
         </p>
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <span className="text-[10px] font-medium text-neutral-400 uppercase tracking-wide">Marketplace</span>
+          <Toggle
+            checked={marketplaceOn}
+            onChange={handleToggleMarketplace}
+            disabled={marketplaceSaving}
+            variant="success"
+            size="sm"
+          />
+          {!p.is_live && marketplaceOn && (
+            <span className="text-[10px] text-neutral-400">Will appear after publishing</span>
+          )}
+          {!storeMarketplaceEnabled && marketplaceOn && (
+            <span className="text-[10px] text-neutral-400">Shop hidden from Marketplace</span>
+          )}
+        </div>
       </div>
 
       {/* Actions */}
@@ -188,6 +226,7 @@ export default function ProductsPage() {
   const { session } = useAuth()
   const { activeStoreId, storeVersion, store } = useUserStore()
   const [products, setProducts] = useState<Product[]>([])
+  const [storeMarketplaceEnabled, setStoreMarketplaceEnabled] = useState(true)
   const [loading, setLoading] = useState(true)
   const [reordering, setReordering] = useState(false)
 
@@ -200,13 +239,20 @@ export default function ProductsPage() {
     setLoading(true)
     fetch('/api/products', { cache: 'no-store' })
       .then(r => r.ok ? r.json() : { products: [] })
-      .then(data => setProducts(data.products ?? []))
+      .then(data => {
+        setProducts(data.products ?? [])
+        setStoreMarketplaceEnabled(data.store_marketplace_enabled ?? store?.marketplace_enabled ?? true)
+      })
       .catch(() => setProducts([]))
       .finally(() => setLoading(false))
-  }, [session, activeStoreId, storeVersion])
+  }, [session, activeStoreId, storeVersion, store?.marketplace_enabled])
 
   function handleDelete(id: string) {
     setProducts(prev => prev.filter(p => p.id !== id))
+  }
+
+  function handleToggleMarketplace(id: string, next: boolean) {
+    setProducts(prev => prev.map(p => (p.id === id ? { ...p, marketplace_listing: next } : p)))
   }
 
   function handleTogglePublish(id: string, nextLive: boolean) {
@@ -273,6 +319,11 @@ export default function ProductsPage() {
 
       <Card>
         <CardContent className="p-0">
+          {!loading && !storeMarketplaceEnabled && products.length > 0 && (
+            <p className="px-4 sm:px-6 py-3 text-xs text-neutral-500 border-b border-neutral-50">
+              Your shop is currently hidden from Marketplace. Individual product settings will be remembered.
+            </p>
+          )}
           {loading ? (
             <div className="divide-y divide-neutral-50">
               {[1,2,3].map(i => (
@@ -304,9 +355,11 @@ export default function ProductsPage() {
                   p={p}
                   onDelete={handleDelete}
                   onTogglePublish={handleTogglePublish}
+                  onToggleMarketplace={handleToggleMarketplace}
                   onMove={handleMove}
                   isFirst={i === 0}
                   isLast={i === products.length - 1}
+                  storeMarketplaceEnabled={storeMarketplaceEnabled}
                 />
               ))}
             </div>

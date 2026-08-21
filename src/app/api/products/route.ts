@@ -68,7 +68,10 @@ export async function GET() {
     sales_count: salesMap[p.id] ?? 0,
   }))
 
-  return NextResponse.json({ products: enriched })
+  return NextResponse.json({
+    products: enriched,
+    store_marketplace_enabled: store.marketplace_enabled ?? true,
+  })
 }
 
 // POST /api/products — create a new product
@@ -156,8 +159,8 @@ export async function POST(request: Request) {
       is_live: is_live ?? false,
       category: category ?? null,
       sort_order: nextSortOrder,
-      // Default ON: every new product is Marketplace-listed and affiliate-enabled at 30%
-      marketplace_listing: marketplace_listing ?? true,
+      // Default OFF: sellers opt in per product; shop master toggle is separate
+      marketplace_listing: marketplace_listing ?? false,
       affiliate_enabled: affiliate_enabled ?? true,
       affiliate_commission_percent: (affiliate_enabled ?? true) ? (affiliate_commission_percent ?? 30) : null,
       affiliate_updated_at: (affiliate_enabled ?? true) ? new Date().toISOString() : null,

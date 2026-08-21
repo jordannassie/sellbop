@@ -44,6 +44,7 @@ const DEMO_STORE_ROW: StoreRow = {
   stripe_onboarding_complete: false,
   stripe_charges_enabled: false,
   stripe_payouts_enabled: false,
+  marketplace_enabled: true,
   created_at: DEMO_SELLER_PROFILE.createdAt,
   updated_at: DEMO_SELLER_PROFILE.createdAt,
 }
@@ -80,6 +81,7 @@ export interface UseUserStoreResult {
   switching: boolean
   isDemo: boolean
   refetch: () => void
+  patchActiveStore: (patch: Partial<StoreRow>) => void
   saveStore: (patch: Database['public']['Tables']['stores']['Update']) => Promise<string | null>
   switchStore: (storeId: string) => Promise<boolean>
   createStore: (input: { name: string; slug?: string }) => Promise<{ ok: true } | { ok: false; error: string }>
@@ -317,6 +319,10 @@ export function UserStoreProvider({ children }: { children: ReactNode }) {
     [store?.id, activeStoreId, supabase, session],
   )
 
+  const patchActiveStore = useCallback((patch: Partial<StoreRow>) => {
+    setStore(prev => (prev ? { ...prev, ...patch } : prev))
+  }, [])
+
   const value: UseUserStoreResult = {
     store,
     stores,
@@ -326,6 +332,7 @@ export function UserStoreProvider({ children }: { children: ReactNode }) {
     switching,
     isDemo,
     refetch,
+    patchActiveStore,
     saveStore,
     switchStore,
     createStore,
@@ -347,6 +354,7 @@ const EMPTY_STORE_STATE: UseUserStoreResult = {
   switching: false,
   isDemo: true,
   refetch: () => {},
+  patchActiveStore: () => {},
   saveStore: async () => 'Shop context unavailable.',
   switchStore: async () => false,
   createStore: async () => ({ ok: false as const, error: 'Shop context unavailable.' }),

@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils'
 import { SellBopLogo } from '@/components/ui/sellbop-logo'
 import { ShopSwitcher } from '@/components/dashboard/shop-switcher'
 import { PartnerShopPreviewButton } from '@/components/dashboard/partner-shop-preview-button'
+import { MarketplaceNavGroup } from '@/components/dashboard/sidebar-marketplace-toggle'
 
 interface NavItem {
   href: string
@@ -143,6 +144,7 @@ export function DashboardSidebar() {
     isDemo,
     switchStore,
     createStore,
+    patchActiveStore,
   } = useUserStore()
   const [mobileOpen, setMobileOpen] = useState(false)
 
@@ -267,9 +269,22 @@ export function DashboardSidebar() {
           Admin
         </Link>
       )}
-      {nav.map(item => (
-        <NavEntry key={item.href} item={item} pathname={pathname} onClick={onNavigate} />
-      ))}
+      {nav.map(item => {
+        if (hasStore && item.href === '/marketplace') {
+          return (
+            <MarketplaceNavGroup
+              key={item.href}
+              pathname={pathname}
+              onNavigate={onNavigate}
+              storeId={activeStoreId}
+              marketplaceEnabled={store?.marketplace_enabled ?? true}
+              switching={switching || isDemo}
+              onMarketplaceUpdated={next => patchActiveStore({ marketplace_enabled: next })}
+            />
+          )
+        }
+        return <NavEntry key={item.href} item={item} pathname={pathname} onClick={onNavigate} />
+      })}
     </nav>
   )
 

@@ -116,7 +116,7 @@ export async function createProduct(identity: AgentIdentity, input: CreateProduc
         // explicitly asks to publish — never silently go live.
         is_live: input.is_live ?? false,
         category: input.category ?? null,
-        marketplace_listing: input.marketplace_listing ?? true,
+        marketplace_listing: input.marketplace_listing ?? false,
         affiliate_enabled: affiliateEnabled,
         affiliate_commission_percent: affiliateEnabled ? (input.affiliate_commission_percent ?? 30) : null,
         affiliate_updated_at: affiliateEnabled ? new Date().toISOString() : null,

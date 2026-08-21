@@ -54,6 +54,7 @@ export interface Database {
           stripe_onboarding_complete: boolean
           stripe_charges_enabled: boolean
           stripe_payouts_enabled: boolean
+          marketplace_enabled: boolean
           created_at: string
           updated_at: string
         }
@@ -76,6 +77,7 @@ export interface Database {
           stripe_onboarding_complete?: boolean
           stripe_charges_enabled?: boolean
           stripe_payouts_enabled?: boolean
+          marketplace_enabled?: boolean
           created_at?: string
           updated_at?: string
         }

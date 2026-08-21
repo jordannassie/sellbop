@@ -53,7 +53,7 @@ export default function NewProductPage() {
   const [productLinks, setProductLinks] = useState<{ url: string; name: string }[]>([])
   const [fileUploading, setFileUploading] = useState(false)
   const [isLive, setIsLive] = useState(false)
-  const [marketplaceListing, setMarketplaceListing] = useState(true)
+  const [marketplaceListing, setMarketplaceListing] = useState(false)
   const [affiliateEnabled, setAffiliateEnabled] = useState(true)
   const [affiliateCommission, setAffiliateCommission] = useState(30)
   const [customCommission, setCustomCommission] = useState('')

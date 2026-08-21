@@ -88,7 +88,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
   const [saleEndsAt, setSaleEndsAt] = useState('')
   const [isLive, setIsLive] = useState(false)
   const [category, setCategory] = useState('')
-  const [marketplaceListing, setMarketplaceListing] = useState(true)
+  const [marketplaceListing, setMarketplaceListing] = useState(false)
   const [affiliateEnabled, setAffiliateEnabled] = useState(true)
   const [affiliateCommission, setAffiliateCommission] = useState(30)
   const [customCommission, setCustomCommission] = useState('')
@@ -125,7 +125,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
           setMediaItems(data.media ?? [])
           setCategory(normalizeProductCategory(p.category) ?? '')
           // Null means the product was created before these fields existed — default to ON
-          setMarketplaceListing(p.marketplace_listing ?? true)
+          setMarketplaceListing(p.marketplace_listing ?? false)
           setAffiliateEnabled(p.affiliate_enabled ?? true)
           const commPct = p.affiliate_commission_percent ?? 30
           if ([10, 20, 30, 40, 50].includes(commPct)) {
