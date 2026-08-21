@@ -35,10 +35,23 @@ export function SidebarMarketplaceToggle({
     try {
       const res = await fetch(`/api/stores/${storeId}/marketplace`, {
         method: 'PATCH',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ marketplace_enabled: next }),
       })
-      if (!res.ok) throw new Error()
+      const data = await res.json().catch(() => ({})) as {
+        ok?: boolean
+        error?: { code?: string; message?: string }
+      }
+      if (!res.ok) {
+        setLocalEnabled(previous)
+        if (data.error?.code === 'MIGRATION_REQUIRED') {
+          toast.error('Marketplace settings need a database update. Apply migration 037 in Supabase.')
+        } else {
+          toast.error("Couldn't update Marketplace settings. Please try again.")
+        }
+        return
+      }
       onUpdated?.(next)
     } catch {
       setLocalEnabled(previous)

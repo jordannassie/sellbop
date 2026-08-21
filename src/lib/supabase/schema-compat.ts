@@ -26,7 +26,19 @@ export function isMissingFunctionError(error: { code?: string | null; message?: 
 
 /** Any missing-schema signal (table or RPC). */
 export function isMissingSchemaError(error: { code?: string | null; message?: string } | null): boolean {
-  return isMissingRelationError(error) || isMissingFunctionError(error)
+  return isMissingRelationError(error) || isMissingFunctionError(error) || isMissingColumnError(error)
+}
+
+/** PostgREST/PostgreSQL errors when a column is not deployed or not in schema cache. */
+export function isMissingColumnError(error: { code?: string | null; message?: string } | null): boolean {
+  if (!error) return false
+  if (error.code === 'PGRST204' || error.code === '42703') return true
+  const msg = error.message ?? ''
+  return (
+    msg.includes('schema cache')
+    || (msg.includes('column') && msg.includes('does not exist'))
+    || msg.includes('Could not find the')
+  )
 }
 
 export class PartnershipSchemaUnavailableError extends Error {
