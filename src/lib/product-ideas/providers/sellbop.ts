@@ -3,8 +3,8 @@ import 'server-only'
 import { isSupabaseAdminConfigured } from '@/lib/env'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { cached, cacheKey, CACHE_TTL } from '../cache'
-import type { SellBopSignal } from '../types'
-import { UNAVAILABLE_SELLBOP } from '../types'
+import type { SellBopSignal } from './legacy-types'
+import { UNAVAILABLE_SELLBOP } from './legacy-types'
 
 /** Minimum paid order observations before surfacing conversion intelligence. */
 export const SELLBOP_MIN_SAMPLE = 20

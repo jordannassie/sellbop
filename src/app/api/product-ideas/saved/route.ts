@@ -104,7 +104,10 @@ export async function POST(request: Request) {
     trend: 'unknown',
     trendPercent: null,
     opportunityScore: parsed.data.idea.opportunityScore ?? null,
-    source: (parsed.data.idea.source === 'youtube_data' ? 'youtube_data' : 'ai_estimate') as import('@/lib/product-ideas/types').ProductIdea['source'],
+    aiOpportunityEstimate: parsed.data.idea.aiOpportunityEstimate ?? null,
+    source: (['google_trends', 'google_trends_youtube', 'youtube', 'ai_estimate'].includes(String(parsed.data.idea.source))
+      ? parsed.data.idea.source
+      : 'ai_estimate') as import('@/lib/product-ideas/types').ProductIdea['source'],
     whyItCouldSell: ideaPayload.whyItCouldSell,
     productContents: ideaPayload.productContents,
     research: parsed.data.idea.research as import('@/lib/product-ideas/types').ProductIdeaResearch | undefined,

@@ -11,10 +11,11 @@ function parseResearch(sourceData: unknown): ProductIdeaResearch | undefined {
   return undefined
 }
 
-function parseSource(raw: unknown, research: ProductIdeaResearch | undefined): ProductIdeaSource {
-  if (raw === 'youtube_data') return 'youtube_data'
-  if (raw === 'search_data' && research?.youtube?.available) return 'youtube_data'
-  if (raw === 'search_data') return 'ai_estimate'
+function parseSource(raw: unknown): ProductIdeaSource {
+  if (raw === 'google_trends' || raw === 'google_trends_youtube' || raw === 'youtube') {
+    return raw
+  }
+  if (raw === 'youtube_data' || raw === 'search_data') return 'ai_estimate'
   return 'ai_estimate'
 }
 
@@ -42,7 +43,10 @@ export function rowToProductIdea(row: Record<string, unknown>): ProductIdea {
     trend: 'unknown',
     trendPercent: null,
     opportunityScore: row.opportunity_score != null ? Number(row.opportunity_score) : null,
-    source: parseSource(row.source, research),
+    aiOpportunityEstimate: sourceData && typeof sourceData === 'object' && 'aiOpportunityEstimate' in sourceData
+      ? Number((sourceData as Record<string, unknown>).aiOpportunityEstimate)
+      : null,
+    source: parseSource(row.source),
     whyItCouldSell: String(row.why_it_could_sell ?? ''),
     productContents: Array.isArray(row.product_contents)
       ? row.product_contents.filter((k): k is string => typeof k === 'string')
@@ -70,13 +74,14 @@ export function productIdeaToInsert(userId: string, storeId: string | null, idea
     search_competition: null,
     trend: 'unknown',
     trend_percent: null,
-    opportunity_score: idea.opportunityScore,
+    opportunity_score: idea.opportunityScore ?? idea.aiOpportunityEstimate,
     source: idea.source,
     why_it_could_sell: idea.whyItCouldSell,
     product_contents: idea.productContents,
     source_data: {
       primaryKeyword: idea.primaryKeyword,
       supportingKeywords: idea.supportingKeywords,
+      aiOpportunityEstimate: idea.aiOpportunityEstimate,
       research: idea.research ?? null,
     },
     updated_at: new Date().toISOString(),

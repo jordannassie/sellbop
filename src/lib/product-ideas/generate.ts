@@ -2,113 +2,69 @@ import 'server-only'
 
 import { randomUUID } from 'crypto'
 import {
-  aiProductIdeasResponseSchema,
+  aiTrendIdeasResponseSchema,
   type GenerateProductIdeasInput,
   type GenerateProductIdeasResult,
   type ProductIdea,
-  type ResearchTheme,
+  productFitLabel,
 } from './types'
 import { callOpenAiJson } from './openai-client'
-import { isYouTubeConfigured } from './providers/youtube'
+import { fetchGoogleTrendsFeed } from './providers/google-trends'
 import {
-  buildResearchBrief,
-  calculateCombinedOpportunityScore,
-  resolveIdeaSource,
-} from './opportunity-engine'
-import {
-  findBestThemeMatch,
-  researchThemes,
-} from './research'
+  aiOpportunityEstimate,
+  calculateGoogleTrendsOpportunityScore,
+  findVerifiedTrendItem,
+  googleTrendExploreUrl,
+  GOOGLE_TRENDS_PAGE_URL,
+  type GoogleTrendItem,
+} from './google-trends-parser'
+import type { ProductIdeasLogger } from './logger'
 
-export async function generateResearchThemes(input: GenerateProductIdeasInput): Promise<ResearchTheme[]> {
+function trendsForOpenAi(items: GoogleTrendItem[]): unknown[] {
+  return items.slice(0, 45).map(item => ({
+    query: item.query,
+    trafficLabel: item.trafficLabel,
+    publishedAt: item.publishedAt,
+    relatedTitles: item.relatedTitles.slice(0, 2),
+  }))
+}
+
+function buildOpenAiPrompt(
+  input: GenerateProductIdeasInput,
+  trends: GoogleTrendItem[],
+  trendsAvailable: boolean,
+): { system: string; user: string } {
   const topicLine = input.topic?.trim()
-    ? `Optional focus topic: ${input.topic.trim()}`
-    : 'No specific topic — explore the category broadly.'
+    ? `User topic/problem focus: ${input.topic.trim()}`
+    : 'No specific topic — use category context and current trends.'
 
-  const result = await callOpenAiJson(
-    'You identify strong audience problems that could become sellable digital products. Return JSON only.',
-    `Category: ${input.category}
+  const trendsBlock = trendsAvailable && trends.length > 0
+    ? `CURRENT GOOGLE TRENDS (Trending Now, US — REAL DATA, reference by exact query only):
+${JSON.stringify(trendsForOpenAi(trends), null, 2)}
+
+Rules for google_trends ideas:
+- source must be "google_trends"
+- sourceTrendQuery MUST exactly match a query from the list above
+- Reject news-only spikes (celebrity, sports scores, deaths, politics, one-time emergencies)
+- Prefer problems that become guides, toolkits, templates, workbooks, checklists, planners, courses
+- Score productFitScore and evergreenScore 0-100
+- Do NOT invent traffic labels or search volumes`
+    : `Google Trends feed is unavailable. Return all ideas as source "ai_estimate" with sourceTrendQuery null.`
+
+  return {
+    system: `You are SellBop's product research assistant. Turn REAL Google Trends interest into sellable digital product concepts.
+
+You may interpret trends but must NOT invent Google Trends data. For google_trends ideas, sourceTrendQuery must match a provided query exactly.
+
+Filter out low product potential: breaking news, celebrity gossip, sports scores, political events, random names.
+
+Return JSON only with exactly ${input.count} ideas.`,
+    user: `Category: ${input.category}
 ${topicLine}
 
-Create 3-5 problem themes — practical struggles, questions, or workflows people actively seek help with.
-Each theme should be specific enough to research on YouTube (not generic category names).
+${trendsBlock}
 
-Return JSON:
-{
-  "themes": [
-    {
-      "theme": "how to get more real estate listing appointments",
-      "seedQueries": ["listing appointment scripts", "seller prospecting real estate"]
-    }
-  ]
-}`,
-  ) as { themes?: { theme?: string; seedQueries?: unknown }[] }
-
-  const themes: ResearchTheme[] = []
-  for (const row of result.themes ?? []) {
-    if (typeof row.theme !== 'string' || row.theme.trim().length < 5) continue
-    const seedQueries = Array.isArray(row.seedQueries)
-      ? row.seedQueries.filter((s): s is string => typeof s === 'string').map(s => s.trim()).filter(Boolean)
-      : []
-    themes.push({ theme: row.theme.trim(), seedQueries })
-  }
-
-  return themes.slice(0, 5)
-}
-
-function themesBrief(themeMap: Awaited<ReturnType<typeof researchThemes>>): string {
-  const lines: string[] = []
-  for (const bundle of themeMap.values()) {
-    const research = {
-      theme: bundle.theme,
-      queries: bundle.queries,
-      youtube: bundle.youtube,
-      trends: bundle.trends,
-      productFit: bundle.productFit,
-      sellbop: bundle.sellbop,
-    }
-    lines.push(buildResearchBrief(research))
-  }
-  return lines.join('\n\n')
-}
-
-export async function generateProductIdeas(input: GenerateProductIdeasInput): Promise<GenerateProductIdeasResult> {
-  const themes = await generateResearchThemes(input)
-  let message: string | null = null
-
-  if (!isYouTubeConfigured()) {
-    message = 'YouTube research is not configured. Ideas are AI-generated estimates without validated audience data. Add YOUTUBE_API_KEY for real demand signals.'
-  }
-
-  const themeMap = themes.length > 0
-    ? await researchThemes(themes, { category: input.category, topic: input.topic })
-    : new Map()
-
-  const hasYouTubeData = [...themeMap.values()].some(b => b.youtube.available)
-  if (isYouTubeConfigured() && !hasYouTubeData && themeMap.size > 0) {
-    message = message ?? 'Limited YouTube evidence was found for these themes. Scores may reflect AI assessment only.'
-  }
-
-  const topicLine = input.topic?.trim() ? `User topic focus: ${input.topic.trim()}` : 'No specific topic provided.'
-  const researchBlock = themeMap.size > 0
-    ? `\n\nVerified research (use ONLY this evidence in whyItCouldSell — never invent view counts, search volumes, or competitor claims):\n${themesBrief(themeMap)}
-
-Researched themes (assign each idea a primaryKeyword matching one theme):
-${[...themeMap.keys()].map(t => `- ${t}`).join('\n')}`
-    : '\n\nNo verified YouTube research available. Create strong product concepts without inventing metrics.'
-
-  const raw = await callOpenAiJson(
-    `You are SellBop's product research assistant. Turn audience problems into specific sellable digital product concepts. Avoid generic titles. Each concept needs a specific buyer, problem, outcome, and format.
-
-When YouTube evidence exists, explain whyItCouldSell using ONLY verified evidence in 2-4 sentences — mention breakout videos or cross-creator interest when supported by data.
-
-Product Fit reasoning may reference AI assessment but must not claim low competition.
-
-Return JSON only.`,
-    `Category: ${input.category}
-${topicLine}${researchBlock}
-
-Generate exactly ${input.count} digital product ideas.
+Generate exactly ${input.count} digital product ideas. Prefer google_trends when a real trend fits. Fill remaining slots with ai_estimate evergreen ideas if needed.
 
 Return JSON:
 {
@@ -122,59 +78,132 @@ Return JSON:
       "productType": "Guide|Workbook|Template|Toolkit|Course|Checklist|Spreadsheet|Notion Template|Bundle|Other",
       "suggestedPriceMinCents": 2700,
       "suggestedPriceMaxCents": 6700,
-      "primaryKeyword": "matching researched theme phrase",
-      "supportingKeywords": ["related problem query"],
-      "whyItCouldSell": "evidence-based explanation",
+      "source": "google_trends|ai_estimate",
+      "sourceTrendQuery": "exact trend query or null",
+      "productFitScore": 82,
+      "evergreenScore": 75,
+      "primaryKeyword": "problem phrase",
+      "supportingKeywords": ["related phrase"],
+      "whyItCouldSell": "2-4 sentences referencing verified trend activity when google_trends",
       "productContents": ["item 1", "item 2"]
     }
   ]
 }`,
-  )
+  }
+}
 
-  const parsed = aiProductIdeasResponseSchema.safeParse(raw)
+function mergeIdea(
+  row: ReturnType<typeof aiTrendIdeasResponseSchema.parse>['ideas'][number],
+  verifiedTrends: GoogleTrendItem[],
+): ProductIdea {
+  let source: ProductIdea['source'] = row.source
+  let verified: GoogleTrendItem | null = null
+
+  if (source === 'google_trends') {
+    verified = findVerifiedTrendItem(verifiedTrends, row.sourceTrendQuery ?? null)
+    if (!verified) source = 'ai_estimate'
+  }
+
+  const productFitScore = row.productFitScore
+  const evergreenScore = row.evergreenScore
+
+  let opportunityScore: number | null = null
+  let aiEstimate: number | null = null
+  let research: ProductIdea['research']
+
+  if (source === 'google_trends' && verified) {
+    opportunityScore = calculateGoogleTrendsOpportunityScore({
+      trafficApprox: verified.trafficApprox,
+      publishedAt: verified.publishedAt,
+      productFitScore,
+      evergreenScore,
+    })
+    research = {
+      trendResearch: {
+        query: verified.query,
+        trafficLabel: verified.trafficLabel,
+        trafficApprox: verified.trafficApprox,
+        publishedAt: verified.publishedAt,
+        sourceUrl: GOOGLE_TRENDS_PAGE_URL,
+        exploreUrl: googleTrendExploreUrl(verified.query),
+        relatedTitles: verified.relatedTitles,
+      },
+      productFitScore,
+      evergreenScore,
+      productFitReason: `Product Fit: ${productFitLabel(productFitScore)}`,
+      whyProductAngle: row.whyItCouldSell,
+    }
+  } else {
+    aiEstimate = aiOpportunityEstimate({ productFitScore, evergreenScore })
+    research = {
+      productFitScore,
+      evergreenScore,
+      productFitReason: `Product Fit: ${productFitLabel(productFitScore)}`,
+      whyProductAngle: row.whyItCouldSell,
+    }
+  }
+
+  return {
+    id: randomUUID(),
+    title: row.title.trim(),
+    hook: row.hook.trim(),
+    description: row.description.trim(),
+    targetAudience: row.targetAudience.trim(),
+    category: row.category.trim(),
+    productType: row.productType,
+    suggestedPriceMinCents: row.suggestedPriceMinCents,
+    suggestedPriceMaxCents: row.suggestedPriceMaxCents,
+    primaryKeyword: row.sourceTrendQuery?.trim() ?? row.primaryKeyword?.trim() ?? null,
+    supportingKeywords: row.supportingKeywords.map(s => s.trim()).filter(Boolean),
+    estimatedMonthlySearches: null,
+    cpc: null,
+    searchCompetition: null,
+    trend: 'unknown',
+    trendPercent: null,
+    opportunityScore,
+    aiOpportunityEstimate: aiEstimate,
+    source,
+    whyItCouldSell: row.whyItCouldSell.trim(),
+    productContents: row.productContents.map(s => s.trim()).filter(Boolean),
+    research,
+  }
+}
+
+export async function generateProductIdeas(
+  input: GenerateProductIdeasInput,
+  log: ProductIdeasLogger,
+): Promise<GenerateProductIdeasResult> {
+  const started = Date.now()
+  log.info('started')
+
+  const trendsFeed = await fetchGoogleTrendsFeed(log)
+  const trends = trendsFeed.items
+
+  let message: string | null = null
+  if (!trendsFeed.available) {
+    message = "Google Trends data isn't available right now, so these ideas are AI-generated estimates."
+    log.info(`google-trends unavailable: ${trendsFeed.error ?? 'unknown'}`)
+  }
+
+  const { system, user } = buildOpenAiPrompt(input, trends, trendsFeed.available)
+
+  const raw = await log.timed('openai', () => callOpenAiJson(system, user))
+
+  const parsed = aiTrendIdeasResponseSchema.safeParse(raw)
   if (!parsed.success) {
-    console.error('[Product Ideas] AI schema validation failed:', parsed.error.flatten())
+    log.error('openai schema validation failed', parsed.error.flatten())
     throw new Error('AI_MALFORMED')
   }
 
-  const ideas: ProductIdea[] = parsed.data.ideas.slice(0, input.count).map(row => {
-    const research = findBestThemeMatch(
-      themeMap,
-      row.primaryKeyword?.trim() ?? null,
-      row.supportingKeywords.map(s => s.trim()).filter(Boolean),
-    )
+  const ideas = parsed.data.ideas.slice(0, input.count).map(row => mergeIdea(row, trends))
 
-    const opportunityScore = research ? calculateCombinedOpportunityScore(research) : null
-    const source = resolveIdeaSource(research)
-
-    return {
-      id: randomUUID(),
-      title: row.title.trim(),
-      hook: row.hook.trim(),
-      description: row.description.trim(),
-      targetAudience: row.targetAudience.trim(),
-      category: row.category.trim(),
-      productType: row.productType,
-      suggestedPriceMinCents: row.suggestedPriceMinCents,
-      suggestedPriceMaxCents: row.suggestedPriceMaxCents,
-      primaryKeyword: row.primaryKeyword?.trim() ?? null,
-      supportingKeywords: row.supportingKeywords.map(s => s.trim()).filter(Boolean),
-      estimatedMonthlySearches: null,
-      cpc: null,
-      searchCompetition: null,
-      trend: 'unknown',
-      trendPercent: null,
-      opportunityScore,
-      source,
-      whyItCouldSell: row.whyItCouldSell.trim(),
-      productContents: row.productContents.map(s => s.trim()).filter(Boolean),
-      research,
-    }
-  })
+  log.info(`total ${Date.now() - started}ms success (${ideas.filter(i => i.source === 'google_trends').length} trend-backed)`)
 
   return {
+    ok: true,
     ideas,
-    source: ideas.some(i => i.source === 'youtube_data') ? 'youtube_data' : 'ai_estimate',
     message,
+    trendingNow: trends.slice(0, 8),
+    requestId: log.requestId,
   }
 }

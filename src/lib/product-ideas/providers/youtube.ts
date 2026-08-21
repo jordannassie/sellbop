@@ -2,8 +2,12 @@ import 'server-only'
 
 import { env } from '@/lib/env'
 import { cached, cacheKey, CACHE_TTL } from '../cache'
-import { breakoutLevel, type YouTubeSignal, type YouTubeVideoExample } from '../types'
-import { UNAVAILABLE_YOUTUBE } from '../types'
+import {
+  breakoutLevel,
+  type YouTubeSignal,
+  type YouTubeVideoExample,
+  UNAVAILABLE_YOUTUBE,
+} from './legacy-types'
 
 const YOUTUBE_BASE = 'https://www.googleapis.com/youtube/v3'
 const MIN_VIDEOS_FOR_SCORE = 3

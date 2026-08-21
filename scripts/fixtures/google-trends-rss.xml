@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<rss xmlns:ht="https://trends.google.com/trending/rss" version="2.0">
+  <channel>
+    <title>Daily Search Trends</title>
+    <item>
+      <title>cortisol blueprint</title>
+      <ht:approx_traffic>20K+</ht:approx_traffic>
+      <pubDate>Fri, 21 Aug 2026 07:30:00 -0700</pubDate>
+      <ht:news_item>
+        <ht:news_item_title>Wellness trend explainer</ht:news_item_title>
+        <ht:news_item_url>https://example.com/wellness</ht:news_item_url>
+      </ht:news_item>
+    </item>
+    <item>
+      <title>ai resume toolkit</title>
+      <ht:approx_traffic>100K+</ht:approx_traffic>
+      <pubDate>Fri, 21 Aug 2026 06:00:00 -0700</pubDate>
+    </item>
+    <item>
+      <title>missing traffic trend</title>
+      <pubDate>Fri, 21 Aug 2026 05:00:00 -0700</pubDate>
+    </item>
+  </channel>
+</rss>

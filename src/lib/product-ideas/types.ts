@@ -1,5 +1,8 @@
 import { z } from 'zod'
 import { PRODUCT_CATEGORIES } from '@/lib/product-categories'
+import type { GoogleTrendItem } from './google-trends-parser'
+
+export type { GoogleTrendItem } from './google-trends-parser'
 
 export const PRODUCT_IDEA_TYPES = [
   'Guide',
@@ -17,80 +20,30 @@ export const PRODUCT_IDEA_TYPES = [
 export const TREND_VALUES = ['rising', 'stable', 'falling', 'unknown'] as const
 export type Trend = (typeof TREND_VALUES)[number]
 
-/** youtube_data = validated YouTube evidence; ai_estimate = no market-data validation */
-export type ProductIdeaSource = 'youtube_data' | 'ai_estimate'
+export type ProductIdeaSource =
+  | 'google_trends'
+  | 'google_trends_youtube'
+  | 'youtube'
+  | 'ai_estimate'
 
-export type QuerySource = 'youtube' | 'autocomplete' | 'ai'
-
-export interface QuerySignal {
+export interface TrendResearch {
   query: string
-  source: QuerySource
-}
-
-export type BreakoutLevel = 'major' | 'strong' | 'breakout' | null
-
-export interface YouTubeVideoExample {
-  title: string
-  videoId: string
-  channelId: string | null
-  channelTitle: string
-  views: number | null
-  channelSubscribers: number | null
-  breakoutRatio: number | null
-  breakoutLevel: BreakoutLevel
-  publishedAt: string
-}
-
-export interface YouTubeSignal {
-  available: boolean
-  youtubeDemandScore: number | null
-  viewStrengthScore: number | null
-  breakoutStrengthScore: number | null
-  momentumScore: number | null
-  crossCreatorScore: number | null
-  relevantVideoCount: number
-  breakoutVideoCount: number
-  uniqueCreatorCount: number
-  medianViews: number | null
-  topVideoViews: number | null
-  topBreakoutRatio: number | null
-  recentMomentum: 'rising' | 'strong' | 'moderate' | 'limited' | 'unknown'
-  examples: YouTubeVideoExample[]
-}
-
-export interface GoogleTrendsSignal {
-  available: boolean
-  matched: boolean
-  searchTier: string | null
-  growthPercent: number | null
-  active: boolean | null
+  trafficLabel: string | null
+  trafficApprox: number | null
+  publishedAt: string | null
+  sourceUrl: string
+  exploreUrl: string
+  relatedTitles: string[]
 }
 
 export type ProductFitLevel = 'very_strong' | 'strong' | 'moderate' | 'weak' | 'unknown'
 
-export interface ProductFitSignal {
-  available: boolean
-  level: ProductFitLevel
-  fitScore: number | null
-  reason: string | null
-}
-
-export interface SellBopSignal {
-  available: boolean
-  demandScore: number | null
-  sampleSize: number | null
-  medianPriceCents: number | null
-  categoryProductCount: number | null
-  summary: string | null
-}
-
 export interface ProductIdeaResearch {
-  theme?: string
-  queries?: QuerySignal[]
-  youtube?: YouTubeSignal
-  trends?: GoogleTrendsSignal
-  productFit?: ProductFitSignal
-  sellbop?: SellBopSignal
+  trendResearch?: TrendResearch
+  productFitScore?: number | null
+  evergreenScore?: number | null
+  productFitReason?: string | null
+  whyProductAngle?: string | null
 }
 
 export interface ProductIdea {
@@ -105,17 +58,16 @@ export interface ProductIdea {
   suggestedPriceMaxCents: number
   primaryKeyword: string | null
   supportingKeywords: string[]
-  /** @deprecated V1 — always null; kept for migration 036 compat */
+  /** @deprecated migration 036 compat — always null in Google Trends V1 */
   estimatedMonthlySearches: number | null
-  /** @deprecated V1 — always null */
   cpc: number | null
-  /** @deprecated V1 — always null */
   searchCompetition: number | null
-  /** @deprecated V1 — use research.youtube.recentMomentum */
   trend: Trend
-  /** @deprecated V1 — always null */
   trendPercent: number | null
+  /** Validated score when source is google_trends* */
   opportunityScore: number | null
+  /** Qualitative AI-only estimate label strength 0-100 */
+  aiOpportunityEstimate: number | null
   source: ProductIdeaSource
   whyItCouldSell: string
   productContents: string[]
@@ -125,13 +77,13 @@ export interface ProductIdea {
 export const generateRequestSchema = z.object({
   topic: z.string().max(500).optional(),
   category: z.enum(PRODUCT_CATEGORIES),
-  count: z.union([z.literal(5), z.literal(10), z.literal(15)]).default(10),
+  count: z.union([z.literal(5), z.literal(10), z.literal(15)]).default(5),
   country: z.string().max(80).optional(),
 })
 
 export type GenerateProductIdeasInput = z.infer<typeof generateRequestSchema>
 
-export const aiProductIdeaSchema = z.object({
+export const aiTrendIdeaSchema = z.object({
   title: z.string().min(3),
   hook: z.string().min(3),
   description: z.string().min(10),
@@ -140,14 +92,18 @@ export const aiProductIdeaSchema = z.object({
   productType: z.enum(PRODUCT_IDEA_TYPES),
   suggestedPriceMinCents: z.number().int().min(0),
   suggestedPriceMaxCents: z.number().int().min(0),
-  primaryKeyword: z.string().nullable().optional(),
-  supportingKeywords: z.array(z.string()).default([]),
+  source: z.enum(['google_trends', 'ai_estimate']),
+  sourceTrendQuery: z.string().nullable().optional(),
+  productFitScore: z.number().min(0).max(100),
+  evergreenScore: z.number().min(0).max(100),
   whyItCouldSell: z.string().min(10),
   productContents: z.array(z.string()).min(1),
+  primaryKeyword: z.string().nullable().optional(),
+  supportingKeywords: z.array(z.string()).default([]),
 })
 
-export const aiProductIdeasResponseSchema = z.object({
-  ideas: z.array(aiProductIdeaSchema).min(1),
+export const aiTrendIdeasResponseSchema = z.object({
+  ideas: z.array(aiTrendIdeaSchema).min(1),
 })
 
 export const saveProductIdeaSchema = z.object({
@@ -170,7 +126,8 @@ export const saveProductIdeaSchema = z.object({
     trend: z.enum(TREND_VALUES).optional(),
     trendPercent: z.number().nullable().optional(),
     opportunityScore: z.number().int().nullable().optional(),
-    source: z.enum(['youtube_data', 'ai_estimate', 'search_data']).optional(),
+    aiOpportunityEstimate: z.number().int().nullable().optional(),
+    source: z.enum(['google_trends', 'google_trends_youtube', 'youtube', 'ai_estimate', 'youtube_data', 'search_data']).optional(),
     whyItCouldSell: z.string().optional(),
     productContents: z.array(z.string()).optional(),
     research: z.unknown().optional(),
@@ -178,80 +135,30 @@ export const saveProductIdeaSchema = z.object({
   }),
 })
 
-export interface ResearchTheme {
-  theme: string
-  seedQueries: string[]
-}
-
-export interface GenerateProductIdeasResult {
+export interface GenerateProductIdeasSuccess {
+  ok: true
   ideas: ProductIdea[]
-  source: ProductIdeaSource
   message: string | null
+  trendingNow: GoogleTrendItem[]
+  requestId: string
 }
 
-export const UNAVAILABLE_YOUTUBE: YouTubeSignal = {
-  available: false,
-  youtubeDemandScore: null,
-  viewStrengthScore: null,
-  breakoutStrengthScore: null,
-  momentumScore: null,
-  crossCreatorScore: null,
-  relevantVideoCount: 0,
-  breakoutVideoCount: 0,
-  uniqueCreatorCount: 0,
-  medianViews: null,
-  topVideoViews: null,
-  topBreakoutRatio: null,
-  recentMomentum: 'unknown',
-  examples: [],
+export interface GenerateProductIdeasErrorBody {
+  ok: false
+  error: {
+    code: string
+    message: string
+  }
+  requestId: string
 }
 
-export const UNAVAILABLE_TRENDS: GoogleTrendsSignal = {
-  available: false,
-  matched: false,
-  searchTier: null,
-  growthPercent: null,
-  active: null,
-}
+export type GenerateProductIdeasResult = GenerateProductIdeasSuccess
 
-export const UNAVAILABLE_PRODUCT_FIT: ProductFitSignal = {
-  available: false,
-  level: 'unknown',
-  fitScore: null,
-  reason: null,
-}
-
-export const UNAVAILABLE_SELLBOP: SellBopSignal = {
-  available: false,
-  demandScore: null,
-  sampleSize: null,
-  medianPriceCents: null,
-  categoryProductCount: null,
-  summary: null,
-}
-
-export function youtubeDemandLabel(score: number | null): string | null {
-  if (score == null) return null
+export function productFitLabel(score: number): string {
   if (score >= 85) return 'Very Strong'
   if (score >= 70) return 'Strong'
   if (score >= 55) return 'Moderate'
-  return 'Limited'
+  return 'Weak'
 }
 
-export function productFitLabel(level: ProductFitLevel): string | null {
-  if (level === 'unknown') return null
-  const map: Record<Exclude<ProductFitLevel, 'unknown'>, string> = {
-    very_strong: 'Very Strong',
-    strong: 'Strong',
-    moderate: 'Moderate',
-    weak: 'Weak',
-  }
-  return map[level]
-}
-
-export function breakoutLevel(ratio: number | null): BreakoutLevel {
-  if (ratio == null || ratio < 3) return null
-  if (ratio >= 10) return 'major'
-  if (ratio >= 5) return 'strong'
-  return 'breakout'
-}
+export { aiEstimateLabel } from './google-trends-parser'

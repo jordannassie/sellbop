@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 import { PRODUCT_CATEGORIES, type ProductCategory } from '@/lib/product-categories'
-import type { ProductIdea } from '@/lib/product-ideas/types'
+import type { GoogleTrendItem, ProductIdea } from '@/lib/product-ideas/types'
 import { useUserStore } from '@/hooks/use-user-store'
 import { toast } from 'sonner'
 import {
@@ -26,9 +26,10 @@ export function ProductIdeasClient() {
   const [tab, setTab] = useState<Tab>('find')
   const [topic, setTopic] = useState('')
   const [category, setCategory] = useState<ProductCategory>(PRODUCT_CATEGORIES[0])
-  const [count, setCount] = useState<'5' | '10' | '15'>('10')
+  const [count, setCount] = useState<'5' | '10' | '15'>('5')
   const [loading, setLoading] = useState(false)
   const [results, setResults] = useState<ProductIdea[]>([])
+  const [trendingNow, setTrendingNow] = useState<GoogleTrendItem[]>([])
   const [resultMessage, setResultMessage] = useState<string | null>(null)
   const [saved, setSaved] = useState<ProductIdea[]>([])
   const [savedTitles, setSavedTitles] = useState<Set<string>>(new Set())
@@ -55,15 +56,18 @@ export function ProductIdeasClient() {
     if (tab === 'saved') void loadSaved()
   }, [tab, loadSaved])
 
-  async function parseJsonResponse(res: Response): Promise<Record<string, unknown>> {
+  async function parseApiJson(res: Response): Promise<Record<string, unknown>> {
+    const contentType = res.headers.get('content-type') ?? ''
     const text = await res.text()
+
+    if (!contentType.includes('application/json')) {
+      throw new Error('Product research couldn\'t complete. Please try again.')
+    }
+
     try {
       return JSON.parse(text) as Record<string, unknown>
     } catch {
-      if (res.status === 504 || res.status === 502) {
-        throw new Error('Research took too long. Try 5 ideas or run again in a moment.')
-      }
-      throw new Error('Server returned an unexpected response. Please try again.')
+      throw new Error('Product research couldn\'t complete. Please try again.')
     }
   }
 
@@ -72,6 +76,7 @@ export function ProductIdeasClient() {
     if (loading) return
     setLoading(true)
     setResults([])
+    setTrendingNow([])
     setResultMessage(null)
     try {
       const res = await fetch('/api/product-ideas/generate', {
@@ -83,12 +88,22 @@ export function ProductIdeasClient() {
           count: Number(count),
         }),
       })
-      const data = await parseJsonResponse(res)
-      if (!res.ok) throw new Error(String(data.error ?? 'Could not find product ideas.'))
+      const data = await parseApiJson(res)
+
+      if (data.ok === false) {
+        const err = data.error as { message?: string } | undefined
+        throw new Error(err?.message ?? 'Product research couldn\'t complete. Please try again.')
+      }
+
+      if (!res.ok) {
+        throw new Error(String(data.error ?? 'Product research couldn\'t complete. Please try again.'))
+      }
+
       setResults((data.ideas as ProductIdea[]) ?? [])
+      setTrendingNow((data.trendingNow as GoogleTrendItem[]) ?? [])
       setResultMessage(data.message != null ? String(data.message) : null)
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Could not find product ideas.')
+      toast.error(err instanceof Error ? err.message : 'Product research couldn\'t complete. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -142,9 +157,12 @@ export function ProductIdeasClient() {
           </div>
           <h1 className="text-2xl font-bold text-black">Product Ideas</h1>
         </div>
-        <p className="text-sm font-medium text-neutral-700 ml-[52px]">Find digital products people are looking for.</p>
+        <p className="text-sm font-medium text-neutral-700 ml-[52px]">Find what people are searching for now.</p>
         <p className="text-sm text-neutral-500 mt-1 ml-[52px] max-w-2xl">
-          Choose a category or tell SellBop what you&apos;re interested in. We&apos;ll find search opportunities and turn them into products you can build.
+          SellBop scans Google Trends for rising interest and turns useful opportunities into digital products you can build with AI.
+        </p>
+        <p className="text-xs text-neutral-400 mt-2 ml-[52px] max-w-2xl">
+          Not every trend makes a good product. SellBop filters for problems with real product potential.
         </p>
       </div>
 
@@ -201,9 +219,9 @@ export function ProductIdeasClient() {
 
           {!loading && results.length === 0 && (
             <div className="rounded-2xl border border-dashed border-neutral-200 bg-neutral-50 p-8 text-center">
-              <h2 className="text-lg font-bold text-black mb-2">What should you sell?</h2>
+              <h2 className="text-lg font-bold text-black mb-2">Find what people are searching for now.</h2>
               <p className="text-sm text-neutral-600 max-w-lg mx-auto mb-6">
-                Start with something you know, a problem you can solve, or simply choose a category. SellBop will look for opportunities and turn them into digital-product ideas.
+                Start with a category or optional topic. SellBop checks Google Trends Trending Now and turns useful demand signals into digital-product ideas.
               </p>
               <div className="flex flex-wrap justify-center gap-2">
                 {EXAMPLE_CATEGORY_CHIPS.map(chip => (
@@ -224,6 +242,24 @@ export function ProductIdeasClient() {
 
           {!loading && results.length > 0 && (
             <div>
+              {trendingNow.length > 0 && (
+                <div className="mb-6 rounded-2xl border border-neutral-200 bg-white p-4">
+                  <h3 className="text-sm font-semibold text-black mb-2">Trending Now</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {trendingNow.map(trend => (
+                      <button
+                        key={trend.query}
+                        type="button"
+                        onClick={() => setTopic(trend.query)}
+                        className="rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1.5 text-xs text-neutral-700 hover:border-neutral-400 transition-colors"
+                      >
+                        {trend.query}
+                        {trend.trafficLabel ? ` · ${trend.trafficLabel}` : ''}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div className="mb-4">
                 <h2 className="text-lg font-bold text-black">Product Opportunities</h2>
                 <p className="text-sm text-neutral-500">{results.length} result{results.length !== 1 ? 's' : ''}</p>

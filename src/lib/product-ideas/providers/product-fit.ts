@@ -1,8 +1,8 @@
 import 'server-only'
 
 import { callOpenAiJson } from '../openai-client'
-import type { ProductFitLevel, ProductFitSignal, YouTubeSignal } from '../types'
-import { UNAVAILABLE_PRODUCT_FIT } from '../types'
+import type { ProductFitLevel, ProductFitSignal, YouTubeSignal } from './legacy-types'
+import { UNAVAILABLE_PRODUCT_FIT } from './legacy-types'
 
 const FIT_LEVELS: ProductFitLevel[] = ['very_strong', 'strong', 'moderate', 'weak']
 

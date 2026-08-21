@@ -1,9 +1,5 @@
-import {
-  productFitLabel,
-  youtubeDemandLabel as youtubeScoreLabel,
-  type ProductFitLevel,
-} from './types'
-import type { GoogleTrendsSignal, ProductIdeaResearch, SellBopSignal, YouTubeSignal } from './types'
+import type { ProductIdea, ProductIdeaResearch } from './types'
+import { aiEstimateLabel, productFitLabel } from './types'
 
 export function opportunityScoreTone(score: number | null): 'high' | 'medium' | 'neutral' {
   if (score == null) return 'neutral'
@@ -12,78 +8,85 @@ export function opportunityScoreTone(score: number | null): 'high' | 'medium' | 
   return 'neutral'
 }
 
-export function youtubeDemandChip(signal: YouTubeSignal | undefined): string | null {
-  if (!signal?.available || signal.youtubeDemandScore == null) return null
-  const label = youtubeScoreLabel(signal.youtubeDemandScore)
-  return label ? `YouTube Demand: ${label}` : null
-}
-
-export function breakoutChip(signal: YouTubeSignal | undefined): string | null {
-  if (!signal?.available || signal.breakoutVideoCount === 0) return null
-  if (signal.breakoutVideoCount === 1) return '1 Breakout Video'
-  return `${signal.breakoutVideoCount} Breakout Videos`
-}
-
-export function momentumChip(signal: YouTubeSignal | undefined): string | null {
-  if (!signal?.available) return null
-  switch (signal.recentMomentum) {
-    case 'rising': return 'Recent Momentum: Rising'
-    case 'strong': return 'Recent Momentum: Strong'
-    case 'moderate': return 'Recent Momentum: Moderate'
-    default: return null
+export function sourceBadgeLabel(source: ProductIdea['source']): string {
+  switch (source) {
+    case 'google_trends':
+    case 'google_trends_youtube':
+      return 'Google Trends'
+    case 'youtube':
+      return 'YouTube Data'
+    default:
+      return 'AI Estimate'
   }
 }
 
-export function productFitChip(level: ProductFitLevel | undefined): string | null {
-  if (!level || level === 'unknown') return null
-  const label = productFitLabel(level)
-  return label ? `Product Fit: ${label}` : null
+export function formatTrendingTraffic(label: string | null | undefined): string | null {
+  if (!label) return null
+  return `${label} trending searches`
 }
 
-export function googleTrendChip(signal: GoogleTrendsSignal | undefined): string | null {
-  if (!signal?.available || !signal.matched || !signal.active) return null
-  const tier = signal.searchTier ? ` (${signal.searchTier})` : ''
-  return `Google Trend: Active${tier}`
-}
-
-export function sellbopChipLabel(signal: SellBopSignal | undefined): string | null {
-  if (!signal?.available) return null
-  return 'SellBop Data'
-}
-
-export function sourceBadgeLabel(source: 'youtube_data' | 'ai_estimate'): string {
-  return source === 'youtube_data' ? 'YouTube Data' : 'AI Estimate'
-}
-
-export function buildEvidenceChips(research: ProductIdeaResearch | undefined): string[] {
-  if (!research) return []
-
+export function buildEvidenceChips(idea: ProductIdea): string[] {
   const chips: string[] = []
+  const research = idea.research
+  const trend = research?.trendResearch
 
-  const ytDemand = youtubeDemandChip(research.youtube)
-  if (ytDemand) chips.push(ytDemand)
+  if (idea.source === 'google_trends' || idea.source === 'google_trends_youtube') {
+    chips.push('Trending Now')
+    const traffic = formatTrendingTraffic(trend?.trafficLabel)
+    if (traffic) chips.push(traffic)
+  }
 
-  const breakout = breakoutChip(research.youtube)
-  if (breakout) chips.push(breakout)
+  if (research?.productFitScore != null) {
+    chips.push(`Product Fit: ${productFitLabel(research.productFitScore)}`)
+  }
 
-  const momentum = momentumChip(research.youtube)
-  if (momentum) chips.push(momentum)
-
-  const fit = productFitChip(research.productFit?.level)
-  if (fit) chips.push(fit)
-
-  const trend = googleTrendChip(research.trends)
-  if (trend) chips.push(trend)
-
-  const sb = sellbopChipLabel(research.sellbop)
-  if (sb) chips.push(sb)
+  if (idea.source === 'ai_estimate' && idea.aiOpportunityEstimate != null) {
+    chips.push(`AI Estimate: ${aiEstimateLabel(idea.aiOpportunityEstimate)}`)
+  }
 
   return chips.slice(0, 5)
 }
 
-export function formatBreakoutRatio(ratio: number | null): string | null {
-  if (ratio == null) return null
-  return `${ratio.toFixed(1)}x`
+export function scoreDisplay(idea: ProductIdea): {
+  label: string
+  value: number | null
+  tooltip: string
+} {
+  if (idea.source === 'google_trends' || idea.source === 'google_trends_youtube') {
+    return {
+      label: 'Opportunity',
+      value: idea.opportunityScore,
+      tooltip: "Combines current Google Trends activity with SellBop's assessment of product fit and staying power. It does not guarantee sales.",
+    }
+  }
+
+  return {
+    label: 'AI Estimate',
+    value: idea.aiOpportunityEstimate,
+    tooltip: 'AI assessment only — not validated by current Google Trends data.',
+  }
 }
 
-export { calculateCombinedOpportunityScore, calculateOpportunityScore } from './opportunity-engine'
+/** @deprecated kept for legacy test script */
+export function calculateOpportunityScore(input: {
+  searchVolume: number | null
+  cpc: number | null
+  competition: number | null
+  trend: import('./types').Trend
+}): number | null {
+  if (input.searchVolume == null || input.searchVolume <= 0) return null
+  const clamp = (v: number) => Math.min(100, Math.max(0, v))
+  const demand = clamp((Math.log10(input.searchVolume + 1) / 5) * 100) * 0.4
+  const trendMap = { rising: 100, stable: 60, falling: 25, unknown: 50 }
+  const trend = trendMap[input.trend] * 0.3
+  const intent = clamp(((input.cpc ?? 0) / 5) * 100) * 0.15
+  const competition = clamp((1 - (input.competition ?? 0.5)) * 100) * 0.15
+  return Math.round(clamp(demand + trend + intent + competition))
+}
+
+export {
+  calculateGoogleTrendsOpportunityScore,
+  trendActivityScore,
+  parseTrafficLabel,
+  findVerifiedTrendItem,
+} from './google-trends-parser'

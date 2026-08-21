@@ -19,7 +19,7 @@
     "db:apply-034": "node scripts/apply-migration-034.mjs",
     "db:apply-035": "node scripts/apply-migration-035.mjs",
     "db:apply-036": "node scripts/apply-migration-036.mjs",
-    "test:product-ideas": "node scripts/test-product-ideas-scoring.mjs",
+    "test:product-ideas": "node scripts/test-product-ideas-scoring.mjs && tsx scripts/test-google-trends-parser.ts",
     "db:verify-034": "node scripts/verify-migration-034.mjs",
     "test:youtube-url": "node scripts/test-youtube-url.mjs",
     "test:oauth-access-scope": "node scripts/test-oauth-access-scope.mjs",
@@ -41,6 +41,7 @@
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.104.0",
     "clsx": "^2.1.1",
+    "fast-xml-parser": "^5.11.0",
     "lucide-react": "^1.8.0",
     "mcp-handler": "^2.1.1",
     "next": "16.2.4",
@@ -69,6 +70,7 @@
     "eslint-config-next": "16.2.4",
     "pg": "^8.16.0",
     "tailwindcss": "^4",
+    "tsx": "^4.23.12",
     "typescript": "^5"
   }
 }

@@ -1,7 +1,7 @@
 import 'server-only'
 
 import { cached, cacheKey, CACHE_TTL } from '../cache'
-import type { QuerySignal } from '../types'
+import type { QuerySignal } from './legacy-types'
 
 const SUGGEST_URL = 'https://suggestqueries.google.com/complete/search'
 
