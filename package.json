@@ -18,6 +18,8 @@
     "db:apply-032": "node scripts/apply-migration-032.mjs",
     "db:apply-034": "node scripts/apply-migration-034.mjs",
     "db:apply-035": "node scripts/apply-migration-035.mjs",
+    "db:apply-036": "node scripts/apply-migration-036.mjs",
+    "test:product-ideas": "node scripts/test-product-ideas-scoring.mjs",
     "db:verify-034": "node scripts/verify-migration-034.mjs",
     "test:youtube-url": "node scripts/test-youtube-url.mjs",
     "test:oauth-access-scope": "node scripts/test-oauth-access-scope.mjs",

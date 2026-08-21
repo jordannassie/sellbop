@@ -54,6 +54,15 @@ export const env = {
   admin: {
     allowedEmails: process.env.ADMIN_ALLOWED_EMAILS ?? '',
   },
+
+  openai: {
+    apiKey: process.env.OPENAI_API_KEY ?? null,
+  },
+
+  dataForSeo: {
+    login: process.env.DATAFORSEO_LOGIN ?? null,
+    password: process.env.DATAFORSEO_PASSWORD ?? null,
+  },
 } as const
 
 // ── Guard helpers ─────────────────────────────────────────────────────────────

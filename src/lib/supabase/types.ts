@@ -112,6 +112,65 @@ export interface Database {
         ]
       }
 
+      product_ideas: {
+        Row: {
+          id: string
+          user_id: string
+          store_id: string | null
+          title: string
+          hook: string | null
+          description: string | null
+          target_audience: string | null
+          category: string | null
+          product_type: string | null
+          suggested_price_min_cents: number | null
+          suggested_price_max_cents: number | null
+          primary_keyword: string | null
+          supporting_keywords: unknown
+          estimated_monthly_searches: number | null
+          cpc: number | null
+          search_competition: number | null
+          trend: string | null
+          trend_percent: number | null
+          opportunity_score: number | null
+          source: string
+          why_it_could_sell: string | null
+          product_contents: unknown
+          source_data: unknown
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          store_id?: string | null
+          title: string
+          hook?: string | null
+          description?: string | null
+          target_audience?: string | null
+          category?: string | null
+          product_type?: string | null
+          suggested_price_min_cents?: number | null
+          suggested_price_max_cents?: number | null
+          primary_keyword?: string | null
+          supporting_keywords?: unknown
+          estimated_monthly_searches?: number | null
+          cpc?: number | null
+          search_competition?: number | null
+          trend?: string | null
+          trend_percent?: number | null
+          opportunity_score?: number | null
+          source?: string
+          why_it_could_sell?: string | null
+          product_contents?: unknown
+          source_data?: unknown
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['product_ideas']['Insert']>
+        Relationships: []
+      }
+
       store_partnerships: {
         Row: {
           id: string

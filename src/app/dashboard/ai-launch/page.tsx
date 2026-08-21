@@ -266,6 +266,11 @@ function Step4({ data, onChange, onBack, onGenerate }: {
           </button>
         ))}
       </div>
+      {!PRICE_OPTIONS.some(opt => opt.value === data.priceRange) && data.priceRange && (
+        <p className="text-sm text-neutral-600 bg-neutral-50 border border-neutral-200 rounded-lg px-3 py-2">
+          Suggested range from your research: <span className="font-medium text-black">{data.priceRange}</span>
+        </p>
+      )}
       <div className="flex justify-between items-center">
         <Button variant="ghost" onClick={onBack}><ArrowLeft size={14} /> Back</Button>
         <Button onClick={onGenerate} disabled={!data.priceRange}>
@@ -839,13 +844,15 @@ function AILaunchWizardInner() {
   // Support both ?idea= (new flow from homepage) and legacy ?prompt=
   const initialIdea   = searchParams.get('idea') ?? ''
   const initialPrompt = initialIdea || (searchParams.get('prompt') ?? '')
+  const initialAudience = searchParams.get('audience') ?? ''
+  const initialPriceRange = searchParams.get('priceRange')
 
   const [step, setStep] = useState<WizardStep>(1)
   const [data, setData] = useState<WizardData>({
     whatYouSell: initialPrompt,
-    whoIsItFor: '',
+    whoIsItFor: initialAudience,
     whatsIncluded: '',
-    priceRange: '$20-$50',
+    priceRange: initialPriceRange ?? '$20-$50',
   })
   const [generating, setGenerating] = useState(false)
   const [result, setResult] = useState<StoreLaunchOutput | null>(null)
