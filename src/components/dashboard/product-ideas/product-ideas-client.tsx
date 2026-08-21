@@ -55,6 +55,18 @@ export function ProductIdeasClient() {
     if (tab === 'saved') void loadSaved()
   }, [tab, loadSaved])
 
+  async function parseJsonResponse(res: Response): Promise<Record<string, unknown>> {
+    const text = await res.text()
+    try {
+      return JSON.parse(text) as Record<string, unknown>
+    } catch {
+      if (res.status === 504 || res.status === 502) {
+        throw new Error('Research took too long. Try 5 ideas or run again in a moment.')
+      }
+      throw new Error('Server returned an unexpected response. Please try again.')
+    }
+  }
+
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault()
     if (loading) return
@@ -71,10 +83,10 @@ export function ProductIdeasClient() {
           count: Number(count),
         }),
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error ?? 'Could not find product ideas.')
-      setResults(data.ideas ?? [])
-      setResultMessage(data.message ?? null)
+      const data = await parseJsonResponse(res)
+      if (!res.ok) throw new Error(String(data.error ?? 'Could not find product ideas.'))
+      setResults((data.ideas as ProductIdea[]) ?? [])
+      setResultMessage(data.message != null ? String(data.message) : null)
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Could not find product ideas.')
     } finally {

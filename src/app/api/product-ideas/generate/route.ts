@@ -3,6 +3,9 @@ import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { generateRequestSchema } from '@/lib/product-ideas/types'
 import { generateProductIdeas } from '@/lib/product-ideas/generate'
 
+/** Allow longer research pipeline (YouTube + OpenAI) on Netlify. */
+export const maxDuration = 60
+
 export async function POST(request: Request) {
   const supabase = await getSupabaseServerClient()
   const { data: { user } } = await supabase.auth.getUser()

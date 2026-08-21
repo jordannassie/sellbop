@@ -60,3 +60,66 @@ Assess Product Fit — can this problem reasonably become a sellable digital pro
     return { ...UNAVAILABLE_PRODUCT_FIT }
   }
 }
+
+function signalFromResult(result: { level?: string; reason?: string }): ProductFitSignal {
+  const level = FIT_LEVELS.includes(result.level as ProductFitLevel)
+    ? result.level as ProductFitLevel
+    : 'moderate'
+
+  return {
+    available: true,
+    level,
+    fitScore: fitScoreFromLevel(level),
+    reason: typeof result.reason === 'string' ? result.reason.trim() : null,
+  }
+}
+
+/** Batch product-fit assessment in one OpenAI call to reduce latency. */
+export async function assessProductFitBatch(
+  items: { theme: string; youtube: YouTubeSignal | undefined }[],
+  category: string,
+): Promise<Map<string, ProductFitSignal>> {
+  const map = new Map<string, ProductFitSignal>()
+  if (items.length === 0) return map
+
+  if (items.length === 1) {
+    const fit = await assessProductFit(items[0].theme, category, items[0].youtube)
+    map.set(items[0].theme.toLowerCase(), fit)
+    return map
+  }
+
+  try {
+    const payload = items.map(i => ({
+      theme: i.theme,
+      youtubeEvidence: youtubeBrief(i.youtube),
+    }))
+
+    const result = await callOpenAiJson(
+      `You assess whether audience problems can become useful paid digital products. Do NOT claim low competition. Return JSON: { "assessments": [{ "theme": "exact theme string", "level": "very_strong|strong|moderate|weak", "reason": "1-2 sentences" }] }`,
+      `Category: ${category}
+
+Assess each theme:
+${JSON.stringify(payload, null, 2)}`,
+    ) as { assessments?: { theme?: string; level?: string; reason?: string }[] }
+
+    for (const row of result.assessments ?? []) {
+      if (typeof row.theme !== 'string') continue
+      map.set(row.theme.toLowerCase(), signalFromResult(row))
+    }
+
+    for (const item of items) {
+      const key = item.theme.toLowerCase()
+      if (!map.has(key)) {
+        map.set(key, signalFromResult({ level: 'moderate' }))
+      }
+    }
+
+    return map
+  } catch (err) {
+    console.error('[Product Fit batch]', err)
+    for (const item of items) {
+      map.set(item.theme.toLowerCase(), { ...UNAVAILABLE_PRODUCT_FIT })
+    }
+    return map
+  }
+}
