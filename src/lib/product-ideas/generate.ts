@@ -5,144 +5,108 @@ import {
   aiProductIdeasResponseSchema,
   type GenerateProductIdeasInput,
   type GenerateProductIdeasResult,
-  type KeywordMetric,
   type ProductIdea,
-  type ProductIdeaSource,
+  type ResearchTheme,
 } from './types'
-import { isDataForSeoConfigured, fetchKeywordMetrics } from './dataforseo'
-import { calculateOpportunityScore } from './scoring'
+import { callOpenAiJson } from './openai-client'
+import { isYouTubeConfigured } from './providers/youtube'
+import {
+  buildResearchBrief,
+  calculateCombinedOpportunityScore,
+  resolveIdeaSource,
+} from './opportunity-engine'
+import {
+  findBestThemeMatch,
+  researchThemes,
+} from './research'
 
-const OPENAI_URL = 'https://api.openai.com/v1/chat/completions'
-
-async function callOpenAiJson(system: string, user: string): Promise<unknown> {
-  const apiKey = process.env.OPENAI_API_KEY
-  if (!apiKey) throw new Error('OPENAI_UNAVAILABLE')
-
-  const response = await fetch(OPENAI_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: system },
-        { role: 'user', content: user },
-      ],
-      temperature: 0.7,
-      response_format: { type: 'json_object' },
-    }),
-  })
-
-  if (!response.ok) {
-    console.error('[Product Ideas] OpenAI error:', await response.text())
-    throw new Error('OPENAI_FAILED')
-  }
-
-  const json = await response.json() as { choices?: { message?: { content?: string } }[] }
-  const raw = json.choices?.[0]?.message?.content ?? '{}'
-  return JSON.parse(raw)
-}
-
-export async function generateSeedKeywords(input: GenerateProductIdeasInput): Promise<string[]> {
+export async function generateResearchThemes(input: GenerateProductIdeasInput): Promise<ResearchTheme[]> {
   const topicLine = input.topic?.trim()
     ? `Optional focus topic: ${input.topic.trim()}`
     : 'No specific topic — explore the category broadly.'
 
   const result = await callOpenAiJson(
-    'You create Google search seed phrases for digital product research. Return JSON only.',
+    'You identify strong audience problems that could become sellable digital products. Return JSON only.',
     `Category: ${input.category}
 ${topicLine}
 
-Create 6-10 search seed phrases that represent problems, questions, or buyer intent for sellable digital products in this category.
-Use natural language people type into Google. Mix informational and commercial intent.
+Create 3-5 problem themes — practical struggles, questions, or workflows people actively seek help with.
+Each theme should be specific enough to research on YouTube (not generic category names).
 
-Return JSON: { "seeds": ["phrase 1", "phrase 2"] }`,
-  ) as { seeds?: unknown }
+Return JSON:
+{
+  "themes": [
+    {
+      "theme": "how to get more real estate listing appointments",
+      "seedQueries": ["listing appointment scripts", "seller prospecting real estate"]
+    }
+  ]
+}`,
+  ) as { themes?: { theme?: string; seedQueries?: unknown }[] }
 
-  const seeds = Array.isArray(result.seeds)
-    ? result.seeds.filter((s): s is string => typeof s === 'string' && s.trim().length > 2).map(s => s.trim())
-    : []
-
-  return [...new Set(seeds)].slice(0, 10)
-}
-
-function keywordBrief(metrics: KeywordMetric[]): string {
-  return JSON.stringify(
-    metrics.map(m => ({
-      keyword: m.keyword,
-      searchVolume: m.searchVolume,
-      cpc: m.cpc,
-      competition: m.competition,
-      trend: m.trend,
-    })),
-    null,
-    2,
-  )
-}
-
-function attachMetrics(
-  idea: ProductIdea,
-  keywordMap: Map<string, KeywordMetric>,
-  source: ProductIdeaSource,
-): ProductIdea {
-  if (source !== 'search_data' || !idea.primaryKeyword) return idea
-
-  const metric = keywordMap.get(idea.primaryKeyword.toLowerCase())
-  if (!metric) return { ...idea, source: 'ai_estimate', opportunityScore: null }
-
-  const opportunityScore = calculateOpportunityScore({
-    searchVolume: metric.searchVolume,
-    cpc: metric.cpc,
-    competition: metric.competition,
-    trend: metric.trend,
-  })
-
-  return {
-    ...idea,
-    source: 'search_data',
-    estimatedMonthlySearches: metric.searchVolume,
-    cpc: metric.cpc,
-    searchCompetition: metric.competition,
-    trend: metric.trend,
-    trendPercent: metric.trendPercent,
-    opportunityScore,
+  const themes: ResearchTheme[] = []
+  for (const row of result.themes ?? []) {
+    if (typeof row.theme !== 'string' || row.theme.trim().length < 5) continue
+    const seedQueries = Array.isArray(row.seedQueries)
+      ? row.seedQueries.filter((s): s is string => typeof s === 'string').map(s => s.trim()).filter(Boolean)
+      : []
+    themes.push({ theme: row.theme.trim(), seedQueries })
   }
+
+  return themes.slice(0, 5)
+}
+
+function themesBrief(themeMap: Awaited<ReturnType<typeof researchThemes>>): string {
+  const lines: string[] = []
+  for (const bundle of themeMap.values()) {
+    const research = {
+      theme: bundle.theme,
+      queries: bundle.queries,
+      youtube: bundle.youtube,
+      trends: bundle.trends,
+      productFit: bundle.productFit,
+      sellbop: bundle.sellbop,
+    }
+    lines.push(buildResearchBrief(research))
+  }
+  return lines.join('\n\n')
 }
 
 export async function generateProductIdeas(input: GenerateProductIdeasInput): Promise<GenerateProductIdeasResult> {
-  const seeds = await generateSeedKeywords(input)
-  let keywordMetrics: KeywordMetric[] = []
-  let source: ProductIdeaSource = 'ai_estimate'
+  const themes = await generateResearchThemes(input)
   let message: string | null = null
 
-  if (isDataForSeoConfigured() && seeds.length > 0) {
-    keywordMetrics = await fetchKeywordMetrics(seeds)
-    if (keywordMetrics.length > 0) {
-      source = 'search_data'
-    } else {
-      message = "Search data isn't available right now, so these ideas are AI-generated estimates."
-    }
-  } else if (!isDataForSeoConfigured()) {
-    message = "Search data isn't configured, so these ideas are AI-generated estimates."
-  } else {
-    message = "Search data isn't available right now, so these ideas are AI-generated estimates."
+  if (!isYouTubeConfigured()) {
+    message = 'YouTube research is not configured. Ideas are AI-generated estimates without validated audience data. Add YOUTUBE_API_KEY for real demand signals.'
   }
 
-  const topKeywords = keywordMetrics.slice(0, Math.max(input.count, 8))
-  const keywordMap = new Map(topKeywords.map(k => [k.keyword.toLowerCase(), k]))
+  const themeMap = themes.length > 0
+    ? await researchThemes(themes, { category: input.category, topic: input.topic })
+    : new Map()
+
+  const hasYouTubeData = [...themeMap.values()].some(b => b.youtube.available)
+  if (isYouTubeConfigured() && !hasYouTubeData && themeMap.size > 0) {
+    message = message ?? 'Limited YouTube evidence was found for these themes. Scores may reflect AI assessment only.'
+  }
 
   const topicLine = input.topic?.trim() ? `User topic focus: ${input.topic.trim()}` : 'No specific topic provided.'
-  const dataBlock = source === 'search_data' && topKeywords.length > 0
-    ? `Use these REAL keyword opportunities (do not invent search volumes):\n${keywordBrief(topKeywords)}`
-    : 'No verified search metrics are available. Create strong product concepts without inventing search volume, CPC, or trend numbers.'
+  const researchBlock = themeMap.size > 0
+    ? `\n\nVerified research (use ONLY this evidence in whyItCouldSell — never invent view counts, search volumes, or competitor claims):\n${themesBrief(themeMap)}
+
+Researched themes (assign each idea a primaryKeyword matching one theme):
+${[...themeMap.keys()].map(t => `- ${t}`).join('\n')}`
+    : '\n\nNo verified YouTube research available. Create strong product concepts without inventing metrics.'
 
   const raw = await callOpenAiJson(
-    `You are SellBop's product research assistant. Turn search opportunities into specific sellable digital product concepts for the SellBop marketplace. Avoid generic titles like "Fitness Ebook" or "Business Guide". Each concept needs a specific buyer, problem, outcome, and format. Return JSON only.`,
+    `You are SellBop's product research assistant. Turn audience problems into specific sellable digital product concepts. Avoid generic titles. Each concept needs a specific buyer, problem, outcome, and format.
+
+When YouTube evidence exists, explain whyItCouldSell using ONLY verified evidence in 2-4 sentences — mention breakout videos or cross-creator interest when supported by data.
+
+Product Fit reasoning may reference AI assessment but must not claim low competition.
+
+Return JSON only.`,
     `Category: ${input.category}
-${topicLine}
-${dataBlock}
+${topicLine}${researchBlock}
 
 Generate exactly ${input.count} digital product ideas.
 
@@ -158,9 +122,9 @@ Return JSON:
       "productType": "Guide|Workbook|Template|Toolkit|Course|Checklist|Spreadsheet|Notion Template|Bundle|Other",
       "suggestedPriceMinCents": 2700,
       "suggestedPriceMaxCents": 6700,
-      "primaryKeyword": "matching keyword phrase or null",
-      "supportingKeywords": ["phrase"],
-      "whyItCouldSell": "short explanation tied to the opportunity",
+      "primaryKeyword": "matching researched theme phrase",
+      "supportingKeywords": ["related problem query"],
+      "whyItCouldSell": "evidence-based explanation",
       "productContents": ["item 1", "item 2"]
     }
   ]
@@ -174,7 +138,16 @@ Return JSON:
   }
 
   const ideas: ProductIdea[] = parsed.data.ideas.slice(0, input.count).map(row => {
-    const base: ProductIdea = {
+    const research = findBestThemeMatch(
+      themeMap,
+      row.primaryKeyword?.trim() ?? null,
+      row.supportingKeywords.map(s => s.trim()).filter(Boolean),
+    )
+
+    const opportunityScore = research ? calculateCombinedOpportunityScore(research) : null
+    const source = resolveIdeaSource(research)
+
+    return {
       id: randomUUID(),
       title: row.title.trim(),
       hook: row.hook.trim(),
@@ -191,13 +164,17 @@ Return JSON:
       searchCompetition: null,
       trend: 'unknown',
       trendPercent: null,
-      opportunityScore: null,
+      opportunityScore,
       source,
       whyItCouldSell: row.whyItCouldSell.trim(),
       productContents: row.productContents.map(s => s.trim()).filter(Boolean),
+      research,
     }
-    return attachMetrics(base, keywordMap, source)
   })
 
-  return { ideas, source, message }
+  return {
+    ideas,
+    source: ideas.some(i => i.source === 'youtube_data') ? 'youtube_data' : 'ai_estimate',
+    message,
+  }
 }

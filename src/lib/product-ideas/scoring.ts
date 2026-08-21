@@ -1,71 +1,9 @@
-import type { Trend } from './types'
-
-function clamp(value: number, min = 0, max = 100): number {
-  return Math.min(max, Math.max(min, value))
-}
-
-function normalizeSearchVolume(volume: number): number {
-  if (volume <= 0) return 0
-  const log = Math.log10(volume + 1)
-  return clamp((log / 5) * 100)
-}
-
-function trendComponent(trend: Trend): number {
-  switch (trend) {
-    case 'rising':
-      return 100
-    case 'stable':
-      return 60
-    case 'falling':
-      return 25
-    default:
-      return 50
-  }
-}
-
-function cpcComponent(cpc: number): number {
-  return clamp((cpc / 5) * 100)
-}
-
-/** Lower Google Ads competition → higher score component. */
-function competitionComponent(competition: number): number {
-  return clamp((1 - competition) * 100)
-}
-
-export function calculateOpportunityScore(input: {
-  searchVolume: number | null
-  cpc: number | null
-  competition: number | null
-  trend: Trend
-}): number | null {
-  if (input.searchVolume == null || input.searchVolume <= 0) return null
-
-  const demand = normalizeSearchVolume(input.searchVolume) * 0.4
-  const trend = trendComponent(input.trend) * 0.3
-  const intent = cpcComponent(input.cpc ?? 0) * 0.15
-  const competition = competitionComponent(input.competition ?? 0.5) * 0.15
-
-  return Math.round(clamp(demand + trend + intent + competition))
-}
-
-export function demandLabel(searchVolume: number | null): string | null {
-  if (searchVolume == null) return null
-  if (searchVolume >= 10000) return 'High Demand'
-  if (searchVolume >= 2500) return 'Medium Demand'
-  return 'Niche Demand'
-}
-
-export function competitionLabel(competition: number | null): string | null {
-  if (competition == null) return null
-  if (competition < 0.33) return 'Low Search Competition'
-  if (competition < 0.66) return 'Medium Search Competition'
-  return 'High Search Competition'
-}
-
-export function trendLabel(trend: Trend): string | null {
-  if (trend === 'unknown') return null
-  return trend.charAt(0).toUpperCase() + trend.slice(1)
-}
+import {
+  productFitLabel,
+  youtubeDemandLabel as youtubeScoreLabel,
+  type ProductFitLevel,
+} from './types'
+import type { GoogleTrendsSignal, ProductIdeaResearch, SellBopSignal, YouTubeSignal } from './types'
 
 export function opportunityScoreTone(score: number | null): 'high' | 'medium' | 'neutral' {
   if (score == null) return 'neutral'
@@ -73,3 +11,79 @@ export function opportunityScoreTone(score: number | null): 'high' | 'medium' | 
   if (score >= 65) return 'medium'
   return 'neutral'
 }
+
+export function youtubeDemandChip(signal: YouTubeSignal | undefined): string | null {
+  if (!signal?.available || signal.youtubeDemandScore == null) return null
+  const label = youtubeScoreLabel(signal.youtubeDemandScore)
+  return label ? `YouTube Demand: ${label}` : null
+}
+
+export function breakoutChip(signal: YouTubeSignal | undefined): string | null {
+  if (!signal?.available || signal.breakoutVideoCount === 0) return null
+  if (signal.breakoutVideoCount === 1) return '1 Breakout Video'
+  return `${signal.breakoutVideoCount} Breakout Videos`
+}
+
+export function momentumChip(signal: YouTubeSignal | undefined): string | null {
+  if (!signal?.available) return null
+  switch (signal.recentMomentum) {
+    case 'rising': return 'Recent Momentum: Rising'
+    case 'strong': return 'Recent Momentum: Strong'
+    case 'moderate': return 'Recent Momentum: Moderate'
+    default: return null
+  }
+}
+
+export function productFitChip(level: ProductFitLevel | undefined): string | null {
+  if (!level || level === 'unknown') return null
+  const label = productFitLabel(level)
+  return label ? `Product Fit: ${label}` : null
+}
+
+export function googleTrendChip(signal: GoogleTrendsSignal | undefined): string | null {
+  if (!signal?.available || !signal.matched || !signal.active) return null
+  const tier = signal.searchTier ? ` (${signal.searchTier})` : ''
+  return `Google Trend: Active${tier}`
+}
+
+export function sellbopChipLabel(signal: SellBopSignal | undefined): string | null {
+  if (!signal?.available) return null
+  return 'SellBop Data'
+}
+
+export function sourceBadgeLabel(source: 'youtube_data' | 'ai_estimate'): string {
+  return source === 'youtube_data' ? 'YouTube Data' : 'AI Estimate'
+}
+
+export function buildEvidenceChips(research: ProductIdeaResearch | undefined): string[] {
+  if (!research) return []
+
+  const chips: string[] = []
+
+  const ytDemand = youtubeDemandChip(research.youtube)
+  if (ytDemand) chips.push(ytDemand)
+
+  const breakout = breakoutChip(research.youtube)
+  if (breakout) chips.push(breakout)
+
+  const momentum = momentumChip(research.youtube)
+  if (momentum) chips.push(momentum)
+
+  const fit = productFitChip(research.productFit?.level)
+  if (fit) chips.push(fit)
+
+  const trend = googleTrendChip(research.trends)
+  if (trend) chips.push(trend)
+
+  const sb = sellbopChipLabel(research.sellbop)
+  if (sb) chips.push(sb)
+
+  return chips.slice(0, 5)
+}
+
+export function formatBreakoutRatio(ratio: number | null): string | null {
+  if (ratio == null) return null
+  return `${ratio.toFixed(1)}x`
+}
+
+export { calculateCombinedOpportunityScore, calculateOpportunityScore } from './opportunity-engine'

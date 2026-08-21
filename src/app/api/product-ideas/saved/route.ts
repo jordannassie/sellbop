@@ -98,15 +98,16 @@ export async function POST(request: Request) {
     suggestedPriceMaxCents: ideaPayload.suggestedPriceMaxCents,
     primaryKeyword: parsed.data.idea.primaryKeyword ?? null,
     supportingKeywords: ideaPayload.supportingKeywords,
-    estimatedMonthlySearches: parsed.data.idea.estimatedMonthlySearches ?? null,
-    cpc: parsed.data.idea.cpc ?? null,
-    searchCompetition: parsed.data.idea.searchCompetition ?? null,
-    trend: ideaPayload.trend as import('@/lib/product-ideas/types').ProductIdea['trend'],
-    trendPercent: parsed.data.idea.trendPercent ?? null,
+    estimatedMonthlySearches: null,
+    cpc: null,
+    searchCompetition: null,
+    trend: 'unknown',
+    trendPercent: null,
     opportunityScore: parsed.data.idea.opportunityScore ?? null,
-    source: ideaPayload.source as import('@/lib/product-ideas/types').ProductIdea['source'],
+    source: (parsed.data.idea.source === 'youtube_data' ? 'youtube_data' : 'ai_estimate') as import('@/lib/product-ideas/types').ProductIdea['source'],
     whyItCouldSell: ideaPayload.whyItCouldSell,
     productContents: ideaPayload.productContents,
+    research: parsed.data.idea.research as import('@/lib/product-ideas/types').ProductIdeaResearch | undefined,
   })
 
   const { data, error } = await admin

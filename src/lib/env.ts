@@ -63,6 +63,13 @@ export const env = {
     login: process.env.DATAFORSEO_LOGIN ?? null,
     password: process.env.DATAFORSEO_PASSWORD ?? null,
   },
+
+  productIdeas: {
+    youtubeApiKey: process.env.YOUTUBE_API_KEY ?? null,
+    googleTrendsApiKey: process.env.GOOGLE_TRENDS_API_KEY ?? null,
+    tiktokClientKey: process.env.TIKTOK_CLIENT_KEY ?? null,
+    tiktokClientSecret: process.env.TIKTOK_CLIENT_SECRET ?? null,
+  },
 } as const
 
 // ── Guard helpers ─────────────────────────────────────────────────────────────
