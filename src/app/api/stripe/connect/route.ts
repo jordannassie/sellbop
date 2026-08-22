@@ -41,7 +41,7 @@ export async function POST() {
   if (!accountId) {
     const account = await stripe.v2.core.accounts.create({
       contact_email: user.email,
-      dashboard: 'none',
+      dashboard: 'express',
       identity: { country: 'US' },
       configuration: {
         recipient: {
