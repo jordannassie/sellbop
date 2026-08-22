@@ -264,9 +264,9 @@ export async function fulfillPurchase(ctx: FulfillmentContext): Promise<Fulfillm
       const terms = await getCurrentFinancialTerms(ctx.partnershipId)
       if (terms) {
         let stripeChargeId: string | null = null
-        if (ctx.stripePaymentIntentId && env.stripe.secretKey {
+        if (ctx.stripePaymentIntentId && env.stripe.secretKey) {
           const Stripe = (await import('stripe')).default
-          const stripe = new Stripe(env.stripe.secretKey
+          const stripe = new Stripe(env.stripe.secretKey)
           const pi = await stripe.paymentIntents.retrieve(ctx.stripePaymentIntentId)
           stripeChargeId = typeof pi.latest_charge === 'string' ? pi.latest_charge : pi.latest_charge?.id ?? null
         }
