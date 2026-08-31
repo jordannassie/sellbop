@@ -364,16 +364,16 @@ export default async function HomePage() {
           <h2 className="text-4xl sm:text-5xl font-black text-white tracking-tight leading-tight mb-4">
             Start selling.
           </h2>
-          <p className="text-white/75 text-base mb-8 max-w-sm mx-auto leading-relaxed">
+          <p className="text-white text-base mb-8 max-w-sm mx-auto leading-relaxed">
             Create your product and let your network help sell it.
           </p>
 
           <Link href="/signup">
-            <button className="inline-flex items-center gap-2 bg-white text-black text-sm font-bold px-8 py-3.5 rounded-xl hover:bg-neutral-100 transition-colors">
+            <button className="inline-flex items-center gap-2 bg-black text-white text-sm font-bold px-8 py-3.5 rounded-xl hover:bg-neutral-900 transition-colors">
               Start Selling <ArrowRight size={14} />
             </button>
           </Link>
-          <p className="text-white/50 text-xs mt-4">Free to start · No credit card required</p>
+          <p className="text-white text-xs mt-4">Free to start · No credit card required</p>
         </div>
       </section>
     </>
