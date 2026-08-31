@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button'
 import { MissionSection } from '@/components/marketing/mission-section'
 import { HeroBanner } from '@/components/marketing/hero-banner'
 import { HomeSchoolSection } from '@/components/marketing/home-school-section'
-import { AFFILIATE_CLOUD_PHOTOS } from '@/lib/demo-avatars'
 import { isSupabaseConfigured } from '@/lib/env'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 import {
@@ -15,7 +14,6 @@ import {
   CreditCard,
   Upload,
   TrendingUp,
-  DollarSign,
   Store,
   Handshake,
   BookOpen,
@@ -30,30 +28,6 @@ import {
   ArrowUpRight,
 } from 'lucide-react'
 
-// Avatar positions for the affiliate creator cloud
-// [xPct, yPct, sizePx, badge | null, animDelayS, fallbackHex, mobileVisible]
-const AVATAR_SLOTS: [number, number, number, string | null, number, string, boolean][] = [
-  [45, 2,  82, '30%',        0.0, '#4F46E5', true ],
-  [8,  16, 72, null,         1.5, '#0EA5E9', true ],
-  [72, 8,  78, '40%',        0.8, '#F59E0B', true ],
-  [28, 54, 70, '$14 / sale', 2.0, '#10B981', true ],
-  [62, 50, 74, null,         0.4, '#EC4899', true ],
-  [20, 4,  58, null,         1.2, '#8B5CF6', true ],
-  [80, 36, 54, '$9 / sale',  1.8, '#EF4444', true ],
-  [50, 28, 58, null,         0.6, '#6366F1', true ],
-  [4,  54, 54, null,         2.2, '#14B8A6', true ],
-  [86, 64, 58, '25%',        1.0, '#F97316', true ],
-  [38, 76, 54, null,         0.3, '#06B6D4', true ],
-  [66, 74, 58, null,         1.7, '#A855F7', true ],
-  [34, 14, 42, null,         2.5, '#475569', false],
-  [88, 7,  42, null,         0.9, '#52525B', false],
-  [56, 66, 42, null,         1.4, '#57534E', false],
-  [14, 77, 42, null,         2.1, '#525252', false],
-  [82, 82, 38, null,         0.7, '#6B7280', false],
-  [24, 38, 42, null,         3.0, '#71717A', false],
-  [93, 44, 38, null,         1.1, '#64748B', false],
-  [11, 44, 38, null,         2.8, '#78716C', false],
-]
 
 export default async function HomePage() {
   let isAuthenticated = false
@@ -260,166 +234,6 @@ export default async function HomePage() {
       </section>
 
       <HomeSchoolSection />
-
-      {/* ── Become an Affiliate ───────────────────────────────────── */}
-      <section className="border-t border-neutral-900 py-28 bg-[#080808] overflow-hidden">
-        <style>{`
-          @keyframes avatarFloat {
-            0%,100% { transform: translateY(0px) scale(1); }
-            50%      { transform: translateY(-9px) scale(1.01); }
-          }
-        `}</style>
-
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          {/* Headline block */}
-          <div className="text-center mb-16">
-            <span className="inline-flex items-center gap-1.5 border border-[#00E676]/40 text-[#00E676] text-xs font-bold tracking-[0.2em] uppercase px-3 py-1.5 rounded-full mb-6">
-              <DollarSign size={10} aria-hidden="true" />
-              For Affiliates
-            </span>
-            <h2 className="text-5xl sm:text-6xl lg:text-7xl font-black text-white tracking-tight leading-[1.05] mb-5">
-              Become an affiliate<br />
-              <span style={{ color: '#00E676' }}>of your favorite creators.</span>
-            </h2>
-            <p className="text-neutral-400 text-lg sm:text-xl max-w-2xl mx-auto leading-relaxed">
-              Share digital products you believe in. Earn commission every time someone buys through your link.
-            </p>
-          </div>
-
-          {/* Two-column: avatar cloud + steps */}
-          <div className="grid lg:grid-cols-[1.15fr_1fr] gap-10 lg:gap-20 items-center mb-20">
-
-            {/* ── Avatar Cloud ── */}
-            <div
-              aria-hidden="true"
-              className="relative order-1 w-full overflow-hidden rounded-3xl"
-              style={{ height: 'clamp(300px, 55vw, 490px)' }}
-            >
-              {/* subtle radial glow in background */}
-              <div
-                className="pointer-events-none absolute inset-0 rounded-3xl"
-                style={{
-                  background: 'radial-gradient(ellipse 70% 60% at 50% 50%, rgba(0,230,118,0.06) 0%, transparent 70%)',
-                }}
-              />
-
-              {AVATAR_SLOTS.map(([xPct, yPct, size, badge, delay], i) => {
-                const avatarUrl = AFFILIATE_CLOUD_PHOTOS[i % AFFILIATE_CLOUD_PHOTOS.length]
-                const isMobileVisible = AVATAR_SLOTS[i][6]
-
-                return (
-                  <div
-                    key={i}
-                    className={isMobileVisible ? 'absolute' : 'absolute hidden sm:block'}
-                    style={{
-                      left: `${xPct}%`,
-                      top:  `${yPct}%`,
-                      width:  size,
-                      height: size,
-                      animation: `avatarFloat ${3 + (delay % 1.5)}s ease-in-out ${delay}s infinite`,
-                    }}
-                  >
-                    <div className="relative w-full h-full rounded-full ring-2 ring-white/20 overflow-hidden shadow-lg shadow-black/40">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={avatarUrl}
-                        alt=""
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
-                    </div>
-
-                    {/* Commission badge */}
-                    {badge && (
-                      <span
-                        className="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded-full text-[10px] font-black text-black leading-none shadow-md whitespace-nowrap"
-                        style={{ background: '#00E676', fontSize: size < 56 ? '9px' : '10px' }}
-                      >
-                        {badge}
-                      </span>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-
-            {/* ── Steps + CTA ── */}
-            <div className="order-2">
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-neutral-500 mb-7">
-                How it works
-              </p>
-
-              <div className="space-y-7 mb-10">
-                {[
-                  {
-                    n: '1',
-                    title: 'Find a product',
-                    desc:  'Browse the Sellbop Marketplace for digital products and creators you want to promote.',
-                  },
-                  {
-                    n: '2',
-                    title: 'Copy your link',
-                    desc:  'Sellbop instantly generates your unique affiliate link — no setup, no code.',
-                  },
-                  {
-                    n: '3',
-                    title: 'Earn when it sells',
-                    desc:  'Every time someone buys through your link, the commission goes directly to you.',
-                  },
-                ].map(s => (
-                  <div key={s.n} className="flex gap-4 items-start">
-                    <div
-                      className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-black font-black text-sm"
-                      style={{ background: '#00E676' }}
-                    >
-                      {s.n}
-                    </div>
-                    <div>
-                      <p className="text-white font-bold mb-1">{s.title}</p>
-                      <p className="text-neutral-400 text-sm leading-relaxed">{s.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* CTA */}
-              <div className="flex flex-col sm:flex-row gap-3 mb-8">
-                <Link href="/marketplace">
-                  <Button
-                    size="lg"
-                    className="w-full sm:w-auto font-black"
-                    style={{ background: '#00E676', color: '#000', borderColor: '#00E676' }}
-                  >
-                    Explore Products to Promote <ArrowRight size={16} />
-                  </Button>
-                </Link>
-              </div>
-
-              {/* Key differentiator */}
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                <p className="text-white font-black text-lg leading-snug mb-1.5">
-                  You don&apos;t need your own product to earn on Sellbop.
-                </p>
-                <p className="text-neutral-400 text-sm leading-relaxed">
-                  Anyone with a Sellbop account can promote affiliate-enabled products and keep their commission.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Bottom: network flow */}
-          <div className="border-t border-white/10 pt-10 flex items-center justify-center gap-3 flex-wrap">
-            {['Find it', 'Copy it', 'Share it', 'Earn'].map((step, i, arr) => (
-              <span key={step} className="flex items-center gap-3">
-                <span className="text-sm font-bold text-neutral-400">{step}</span>
-                {i < arr.length - 1 && (
-                  <ArrowRight size={13} className="text-neutral-600 flex-shrink-0" />
-                )}
-              </span>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* ── What you can sell ─────────────────────────────────────── */}
       <section className="border-t border-neutral-100 py-24 bg-neutral-50">

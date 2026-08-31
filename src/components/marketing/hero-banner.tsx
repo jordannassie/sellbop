@@ -1,136 +1,64 @@
-'use client'
-import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
 
-const BANNERS = [
+const HERO_SRC =
+  'https://qsvmgzdaashfsavmfjuz.supabase.co/storage/v1/object/public/SELL/images2/logos/63c10c3c-9bb4-4996-9bf1-62f626cb6401.png'
+
+const TOOL_LOGOS = [
   {
-    src: 'https://qsvmgzdaashfsavmfjuz.supabase.co/storage/v1/object/public/SELL/partners/ChatGPT%20Image%20Aug%2019,%202026,%2003_51_02%20PM%20(1).png',
-    alt: 'SellBop Partner — creator with verified badge and digital product guides',
+    src: 'https://qsvmgzdaashfsavmfjuz.supabase.co/storage/v1/object/public/SELL/images2/logos/Font-Fiverr-Logo.jpg',
+    alt: 'Fiverr',
   },
   {
-    src: 'https://qsvmgzdaashfsavmfjuz.supabase.co/storage/v1/object/public/SELL/partners/ChatGPT%20Image%20Aug%2019,%202026,%2003_51_02%20PM%20(2).png',
-    alt: 'SellBop Partner — creator with growth analytics and digital downloads',
+    src: 'https://qsvmgzdaashfsavmfjuz.supabase.co/storage/v1/object/public/SELL/images2/logos/higgsfield-logo-750x450.png',
+    alt: 'Higgsfield',
   },
   {
-    src: 'https://qsvmgzdaashfsavmfjuz.supabase.co/storage/v1/object/public/SELL/partners/ChatGPT%20Image%20Aug%2019,%202026,%2003_51_03%20PM%20(3).png',
-    alt: 'SellBop Partner — creator building a digital product business',
-  },
-  {
-    src: 'https://qsvmgzdaashfsavmfjuz.supabase.co/storage/v1/object/public/SELL/partners/ChatGPT%20Image%20Aug%2019,%202026,%2003_51_03%20PM%20(4).png',
-    alt: 'SellBop Partner — creator with premium digital products and sales growth',
+    src: 'https://qsvmgzdaashfsavmfjuz.supabase.co/storage/v1/object/public/SELL/images2/logos/images.jpg',
+    alt: 'Canva',
   },
 ]
 
-const INTERVAL_MS = 4500
-
 export function HeroBanner() {
-  const [current, setCurrent] = useState(0)
-  const [paused, setPaused] = useState(false)
-  const [transitioning, setTransitioning] = useState(false)
-
-  const goTo = useCallback((index: number) => {
-    if (transitioning) return
-    setTransitioning(true)
-    setTimeout(() => {
-      setCurrent(index)
-      setTransitioning(false)
-    }, 300)
-  }, [transitioning])
-
-  const next = useCallback(() => {
-    goTo((current + 1) % BANNERS.length)
-  }, [current, goTo])
-
-  const prev = useCallback(() => {
-    goTo((current - 1 + BANNERS.length) % BANNERS.length)
-  }, [current, goTo])
-
-  useEffect(() => {
-    if (paused) return
-    const t = setInterval(next, INTERVAL_MS)
-    return () => clearInterval(t)
-  }, [paused, next])
-
   return (
-    <div
-      className="relative w-full overflow-hidden rounded-2xl bg-white border border-neutral-100"
-      style={{ aspectRatio: '16/9' }}
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
-    >
-      {/* Slides */}
-      {BANNERS.map((banner, i) => (
-        <div
-          key={banner.src}
-          className="absolute inset-0 transition-opacity duration-500"
-          style={{ opacity: i === current ? (transitioning ? 0 : 1) : 0, zIndex: i === current ? 1 : 0 }}
-          aria-hidden={i !== current}
-        >
-          <Image
-            src={banner.src}
-            alt={banner.alt}
-            fill
-            className="object-contain"
-            sizes="(max-width: 768px) 100vw, 90vw"
-            priority={i === 0}
-            unoptimized
-          />
-        </div>
-      ))}
-
-      {/* Prev/Next */}
-      <button
-        onClick={prev}
-        className="absolute left-3 top-1/2 -translate-y-1/2 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-neutral-900/10 text-neutral-700 backdrop-blur-sm hover:bg-neutral-900/15 transition-colors"
-        aria-label="Previous slide"
-      >
-        <ChevronLeft size={18} />
-      </button>
-      <button
-        onClick={next}
-        className="absolute right-3 top-1/2 -translate-y-1/2 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-neutral-900/10 text-neutral-700 backdrop-blur-sm hover:bg-neutral-900/15 transition-colors"
-        aria-label="Next slide"
-      >
-        <ChevronRight size={18} />
-      </button>
-
-      {/* Dots */}
-      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5">
-        {BANNERS.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => goTo(i)}
-            className="transition-all duration-300 rounded-full"
-            style={{
-              width: i === current ? 20 : 6,
-              height: 6,
-              background: i === current ? '#00E676' : 'rgba(0,0,0,0.2)',
-            }}
-            aria-label={`Go to slide ${i + 1}`}
-          />
-        ))}
+    <>
+      {/* Static hero image */}
+      <div className="relative w-full overflow-hidden rounded-2xl border border-neutral-100 bg-white shadow-[0_8px_40px_rgba(0,0,0,0.06)]">
+        <Image
+          src={HERO_SRC}
+          alt="SellBop — sell digital products and build your affiliate network"
+          width={1200}
+          height={675}
+          className="w-full h-auto object-contain"
+          sizes="(max-width: 768px) 100vw, 90vw"
+          priority
+          unoptimized
+        />
       </div>
 
-      {/* Progress bar */}
-      {!paused && (
-        <div className="absolute bottom-0 left-0 right-0 z-10 h-0.5 bg-neutral-200">
-          <div
-            key={`${current}-progress`}
-            className="h-full bg-emerald-500"
-            style={{
-              animation: `progressBar ${INTERVAL_MS}ms linear forwards`,
-            }}
-          />
+      {/* Tool logos strip */}
+      <div className="mt-6 sm:mt-8 rounded-2xl border border-neutral-100 bg-white shadow-[0_2px_16px_rgba(0,0,0,0.04)] px-6 py-5">
+        <p className="text-center text-xs font-medium text-neutral-400 mb-4 tracking-wide">
+          Build your business with the tools you already know
+        </p>
+        <div className="flex items-center justify-center flex-wrap gap-6 sm:gap-10">
+          {TOOL_LOGOS.map((logo) => (
+            <div
+              key={logo.alt}
+              className="relative flex items-center justify-center"
+              style={{ height: '44px', width: '110px' }}
+            >
+              <Image
+                src={logo.src}
+                alt={logo.alt}
+                fill
+                className="object-contain"
+                sizes="110px"
+                unoptimized
+              />
+            </div>
+          ))}
         </div>
-      )}
-
-      <style>{`
-        @keyframes progressBar {
-          from { width: 0% }
-          to   { width: 100% }
-        }
-      `}</style>
-    </div>
+      </div>
+    </>
   )
 }
