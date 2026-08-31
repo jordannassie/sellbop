@@ -356,12 +356,15 @@ export default async function HomePage() {
       <MissionSection />
 
       {/* ── Final CTA ─────────────────────────────────────────────── */}
-      <section className="border-t border-neutral-100 py-24 bg-black">
+      <section
+        className="py-24"
+        style={{ background: 'linear-gradient(135deg, #00E676 0%, #00C853 100%)' }}
+      >
         <div className="max-w-2xl mx-auto px-4 sm:px-6 text-center">
           <h2 className="text-4xl sm:text-5xl font-black text-white tracking-tight leading-tight mb-4">
             Start selling.
           </h2>
-          <p className="text-neutral-400 text-base mb-8 max-w-sm mx-auto leading-relaxed">
+          <p className="text-white/75 text-base mb-8 max-w-sm mx-auto leading-relaxed">
             Create your product and let your network help sell it.
           </p>
 
@@ -370,7 +373,7 @@ export default async function HomePage() {
               Start Selling <ArrowRight size={14} />
             </button>
           </Link>
-          <p className="text-xs text-neutral-600 mt-4">Free to start · No credit card required</p>
+          <p className="text-white/50 text-xs mt-4">Free to start · No credit card required</p>
         </div>
       </section>
     </>
