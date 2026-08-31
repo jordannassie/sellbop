@@ -147,6 +147,43 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* ── SellBop School video ─────────────────────────────────── */}
+      <section className="border-t border-neutral-100 py-20 bg-neutral-50">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-10">
+            <p className="text-xs font-bold uppercase tracking-[0.25em] mb-3" style={{ color: '#00E676' }}>
+              SellBop School
+            </p>
+            <h2 className="text-3xl sm:text-4xl font-black text-black tracking-tight">
+              See how it&apos;s done.
+            </h2>
+            <p className="text-neutral-500 mt-3 text-base sm:text-lg">
+              Watch how creators build and sell digital products with AI.
+            </p>
+          </div>
+
+          {/* 16/9 responsive embed */}
+          <div className="relative w-full overflow-hidden rounded-2xl border border-neutral-200 shadow-[0_8px_40px_rgba(0,0,0,0.08)]" style={{ paddingTop: '56.25%' }}>
+            <iframe
+              className="absolute inset-0 w-full h-full"
+              src="https://www.youtube.com/embed/CoqJ6kwbjus?rel=0&modestbranding=1"
+              title="Building Digital Products with Claude — SellBop School"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+            />
+          </div>
+
+          <div className="mt-6 text-center">
+            <a
+              href="/school/building-digital-products-claude"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-neutral-600 hover:text-black transition-colors"
+            >
+              More lessons in SellBop School <ArrowRight size={14} />
+            </a>
+          </div>
+        </div>
+      </section>
+
       {/* ── SellBop Partner Program ───────────────────────────────── */}
       <section className="border-t border-neutral-100 py-24 bg-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
